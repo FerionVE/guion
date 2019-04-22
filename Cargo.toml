@@ -1,0 +1,8 @@
+[package]
+name = "guion"
+version = "0.1.0"
+authors = ["qwertz19281 <dellen903@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+piston_window = "0.89"
