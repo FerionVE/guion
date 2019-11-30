@@ -1,3 +1,4 @@
+use crate::widget::Link;
 use std::any::Any;
 use crate::panel::imp::PaneEntry;
 use crate::widget::Widget;
@@ -23,11 +24,11 @@ pub trait ChildEntry<E>: Clone where E: Env {
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
-    fn render(&self) -> fn(&mut E::Ctx, &E::WidgetID, E::Renderer) {
+    fn _render(&self) -> fn(Link<E>, E::Renderer) {
         render::<T,E>
     }
 
-    fn event(&self) -> fn(&mut E::Ctx, &E::WidgetID, E::Event) {
+    fn _event(&self) -> fn(Link<E>, E::Event) {
         event::<T,E>
     }
 
@@ -58,22 +59,22 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     fn _as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
-fn render<W: Pane<E> + 'static, E: Env + 'static>(cx: &mut E::Ctx, me: &E::WidgetID, mut r: E::Renderer) {
-    for c in childs::<W,_>(cx, me) {
-        let h = cx.widgets().get(&c.id)
+fn render<W: Pane<E> + 'static, E: Env + 'static>(l: Link<E>, mut r: E::Renderer) {
+    for c in childs::<W,_>(l) {
+        let h = l.widgets().get(&c.id)
         .expect("Pane contains lost Widget")
         .render();
 
-        h(cx, &c.id, r.slice(c.bounds) );
+        h(l, &c.id, r.slice(c.bounds) );
     }
 }
 
-fn event<W: Pane<E> + 'static, E: Env + 'static>(cx: &mut E::Ctx, me: &E::WidgetID, mut r: E::Event) {
+fn event<W: Pane<E> + 'static, E: Env + 'static>(l: Link<E>, mut r: E::Event) {
     unimplemented!()
 }
 
-fn childs<W: Pane<E> + 'static, E: Env + 'static>(cx: &E::Ctx, me: &E::WidgetID) -> Vec<PaneEntry<E>> {
-    cx.me::<W>(me).unwrap().childs()
+fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<PaneEntry<E>> {
+    l.me::<W>().childs()
         .iter()
         .map(|e| PaneEntry::from(e) )
         .collect()
