@@ -3,6 +3,7 @@ use crate::widget::env::Context;
 use crate::widget::env::Env;
 use std::any::Any;
 
-impl<E> Widget<E> for E::WidgetID where E: Env {
-    
+pub trait WidgetRef<E> where E: Env {
+    fn get(&self, c: &E::Ctx) -> &dyn Widget<E>;
+    fn get_mut(&mut self, c: &mut E::Ctx) -> &dyn Widget<E>;
 }

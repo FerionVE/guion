@@ -55,8 +55,8 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
         )
     }
 
-    fn _as_any(&self) -> &dyn Any {self}
-    fn _as_any_mut(&mut self) -> &mut dyn Any {self}
+    fn as_any(&self) -> &dyn Any {self}
+    fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
 fn render<W: Pane<E> + 'static, E: Env + 'static>(l: Link<E>, mut r: E::Renderer) {
