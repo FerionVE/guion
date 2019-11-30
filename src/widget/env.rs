@@ -1,11 +1,12 @@
+use crate::util::as_any::AsAny;
 use crate::event::Event;
 use crate::render::Render;
 use crate::widget::Widget;
 
-pub trait Env: Sized {
+pub trait Env: Sized + Clone {
     type Renderer: Render;
     type Event: Event;
-    type DynWidget: ?Sized;
+    type DynWidget: AsAny + Widget<Self> + ?Sized;
     type WidgetID: Eq + Clone;
     type Commit: Eq + Ord;
     type Stor: WidgetStore<Self> + 'static;

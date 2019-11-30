@@ -1,44 +1,85 @@
+use crate::panel::imp::PaneEntry;
+use crate::widget::handler::WidgetHandler;
+use std::marker::PhantomData;
 use crate::widget::Widget;
-use crate::widget::env::Env;
+use crate::widget::env::*;
+use crate::widget::handler::WidgetHandlerExt;
+use crate::render::Render;
 
-pub trait AbsolutePanel<E> where E: Env {
+pub mod imp;
+
+pub trait Pane<E> where E: Env {
     type C: ChildEntry<E> + 'static;
 
-    fn childs<'a,I: Iterator<Item=&'a Self::C> + 'static>(&'a self) -> I;
+    fn childs(&self) -> &[Self::C];
 
-    fn commit(&self) -> E::Commit;
+    fn commit(&self) -> &E::Commit;
     fn commit_mut(&mut self) -> &mut E::Commit;
     fn parent(&self) -> Option<&E::WidgetID>;
+    fn parent_mut(&mut self) -> &mut Option<E::WidgetID>;
 }
 
-pub trait ChildEntry<E> where E: Env {
+pub trait ChildEntry<E>: Clone where E: Env {
     fn child(&self) -> E::WidgetID;
     fn bounds(&self) -> (u32,u32,u32,u32);
 }
 
-impl<E,T> Widget<E> for T where T: AbsolutePanel<E>, E: Env {
-    type H = PanelWidgetHandler<E>;
+impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
+    type H = PaneWidgetHandler<E,T>;
 
     fn handler(&self) -> Self::H {
-        PanelWidgetHandler
+        PaneWidgetHandler{_p: PhantomData, _w: PhantomData}
     }
 
-    fn commit(&self) -> E::Commit {
-        AbsolutePanel::commit(self)
+    fn commit(&self) -> &E::Commit {
+        Pane::commit(self)
     }
     fn commit_mut(&mut self) -> &mut E::Commit {
-        AbsolutePanel::commit_mut(self)
+        Pane::commit_mut(self)
     }
 
     fn parent(&self) -> Option<&E::WidgetID> {
-        AbsolutePanel::parent(self)
+        Pane::parent(self)
     }
 
-    fn childs(&self) -> Box<dyn Iterator<Item=((u32,u32,u32,u32),E::WidgetID)>> {
-        AbsolutePanel::childs(self)
-        .map(|c| (c.bounds(),c.child()) )
+    fn parent_mut(&mut self) -> &mut Option<E::WidgetID> {
+        Pane::parent_mut(self)
+    }
+
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=((u32,u32,u32,u32),E::WidgetID)> + 'a> {
+        Box::new(
+            Pane::childs(self)
+            .iter()
+            .map(|c| (c.bounds(),c.child()) )
+        )
     }
 }
 
-pub struct PanelWidgetHandler<E>;
+pub struct PaneWidgetHandler<E,W> where W: Pane<E>, E: Env {
+    _p: PhantomData<E>,
+    _w: PhantomData<W>,
+}
 
+impl<E,W> PaneWidgetHandler<E,W> where W: Pane<E> + 'static, E: Env + 'static {
+    fn childs(&self, cx: &E::Ctx, me: &E::WidgetID) -> Vec<PaneEntry<E>> {
+        self.me::<W>(cx, me).unwrap().childs()
+            .iter()
+            .map(|e| PaneEntry::from(e) )
+            .collect()
+    }
+}
+
+impl<E,W> WidgetHandler<E> for PaneWidgetHandler<E,W> where W: Pane<E> + 'static, E: Env + 'static {
+    fn render(&self, cx: &mut E::Ctx, me: &E::WidgetID, mut r: E::Renderer) {
+        for c in self.childs(cx, me) {
+            let h = cx.widgets().get(&c.id)
+            .expect("Pane contains lost Widget")
+            .handler();
+
+            h.render(cx, &c.id, r.slice(c.bounds) );
+        }
+    }
+    fn event(&self, c: &mut E::Ctx, me: &E::WidgetID, r: E::Event) {
+        unimplemented!()
+    }
+}

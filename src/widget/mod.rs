@@ -10,10 +10,11 @@ pub trait Widget<E> where E: Env {
     fn handler(&self) -> Self::H;
 
     ///commit accessors may moved to Handler
-    fn commit(&self) -> E::Commit;
+    fn commit(&self) -> &E::Commit;
     fn commit_mut(&mut self) -> &mut E::Commit;
 
     fn parent(&self) -> Option<&E::WidgetID>;
+    fn parent_mut(&mut self) -> &mut Option<E::WidgetID>;
 
-    fn childs(&self) -> Box<dyn Iterator<Item=(u32,u32,E::WidgetID)>>;
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=((u32,u32,u32,u32),E::WidgetID)> + 'a>;
 }
