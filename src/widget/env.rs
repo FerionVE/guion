@@ -6,6 +6,7 @@ use crate::widget::Widget;
 pub trait Env: Sized + Clone {
     type Renderer: Render;
     type Event: Event;
+    ///regularly just dyn Widget
     type DynWidget: AsAny + Widget<Self> + ?Sized;
     type WidgetID: Eq + Clone;
     type Commit: Eq + Ord;

@@ -1,3 +1,4 @@
+use std::any::Any;
 use crate::panel::imp::PaneEntry;
 use crate::widget::handler::WidgetHandler;
 use std::marker::PhantomData;
@@ -25,10 +26,8 @@ pub trait ChildEntry<E>: Clone where E: Env {
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
-    type H = PaneWidgetHandler<E,T>;
-
-    fn handler(&self) -> Self::H {
-        PaneWidgetHandler{_p: PhantomData, _w: PhantomData}
+    fn handler(&self) -> Box<dyn WidgetHandler<E>> {
+        Box::new( PaneWidgetHandler::<E,T>{_p: PhantomData, _w: PhantomData} )
     }
 
     fn commit(&self) -> &E::Commit {
@@ -53,6 +52,9 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
             .map(|c| (c.bounds(),c.child()) )
         )
     }
+
+    fn _as_any(&self) -> &dyn Any {self}
+    fn _as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
 pub struct PaneWidgetHandler<E,W> where W: Pane<E>, E: Env {
