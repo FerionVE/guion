@@ -1,5 +1,5 @@
 pub trait Render {
-    fn bounds(&self) -> (u32,u32,u32,u32);
+    fn bounds_abs(&self) -> (u32,u32,u32,u32);
     fn slice(&mut self, b: (u32,u32,u32,u32)) -> Self;
 
     fn fill_rect_rgba(&mut self, c: [u8;4]);

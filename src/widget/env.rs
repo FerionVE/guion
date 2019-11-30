@@ -1,9 +1,10 @@
+use crate::event::Event;
 use crate::render::Render;
 use crate::widget::Widget;
 
 pub trait Env: Sized {
     type Renderer: Render;
-    type Event;
+    type Event: Event;
     type DynWidget: ?Sized;
     type WidgetID: Eq + Clone;
     type Commit: Eq + Ord;

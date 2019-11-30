@@ -7,7 +7,7 @@ pub mod env;
 pub trait Widget<E> where E: Env {
     type H: WidgetHandler<E>;
 
-    fn handler(&self) -> &'static Self::H;
+    fn handler(&self) -> Self::H;
 
     ///commit accessors may moved to Handler
     fn commit(&self) -> E::Commit;
