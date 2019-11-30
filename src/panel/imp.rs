@@ -2,6 +2,7 @@ use crate::panel::ChildEntry;
 use crate::widget::env::Env;
 
 pub struct Pane<E> where E: Env {
+    id: E::WidgetID,
     childs: Vec<PaneEntry<E>>,
     commit: E::Commit,
     parent: Option<E::WidgetID>,
@@ -14,6 +15,10 @@ pub struct PaneEntry<E> where E: Env {
 
 impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
     type C = PaneEntry<E>;
+
+    fn id(&self) -> E::WidgetID {
+        self.id.clone()
+    }
 
     fn childs(&self) -> &[Self::C] {
         &self.childs[..]
