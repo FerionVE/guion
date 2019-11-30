@@ -1,11 +1,8 @@
 use std::any::Any;
 use crate::panel::imp::PaneEntry;
-use crate::widget::handler::WidgetHandler;
-use std::marker::PhantomData;
 use crate::widget::Widget;
 use crate::widget::env::*;
 use crate::render::Render;
-use crate::widget::handler::dyne::DynHandler;
 
 pub mod imp;
 
@@ -26,8 +23,12 @@ pub trait ChildEntry<E>: Clone where E: Env {
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
-    fn handler(&self) -> DynHandler<E> {
-        DynHandler::of::<PaneWidgetHandler<E,T>>()
+    fn render(&self) -> fn(&mut E::Ctx, &E::WidgetID, E::Renderer) {
+        render::<T,E>
+    }
+
+    fn event(&self) -> fn(&mut E::Ctx, &E::WidgetID, E::Event) {
+        event::<T,E>
     }
 
     fn commit(&self) -> &E::Commit {
@@ -57,24 +58,18 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     fn _as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
-pub struct PaneWidgetHandler<E,W> where W: Pane<E>, E: Env {
-    _p: PhantomData<E>,
-    _w: PhantomData<W>,
+fn render<W: Pane<E> + 'static, E: Env + 'static>(cx: &mut E::Ctx, me: &E::WidgetID, mut r: E::Renderer) {
+    for c in childs::<W,_>(cx, me) {
+        let h = cx.widgets().get(&c.id)
+        .expect("Pane contains lost Widget")
+        .render();
+
+        h(cx, &c.id, r.slice(c.bounds) );
+    }
 }
 
-impl<E,W> WidgetHandler<E> for PaneWidgetHandler<E,W> where W: Pane<E> + 'static, E: Env + 'static {
-    fn render(cx: &mut E::Ctx, me: &E::WidgetID, mut r: E::Renderer) {
-        for c in childs::<W,_>(cx, me) {
-            let h = cx.widgets().get(&c.id)
-            .expect("Pane contains lost Widget")
-            .handler();
-
-            h.render(cx, &c.id, r.slice(c.bounds) );
-        }
-    }
-    fn event(cx: &mut E::Ctx, me: &E::WidgetID, r: E::Event) {
-        unimplemented!()
-    }
+fn event<W: Pane<E> + 'static, E: Env + 'static>(cx: &mut E::Ctx, me: &E::WidgetID, mut r: E::Event) {
+    unimplemented!()
 }
 
 fn childs<W: Pane<E> + 'static, E: Env + 'static>(cx: &E::Ctx, me: &E::WidgetID) -> Vec<PaneEntry<E>> {
