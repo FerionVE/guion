@@ -1,3 +1,4 @@
+use crate::util::bounds::Bounds;
 use crate::panel::ChildEntry;
 use crate::widget::env::Env;
 
@@ -9,7 +10,7 @@ pub struct Pane<E> where E: Env {
 }
 #[derive(Clone)]
 pub struct PaneEntry<E> where E: Env {
-    pub bounds: (u32,u32,u32,u32),
+    pub bounds: Bounds,
     pub id: E::WidgetID,
 }
 
@@ -44,7 +45,7 @@ impl<E> PaneEntry<E> where E: Env {
     pub fn from<C: ChildEntry<E>>(e: &C) -> Self {
         Self{
             id: e.child(),
-            bounds: e.bounds(),
+            bounds: e.bounds().clone(),
         }
     }
 }
@@ -53,7 +54,7 @@ impl<E> ChildEntry<E> for PaneEntry<E> where E: Env {
     fn child(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn bounds(&self) -> (u32,u32,u32,u32) {
-        self.bounds        
+    fn bounds(&self) -> &Bounds {
+        &self.bounds        
     }
 }

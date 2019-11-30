@@ -1,3 +1,4 @@
+use crate::util::bounds::Bounds;
 use crate::widget::handler::HandlerFns;
 use crate::widget::link::Link;
 use std::any::Any;
@@ -24,7 +25,7 @@ pub trait Pane<E> where E: Env {
 
 pub trait ChildEntry<E>: Clone where E: Env {
     fn child(&self) -> E::WidgetID;
-    fn bounds(&self) -> (u32,u32,u32,u32);
+    fn bounds(&self) -> &Bounds;
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
@@ -54,7 +55,7 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
         Pane::parent_mut(self)
     }
 
-    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=((u32,u32,u32,u32),E::WidgetID)> + 'a> {
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=(&'a Bounds,E::WidgetID)> + 'a> {
         Box::new(
             Pane::childs(self)
             .iter()
@@ -71,14 +72,14 @@ fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Rend
         l.widgets().get(&c.id)
             .expect("Pane contains lost Widget")
             .handler()
-            .render( &mut *l, r.slice(c.bounds) );
+            .render( &mut *l, r.slice(&c.bounds) );
     }
 }
 
 fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     //TODO special focus/hover enter/leave handling
     for c in childs::<W,_>(&l) {
-        if let Some(e) = e.filter_cloned(c.bounds) {
+        if let Some(e) = e.filter_cloned(&c.bounds) {
             l.widgets().get(&c.id)
                 .expect("Pane contains lost Widget")
                 .handler()
