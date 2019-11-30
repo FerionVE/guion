@@ -1,3 +1,4 @@
+use crate::widget::handler::dyne::DynHandler;
 use std::any::Any;
 use crate::widget::handler::WidgetHandler;
 use crate::widget::env::Env;
@@ -6,7 +7,7 @@ pub mod handler;
 pub mod env;
 
 pub trait Widget<E>: Any where E: Env {
-    fn handler(&self) -> Box<dyn WidgetHandler<E>>;
+    fn handler(&self) -> DynHandler<E>;
 
     ///commit accessors may moved to Handler
     fn commit(&self) -> &E::Commit;
@@ -21,6 +22,6 @@ pub trait Widget<E>: Any where E: Env {
     fn _as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-fn e<E: Env>(a: &dyn Widget<E>) {
+fn e<E: Env + 'static>(a: &dyn Widget<E>) {
     let h = a.handler();
 }

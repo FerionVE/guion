@@ -25,4 +25,18 @@ pub trait WidgetStore<E> where E: Env {
 pub trait Context<E> where E: Env {
     fn widgets(&self) -> &E::Stor;
     fn widgets_mut(&mut self) -> &mut E::Stor;
+
+    fn me<'a,S: Widget<E> + 'static>(&'a self, me: &E::WidgetID) -> Option<&'a S> {
+        self.widgets().get(me)
+        .map(|d|
+            d.as_any().downcast_ref::<S>().expect("Invalid Widget Downcast Type")
+        )
+    }
+
+    fn me_mut<'a,S: Widget<E> + 'static>(&'a mut self, me: &E::WidgetID) -> Option<&'a mut S> {
+        self.widgets_mut().get_mut(me)
+        .map(|d|
+            d.as_any_mut().downcast_mut::<S>().expect("Invalid Widget Downcast Type")
+        )
+    }
 }

@@ -4,8 +4,8 @@ use crate::widget::handler::WidgetHandler;
 use std::marker::PhantomData;
 use crate::widget::Widget;
 use crate::widget::env::*;
-use crate::widget::handler::WidgetHandlerExt;
 use crate::render::Render;
+use crate::widget::handler::dyne::DynHandler;
 
 pub mod imp;
 
@@ -26,8 +26,8 @@ pub trait ChildEntry<E>: Clone where E: Env {
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
-    fn handler(&self) -> Box<dyn WidgetHandler<E>> {
-        Box::new( PaneWidgetHandler::<E,T>{_p: PhantomData, _w: PhantomData} )
+    fn handler(&self) -> DynHandler<E> {
+        DynHandler::of::<PaneWidgetHandler<E,T>>()
     }
 
     fn commit(&self) -> &E::Commit {
@@ -62,18 +62,9 @@ pub struct PaneWidgetHandler<E,W> where W: Pane<E>, E: Env {
     _w: PhantomData<W>,
 }
 
-impl<E,W> PaneWidgetHandler<E,W> where W: Pane<E> + 'static, E: Env + 'static {
-    fn childs(&self, cx: &E::Ctx, me: &E::WidgetID) -> Vec<PaneEntry<E>> {
-        self.me::<W>(cx, me).unwrap().childs()
-            .iter()
-            .map(|e| PaneEntry::from(e) )
-            .collect()
-    }
-}
-
 impl<E,W> WidgetHandler<E> for PaneWidgetHandler<E,W> where W: Pane<E> + 'static, E: Env + 'static {
-    fn render(&self, cx: &mut E::Ctx, me: &E::WidgetID, mut r: E::Renderer) {
-        for c in self.childs(cx, me) {
+    fn render(cx: &mut E::Ctx, me: &E::WidgetID, mut r: E::Renderer) {
+        for c in childs::<W,_>(cx, me) {
             let h = cx.widgets().get(&c.id)
             .expect("Pane contains lost Widget")
             .handler();
@@ -81,7 +72,14 @@ impl<E,W> WidgetHandler<E> for PaneWidgetHandler<E,W> where W: Pane<E> + 'static
             h.render(cx, &c.id, r.slice(c.bounds) );
         }
     }
-    fn event(&self, c: &mut E::Ctx, me: &E::WidgetID, r: E::Event) {
+    fn event(cx: &mut E::Ctx, me: &E::WidgetID, r: E::Event) {
         unimplemented!()
     }
+}
+
+fn childs<W: Pane<E> + 'static, E: Env + 'static>(cx: &E::Ctx, me: &E::WidgetID) -> Vec<PaneEntry<E>> {
+    cx.me::<W>(me).unwrap().childs()
+        .iter()
+        .map(|e| PaneEntry::from(e) )
+        .collect()
 }
