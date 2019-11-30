@@ -5,6 +5,7 @@ use crate::panel::imp::PaneEntry;
 use crate::widget::Widget;
 use crate::widget::env::*;
 use crate::render::Render;
+use crate::event::Event;
 
 pub mod imp;
 
@@ -74,8 +75,16 @@ fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Rend
     }
 }
 
-fn event<W: Pane<E> + 'static, E: Env + 'static>(l: Link<E>, r: E::Event) {
-    unimplemented!()
+fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
+    //TODO special focus/hover enter/leave handling
+    for c in childs::<W,_>(&l) {
+        if let Some(e) = e.filter_cloned(c.bounds) {
+            l.widgets().get(&c.id)
+                .expect("Pane contains lost Widget")
+                .handler()
+                .event( &mut *l, e );
+        }
+    }
 }
 
 fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<PaneEntry<E>> {
