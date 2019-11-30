@@ -1,2 +1,3 @@
-pub mod core;
-pub mod panel;
+pub mod render;
+pub mod widget;
+pub mod event;
