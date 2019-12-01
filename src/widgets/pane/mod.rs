@@ -1,9 +1,7 @@
-use crate::core::util::bounds::BoundedWidget;
-use crate::core::util::bounds::Bounds;
+use crate::core::util::bounded_widget::*;
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::link::Link;
 use std::any::Any;
-use crate::widgets::pane::imp::PaneEntry;
 use crate::core::widget::Widget;
 use crate::core::env::*;
 use crate::core::render::Render;
@@ -12,28 +10,17 @@ use crate::core::event::Event;
 pub mod imp;
 
 pub trait Pane<E> where E: Env {
-    type C: ChildEntry<E> + 'static;
+    type C: BoundedWidget<E> + 'static;
 
     fn id(&self) -> E::WidgetID;
 
     fn childs(&self) -> &[Self::C];
 
-    fn commit(&self) -> &E::Commit;
-    fn commit_mut(&mut self) -> &mut E::Commit;
+    fn render(&self) -> bool;
+    fn set_render(&mut self, v: bool);
+
     fn parent(&self) -> Option<&E::WidgetID>;
-    fn parent_mut(&mut self) -> &mut Option<E::WidgetID>;
-}
-
-pub trait ChildEntry<E>: Clone where E: Env {
-    fn child(&self) -> E::WidgetID;
-    fn bounds(&self) -> &Bounds;
-
-    fn into(&self) -> BoundedWidget<E> {
-        BoundedWidget{
-            bounds: self.bounds().clone(),
-            id: self.child()
-        }
-    }
+    fn set_parent(&mut self, v: Option<E::WidgetID>);
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
@@ -48,26 +35,25 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
         }
     }
 
-    fn commit(&self) -> &E::Commit {
-        Pane::commit(self)
+    fn render(&self) -> bool {
+        Pane::render(self)
     }
-    fn commit_mut(&mut self) -> &mut E::Commit {
-        Pane::commit_mut(self)
+    fn set_render(&mut self, v: bool) {
+        Pane::set_render(self,v)
     }
 
     fn parent(&self) -> Option<&E::WidgetID> {
         Pane::parent(self)
     }
-
-    fn parent_mut(&mut self) -> &mut Option<E::WidgetID> {
-        Pane::parent_mut(self)
+    fn set_parent(&mut self, v: Option<E::WidgetID>) {
+        Pane::set_parent(self,v)
     }
 
-    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=BoundedWidget<E>> + 'a> {
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=ABoundedWidget<E>> + 'a> {
         Box::new(
             Pane::childs(self)
             .iter()
-            .map(ChildEntry::into)
+            .map(BoundedWidget::into_a)
         )
     }
 
@@ -100,9 +86,9 @@ fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     }
 }
 
-fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<PaneEntry<E>> {
+fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<ABoundedWidget<E>> {
     l.me::<W>().childs()
         .iter()
-        .map(|e| PaneEntry::from(e) )
+        .map(BoundedWidget::into_a)
         .collect()
 }

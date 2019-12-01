@@ -2,7 +2,7 @@
 use std::ops::BitAnd;
 use std::ops::AddAssign;
 use std::ops::SubAssign;
-use crate::core::env::Env;
+
 #[derive(Clone)]
 pub struct Offset {
     pub x: u32,
@@ -17,11 +17,6 @@ pub struct Size {
 pub struct Bounds {
     pub off: Offset,
     pub size: Size,
-}
-#[derive(Clone)]
-pub struct BoundedWidget<E> where E: Env {
-    pub bounds: Bounds,
-    pub id: E::WidgetID,
 }
 
 impl Bounds {

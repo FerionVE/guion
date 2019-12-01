@@ -1,6 +1,6 @@
 use crate::core::widget::Widget;
 use crate::core::util::bounds::Bounds;
-use crate::core::util::bounds::BoundedWidget;
+use crate::core::util::bounded_widget::ABoundedWidget;
 use crate::core::widget::link::Link;
 use crate::core::env::Env;
 use crate::core::env::Context;
@@ -25,7 +25,8 @@ impl<E> Handler<E> where E: Env {
         (self.fns.event)(self.link(c),e)
     }
 
-    pub fn iter<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&BoundedWidget<E>)->bool ) -> impl Iterator<Item=(Bounds,&'a E::DynWidget)> {
+    #[inline]
+    pub fn iter<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&ABoundedWidget<E>)->bool ) -> impl Iterator<Item=(Bounds,&'a E::DynWidget)> {
         c.widgets().get(&self.own_id).unwrap()
             .childs()
             .filter(predicate)
@@ -36,28 +37,9 @@ impl<E> Handler<E> where E: Env {
                 )
             })
     }
-
-    /*pub fn iter_mut<'a>(&self, c: &'a mut E::Ctx, predicate: impl FnMut(&BoundedWidget<E>)->bool ) -> impl Iterator<Item=(Bounds,&'a mut E::DynWidget)> {
-        let childs: Vec<BoundedWidget<E>> = c.widgets().get(&self.own_id).unwrap().childs().collect();
-
-        /*childs.into_iter()
-            .filter(predicate)
-            .map(move |e| {
-                (
-                    e.bounds,
-                    c.widgets_mut().get_mut(&e.id).expect("Lost Child")
-                )
-            })*/
-
-        FknIter {
-            ctx: c,
-            childs,
-            idx: 0,
-        }
-    }*/
-
+    #[inline]
     pub fn iter_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut((Bounds,&mut E::DynWidget)) ) {
-        let childs: Vec<BoundedWidget<E>> = c.widgets().get(&self.own_id).unwrap().childs().collect();
+        let childs: Vec<ABoundedWidget<E>> = c.widgets().get(&self.own_id).unwrap().childs().collect();
 
         for e in childs {
             let b = (
@@ -75,28 +57,3 @@ impl<E> Handler<E> where E: Env {
         }
     }
 }
-
-/*pub struct FknIter<'a,E> where E: Env {
-    ctx: &'a mut E::Ctx,
-    childs: Vec<BoundedWidget<E>>,
-    idx: usize,
-}
-
-impl<'a,E> Iterator for FknIter<'a,E> where E: Env {
-    type Item = (Bounds,&'a mut E::DynWidget);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let c = self.idx;
-        self.idx+=1;
-        let c = self.childs.get(c);
-        
-        if let Some(e) = c {
-            Some((
-                e.bounds,
-                self.ctx.widgets_mut().get_mut(&e.id).expect("Lost Child")
-            ))
-        }else{
-            None
-        }
-    }
-}*/
