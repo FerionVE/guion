@@ -24,16 +24,23 @@ pub trait Render {
 }
 
 pub trait RenderExt<E> where E: Env {
+    fn requires_render(&self, w: &E::DynWidget) -> bool;
+
     fn render_widgets<'a,W: IBoundedWidget<E> + 'a>(&mut self, i: impl Iterator<Item=&'a W>, c: &mut E::Ctx, overlap: bool);
 }
 
 impl<E> RenderExt<E> for E::Renderer where E: Env {
+    #[inline]
+    fn requires_render(&self, w: &E::DynWidget) -> bool {
+        w.render() || self.force()
+    }
+
     fn render_widgets<'a,W: IBoundedWidget<E> + 'a>(&mut self, i: impl Iterator<Item=&'a W>, c: &mut E::Ctx, overlap: bool) {
         if overlap {
             let mut render = false;
             for w in i {
                 let ww = c.widgets_mut().get_mut(&w.id()).expect("Lost Child");
-                render |= (ww.render() || self.force());
+                render |= RenderExt::<E>::requires_render(self,&ww);
                 if render {
                     ww.handler().render(c,self.slice(w.bounds()));
                 }
