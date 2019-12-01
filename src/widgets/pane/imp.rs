@@ -1,6 +1,6 @@
-use crate::util::bounds::Bounds;
-use crate::panel::ChildEntry;
-use crate::widget::env::Env;
+use crate::core::util::bounds::Bounds;
+use crate::widgets::pane::ChildEntry;
+use crate::core::env::Env;
 
 pub struct Pane<E> where E: Env {
     id: E::WidgetID,

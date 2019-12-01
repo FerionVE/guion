@@ -1,11 +1,10 @@
-use crate::util::bounds::Bounds;
-use crate::widget::handler::HandlerFns;
-use crate::widget::handler::Handler;
+use crate::core::util::bounds::BoundedWidget;
+use crate::core::util::bounds::Bounds;
+use crate::core::widget::handler::HandlerFns;
+use crate::core::widget::handler::Handler;
 use std::any::Any;
-use crate::widget::env::Env;
+use crate::core::env::Env;
 
-
-pub mod env;
 pub mod link;
 pub mod handler;
 
@@ -28,7 +27,7 @@ pub trait Widget<E>: Any where E: Env {
     fn parent(&self) -> Option<&E::WidgetID>;
     fn parent_mut(&mut self) -> &mut Option<E::WidgetID>;
 
-    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=(&'a Bounds,E::WidgetID)> + 'a>;
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=BoundedWidget<E>> + 'a>;
 
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;

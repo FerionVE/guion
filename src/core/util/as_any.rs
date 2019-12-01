@@ -1,5 +1,5 @@
-use crate::widget::env::Env;
-use crate::widget::Widget;
+use crate::core::env::Env;
+use crate::core::widget::Widget;
 use std::any::Any;
 
 pub trait AsAny {

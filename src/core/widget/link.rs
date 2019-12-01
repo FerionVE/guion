@@ -1,9 +1,9 @@
-use crate::widget::Widget;
+use crate::core::widget::Widget;
 use std::ops::DerefMut;
 use std::ops::Deref;
-use crate::widget::env::Env;
-use crate::widget::env::Context;
-use crate::widget::env::WidgetStore;
+use crate::core::env::Env;
+use crate::core::env::Context;
+use crate::core::env::WidgetStore;
 
 pub struct Link<'a,E> where E: Env {
     pub ctx: &'a mut E::Ctx,

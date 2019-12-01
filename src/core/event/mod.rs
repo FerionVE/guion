@@ -1,4 +1,4 @@
-use crate::util::bounds::Bounds;
+use crate::core::util::bounds::Bounds;
 
 pub trait Event: Clone where Self: Sized {
     ///split Self into some known cases to handle
@@ -6,6 +6,8 @@ pub trait Event: Clone where Self: Sized {
 
     fn filter(self, subbounds: &Bounds) -> Option<Self>;
     fn filter_cloned(&self, subbounds: &Bounds) -> Option<Self>; 
+
+    fn consuming(&self) -> bool;
 }
 
 pub enum Events<E> where E: Event {

@@ -1,12 +1,13 @@
-use crate::util::bounds::Bounds;
-use crate::widget::handler::HandlerFns;
-use crate::widget::link::Link;
+use crate::core::util::bounds::BoundedWidget;
+use crate::core::util::bounds::Bounds;
+use crate::core::widget::handler::HandlerFns;
+use crate::core::widget::link::Link;
 use std::any::Any;
-use crate::panel::imp::PaneEntry;
-use crate::widget::Widget;
-use crate::widget::env::*;
-use crate::render::Render;
-use crate::event::Event;
+use crate::widgets::pane::imp::PaneEntry;
+use crate::core::widget::Widget;
+use crate::core::env::*;
+use crate::core::render::Render;
+use crate::core::event::Event;
 
 pub mod imp;
 
@@ -26,6 +27,13 @@ pub trait Pane<E> where E: Env {
 pub trait ChildEntry<E>: Clone where E: Env {
     fn child(&self) -> E::WidgetID;
     fn bounds(&self) -> &Bounds;
+
+    fn into(&self) -> BoundedWidget<E> {
+        BoundedWidget{
+            bounds: self.bounds().clone(),
+            id: self.child()
+        }
+    }
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
@@ -55,11 +63,11 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
         Pane::parent_mut(self)
     }
 
-    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=(&'a Bounds,E::WidgetID)> + 'a> {
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=BoundedWidget<E>> + 'a> {
         Box::new(
             Pane::childs(self)
             .iter()
-            .map(|c| (c.bounds(),c.child()) )
+            .map(ChildEntry::into)
         )
     }
 
@@ -78,12 +86,16 @@ fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Rend
 
 fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     //TODO special focus/hover enter/leave handling
-    for c in childs::<W,_>(&l) {
+    for c in childs::<W,_>(&l).into_iter().rev() {
         if let Some(e) = e.filter_cloned(&c.bounds) {
+            let consuming = e.consuming();
+
             l.widgets().get(&c.id)
                 .expect("Pane contains lost Widget")
                 .handler()
                 .event( &mut *l, e );
+
+            if consuming {return;}
         }
     }
 }

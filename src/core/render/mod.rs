@@ -1,4 +1,4 @@
-use crate::util::bounds::Bounds;
+use crate::core::util::bounds::Bounds;
 
 pub trait Render {
     fn bounds_abs(&self) -> Bounds;

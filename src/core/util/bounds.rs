@@ -2,7 +2,7 @@
 use std::ops::BitAnd;
 use std::ops::AddAssign;
 use std::ops::SubAssign;
-use crate::widget::env::Env;
+use crate::core::env::Env;
 #[derive(Clone)]
 pub struct Offset {
     pub x: u32,
