@@ -10,7 +10,7 @@ use crate::core::event::Event;
 pub mod imp;
 
 pub trait Pane<E> where E: Env {
-    type C: BoundedWidget<E> + 'static;
+    type C: IBoundedWidget<E> + 'static;
 
     fn id(&self) -> E::WidgetID;
 
@@ -49,11 +49,11 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
         Pane::set_parent(self,v)
     }
 
-    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=ABoundedWidget<E>> + 'a> {
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=BoundedWidget<E>> + 'a> {
         Box::new(
             Pane::childs(self)
             .iter()
-            .map(BoundedWidget::into_a)
+            .map(IBoundedWidget::into_a)
         )
     }
 
@@ -86,9 +86,9 @@ fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     }
 }
 
-fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<ABoundedWidget<E>> {
+fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<BoundedWidget<E>> {
     l.me::<W>().childs()
         .iter()
-        .map(BoundedWidget::into_a)
+        .map(IBoundedWidget::into_a)
         .collect()
 }

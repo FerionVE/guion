@@ -1,6 +1,6 @@
 use crate::core::widget::Widget;
 use crate::core::util::bounds::Bounds;
-use crate::core::util::bounded_widget::ABoundedWidget;
+use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::widget::link::Link;
 use crate::core::env::Env;
 use crate::core::env::Context;
@@ -24,9 +24,9 @@ impl<E> Handler<E> where E: Env {
     pub fn event(&self, c: &mut E::Ctx, e: E::Event) {
         (self.fns.event)(self.link(c),e)
     }
-
+    /// iterate over childs
     #[inline]
-    pub fn iter<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&ABoundedWidget<E>)->bool ) -> impl Iterator<Item=(Bounds,&'a E::DynWidget)> {
+    pub fn childs<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&BoundedWidget<E>)->bool ) -> impl Iterator<Item=(Bounds,&'a E::DynWidget)> {
         c.widgets().get(&self.own_id).unwrap()
             .childs()
             .filter(predicate)
@@ -37,16 +37,37 @@ impl<E> Handler<E> where E: Env {
                 )
             })
     }
+    /// iterate over childs mut
     #[inline]
-    pub fn iter_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut((Bounds,&mut E::DynWidget)) ) {
-        let childs: Vec<ABoundedWidget<E>> = c.widgets().get(&self.own_id).unwrap().childs().collect();
+    pub fn childs_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut(Bounds,&mut E::DynWidget), mut predicate: impl FnMut(&BoundedWidget<E>)->bool) {
+        let childs: Vec<BoundedWidget<E>> = c.widgets().get(&self.own_id).unwrap().childs().collect();
 
         for e in childs {
-            let b = (
-                e.bounds,
-                c.widgets_mut().get_mut(&e.id).expect("Lost Child")
-            );
-            f(b);
+            if predicate(&e) {
+                f(
+                    e.bounds,
+                    c.widgets_mut().get_mut(&e.id).expect("Lost Child")
+                );
+            }
+        }
+    }
+    /// iterate from current up to the root element
+    #[inline]
+    pub fn parents<'a>(&self, c: &'a E::Ctx) -> Parents<'a,E> {
+        Parents{
+            ctx: c,
+            next: Some(self.own_id.clone())
+        }
+    }
+    /// iterate from current up to the root element mut
+    #[inline]
+    pub fn parents_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut(&mut E::DynWidget) ) {
+        let mut next = Some(self.own_id.clone());
+
+        while let Some(n) = next {
+            let r = c.widgets_mut().get_mut(&n).expect("Lost Parent");
+            f(r);
+            next = r.parent().cloned();
         }
     }
 
@@ -54,6 +75,25 @@ impl<E> Handler<E> where E: Env {
         Link{
             ctx: c,
             widget_id: self.own_id.clone()
+        }
+    }
+}
+
+pub struct Parents<'a,E> where E: Env {
+    ctx: &'a E::Ctx,
+    next: Option<E::WidgetID>,
+}
+
+impl<'a,E> Iterator for Parents<'a,E> where E: Env {
+    type Item = &'a E::DynWidget;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(n) = &self.next {
+            let r = self.ctx.widgets().get(n).expect("Lost Parent");
+            self.next = r.parent().cloned();
+            Some(r)
+        }else{
+            None
         }
     }
 }

@@ -1,15 +1,15 @@
-use crate::core::util::bounded_widget::ABoundedWidget;
+use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::env::Env;
 
 pub struct Pane<E> where E: Env {
     id: E::WidgetID,
-    childs: Vec<ABoundedWidget<E>>,
+    childs: Vec<BoundedWidget<E>>,
     render: bool,
     parent: Option<E::WidgetID>,
 }
 
 impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
-    type C = ABoundedWidget<E>;
+    type C = BoundedWidget<E>;
 
     fn id(&self) -> E::WidgetID {
         self.id.clone()
