@@ -1,3 +1,4 @@
+use crate::core::util::lazout::Lazout;
 use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::handler::Handler;
@@ -18,6 +19,8 @@ pub trait Widget<E>: Any where E: Env {
     }
     
     fn _handler(&self) -> HandlerFns<E>;
+
+    fn lazout(&self) -> Lazout;
 
     ///commit accessors may moved to Handler
     fn render(&self) -> bool;

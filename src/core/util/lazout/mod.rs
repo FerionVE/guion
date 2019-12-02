@@ -1,3 +1,4 @@
+use std::ops::Index;
 use crate::core::util::border::Border;
 //TODO may use priv-mod-but-pub-use trick everywhere
 mod dir;
@@ -41,4 +42,20 @@ impl Lazout {
         self.x.add(b.left+b.right);
         self.y.add(b.top+b.bottom);
     }
+}
+
+impl Index<Orientation> for Lazout {
+    type Output = LazoutDir;
+
+    fn index(&self, i: Orientation) -> &Self::Output {
+        match i {
+            Orientation::Horizontal() => &self.x,
+            Orientation::Vertical() => &self.y,
+        }
+    }
+}
+
+pub enum Orientation {
+    Horizontal(),
+    Vertical(),
 }
