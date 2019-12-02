@@ -4,7 +4,7 @@ use crate::core::widget::link::Link;
 use std::any::Any;
 use crate::core::widget::Widget;
 use crate::core::env::*;
-use crate::core::render::Render;
+use crate::core::render::*;
 use crate::core::event::Event;
 
 pub mod imp;
@@ -61,13 +61,9 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
-fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
-    for c in childs::<W,_>(&l) {
-        l.widgets().get(&c.id)
-            .expect("Pane contains lost Widget")
-            .handler()
-            .render( &mut *l, r.slice(&c.bounds) );
-    }
+fn render<W: Pane<E> + 'static, E: Env + 'static>(l: Link<E>, mut r: E::Renderer) {
+    let c = childs::<W,_>(&l);
+    r.render_widgets(c.iter(),l.ctx,true);
 }
 
 fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
