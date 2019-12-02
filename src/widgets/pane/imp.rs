@@ -1,3 +1,4 @@
+use crate::core::util::lazout::Lazout;
 use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::env::Env;
 
@@ -31,5 +32,9 @@ impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
     }
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
         self.parent=v;
+    }
+
+    fn lazout(&self) -> Lazout {
+        unimplemented!()
     }
 }

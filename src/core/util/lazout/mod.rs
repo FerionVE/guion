@@ -19,14 +19,14 @@ impl Lazout {
         Self{
             x: LazoutDir{
                 min: w,
-                max: w,
-                optimal: w,
+                max: Some(w),
+                optimal: Some(w),
                 pressure: 0.0,
             },
             y: LazoutDir{
                 min: h,
-                max: h,
-                optimal: h,
+                max: Some(h),
+                optimal: Some(h),
                 pressure: 0.0,
             }
         }
@@ -54,7 +54,7 @@ impl Index<Orientation> for Lazout {
         }
     }
 }
-
+#[derive(Clone,Copy)]
 pub enum Orientation {
     Horizontal(),
     Vertical(),

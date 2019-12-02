@@ -1,3 +1,4 @@
+use crate::core::util::lazout::Lazout;
 use crate::core::util::bounded_widget::*;
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::link::Link;
@@ -21,6 +22,8 @@ pub trait Pane<E> where E: Env {
 
     fn parent(&self) -> Option<&E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);
+    
+    fn lazout(&self) -> Lazout;
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
@@ -47,6 +50,10 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     }
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
         Pane::set_parent(self,v)
+    }
+
+    fn lazout(&self) -> Lazout {
+        Pane::lazout(self)
     }
 
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=BoundedWidget<E>> + 'a> {

@@ -20,6 +20,20 @@ pub struct Bounds {
 }
 
 impl Bounds {
+    #[inline]
+    pub fn from_xywh(x: u32, y: u32, w: u32, h: u32) -> Self {
+        Self{
+            off: Offset{
+                x,
+                y,
+            },
+            size: Size{
+                w,
+                h,
+            }
+        }
+    }
+
     #[inline] pub fn x(&self) -> u32 { self.off.x }
     #[inline] pub fn y(&self) -> u32 { self.off.y }
     #[inline] pub fn w(&self) -> u32 { self.size.w }
