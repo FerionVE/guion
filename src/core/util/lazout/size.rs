@@ -1,3 +1,6 @@
+use crate::core::util::border::Border;
+use qwutils::*;
+
 #[derive(Clone)]
 pub struct Size {
     pub x: SizeAxis,
@@ -39,7 +42,7 @@ impl Size {
     }
 }
 
-impl LazoutAxis {
+impl SizeAxis {
     //TODO may use Add/Sub impls
     pub fn add(&mut self, v: u32) {
         self.min += v;

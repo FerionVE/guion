@@ -1,4 +1,4 @@
-use crate::core::util::lazout::Lazout;
+use crate::core::util::lazout::size::Size;
 use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::env::Env;
 
@@ -20,11 +20,22 @@ impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
         &self.childs[..]
     }
 
-    fn render(&self) -> bool {
+    fn render_invalid(&self) -> bool {
         self.render
     }
-    fn set_render(&mut self, v: bool) {
+    fn set_render_invalid(&mut self, v: bool) {
         self.render=v;
+    }
+
+    fn layout_invalid(&self) -> bool {
+        unimplemented!()
+    }
+    fn set_layout_invalid(&mut self, v: bool) {
+        unimplemented!()
+    }
+    
+    fn size(&self) -> Size {
+        unimplemented!()
     }
 
     fn parent(&self) -> Option<&E::WidgetID> {
@@ -32,9 +43,5 @@ impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
     }
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
         self.parent=v;
-    }
-
-    fn lazout(&self) -> Lazout {
-        unimplemented!()
     }
 }

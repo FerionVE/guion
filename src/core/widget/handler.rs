@@ -4,7 +4,6 @@ use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::widget::link::Link;
 use crate::core::env::Env;
 use crate::core::env::Context;
-use crate::core::env::WidgetStore;
 
 pub struct Handler<E> where E: Env {
     pub(crate) own_id: E::WidgetID,
@@ -27,26 +26,26 @@ impl<E> Handler<E> where E: Env {
     /// iterate over childs
     #[inline]
     pub fn childs<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&BoundedWidget<E>)->bool ) -> impl Iterator<Item=(Bounds,&'a E::DynWidget)> {
-        c.widgets().get(&self.own_id).unwrap()
+        c.widget(&self.own_id).unwrap()
             .childs()
             .filter(predicate)
             .map(move |e| {
                 (
                     e.bounds,
-                    c.widgets().get(&e.id).expect("Lost Child")
+                    c.widget(&e.id).expect("Lost Child")
                 )
             })
     }
     /// iterate over childs mut
     #[inline]
     pub fn childs_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut(Bounds,&mut E::DynWidget), mut predicate: impl FnMut(&BoundedWidget<E>)->bool) {
-        let childs: Vec<BoundedWidget<E>> = c.widgets().get(&self.own_id).unwrap().childs().collect();
+        let childs: Vec<BoundedWidget<E>> = c.widget(&self.own_id).unwrap().childs().collect();
 
         for e in childs {
             if predicate(&e) {
                 f(
                     e.bounds,
-                    c.widgets_mut().get_mut(&e.id).expect("Lost Child")
+                    c.widget_mut(&e.id).expect("Lost Child")
                 );
             }
         }
@@ -65,7 +64,7 @@ impl<E> Handler<E> where E: Env {
         let mut next = Some(self.own_id.clone());
 
         while let Some(n) = next {
-            let r = c.widgets_mut().get_mut(&n).expect("Lost Parent");
+            let r = c.widget_mut(&n).expect("Lost Parent");
             f(r);
             next = r.parent().cloned();
         }
@@ -89,7 +88,7 @@ impl<'a,E> Iterator for Parents<'a,E> where E: Env {
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(n) = &self.next {
-            let r = self.ctx.widgets().get(n).expect("Lost Parent");
+            let r = self.ctx.widget(n).expect("Lost Parent");
             self.next = r.parent().cloned();
             Some(r)
         }else{

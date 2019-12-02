@@ -1,4 +1,4 @@
-use crate::core::util::lazout::Lazout;
+use crate::core::util::lazout::size::Size;
 use crate::core::util::bounded_widget::*;
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::link::Link;
@@ -17,13 +17,18 @@ pub trait Pane<E> where E: Env {
 
     fn childs(&self) -> &[Self::C];
 
-    fn render(&self) -> bool;
-    fn set_render(&mut self, v: bool);
+    fn render_invalid(&self) -> bool;
+    fn set_render_invalid(&mut self, v: bool);
+
+    fn layout_invalid(&self) -> bool;
+    fn set_layout_invalid(&mut self, v: bool);
+
+    fn size(&self) -> Size;
 
     fn parent(&self) -> Option<&E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);
     
-    fn lazout(&self) -> Lazout;
+    
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
@@ -38,11 +43,22 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
         }
     }
 
-    fn render(&self) -> bool {
-        Pane::render(self)
+    fn render_invalid(&self) -> bool {
+        Pane::render_invalid(self)
     }
-    fn set_render(&mut self, v: bool) {
-        Pane::set_render(self,v)
+    fn set_render_invalid(&mut self, v: bool) {
+        Pane::set_render_invalid(self,v)
+    }
+
+    fn layout_invalid(&self) -> bool {
+        Pane::layout_invalid(self)
+    }
+    fn set_layout_invalid(&mut self, v: bool) {
+        Pane::set_layout_invalid(self,v)
+    }
+
+    fn size(&self) -> Size {
+        Pane::size(self)
     }
 
     fn parent(&self) -> Option<&E::WidgetID> {
@@ -50,10 +66,6 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     }
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
         Pane::set_parent(self,v)
-    }
-
-    fn lazout(&self) -> Lazout {
-        Pane::lazout(self)
     }
 
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=BoundedWidget<E>> + 'a> {
@@ -68,9 +80,13 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
-fn render<W: Pane<E> + 'static, E: Env + 'static>(l: Link<E>, mut r: E::Renderer) {
-    let c = childs::<W,_>(&l);
-    r.render_widgets(c.iter(),l.ctx,true);
+fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+    for c in childs::<W,_>(&l) {
+        l.widget(&c.id)
+            .expect("Pane contains lost Widget")
+            .handler()
+            .render( &mut *l, r.slice(&c.bounds) );
+    }
 }
 
 fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
@@ -79,7 +95,7 @@ fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
         if let Some(e) = e.filter_cloned(&c.bounds) {
             let consuming = e.consuming();
 
-            l.widgets().get(&c.id)
+            l.widget(&c.id)
                 .expect("Pane contains lost Widget")
                 .handler()
                 .event( &mut *l, e );
