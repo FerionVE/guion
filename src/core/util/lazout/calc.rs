@@ -25,16 +25,31 @@ pub fn sum(i: &[LazoutDir]) -> LazoutDir {
 pub fn calc<W: Borrow<E::WidgetID>, E: Env>(i: &[W], b: (u32,u32), o: Orientation, c: &E::Ctx) -> Vec<BoundedWidget<E>> {
     let lazouts = i.iter()
         .map(|l| 
-            c.widgets()
-                .get(l.borrow())
-                .expect("Lost Widget")
-                .lazout()
+            (
+                l.borrow(),
+                c.widgets()
+                    .get(l.borrow())
+                    .expect("Lost Widget")
+                    .lazout()
+            )
         )
         .collect::<Vec<_>>();
 
+    let dd = lazouts.iter().map(|e| e.1[o] ).collect::<Vec<_>>();
+
     match o {
         Orientation::Horizontal() => {
-            calc_dirs(lazouts, o, b.0);
+            let s = calc_dirs(&dd[..], b.0);
+        
+            s.into_iter().zip(lazouts.into_iter())
+            .map(|(pos,(id,laz))| {
+                BoundedWidget {
+                    id,
+                    bounds: Bounds {
+                        
+                    }
+                }
+            }).collect()
         }
         Orientation::Vertical() => {
             unimplemented!()
@@ -43,8 +58,8 @@ pub fn calc<W: Borrow<E::WidgetID>, E: Env>(i: &[W], b: (u32,u32), o: Orientatio
 }
 
 ///calculate the sizes of dir
-pub fn calc_dirs(i: &[Lazout], o: Orientation, dest: u32) -> Vec<(u32,u32)> {
-    let sum = sum(i,o);
+pub fn calc_dirs(i: &[LazoutDir], dest: u32) -> Vec<(u32,u32)> {
+    let sum = sum(i);
     
     let mut out = Vec::with_capacity(i.len());
     let mut off = 0;
