@@ -1,4 +1,4 @@
-use crate::core::util::lazout::size::Size;
+use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::env::Env;
 

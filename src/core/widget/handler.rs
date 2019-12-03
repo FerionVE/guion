@@ -6,7 +6,7 @@ use crate::core::env::Env;
 use crate::core::env::Context;
 
 pub struct Handler<E> where E: Env {
-    pub(crate) own_id: E::WidgetID,
+    pub(crate) id: E::WidgetID,
     pub(crate) fns: HandlerFns<E>,
 }
 
@@ -17,16 +17,16 @@ pub struct HandlerFns<E> where E: Env {
 
 impl<E> Handler<E> where E: Env {
     pub fn render(&self, c: &mut E::Ctx, r: E::Renderer) {
-        (self.fns.render)(self.link(c),r)
+        c.render_widget(r,&self.id,self.fns.render)
     }
 
     pub fn event(&self, c: &mut E::Ctx, e: E::Event) {
-        (self.fns.event)(self.link(c),e)
+        c.event_widget(e,&self.id,self.fns.event)
     }
     /// iterate over childs
     #[inline]
     pub fn childs<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&BoundedWidget<E>)->bool ) -> impl Iterator<Item=(Bounds,&'a E::DynWidget)> {
-        c.widget(&self.own_id).unwrap()
+        c.widget(&self.id).unwrap()
             .childs()
             .filter(predicate)
             .map(move |e| {
@@ -39,7 +39,7 @@ impl<E> Handler<E> where E: Env {
     /// iterate over childs mut
     #[inline]
     pub fn childs_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut(Bounds,&mut E::DynWidget), mut predicate: impl FnMut(&BoundedWidget<E>)->bool) {
-        let childs: Vec<BoundedWidget<E>> = c.widget(&self.own_id).unwrap().childs().collect();
+        let childs: Vec<BoundedWidget<E>> = c.widget(&self.id).unwrap().childs().collect();
 
         for e in childs {
             if predicate(&e) {
@@ -55,13 +55,13 @@ impl<E> Handler<E> where E: Env {
     pub fn parents<'a>(&self, c: &'a E::Ctx) -> Parents<'a,E> {
         Parents{
             ctx: c,
-            next: Some(self.own_id.clone())
+            next: Some(self.id.clone())
         }
     }
     /// iterate from current up to the root element mut
     #[inline]
     pub fn parents_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut(&mut E::DynWidget) ) {
-        let mut next = Some(self.own_id.clone());
+        let mut next = Some(self.id.clone());
 
         while let Some(n) = next {
             let r = c.widget_mut(&n).expect("Lost Parent");
@@ -73,7 +73,7 @@ impl<E> Handler<E> where E: Env {
     fn link<'a>(&self, c: &'a mut E::Ctx) -> Link<'a,E> {
         Link{
             ctx: c,
-            widget_id: self.own_id.clone()
+            widget_id: self.id.clone()
         }
     }
 }

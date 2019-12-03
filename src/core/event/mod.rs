@@ -1,6 +1,6 @@
 use crate::core::util::bounds::Bounds;
 
-pub trait Event: Clone where Self: Sized {
+pub trait Event: Sized + Clone {
     ///split Self into some known cases to handle
     fn case(self) -> Events<Self>;
 

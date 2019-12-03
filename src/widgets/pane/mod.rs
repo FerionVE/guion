@@ -1,4 +1,4 @@
-use crate::core::util::lazout::size::Size;
+use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::*;
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::link::Link;

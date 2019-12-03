@@ -1,4 +1,4 @@
-use crate::core::util::lazout::Size;
+use crate::core::lazout::Size;
 use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::handler::Handler;
@@ -13,7 +13,7 @@ pub trait Widget<E>: Any where E: Env {
 
     fn handler<'a>(&self) -> Handler<E> {
         Handler {
-            own_id: self.id(),
+            id: self.id(),
             fns: self._handler(),
         }
     }
