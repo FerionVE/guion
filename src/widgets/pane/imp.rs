@@ -5,7 +5,7 @@ use crate::core::env::Env;
 pub struct Pane<E> where E: Env {
     id: E::WidgetID,
     childs: Vec<BoundedWidget<E>>,
-    render: bool,
+    invalid: bool,
     parent: Option<E::WidgetID>,
 }
 
@@ -20,18 +20,11 @@ impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
         &self.childs[..]
     }
 
-    fn render_invalid(&self) -> bool {
-        self.render
+    fn invalid(&self) -> bool {
+        self.invalid
     }
-    fn set_render_invalid(&mut self, v: bool) {
-        self.render=v;
-    }
-
-    fn layout_invalid(&self) -> bool {
-        unimplemented!()
-    }
-    fn set_layout_invalid(&mut self, v: bool) {
-        unimplemented!()
+    fn set_invalid(&mut self, v: bool) {
+        self.invalid = v;
     }
     
     fn size(&self) -> Size {

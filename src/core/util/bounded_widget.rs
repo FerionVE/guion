@@ -4,7 +4,7 @@ use crate::core::env::Env;
 pub trait IBoundedWidget<E>: Clone where E: Env {
     fn bounds(&self) -> &Bounds;
     fn id(&self) -> E::WidgetID;
-
+    #[inline]
     fn into_a(&self) -> BoundedWidget<E> {
         BoundedWidget{
             bounds: self.bounds().clone(),
@@ -20,9 +20,11 @@ pub struct BoundedWidget<E> where E: Env {
 }
 
 impl<E> IBoundedWidget<E> for BoundedWidget<E> where E: Env {
+    #[inline]
     fn bounds(&self) -> &Bounds {
         &self.bounds
     }
+    #[inline]
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

@@ -1,27 +1,33 @@
+use crate::core::lazout::size::Size;
 use crate::core::widget::Widget;
 use crate::core::util::bounds::Bounds;
 use crate::core::util::bounded_widget::BoundedWidget;
-use crate::core::widget::link::Link;
 use crate::core::env::Env;
 use crate::core::env::Context;
+
+pub mod fns;
+pub mod imp;
+
+pub use fns::*;
+pub use imp::*;
 
 pub struct Handler<E> where E: Env {
     pub(crate) id: E::WidgetID,
     pub(crate) fns: HandlerFns<E>,
 }
 
-pub struct HandlerFns<E> where E: Env {
-    pub render: fn(Link<E>, E::Renderer),
-    pub event: fn(Link<E>, E::Event),
-}
-
 impl<E> Handler<E> where E: Env {
+    #[inline]
     pub fn render(&self, c: &mut E::Ctx, r: E::Renderer) {
         c.render_widget(r,&self.id,self.fns.render)
     }
-
+    #[inline]
     pub fn event(&self, c: &mut E::Ctx, e: E::Event) {
         c.event_widget(e,&self.id,self.fns.event)
+    }
+    #[inline]
+    pub fn size(&self, c: &mut E::Ctx) -> Size {
+        c.size_widget(&self.id,self.fns.size)
     }
     /// iterate over childs
     #[inline]
@@ -67,32 +73,6 @@ impl<E> Handler<E> where E: Env {
             let r = c.widget_mut(&n).expect("Lost Parent");
             f(r);
             next = r.parent().cloned();
-        }
-    }
-
-    fn link<'a>(&self, c: &'a mut E::Ctx) -> Link<'a,E> {
-        Link{
-            ctx: c,
-            widget_id: self.id.clone()
-        }
-    }
-}
-
-pub struct Parents<'a,E> where E: Env {
-    ctx: &'a E::Ctx,
-    next: Option<E::WidgetID>,
-}
-
-impl<'a,E> Iterator for Parents<'a,E> where E: Env {
-    type Item = &'a E::DynWidget;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(n) = &self.next {
-            let r = self.ctx.widget(n).expect("Lost Parent");
-            self.next = r.parent().cloned();
-            Some(r)
-        }else{
-            None
         }
     }
 }

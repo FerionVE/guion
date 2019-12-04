@@ -10,13 +10,14 @@ pub struct Link<'a,E> where E: Env {
 }
 
 impl<'a,E> Link<'a,E> where E: Env {
+    #[inline]
     pub fn me<S: Widget<E> + 'static>(&'a self) -> &'a S {
         self.ctx.widget(&self.widget_id)
             .expect("Link: Widget Gone")
             .as_any()
             .downcast_ref::<S>().expect("Link: Wrong Widget Type")
     }
-
+    #[inline] 
     pub fn me_mut<S: Widget<E> + 'static>(&'a mut self) -> &'a mut S {
         self.ctx.widget_mut(&self.widget_id)
             .expect("Link: Widget Gone")
@@ -27,12 +28,13 @@ impl<'a,E> Link<'a,E> where E: Env {
 
 impl<'a,E> Deref for Link<'a,E> where E: Env {
     type Target = E::Ctx;
-
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.ctx
     }
 }
 impl<'a,E> DerefMut for Link<'a,E> where E: Env {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.ctx
     }

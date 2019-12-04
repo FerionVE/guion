@@ -17,11 +17,8 @@ pub trait Pane<E> where E: Env {
 
     fn childs(&self) -> &[Self::C];
 
-    fn render_invalid(&self) -> bool;
-    fn set_render_invalid(&mut self, v: bool);
-
-    fn layout_invalid(&self) -> bool;
-    fn set_layout_invalid(&mut self, v: bool);
+    fn invalid(&self) -> bool;
+    fn set_invalid(&mut self, v: bool);
 
     fn size(&self) -> Size;
 
@@ -32,42 +29,34 @@ pub trait Pane<E> where E: Env {
 }
 
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
+    #[inline]
     fn id(&self) -> E::WidgetID {
         Pane::id(self)
     }
-
+    #[inline]
     fn _handler(&self) -> HandlerFns<E> {
         HandlerFns{
             render: render::<T,E>,
             event: event::<T,E>,
+            size: size::<T,E>,
         }
     }
-
-    fn render_invalid(&self) -> bool {
-        Pane::render_invalid(self)
+    #[inline]
+    fn invalid(&self) -> bool {
+        Pane::invalid(self)
     }
-    fn set_render_invalid(&mut self, v: bool) {
-        Pane::set_render_invalid(self,v)
+    fn set_invalid(&mut self, v: bool) {
+        Pane::set_invalid(self,v)
     }
-
-    fn layout_invalid(&self) -> bool {
-        Pane::layout_invalid(self)
-    }
-    fn set_layout_invalid(&mut self, v: bool) {
-        Pane::set_layout_invalid(self,v)
-    }
-
-    fn size(&self) -> Size {
-        Pane::size(self)
-    }
-
+    #[inline]
     fn parent(&self) -> Option<&E::WidgetID> {
         Pane::parent(self)
     }
+    #[inline]
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
         Pane::set_parent(self,v)
     }
-
+    #[inline]
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=BoundedWidget<E>> + 'a> {
         Box::new(
             Pane::childs(self)
@@ -75,9 +64,9 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
             .map(IBoundedWidget::into_a)
         )
     }
-
-    fn as_any(&self) -> &dyn Any {self}
-    fn as_any_mut(&mut self) -> &mut dyn Any {self}
+    
+    #[inline] fn as_any(&self) -> &dyn Any {self}
+    #[inline] fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
 fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
@@ -105,6 +94,10 @@ fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     }
 }
 
+fn size<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
+    unimplemented!()
+}
+#[inline]
 fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<BoundedWidget<E>> {
     l.me::<W>().childs()
         .iter()

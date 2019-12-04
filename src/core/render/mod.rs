@@ -3,14 +3,13 @@ use crate::core::env::Env;
 use crate::core::widget::Widget;
 use crate::core::util::bounds::Bounds;
 use crate::core::env::Context;
-use std::any::TypeId;
 
 pub trait Render<E>: Sized where E: Env<Renderer=Self> {
     #[inline]
     fn requires_render(&self, w: &E::DynWidget) -> bool {
-        w.render_invalid() || self.force()
+        w.invalid() || self.force()
     }
-
+    #[inline] 
     fn render_widgets<'a,W: IBoundedWidget<E> + 'a>(&mut self, i: impl Iterator<Item=&'a W>, c: &mut E::Ctx, overlap: bool) {
         if overlap {
             let mut render = false;

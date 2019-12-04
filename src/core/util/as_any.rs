@@ -8,18 +8,22 @@ pub trait AsAny {
 }
 
 impl AsAny for dyn Any {
+    #[inline]
     fn as_any(&self) -> &dyn Any {
         &(*self)
     }
+    #[inline]
     fn as_any_mut(&mut self) -> &mut dyn Any {
         &mut (*self)
     }
 }
 
 impl<E> AsAny for dyn Widget<E> where E: Env {
+    #[inline]
     fn as_any(&self) -> &dyn Any {
         self.as_any()
     }
+    #[inline]
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self.as_any_mut()
     }

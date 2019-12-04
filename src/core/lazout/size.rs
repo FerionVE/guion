@@ -1,12 +1,13 @@
-use crate::core::util::border::Border;
-use qwutils::*;
 
+/// Size +/+= Border
 #[derive(Clone)]
 pub struct Size {
     pub x: SizeAxis,
     pub y: SizeAxis,
 }
 
+/// SizeAxis +/+= SizeAxis
+/// SizeAxis &/&= SizeAxis
 #[derive(Clone)]
 pub struct SizeAxis {
     pub min: u32,
@@ -30,30 +31,13 @@ impl Size {
         }
     }
 
-    pub fn with_border(&self, b: &Border) -> Self {
-        let mut c = self.clone();
-        c.add_border(b);
-        c
+    pub fn add_x(&mut self, o: &Self) {
+        self.x += &o.x;
+        self.y &= &o.y;
     }
 
-    pub fn add_border(&mut self, b: &Border) {
-        self.x.add(b.left+b.right);
-        self.y.add(b.top+b.bottom);
-    }
-}
-
-impl SizeAxis {
-    //TODO may use Add/Sub impls
-    pub fn add(&mut self, v: u32) {
-        self.min += v;
-        self.preferred += v;
-        self.max.add_to(v);
-        //TODO decide if we should alter the pressure
-    }
-
-    pub fn sub(&mut self, v: u32) {
-        self.min -= v;
-        self.preferred -= v;
-        self.max.sub_to(v);
+    pub fn add_y(&mut self, o: &Self) {
+        self.x &= &o.x;
+        self.y += &o.y;
     }
 }
