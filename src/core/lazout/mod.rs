@@ -14,3 +14,23 @@ pub enum Orientation {
     Horizontal(),
     Vertical(),
 }
+
+pub trait TOrientation {
+    #[inline] fn val() -> Orientation;
+}
+
+pub struct Horizontal;
+
+impl TOrientation for Horizontal {
+    #[inline] fn val() -> Orientation {
+        Orientation::Horizontal()
+    }
+}
+
+pub struct Vertical;
+
+impl TOrientation for Vertical {
+    #[inline] fn val() -> Orientation {
+        Orientation::Vertical()
+    }
+}

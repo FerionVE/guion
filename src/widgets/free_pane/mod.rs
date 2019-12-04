@@ -1,4 +1,3 @@
-use crate::core::lazout::TOrientation;
 use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::*;
 use crate::core::widget::handler::HandlerFns;
@@ -8,16 +7,15 @@ use crate::core::widget::Widget;
 use crate::core::env::*;
 use crate::core::render::*;
 use crate::core::event::Event;
-use crate::core::lazout::Orientation;
 
 pub mod imp;
 
 pub trait Pane<E> where E: Env {
-    type O: TOrientation;
+    type C: IBoundedWidget<E> + 'static;
 
     fn id(&self) -> E::WidgetID;
 
-    fn childs(&self) -> &[E::WidgetID];
+    fn childs(&self) -> &[Self::C];
 
     fn invalid(&self) -> bool;
     fn set_invalid(&mut self, v: bool);
@@ -26,9 +24,11 @@ pub trait Pane<E> where E: Env {
 
     fn parent(&self) -> Option<&E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);
+    
+    
 }
 
-impl<E,T,O> Widget<E> for T where T: Pane<E,O=O> + 'static, E: Env + 'static, O: TOrientation {
+impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {
         Pane::id(self)
@@ -36,9 +36,9 @@ impl<E,T,O> Widget<E> for T where T: Pane<E,O=O> + 'static, E: Env + 'static, O:
     #[inline]
     fn _handler(&self) -> HandlerFns<E> {
         HandlerFns{
-            render: render::<T,E,O>,
-            event: event::<T,E,O>,
-            size: size::<T,E,O>,
+            render: render::<T,E>,
+            event: event::<T,E>,
+            size: size::<T,E>,
         }
     }
     #[inline]
@@ -69,8 +69,8 @@ impl<E,T,O> Widget<E> for T where T: Pane<E,O=O> + 'static, E: Env + 'static, O:
     #[inline] fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
-fn render<W: Pane<E,O=O> + 'static, E: Env + 'static, O: TOrientation>(mut l: Link<E>, mut r: E::Renderer) {
-    for c in childs::<W,_,O>(&l) {
+fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+    for c in childs::<W,_>(&l) {
         l.widget(&c.id)
             .expect("Pane contains lost Widget")
             .handler()
@@ -78,9 +78,9 @@ fn render<W: Pane<E,O=O> + 'static, E: Env + 'static, O: TOrientation>(mut l: Li
     }
 }
 
-fn event<W: Pane<E,O=O> + 'static, E: Env + 'static, O: TOrientation>(mut l: Link<E>, e: E::Event) {
+fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     //TODO special focus/hover enter/leave handling
-    for c in childs::<W,_,O>(&l).into_iter().rev() {
+    for c in childs::<W,_>(&l).into_iter().rev() {
         if let Some(e) = e.filter_cloned(&c.bounds) {
             let consuming = e.consuming();
 
@@ -94,10 +94,13 @@ fn event<W: Pane<E,O=O> + 'static, E: Env + 'static, O: TOrientation>(mut l: Lin
     }
 }
 
-fn size<W: Pane<E,O=O> + 'static, E: Env + 'static, O: TOrientation>(mut l: Link<E>) -> Size {
+fn size<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     unimplemented!()
 }
 #[inline]
-fn childs<W: Pane<E,O=O> + 'static, E: Env + 'static, O: TOrientation>(l: &Link<E>) -> Vec<E::WidgetID> {
-    l.me::<W>().childs().to_owned()
+fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<BoundedWidget<E>> {
+    l.me::<W>().childs()
+        .iter()
+        .map(IBoundedWidget::into_a)
+        .collect()
 }

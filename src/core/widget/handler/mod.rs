@@ -1,7 +1,5 @@
 use crate::core::lazout::size::Size;
 use crate::core::widget::Widget;
-use crate::core::util::bounds::Bounds;
-use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::env::Env;
 use crate::core::env::Context;
 
@@ -31,27 +29,25 @@ impl<E> Handler<E> where E: Env {
     }
     /// iterate over childs
     #[inline]
-    pub fn childs<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&BoundedWidget<E>)->bool ) -> impl Iterator<Item=(Bounds,&'a E::DynWidget)> {
+    pub fn childs<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&E::WidgetID)->bool ) -> impl Iterator<Item=&'a E::DynWidget> {
         c.widget(&self.id).unwrap()
             .childs()
             .filter(predicate)
             .map(move |e| {
                 (
-                    e.bounds,
-                    c.widget(&e.id).expect("Lost Child")
+                    c.widget(&e).expect("Lost Child")
                 )
             })
     }
     /// iterate over childs mut
     #[inline]
-    pub fn childs_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut(Bounds,&mut E::DynWidget), mut predicate: impl FnMut(&BoundedWidget<E>)->bool) {
-        let childs: Vec<BoundedWidget<E>> = c.widget(&self.id).unwrap().childs().collect();
+    pub fn childs_mut<'a>(&self, c: &'a mut E::Ctx, mut f: impl FnMut(&mut E::DynWidget), mut predicate: impl FnMut(&E::WidgetID)->bool) {
+        let childs: Vec<E::WidgetID> = c.widget(&self.id).unwrap().childs().collect();
 
         for e in childs {
             if predicate(&e) {
                 f(
-                    e.bounds,
-                    c.widget_mut(&e.id).expect("Lost Child")
+                    c.widget_mut(&e).expect("Lost Child")
                 );
             }
         }

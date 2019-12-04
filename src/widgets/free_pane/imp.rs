@@ -1,23 +1,22 @@
-use crate::core::lazout::TOrientation;
 use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::BoundedWidget;
 use crate::core::env::Env;
 
-pub struct Pane<E,O> where E: Env, O: TOrientation {
+pub struct Pane<E> where E: Env {
     id: E::WidgetID,
-    childs: Vec<E::WidgetID>,
+    childs: Vec<BoundedWidget<E>>,
     invalid: bool,
     parent: Option<E::WidgetID>,
 }
 
-impl<E,O> super::Pane<E> for Pane<E,O> where E: Env + 'static, O: TOrientation {
-    type O=O;
+impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
+    type C = BoundedWidget<E>;
 
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
 
-    fn childs(&self) -> &[E::WidgetID] {
+    fn childs(&self) -> &[Self::C] {
         &self.childs[..]
     }
 

@@ -40,4 +40,21 @@ impl Size {
         self.x &= &o.x;
         self.y += &o.y;
     }
+
+    pub fn empty() -> Self {
+        Size {
+            x: SizeAxis::empty(),
+            y: SizeAxis::empty(),
+        }
+    }
+}
+
+impl SizeAxis {
+    pub fn empty() -> Self {
+        SizeAxis {
+            min: 0,
+            preferred: 0,
+            max: None,
+        }
+    }
 }
