@@ -9,14 +9,14 @@ pub struct Offset {
     pub y: u32,
 }
 #[derive(Clone)]
-pub struct Size {
+pub struct Dims {
     pub w: u32,
     pub h: u32,
 }
 #[derive(Clone)]
 pub struct Bounds {
     pub off: Offset,
-    pub size: Size,
+    pub size: Dims,
 }
 
 impl Bounds {
@@ -26,7 +26,7 @@ impl Bounds {
                 x,
                 y,
             },
-            size: Size{
+            size: Dims{
                 w,
                 h,
             }

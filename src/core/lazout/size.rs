@@ -1,4 +1,6 @@
 
+use crate::core::lazout::Orientation;
+
 /// Size +/+= Border
 #[derive(Clone)]
 pub struct Size {
@@ -28,6 +30,13 @@ impl Size {
                 preferred: h,
                 max: Some(h),
             }
+        }
+    }
+
+    pub fn add(&mut self, o: &Self, dir: Orientation) {
+        match dir {
+            Orientation::Horizontal() => self.add_x(o),
+            Orientation::Vertical() => self.add_y(o),
         }
     }
 

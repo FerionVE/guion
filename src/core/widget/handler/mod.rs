@@ -27,6 +27,14 @@ impl<E> Handler<E> where E: Env {
     pub fn size(&self, c: &mut E::Ctx) -> Size {
         c.size_widget(&self.id,self.fns.size)
     }
+    #[inline]
+    pub fn is_hovered(&self, c: &mut E::Ctx) -> bool {
+        c.hovered().map_or(false, |i| i == self.id )
+    }
+    #[inline]
+    pub fn is_selected(&self, c: &mut E::Ctx) -> bool {
+        c.selected().map_or(false, |i| i == self.id )
+    }
     /// iterate over childs
     #[inline]
     pub fn childs<'a>(&self, c: &'a E::Ctx, predicate: impl FnMut(&E::WidgetID)->bool ) -> impl Iterator<Item=&'a E::DynWidget> {
