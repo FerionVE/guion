@@ -1,4 +1,4 @@
-use crate::core::env::Env;
+use crate::core::ctx::Context;
 use crate::core::widget::Widget;
 use std::any::Any;
 
@@ -18,7 +18,7 @@ impl AsAny for dyn Any {
     }
 }
 
-impl<E> AsAny for dyn Widget<E> where E: Env {
+impl<E> AsAny for dyn Widget<E> where E: Context {
     #[inline]
     fn as_any(&self) -> &dyn Any {
         self.as_any()

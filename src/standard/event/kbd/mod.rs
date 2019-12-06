@@ -1,18 +1,18 @@
-use crate::core::env::Env;
+use crate::core::ctx::Context;
 
 pub mod tabulate;
 
-pub struct KbdState<E> where E: Env {
+pub struct KbdState<E> where E: Context {
     pub pressed: Vec<KbdPressedKey<E>>,
 }
 
-pub struct KbdPressedKey<E> where E: Env {
+pub struct KbdPressedKey<E> where E: Context {
     pub key: u32,
     pub id: E::WidgetID,
     pub ts: u64,
 }
 
-impl<E> KbdState<E> where E: Env {
+impl<E> KbdState<E> where E: Context {
     #[inline]
     pub fn down(&mut self, key: u32, id: E::WidgetID, ts: u64) {
         self.up(key);

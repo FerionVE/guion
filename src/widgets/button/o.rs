@@ -4,9 +4,9 @@ use crate::core::lazout::Orientation;
 use std::marker::PhantomData;
 use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::BoundedWidget;
-use crate::core::env::Env;
+use crate::core::ctx::Context;
 
-pub struct Button<E> where E: Env {
+pub struct Button<E> where E: Context {
     id: E::WidgetID,
     invalid: bool,
     parent: Option<E::WidgetID>,
@@ -14,7 +14,7 @@ pub struct Button<E> where E: Env {
     action: fn(Link<E>),
 }
 
-impl<E> super::IButton<E> for Button<E> where E: Env + 'static {
+impl<E> super::IButton<E> for Button<E> where E: Context + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -41,6 +41,6 @@ impl<E> super::IButton<E> for Button<E> where E: Env + 'static {
     }
 }
 
-impl<E> Widget<E> for Button<E> where E: Env + 'static {
+impl<E> Widget<E> for Button<E> where E: Context + 'static {
     crate::impl_button!(Button<E>,E);
 }

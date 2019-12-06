@@ -1,15 +1,15 @@
 use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::BoundedWidget;
-use crate::core::env::Env;
+use crate::core::ctx::Context;
 
-pub struct Pane<E> where E: Env {
+pub struct Pane<E> where E: Context {
     id: E::WidgetID,
     childs: Vec<BoundedWidget<E>>,
     invalid: bool,
     parent: Option<E::WidgetID>,
 }
 
-impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
+impl<E> super::Pane<E> for Pane<E> where E: Context + 'static {
     type C = BoundedWidget<E>;
 
     fn id(&self) -> E::WidgetID {

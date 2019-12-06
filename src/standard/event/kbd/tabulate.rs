@@ -1,12 +1,11 @@
 
-use crate::core::env::context::Context;
-use crate::core::env::Env;
+use crate::core::ctx::Context;
 use crate::standard::ctx::StandardCtx;
 use crate::core::widget::Widget;
 ///tabulate through widget tree
-pub fn tabulate<E: Env>(c: &mut E::Ctx, selected: E::WidgetID, reverse: bool) -> E::WidgetID {
+pub fn tabulate<E: Context>(c: &mut E, selected: E::WidgetID, reverse: bool) -> E::WidgetID {
     //for recognizing infinite loops
-    let initial_selected = selected;
+    let initial_selected = selected.clone();
     let mut current = selected;
     //set if we need another pass
     let mut repeat = true;
@@ -37,13 +36,13 @@ pub fn tabulate<E: Env>(c: &mut E::Ctx, selected: E::WidgetID, reverse: bool) ->
 
                 if !reverse && pc.len()-idx-1 != 0 {
                     //traverse into next silbing
-                    current = pc[idx+1];
+                    current = pc[idx+1].clone();
                 } else if reverse && idx != 0 {
                     //traverse into next silbing
-                    current = pc[idx-1];
+                    current = pc[idx-1].clone();
                 }else{
                     //parent traverse end was reached, traverse grandpa
-                    current = *p;
+                    current = p.clone();
                     traverse_parents = true;
                     repeat = true;
                 }

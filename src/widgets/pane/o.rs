@@ -3,9 +3,9 @@ use crate::core::lazout::Orientation;
 use std::marker::PhantomData;
 use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::BoundedWidget;
-use crate::core::env::Env;
+use crate::core::ctx::Context;
 
-pub struct Pane<E> where E: Env {
+pub struct Pane<E> where E: Context {
     id: E::WidgetID,
     childs: Vec<E::WidgetID>,
     invalid: bool,
@@ -13,7 +13,7 @@ pub struct Pane<E> where E: Env {
     orientation: Orientation,
 }
 
-impl<E> super::IPane<E> for Pane<E> where E: Env + 'static {
+impl<E> super::IPane<E> for Pane<E> where E: Context + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -44,6 +44,6 @@ impl<E> super::IPane<E> for Pane<E> where E: Env + 'static {
     }
 }
 
-impl<E> Widget<E> for Pane<E> where E: Env + 'static {
+impl<E> Widget<E> for Pane<E> where E: Context + 'static {
     crate::impl_pane!(Pane<E>,E);
 }

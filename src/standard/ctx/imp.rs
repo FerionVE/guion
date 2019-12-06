@@ -1,34 +1,45 @@
+use std::borrow::BorrowMut;
+use crate::core::ctx::ContextFns;
+use crate::core::widget::Widget;
+use crate::core::render::Render;
+use crate::core::ctx::Context;
 use std::marker::PhantomData;
 use crate::core::lazout::size::Size;
 use crate::core::widget::link::Link;
 use super::*;
-///NOTE that E is not the current env but the underlying
-impl<E> Context<StandardCtxEnv<E>> for StandardCtx<E> where E: Env {
-    fn widget(&self, i: &E::WidgetID) -> Option<&E::DynWidget> {
+///NOTE that E is not the current Context but the underlying
+impl<E> Context for StandardCtx<E> where E: Context, E::Renderer: Render<Self>, E::DynWidget: Widget<Self> {
+    type Renderer = E::Renderer;
+    type Event = E::Event;
+    ///regularly just dyn Widget
+    type DynWidget = E::DynWidget;
+    type WidgetID = E::WidgetID;
+    type Commit = E::Commit;
+
+    fn widget(&self, i: &Self::WidgetID) -> Option<&Self::DynWidget> {
         self.sup.widget(i)
     }
-    fn widget_mut(&mut self, i: &E::WidgetID) -> Option<&mut E::DynWidget> {
+    fn widget_mut(&mut self, i: &Self::WidgetID) -> Option<&mut Self::DynWidget> {
         self.sup.widget_mut(i)
     }
 
-    fn tune_id(&self, i: &mut E::WidgetID) {
+    fn tune_id(&self, i: &mut Self::WidgetID) {
         self.sup.tune_id(i)
     }
-    fn tune_id_mut(&mut self, i: &mut E::WidgetID) {
+    fn tune_id_mut(&mut self, i: &mut Self::WidgetID) {
         self.sup.tune_id_mut(i)
     }
     
-    #[inline] fn render_widget(&mut self, r: E::Renderer, i: &E::WidgetID, f: fn(Link<E>, E::Renderer)) {
-        self.sup.render_widget(r,i,f)
-    }
-    #[inline] fn event_widget(&mut self, e: E::Event, i: &E::WidgetID, f: fn(Link<E>, E::Event)) {
-        self.sup.event_widget(e,i,f)
-    }
-    #[inline] fn size_widget(&mut self, i: &E::WidgetID, f: fn(Link<E>)->Size) -> Size {
-        self.sup.size_widget(i,f)
+    fn fns<F>(&self) -> ContextFns<Self,F> where F: Context<WidgetID=Self::WidgetID> + BorrowMut<Self> + BorrowMut<E> {
+        ContextFns{
+            render: render::<E,F>,
+            event: event::<E,F>,
+            size: size::<E,F>,
+            _e: PhantomData,
+        }
     }
 
-    #[inline] fn link<'a>(&'a mut self, i: E::WidgetID) -> Link<'a,StandardCtxEnv<E>> {
+    #[inline] fn link<'a>(&'a mut self, i: Self::WidgetID) -> Link<'a,Self> {
         Link{
             ctx: self,
             widget_id: i
@@ -42,18 +53,21 @@ impl<E> Context<StandardCtxEnv<E>> for StandardCtx<E> where E: Env {
         None
     }
 }
-///Env type with a StandardCtx and wrapping an underlying Env
-#[derive(Clone)]
-pub struct StandardCtxEnv<E> where E: Env {
-    _e: PhantomData<E>
-}
 
-impl<E> Env for StandardCtxEnv<E> where E: Env {
-    type Renderer = E::Renderer;
-    type Event = E::Event;
-    ///regularly just dyn Widget
-    type DynWidget = E::DynWidget;
-    type WidgetID = E::WidgetID;
-    type Commit = E::Commit;
-    type Ctx = StandardCtx<E>;
+fn render<E,F>(l: Link<F>, r: F::Renderer, f: fn(Link<F>,F::Renderer)) 
+    where
+    E: Context,
+    E::Renderer: Render<StandardCtx<E>>,
+    E::DynWidget: Widget<StandardCtx<E>>,
+    F: Context<WidgetID=<StandardCtx<E> as Context>::WidgetID> + BorrowMut<StandardCtx<E>>
+{
+    let senf = (*l).borrow_mut();
+    let fns = senf.sup.fns::<F>();
+    (fns.render)(l,r,f)
+}
+fn event<E: Context, F: Context<WidgetID=E::WidgetID> + BorrowMut<StandardCtx<E>>>(l: Link<F>, r: F::Event, f: fn(Link<F>,F::Event)) {
+    f(l,r)
+}
+fn size<E: Context, F: Context<WidgetID=E::WidgetID> + BorrowMut<StandardCtx<E>>>(l: Link<F>, f: fn(Link<F>)-> Size) -> Size {
+    f(l)
 }

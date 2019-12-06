@@ -6,7 +6,7 @@ use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::link::Link;
 use std::any::Any;
 use crate::core::widget::Widget;
-use crate::core::env::*;
+use crate::core::ctx::Context;
 use crate::core::render::*;
 use crate::core::event::Event;
 use crate::core::lazout::Orientation;
@@ -17,7 +17,7 @@ pub mod o;
 pub use imp::*;
 pub use o::*;
 
-pub trait IPane<E>: Widget<E> where E: Env {
+pub trait IPane<E>: Widget<E> where E: Context {
 
     fn id(&self) -> E::WidgetID;
 

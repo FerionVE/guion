@@ -1,12 +1,12 @@
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::handler::Handler;
 use std::any::Any;
-use crate::core::env::Env;
+use crate::core::ctx::Context;
 
 pub mod link;
 pub mod handler;
 
-pub trait Widget<E>: Any where E: Env {
+pub trait Widget<E>: Any where E: Context {
     fn id(&self) -> E::WidgetID;
     #[inline]
     fn handler<'a>(&self) -> Handler<E> {
