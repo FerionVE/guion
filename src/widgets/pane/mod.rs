@@ -17,7 +17,7 @@ pub mod o;
 pub use imp::*;
 pub use o::*;
 
-pub trait IPane<E> where E: Env {
+pub trait IPane<E>: Widget<E> where E: Env {
 
     fn id(&self) -> E::WidgetID;
 

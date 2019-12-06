@@ -27,6 +27,12 @@ pub trait Widget<E>: Any where E: Env {
 
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a>;
 
+    fn childs_vec<'a>(&'a self) -> Vec<E::WidgetID>;
+
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn selectable(&self) -> bool;
+
+    fn has_childs(&self) -> bool;
 }

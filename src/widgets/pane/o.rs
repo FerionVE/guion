@@ -1,3 +1,4 @@
+use crate::core::widget::Widget;
 use crate::core::lazout::Orientation;
 use std::marker::PhantomData;
 use crate::core::lazout::size::Size;
@@ -41,4 +42,8 @@ impl<E> super::IPane<E> for Pane<E> where E: Env + 'static {
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
         self.parent = v;
     }
+}
+
+impl<E> Widget<E> for Pane<E> where E: Env + 'static {
+    crate::impl_pane!(Pane<E>,E);
 }

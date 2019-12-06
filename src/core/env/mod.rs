@@ -7,6 +7,7 @@ use crate::core::widget::Widget;
 pub mod context;
 pub use context::*;
 
+///Env is a (empty struct) containing Type definitions
 pub trait Env: Sized + Clone {
     type Renderer: Render<Self>;
     type Event: Event;
