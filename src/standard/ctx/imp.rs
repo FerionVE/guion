@@ -1,9 +1,6 @@
-use std::borrow::BorrowMut;
-use crate::core::ctx::ContextFns;
 use crate::core::widget::Widget;
 use crate::core::render::Render;
 use crate::core::ctx::Context;
-use std::marker::PhantomData;
 use crate::core::lazout::size::Size;
 use crate::core::widget::link::Link;
 use super::*;
@@ -16,58 +13,66 @@ impl<E> Context for StandardCtx<E> where E: Context, E::Renderer: Render<Self>, 
     type WidgetID = E::WidgetID;
     type Commit = E::Commit;
 
+    #[inline]
     fn widget(&self, i: &Self::WidgetID) -> Option<&Self::DynWidget> {
         self.sup.widget(i)
     }
+    #[inline]
     fn widget_mut(&mut self, i: &Self::WidgetID) -> Option<&mut Self::DynWidget> {
         self.sup.widget_mut(i)
     }
-
+    #[inline]
     fn tune_id(&self, i: &mut Self::WidgetID) {
         self.sup.tune_id(i)
     }
+    #[inline]
     fn tune_id_mut(&mut self, i: &mut Self::WidgetID) {
         self.sup.tune_id_mut(i)
     }
+
+    #[inline]
+    fn pre_render(&mut self, i: &Self::WidgetID, e: &mut Self::Renderer) {
+        unimplemented!();
+    }
+    #[inline]
+    fn post_render(&mut self, i: &Self::WidgetID, e: &mut Self::Renderer) {
+        unimplemented!();
+    }
     
-    fn fns<F>(&self) -> ContextFns<Self,F> where F: Context<WidgetID=Self::WidgetID> + BorrowMut<Self> + BorrowMut<E> {
-        ContextFns{
-            render: render::<E,F>,
-            event: event::<E,F>,
-            size: size::<E,F>,
-            _e: PhantomData,
-        }
+    #[inline]
+    fn pre_event(&mut self, i: &Self::WidgetID, e: Self::Event) -> Self::Event {
+        unimplemented!();
+        e
+    }
+    #[inline]
+    fn post_event(&mut self, i: &Self::WidgetID, e: Self::Event) {
+        unimplemented!();
+    }
+    
+    #[inline]
+    fn pre_size(&mut self, i: &Self::WidgetID) {
+        unimplemented!();
+    }
+    #[inline]
+    fn post_size(&mut self, i: &Self::WidgetID, s: Size) -> Size {
+        unimplemented!();
+        s
     }
 
-    #[inline] fn link<'a>(&'a mut self, i: Self::WidgetID) -> Link<'a,Self> {
+    #[inline]
+    fn link<'a>(&'a mut self, i: Self::WidgetID) -> Link<'a,Self> {
         Link{
             ctx: self,
             widget_id: i
         }
     }
 
-    #[inline] fn hovered(&self) -> Option<E::WidgetID> {
+    #[inline]
+    fn hovered(&self) -> Option<E::WidgetID> {
         None
     }
-    #[inline] fn selected(&self) -> Option<E::WidgetID> {
+    #[inline]
+    fn selected(&self) -> Option<E::WidgetID> {
         None
     }
-}
-
-fn render<E,F>(l: Link<F>, r: F::Renderer, f: fn(Link<F>,F::Renderer)) 
-    where
-    E: Context,
-    E::Renderer: Render<StandardCtx<E>>,
-    E::DynWidget: Widget<StandardCtx<E>>,
-    F: Context<WidgetID=<StandardCtx<E> as Context>::WidgetID> + BorrowMut<StandardCtx<E>>
-{
-    let senf = (*l).borrow_mut();
-    let fns = senf.sup.fns::<F>();
-    (fns.render)(l,r,f)
-}
-fn event<E: Context, F: Context<WidgetID=E::WidgetID> + BorrowMut<StandardCtx<E>>>(l: Link<F>, r: F::Event, f: fn(Link<F>,F::Event)) {
-    f(l,r)
-}
-fn size<E: Context, F: Context<WidgetID=E::WidgetID> + BorrowMut<StandardCtx<E>>>(l: Link<F>, f: fn(Link<F>)-> Size) -> Size {
-    f(l)
 }

@@ -16,7 +16,7 @@ pub trait Render<E>: Sized where E: Context<Renderer=Self> {
                 let ww = c.widget_mut(&w.id()).expect("Lost Child");
                 render |= self.requires_render(&ww);
                 if render {
-                    ww.handler().render(c,self.slice(w.bounds()));
+                    ww.handler().render(c,&mut self.slice(w.bounds()));
                 }
                 render &= overlap;
             }

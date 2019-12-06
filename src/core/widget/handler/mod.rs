@@ -1,3 +1,4 @@
+use crate::core::widget::link::Link;
 use crate::core::lazout::size::Size;
 use crate::core::widget::Widget;
 use crate::core::ctx::Context;
@@ -15,16 +16,26 @@ pub struct Handler<E> where E: Context {
 
 impl<E> Handler<E> where E: Context {
     #[inline]
-    pub fn render(&self, c: &mut E, r: E::Renderer) {
-        (c.fns().render)(c.link(self.id),r,self.fns.render)
+    pub fn render(&self, c: &mut E, r: &mut E::Renderer) { //TODO fix &mut Renderer back to owned
+        c.pre_render(&self.id,r);
+        (self.fns.render)(self.link(c),r);
+        c.post_render(&self.id,r);
     }
     #[inline]
     pub fn event(&self, c: &mut E, e: E::Event) {
-        (c.fns().event)(c.link(self.id),e,self.fns.event)
+        let ee = c.pre_event(&self.id,e.clone());
+        (self.fns.event)(self.link(c),ee);
+        c.post_event(&self.id,e);
     }
     #[inline]
     pub fn size(&self, c: &mut E) -> Size {
-        (c.fns().size)(c.link(self.id),self.fns.size)
+        c.pre_size(&self.id);
+        let s = (self.fns.size)(self.link(c));
+        c.post_size(&self.id,s)
+    }
+    #[inline]
+    fn link<'a>(&self, c: &'a mut E) -> Link<'a,E> {
+        c.link(self.id.clone())
     }
     #[inline]
     pub fn is_hovered(&self, c: &mut E) -> bool {

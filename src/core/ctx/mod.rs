@@ -1,6 +1,3 @@
-use std::marker::PhantomData;
-use std::borrow::BorrowMut;
-use std::ops::DerefMut;
 use crate::core::lazout::size::Size;
 use crate::core::widget::link::Link;
 use crate::core::event::Event;
@@ -18,17 +15,17 @@ pub trait Context: Sized {
     fn widget(&self, i: &Self::WidgetID) -> Option<&Self::DynWidget>;
     fn widget_mut(&mut self, i: &Self::WidgetID) -> Option<&mut Self::DynWidget>;
 
-    fn tune_id(&self, _i: &mut Self::WidgetID) {}
-    fn tune_id_mut(&mut self, _i: &mut Self::WidgetID) {}
+    #[inline] fn tune_id(&self, _i: &mut Self::WidgetID) {}
+    #[inline] fn tune_id_mut(&mut self, _i: &mut Self::WidgetID) {}
+
+    #[inline] fn pre_render(&mut self, _i: &Self::WidgetID, _e: &mut Self::Renderer) {}
+    #[inline] fn post_render(&mut self, _i: &Self::WidgetID, _e: &mut Self::Renderer) {}
     
-    fn fns<E>(&self) -> ContextFns<Self,E> where E: Context<WidgetID=Self::WidgetID> + BorrowMut<Self> {
-        ContextFns{
-            render: render::<E>,
-            event: event::<E>,
-            size: size::<E>,
-            _e: PhantomData,
-        }
-    }
+    #[inline] fn pre_event(&mut self, _i: &Self::WidgetID, e: Self::Event) -> Self::Event {e}
+    #[inline] fn post_event(&mut self, _i: &Self::WidgetID, _e: Self::Event) {}
+    
+    #[inline] fn pre_size(&mut self, _i: &Self::WidgetID) {}
+    #[inline] fn post_size(&mut self, _i: &Self::WidgetID, s: Size) -> Size {s}
 
     #[inline] fn link<'a>(&'a mut self, i: Self::WidgetID) -> Link<'a,Self> {
         Link{
@@ -43,21 +40,4 @@ pub trait Context: Sized {
     #[inline] fn selected(&self) -> Option<Self::WidgetID> {
         None
     }
-}
-
-fn render<F: Context>(l: Link<F>, r: F::Renderer, f: fn(Link<F>,F::Renderer)) {
-    f(l,r)
-}
-fn event<F: Context>(l: Link<F>, r: F::Event, f: fn(Link<F>,F::Event)) {
-    f(l,r)
-}
-fn size<F: Context>(l: Link<F>, f: fn(Link<F>)-> Size) -> Size {
-    f(l)
-}
-
-pub struct ContextFns<E,F> where E: Context, F: Context<WidgetID=E::WidgetID> + BorrowMut<E> {
-    pub render: fn(Link<F>, F::Renderer, fn(Link<F>,F::Renderer)),
-    pub event: fn(Link<F>, F::Event, fn(Link<F>,F::Event)),
-    pub size: fn(Link<F>, fn(Link<F>)->Size)->Size,
-    _e: PhantomData<E>,
 }

@@ -1,9 +1,4 @@
-use std::iter::empty;
-use std::any::Any;
 use crate::core::lazout::size::Size;
-use crate::core::lazout::calc::calc_bounds;
-use crate::core::widget::Widget;
-use crate::core::widget::handler::fns::HandlerFns;
 use super::*;
 
 #[macro_export]
@@ -62,7 +57,7 @@ macro_rules! impl_button {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+pub fn _render<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: &mut E::Renderer) {
     unimplemented!()
 }
 

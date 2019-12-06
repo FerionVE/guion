@@ -56,7 +56,7 @@ macro_rules! impl_pane {
     };
 }
 
-pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: &mut E::Renderer) {
     let o = l.me::<W>().orientation();
     
     let c = childs::<W,E>(&l);
@@ -76,7 +76,7 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: L
         l.widget(cc)
         .expect("Pane contains lost Widget")
         .handler()
-        .render( &mut *l, r.slice(bb) );
+        .render( &mut *l, &mut r.slice(bb) );
     }
     
 }
