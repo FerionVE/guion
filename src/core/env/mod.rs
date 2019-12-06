@@ -9,7 +9,7 @@ pub use context::*;
 
 pub trait Env: Sized + Clone {
     type Renderer: Render<Self>;
-    type Event: Event<Self>;
+    type Event: Event;
     ///regularly just dyn Widget
     type DynWidget: Widget<Self> + ?Sized;
     type WidgetID: PartialEq + Clone;

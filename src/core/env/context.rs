@@ -4,8 +4,8 @@ pub trait Context<E>: Sized where E: Env<Ctx=Self> {
     fn widget(&self, i: &E::WidgetID) -> Option<&E::DynWidget>;
     fn widget_mut(&mut self, i: &E::WidgetID) -> Option<&mut E::DynWidget>;
 
-    fn tune_id(&self, i: &mut E::WidgetID) {}
-    fn tune_id_mut(&mut self, i: &mut E::WidgetID) {}
+    fn tune_id(&self, _i: &mut E::WidgetID) {}
+    fn tune_id_mut(&mut self, _i: &mut E::WidgetID) {}
     
     #[inline] fn render_widget(&mut self, r: E::Renderer, i: &E::WidgetID, f: fn(Link<E>, E::Renderer)) {
         f(self.link(i.clone()), r);

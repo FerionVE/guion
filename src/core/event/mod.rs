@@ -1,9 +1,8 @@
-use crate::core::env::Env;
 use crate::core::util::bounds::Bounds;
 
-pub trait Event<E>: Sized + Clone where E: Env<Event=Self> {
+pub trait Event: Sized + Clone {
     ///split Self into some known cases to handle
-    fn case(self) -> Events<E>;
+    fn case(self) -> Events<Self>;
 
     fn filter(self, subbounds: &Bounds) -> Option<Self>;
     fn filter_cloned(&self, subbounds: &Bounds) -> Option<Self>; 
@@ -11,30 +10,20 @@ pub trait Event<E>: Sized + Clone where E: Env<Event=Self> {
     fn consuming(&self) -> bool;
 }
 
-pub enum Events<E> where E: Env {
-    MouseMove(u32,u32,E::Event),
-    MouseDown(u32,E::Event),
-    MouseUp(u32,E::Event),
+pub enum Events<E> where E: Event {
+    MouseMove(u32,u32,E),
+    MouseDown(u32,E),
+    MouseUp(u32,E),
 
-    KeyDown(u32,E::Event),
-    KeyUp(u32,E::Event),
-    KeyPress(u32,E::Event),
+    KeyDown(u32,E),
+    KeyUp(u32,E),
+    KeyPress(u32,E),
 
     //Resize(u32,u32,E),
 
-    DragStart(E::Event),
-    DragStop(E::Event),
-
-    DropHover(E::WidgetID,E::Event),
-    DropDo(E::WidgetID,E::Event),
+    //DropExternal(String,E), //TODO actually dragdrop driver will set current_drag and trigger MouseUp on spontaneus external drag
 
     //filtered events...
     ///If the event is not of the generic cases
-    Any(E::Event),
-}
-//TODO move to drag handler feature module
-pub enum DragItem<E> where E: Env {
-    Widget(E::WidgetID),
-    Text(String),
-    File(String),
+    Any(E),
 }

@@ -1,3 +1,4 @@
+use crate::core::widget::handler::fns::HandlerFns;
 use super::*;
 
 impl<E,T> Widget<E> for T where T: IButton<E> + 'static, E: Env + 'static {
@@ -31,9 +32,7 @@ impl<E,T> Widget<E> for T where T: IButton<E> + 'static, E: Env + 'static {
     #[inline]
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a> {
         Box::new(
-            IButton::childs(self)
-            .iter()
-            .cloned()
+            [].iter()
         )
     }
     
