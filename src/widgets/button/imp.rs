@@ -1,9 +1,9 @@
 use super::*;
 
-impl<E,T> Widget<E> for T where T: IPane<E> + 'static, E: Env + 'static {
+impl<E,T> Widget<E> for T where T: IButton<E> + 'static, E: Env + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {
-        IPane::id(self)
+        IButton::id(self)
     }
     #[inline]
     fn _handler(&self) -> HandlerFns<E> {
@@ -15,23 +15,23 @@ impl<E,T> Widget<E> for T where T: IPane<E> + 'static, E: Env + 'static {
     }
     #[inline]
     fn invalid(&self) -> bool {
-        IPane::invalid(self)
+        IButton::invalid(self)
     }
     fn set_invalid(&mut self, v: bool) {
-        IPane::set_invalid(self,v)
+        IButton::set_invalid(self,v)
     }
     #[inline]
     fn parent(&self) -> Option<&E::WidgetID> {
-        IPane::parent(self)
+        IButton::parent(self)
     }
     #[inline]
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
-        IPane::set_parent(self,v)
+        IButton::set_parent(self,v)
     }
     #[inline]
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a> {
         Box::new(
-            IPane::childs(self)
+            IButton::childs(self)
             .iter()
             .cloned()
         )
@@ -41,7 +41,7 @@ impl<E,T> Widget<E> for T where T: IPane<E> + 'static, E: Env + 'static {
     #[inline] fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
-fn render<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+fn render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
     let o = l.me::<W>().orientation();
 
     let c = childs::<W,E>(&l);
@@ -66,11 +66,11 @@ fn render<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Ren
 
 }
 
-fn event<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
+fn event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     unimplemented!()
 }
 
-fn size<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
+fn size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     let o = l.me::<W>().orientation();
 
     let mut s = Size::empty();
@@ -87,6 +87,6 @@ fn size<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     s
 }
 #[inline]
-fn childs<W: IPane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<E::WidgetID> {
+fn childs<W: IButton<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<E::WidgetID> {
     l.me::<W>().childs().to_owned()
 }

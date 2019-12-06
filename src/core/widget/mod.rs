@@ -1,3 +1,4 @@
+use crate::core::event::DragItem;
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::handler::Handler;
 use std::any::Any;
@@ -29,4 +30,13 @@ pub trait Widget<E>: Any where E: Env {
 
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
+    
+    #[inline]
+    fn can_drag(&self) -> bool {
+        false
+    }
+    #[inline]
+    fn can_drop(&self, _: &DragItem<E>) -> bool {
+        false
+    }
 }
