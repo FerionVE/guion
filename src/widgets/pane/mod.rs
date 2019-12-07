@@ -17,7 +17,7 @@ pub trait IPane<E>: Widget<E> where E: Context {
 
     fn id(&self) -> E::WidgetID;
 
-    fn style(&self) -> E::Style;
+    fn style(&self) -> &E::Style;
 
     fn cached(&mut self) -> Option<&mut Option<Vec<Bounds>>> {
         None

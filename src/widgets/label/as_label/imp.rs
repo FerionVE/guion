@@ -25,7 +25,7 @@ impl<T,E> ILabel<E> for AsLabel<T,E> where T: ILabel<E>, E: Context + 'static {
         ILabel::set_parent(self,v)
     }
     #[inline]
-    fn style(&self) -> E::Style {
+    fn style(&self) -> &E::Style {
         ILabel::style(self)
     }
 }

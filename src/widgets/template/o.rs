@@ -11,8 +11,8 @@ impl<E> super::ITemplate<E> for Template<E> where E: Context + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn style(&self) -> E::Style {
-        self.style.clone()
+    fn style(&self) -> &E::Style {
+        &self.style
     }
 
     fn invalid(&self) -> bool {

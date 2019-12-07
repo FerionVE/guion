@@ -61,7 +61,7 @@ macro_rules! impl_empty_inner {
             false
         }
         #[inline]
-        fn style(&self) -> E::Style {
+        fn style(&self) -> &E::Style {
             <E::Style as $crate::core::style::Style>::default()
         }
         

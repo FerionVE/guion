@@ -25,7 +25,7 @@ impl<T,E> ITemplate<E> for AsTemplate<T,E> where T: ITemplate<E>, E: Context + '
         ITemplate::set_parent(self,v)
     }
     #[inline]
-    fn style(&self) -> E::Style {
+    fn style(&self) -> &E::Style {
         ITemplate::style(self)
     }
 }

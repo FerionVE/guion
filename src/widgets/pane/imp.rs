@@ -61,7 +61,7 @@ macro_rules! impl_pane_inner {
             true
         }
         #[inline]
-        fn style(&self) -> E::Style {
+        fn style(&self) -> &E::Style {
             $crate::macro_prelude::IPane::style(self)
         }
         

@@ -7,5 +7,5 @@ pub trait Style: Clone {
     fn hovered(&self) -> Self;
     fn font(&self) -> Option<&Self::F>;
 
-    fn default() -> Self;
+    fn default() -> &'static Self;
 }

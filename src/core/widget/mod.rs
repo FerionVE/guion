@@ -37,5 +37,5 @@ pub trait Widget<E>: Any where E: Context {
 
     fn has_childs(&self) -> bool;
 
-    fn style(&self) -> E::Style;
+    fn style(&self) -> &E::Style;
 }

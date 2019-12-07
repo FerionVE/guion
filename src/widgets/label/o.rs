@@ -12,8 +12,8 @@ impl<E> super::ILabel<E> for Label<E> where E: Context + 'static {
         self.id.clone()
     }
     
-    fn style(&self) -> E::Style {
-        self.style.clone()
+    fn style(&self) -> &E::Style {
+        &self.style
     }
 
     fn invalid(&self) -> bool {

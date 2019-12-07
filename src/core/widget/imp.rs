@@ -50,7 +50,7 @@ impl<'b,E,T> Widget<E> for &'b mut T where T: Widget<E> + 'static, E: Context {
         Widget::has_childs(self)
     }
     #[inline]
-    fn style(&self) -> E::Style {
+    fn style(&self) -> &E::Style {
         Widget::style(self)
     }
 }
@@ -108,7 +108,7 @@ impl<E,S,T> Widget<E> for S where S: ScopedMut<T=T> + 'static, T: Widget<E>, E: 
         Widget::access(self, #[inline] |w| w.has_childs() )
     }
     #[inline]
-    fn style(&self) -> E::Style {
+    fn style(&self) -> &E::Style {
         Widget::access(self, #[inline] |w| w.style() )
     }
 }*/

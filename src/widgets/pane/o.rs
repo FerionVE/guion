@@ -18,7 +18,7 @@ impl<E> super::IPane<E> for Pane<E> where E: Context + 'static {
     fn childs(&self) -> &[E::WidgetID] {
         &self.childs[..]
     }
-    fn style(&self) -> E::Style {
+    fn style(&self) -> &E::Style {
         <E::Style as Style>::default()
     }
 

@@ -66,8 +66,8 @@ macro_rules! impl_label_inner {
             false
         }
         #[inline]
-        fn style(&self) -> E::Style {
-            $crate::macro_prelude::ILabel::style(self).clone()
+        fn style(&self) -> &E::Style {
+            $crate::macro_prelude::ILabel::style(self)
         }
         
         #[inline] fn as_any(&self) -> &dyn std::any::Any {self}
