@@ -62,7 +62,7 @@ macro_rules! impl_empty_inner {
         }
         #[inline]
         fn style(&self) -> E::Style {
-            E::Style::default()
+            <E::Style as $crate::core::style::Style>::default()
         }
         
         #[inline] fn as_any(&self) -> &dyn std::any::Any {self}

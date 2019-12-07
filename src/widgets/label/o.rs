@@ -4,11 +4,16 @@ pub struct Label<E> where E: Context {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
     invalid: bool,
+    style: E::Style,
 }
 
 impl<E> super::ILabel<E> for Label<E> where E: Context + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
+    }
+    
+    fn style(&self) -> E::Style {
+        self.style.clone()
     }
 
     fn invalid(&self) -> bool {

@@ -4,6 +4,8 @@ pub use font::*;
 pub trait Style: Clone {
     type F: Font;
 
-    fn hovered() -> Self;
-    fn font() -> Option<Self::F>;
+    fn hovered(&self) -> Self;
+    fn font(&self) -> Option<&Self::F>;
+
+    fn default() -> Self;
 }

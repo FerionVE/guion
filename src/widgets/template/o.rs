@@ -4,11 +4,15 @@ pub struct Template<E> where E: Context {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
     invalid: bool,
+    style: E::Style,
 }
 
 impl<E> super::ITemplate<E> for Template<E> where E: Context + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
+    }
+    fn style(&self) -> E::Style {
+        self.style.clone()
     }
 
     fn invalid(&self) -> bool {

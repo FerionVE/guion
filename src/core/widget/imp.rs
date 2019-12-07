@@ -1,56 +1,56 @@
 use super::*;
 
-impl<'a,E,T> Widget<'a,E> for &'a mut T where T: Widget<'a,E>, E: Context {
+impl<'b,E,T> Widget<E> for &'b mut T where T: Widget<E> + 'static, E: Context {
     #[inline]
-    fn id(&'a self) -> E::WidgetID {
+    fn id(&self) -> E::WidgetID {
         Widget::id(self)
     }
     #[inline]
-    fn _handler(&'a self) -> HandlerFns<E> {
+    fn _handler(&self) -> HandlerFns<E> {
         Widget::_handler(self)
     }
     #[inline]
-    fn invalid(&'a self) -> bool {
+    fn invalid(&self) -> bool {
         Widget::invalid(self)
     }
     #[inline]
-    fn set_invalid(&'a mut self, v: bool) {
+    fn set_invalid(&mut self, v: bool) {
         Widget::set_invalid(self,v)
     }
     #[inline]
-    fn parent(&'a self) -> Option<E::WidgetID> {
+    fn parent(&self) -> Option<E::WidgetID> {
         Widget::parent(self)
     }
     #[inline]
-    fn set_parent(&'a mut self, v: Option<E::WidgetID>) {
+    fn set_parent(&mut self, v: Option<E::WidgetID>) {
         Widget::set_parent(self,v)
     }
     #[inline]
-    fn childs(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a> {
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a> {
         Widget::childs(self)
     }
     #[inline]
-    fn childs_vec(&'a self) -> Vec<E::WidgetID> {
+    fn childs_vec<'a>(&'a self) -> Vec<E::WidgetID> {
         Widget::childs_vec(self)
     }
     #[inline]
-    fn as_any(&'a self) -> &dyn Any {
+    fn as_any(&self) -> &dyn Any {
         Widget::as_any(self)
     }
     #[inline]
-    fn as_any_mut(&'a mut self) -> &mut dyn Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         Widget::as_any_mut(self)
     }
     #[inline]
-    fn selectable(&'a self) -> bool {
+    fn selectable(&self) -> bool {
         Widget::selectable(self)
     }
     #[inline]
-    fn has_childs(&'a self) -> bool {
+    fn has_childs(&self) -> bool {
         Widget::has_childs(self)
     }
     #[inline]
-    fn style(&'a self) -> E::Style {
+    fn style(&self) -> E::Style {
         Widget::style(self)
     }
 }

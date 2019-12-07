@@ -21,7 +21,7 @@ pub use as_template::*;
 pub trait ITemplate<E>: Widget<E> where E: Context {
     fn id(&self) -> E::WidgetID;
 
-    fn style(&self) -> &E::Style;
+    fn style(&self) -> E::Style;
     
     fn invalid(&self) -> bool;
     fn set_invalid(&mut self, v: bool);

@@ -21,7 +21,7 @@ pub trait Pane<E> where E: Context {
     fn set_invalid(&mut self, v: bool);
 
     fn size(&self) -> Size;
-    fn style(&self) -> &E::Style;
+    fn style(&self) -> E::Style;
 
     fn parent(&self) -> Option<&E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);

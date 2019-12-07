@@ -21,8 +21,8 @@ impl<E> super::IButton<E> for Button<E> where E: Context + 'static {
     fn caption(&self) -> &str {
         &self.caption
     }
-    fn style(&self) -> &E::Style {
-        &self.style
+    fn style(&self) -> E::Style {
+        self.style.clone()
     }
 
     fn invalid(&self) -> bool {
