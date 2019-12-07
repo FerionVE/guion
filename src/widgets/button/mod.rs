@@ -13,6 +13,8 @@ pub trait IButton<E>: Widget<E> where E: Context {
     fn action(&self) -> fn(Link<E>);
     fn caption(&self) -> &str;
 
+    fn style(&self) -> &E::Style;
+
     fn invalid(&self) -> bool;
     fn set_invalid(&mut self, v: bool);
 

@@ -60,6 +60,10 @@ macro_rules! impl_button_inner {
         fn has_childs(&self) -> bool {
             false
         }
+        #[inline]
+        fn style(&self) -> E::Style {
+            $crate::macro_prelude::IButton::style(self)
+        }
         
         #[inline] fn as_any(&self) -> &dyn std::any::Any {self}
         #[inline] fn as_any_mut(&mut self) -> &mut dyn std::any::Any {self}

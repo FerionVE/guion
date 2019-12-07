@@ -1,3 +1,4 @@
+use crate::core::style::Style;
 use crate::core::lazout::size::Size;
 use crate::core::widget::link::Link;
 use crate::core::event::Event;
@@ -11,6 +12,7 @@ pub trait Context: Sized {
     type DynWidget: Widget<Self> + ?Sized;
     type WidgetID: PartialEq + Clone;
     type Commit: Eq + Ord;
+    type Style: Style;
 
     fn widget(&self, i: &Self::WidgetID) -> Option<&Self::DynWidget>;
     fn widget_mut(&mut self, i: &Self::WidgetID) -> Option<&mut Self::DynWidget>;

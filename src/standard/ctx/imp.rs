@@ -12,6 +12,7 @@ impl<E> Context for StandardCtx<E> where E: Context, E::Renderer: Render<Self>, 
     type DynWidget = E::DynWidget;
     type WidgetID = E::WidgetID;
     type Commit = E::Commit;
+    type Style = E::Style;
 
     #[inline]
     fn widget(&self, i: &Self::WidgetID) -> Option<&Self::DynWidget> {

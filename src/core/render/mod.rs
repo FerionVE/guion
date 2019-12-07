@@ -2,6 +2,7 @@ use crate::core::util::bounded_widget::IBoundedWidget;
 use crate::core::ctx::Context;
 use crate::core::widget::Widget;
 use crate::core::util::bounds::Bounds;
+use crate::core::style::*;
 
 pub trait Render<E>: Sized where E: Context<Renderer=Self> {
     #[inline]
@@ -37,4 +38,7 @@ pub trait Render<E>: Sized where E: Context<Renderer=Self> {
 
     fn fill_rect_rgba(&mut self, c: [u8;4]);
     fn border_rect_rgba(&mut self, c: [u8;4], thickness: u32);
+
+    fn render_text(&mut self, text: &str, style: &E::Style);
+    fn render_preprocessed_text(&mut self, text: &<<E::Style as Style>::F as Font>::PP, style: &E::Style);
 }

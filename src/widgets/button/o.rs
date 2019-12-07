@@ -5,6 +5,7 @@ pub struct Button<E> where E: Context {
     id: E::WidgetID,
     invalid: bool,
     parent: Option<E::WidgetID>,
+    style: E::Style,
     caption: String,
     action: fn(Link<E>),
 }
@@ -19,6 +20,9 @@ impl<E> super::IButton<E> for Button<E> where E: Context + 'static {
     }
     fn caption(&self) -> &str {
         &self.caption
+    }
+    fn style(&self) -> &E::Style {
+        &self.style
     }
 
     fn invalid(&self) -> bool {

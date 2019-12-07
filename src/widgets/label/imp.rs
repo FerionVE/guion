@@ -1,50 +1,50 @@
 use crate::core::lazout::size::Size;
 use super::*;
 
-/// implement Widget for a ITemplate implementor
+/// implement Widget for a ILabel implementor
 /// 
 /// INFO: using AsWidget is recommended over this, because you can only implement one widget view for one type
 #[macro_export]
-macro_rules! impl_template {
+macro_rules! impl_label {
     ($t:ty) => {
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::ITemplate<E>, E: $crate::macro_prelude::Context + 'static {
-            $crate::impl_template_inner!($t,E);
+        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::ILabel<E>, E: $crate::macro_prelude::Context + 'static {
+            $crate::impl_label_inner!($t,E);
         }
     };
 }
-/// impl<E> Widget<E> for T where T: ITemplate<E>, E: Context + 'static {
-///     crate::impl_template_inner!(T,E);
+/// impl<E> Widget<E> for T where T: ILabel<E>, E: Context + 'static {
+///     crate::impl_label_inner!(T,E);
 /// }
 #[macro_export]
-macro_rules! impl_template_inner {
+macro_rules! impl_label_inner {
     ($s:ty,$c:ty) => {
         #[inline]
         fn id(&self) -> <$c>::WidgetID {
-            $crate::macro_prelude::ITemplate::id(self)
+            $crate::macro_prelude::ILabel::id(self)
         }
         #[inline]
         fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$c> {
             $crate::macro_prelude::HandlerFns{
-                render: $crate::widgets::template::_render::<$s,$c>,
-                event: $crate::widgets::template::_event::<$s,$c>,
-                size: $crate::widgets::template::_size::<$s,$c>,
+                render: $crate::widgets::label::_render::<$s,$c>,
+                event: $crate::widgets::label::_event::<$s,$c>,
+                size: $crate::widgets::label::_size::<$s,$c>,
             }
         }
         #[inline]
         fn invalid(&self) -> bool {
-            $crate::macro_prelude::ITemplate::invalid(self)
+            $crate::macro_prelude::ILabel::invalid(self)
         }
         #[inline]
         fn set_invalid(&mut self, v: bool) {
-            $crate::macro_prelude::ITemplate::set_invalid(self,v)
+            $crate::macro_prelude::ILabel::set_invalid(self,v)
         }
         #[inline]
         fn parent(&self) -> Option<<$c>::WidgetID> {
-            $crate::macro_prelude::ITemplate::parent(self)
+            $crate::macro_prelude::ILabel::parent(self)
         }
         #[inline]
         fn set_parent(&mut self, v: Option<<$c>::WidgetID>) {
-            $crate::macro_prelude::ITemplate::set_parent(self,v)
+            $crate::macro_prelude::ILabel::set_parent(self,v)
         }
         #[inline]
         fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=<$c>::WidgetID> + 'a> {
@@ -66,8 +66,8 @@ macro_rules! impl_template_inner {
             false
         }
         #[inline]
-        fn style(&self) -> &E::Style {
-            $crate::macro_prelude::ITemplate::style(self)
+        fn style(&self) -> E::Style {
+            $crate::macro_prelude::ILabel::style(self).clone()
         }
         
         #[inline] fn as_any(&self) -> &dyn std::any::Any {self}
@@ -75,14 +75,14 @@ macro_rules! impl_template_inner {
     };
 }
 
-pub fn _render<W: ITemplate<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: &mut E::Renderer) {
+pub fn _render<W: ILabel<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: &mut E::Renderer) {
     unimplemented!()
 }
 
-pub fn _event<W: ITemplate<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
+pub fn _event<W: ILabel<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
     unimplemented!()
 }
 
-pub fn _size<W: ITemplate<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
+pub fn _size<W: ILabel<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
     unimplemented!()
 }
