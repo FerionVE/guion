@@ -1,28 +1,18 @@
-use crate::core::widget::link::Link;
 use crate::core::ctx::Context;
 
-pub struct Button<E> where E: Context {
+pub struct Template<E> where E: Context {
     id: E::WidgetID,
-    invalid: bool,
     parent: Option<E::WidgetID>,
-    caption: String,
-    action: fn(Link<E>),
+    invalid: bool,
 }
 
-impl<E> super::IButton<E> for Button<E> where E: Context + 'static {
+impl<E> super::ITemplate<E> for Template<E> where E: Context + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
 
-    fn action(&self) -> fn(Link<E>) {
-        self.action
-    }
-    fn caption(&self) -> &str {
-        &self.caption
-    }
-
     fn invalid(&self) -> bool {
-        self.invalid
+        self.invalid //return true if no invalid field is stored
     }
     fn set_invalid(&mut self, v: bool) {
         self.invalid = v;
@@ -36,4 +26,4 @@ impl<E> super::IButton<E> for Button<E> where E: Context + 'static {
     }
 }
 
-crate::impl_button!(Button<E>);
+crate::impl_template!(Template<E>);

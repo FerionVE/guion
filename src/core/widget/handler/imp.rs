@@ -12,7 +12,7 @@ impl<'a,E> Iterator for Parents<'a,E> where E: Context {
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(n) = &self.next {
             let r = self.ctx.widget(n).expect("Lost Parent");
-            self.next = r.parent().cloned();
+            self.next = r.parent();
             Some(r)
         }else{
             None

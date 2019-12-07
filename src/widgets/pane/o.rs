@@ -1,4 +1,3 @@
-use crate::core::widget::Widget;
 use crate::core::lazout::Orientation;
 use crate::core::ctx::Context;
 
@@ -33,14 +32,12 @@ impl<E> super::IPane<E> for Pane<E> where E: Context + 'static {
         self.invalid = v;
     }
 
-    fn parent(&self) -> Option<&E::WidgetID> {
-        self.parent.as_ref()
+    fn parent(&self) -> Option<E::WidgetID> {
+        self.parent.clone()
     }
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
         self.parent = v;
     }
 }
 
-impl<E> Widget<E> for Pane<E> where E: Context + 'static {
-    crate::impl_pane!(Pane<E>,E);
-}
+crate::impl_pane!(Pane<E>);

@@ -5,6 +5,7 @@ use crate::core::ctx::Context;
 
 pub mod link;
 pub mod handler;
+pub mod imp;
 
 pub trait Widget<E>: Any where E: Context {
     fn id(&self) -> E::WidgetID;
@@ -22,7 +23,7 @@ pub trait Widget<E>: Any where E: Context {
     fn invalid(&self) -> bool;
     fn set_invalid(&mut self, v: bool);
 
-    fn parent(&self) -> Option<&E::WidgetID>;
+    fn parent(&self) -> Option<E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);
 
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a>;

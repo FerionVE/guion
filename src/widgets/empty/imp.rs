@@ -2,44 +2,44 @@ use crate::core::lazout::size::Size;
 use super::*;
 
 #[macro_export]
-macro_rules! impl_button {
+macro_rules! impl_empty {
     ($t:ty) => {
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IButton<E>, E: $crate::macro_prelude::Context + 'static {
-            $crate::impl_button_inner!($t,E);
+        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IEmpty<E>, E: $crate::macro_prelude::Context + 'static {
+            $crate::impl_empty_inner!($t,E);
         }
     };
 }
 
 #[macro_export]
-macro_rules! impl_button_inner {
+macro_rules! impl_empty_inner {
     ($s:ty,$c:ty) => {
         #[inline]
         fn id(&self) -> <$c>::WidgetID {
-            $crate::macro_prelude::IButton::id(self)
+            $crate::macro_prelude::IEmpty::id(self)
         }
         #[inline]
         fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$c> {
             $crate::macro_prelude::HandlerFns{
-                render: $crate::widgets::button::_render::<$s,$c>,
-                event: $crate::widgets::button::_event::<$s,$c>,
-                size: $crate::widgets::button::_size::<$s,$c>,
+                render: $crate::widgets::empty::_render::<$s,$c>,
+                event: $crate::widgets::empty::_event::<$s,$c>,
+                size: $crate::widgets::empty::_size::<$s,$c>,
             }
         }
         #[inline]
         fn invalid(&self) -> bool {
-            $crate::macro_prelude::IButton::invalid(self)
+            $crate::macro_prelude::IEmpty::invalid(self)
         }
         #[inline]
         fn set_invalid(&mut self, v: bool) {
-            $crate::macro_prelude::IButton::set_invalid(self,v)
+            $crate::macro_prelude::IEmpty::set_invalid(self,v)
         }
         #[inline]
         fn parent(&self) -> Option<<$c>::WidgetID> {
-            $crate::macro_prelude::IButton::parent(self)
+            $crate::macro_prelude::IEmpty::parent(self)
         }
         #[inline]
         fn set_parent(&mut self, v: Option<<$c>::WidgetID>) {
-            $crate::macro_prelude::IButton::set_parent(self,v)
+            $crate::macro_prelude::IEmpty::set_parent(self,v)
         }
         #[inline]
         fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=<$c>::WidgetID> + 'a> {
@@ -54,7 +54,7 @@ macro_rules! impl_button_inner {
         }
         #[inline]
         fn selectable(&self) -> bool {
-            true
+            false
         }
         #[inline]
         fn has_childs(&self) -> bool {
@@ -66,14 +66,14 @@ macro_rules! impl_button_inner {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: &mut E::Renderer) {
-    unimplemented!()
+pub fn _render<W: IEmpty<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: &mut E::Renderer) {
+    
 }
 
-pub fn _event<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
-    unimplemented!()
+pub fn _event<W: IEmpty<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
+    
 }
 
-pub fn _size<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
-    unimplemented!()
+pub fn _size<W: IEmpty<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
+    Size::empty()
 }

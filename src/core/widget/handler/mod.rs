@@ -86,7 +86,7 @@ impl<E> Handler<E> where E: Context {
         while let Some(n) = next {
             let r = c.widget_mut(&n).expect("Lost Parent");
             f(r);
-            next = r.parent().cloned();
+            next = r.parent();
         }
     }
 }

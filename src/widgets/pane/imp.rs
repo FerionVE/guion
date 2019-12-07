@@ -1,18 +1,28 @@
 use crate::core::ctx::Context;
 use super::*;
+
 #[macro_export]
 macro_rules! impl_pane {
-    ($senf:ty,$Context:ty) => {
+    ($t:ty) => {
+        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IPane<E>, E: $crate::macro_prelude::Context + 'static {
+            $crate::impl_pane_inner!($t,E);
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! impl_pane_inner {
+    ($s:ty,$c:ty) => {
         #[inline]
-        fn id(&self) -> <$Context>::WidgetID {
+        fn id(&self) -> <$c>::WidgetID {
             $crate::widgets::pane::IPane::id(self)
         }
         #[inline]
-        fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$Context> {
+        fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$c> {
             $crate::macro_prelude::HandlerFns{
-                render: $crate::widgets::pane::_render::<$senf,$Context>,
-                event: $crate::widgets::pane::_event::<$senf,$Context>,
-                size: $crate::widgets::pane::_size::<$senf,$Context>,
+                render: $crate::widgets::pane::_render::<$s,$c>,
+                event: $crate::widgets::pane::_event::<$s,$c>,
+                size: $crate::widgets::pane::_size::<$s,$c>,
             }
         }
         #[inline]
@@ -23,15 +33,15 @@ macro_rules! impl_pane {
             $crate::macro_prelude::IPane::set_invalid(self,v)
         }
         #[inline]
-        fn parent(&self) -> Option<&<$Context>::WidgetID> {
+        fn parent(&self) -> Option<<$c>::WidgetID> {
             $crate::macro_prelude::IPane::parent(self)
         }
         #[inline]
-        fn set_parent(&mut self, v: Option<<$Context>::WidgetID>) {
+        fn set_parent(&mut self, v: Option<<$c>::WidgetID>) {
             $crate::macro_prelude::IPane::set_parent(self,v)
         }
         #[inline]
-        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=<$Context>::WidgetID> + 'a> {
+        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=<$c>::WidgetID> + 'a> {
             Box::new(
                 $crate::macro_prelude::IPane::childs(self)
                 .iter()
@@ -39,7 +49,7 @@ macro_rules! impl_pane {
             )
         }
         #[inline]
-        fn childs_vec<'a>(&'a self) -> Vec<<$Context>::WidgetID> {
+        fn childs_vec<'a>(&'a self) -> Vec<<$c>::WidgetID> {
             $crate::macro_prelude::IPane::childs(self).to_owned()
         }
         #[inline]
@@ -56,7 +66,7 @@ macro_rules! impl_pane {
     };
 }
 
-pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: &mut E::Renderer) {
+pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: &mut E::Renderer) {
     let o = l.me::<W>().orientation();
     
     let c = childs::<W,E>(&l);
