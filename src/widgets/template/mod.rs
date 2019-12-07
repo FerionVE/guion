@@ -9,6 +9,10 @@ pub use imp::*;
 pub use o::*;
 pub use as_template::*;
 
+/// implement a view as Template over a type
+/// 
+/// Then put the reference or owned type inside a AsTemplate to use as widget
+/// If your type should only be viewed as one widget, you can use impl_template! to implement Widget directly
 pub trait ITemplate<E>: Widget<E> where E: Context {
     fn id(&self) -> E::WidgetID;
     

@@ -1,13 +1,8 @@
-use std::marker::PhantomData;
 use crate::core::util::ScopedMut;
 use super::*;
 
-pub struct AsTemplate<T,U,E> where T: ScopedMut<T=U> + 'static, U: ITemplate<E>, E: Context + 'static {
-    inner: T,
-    _e: PhantomData<E>,
-}
 
-impl<T,U,E> super::ITemplate<E> for AsTemplate<T,U,E> where T: ScopedMut<T=U> + 'static, U: ITemplate<E>, E: Context + 'static {
+impl<T,U,E> ITemplate<E> for AsTemplate<T,U,E> where T: ScopedMut<T=U> + 'static, U: ITemplate<E>, E: Context + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {
         self.inner.access(#[inline] |s| Widget::id(s).clone() )

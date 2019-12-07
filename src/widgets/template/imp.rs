@@ -1,6 +1,9 @@
 use crate::core::lazout::size::Size;
 use super::*;
 
+/// implement Widget for a ITemplate implementor
+/// 
+/// INFO: using AsWidget is recommended over this, because you can only implement one widget view for one type
 #[macro_export]
 macro_rules! impl_template {
     ($t:ty) => {
@@ -9,7 +12,9 @@ macro_rules! impl_template {
         }
     };
 }
-
+/// impl<E> Widget<E> for T where T: ITemplate<E>, E: Context + 'static {
+///     crate::impl_template_inner!(T,E);
+/// }
 #[macro_export]
 macro_rules! impl_template_inner {
     ($s:ty,$c:ty) => {
