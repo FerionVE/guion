@@ -1,13 +1,15 @@
+use crate::core::util::border::Border;
 use crate::core::widget::handler::HandlerFns;
 use crate::core::widget::handler::Handler;
 use std::any::Any;
 use crate::core::ctx::Context;
+use crate::core::style::Style;
 
 pub mod link;
 pub mod handler;
 //pub mod imp;
 
-pub trait Widget<E>: Any where E: Context {
+pub trait Widget<E>: Any where E: Context + 'static {
     fn id(&self) -> E::WidgetID;
     #[inline]
     fn handler<'a>(&self) -> Handler<E> {
@@ -36,6 +38,12 @@ pub trait Widget<E>: Any where E: Context {
     fn selectable(&self) -> bool;
 
     fn has_childs(&self) -> bool;
-
-    fn style(&self) -> &E::Style;
+    #[inline]
+    fn style(&self) -> &E::Style {
+        E::Style::default()
+    }
+    #[inline]
+    fn border(&self) -> &Border {
+        E::Style::default_border()
+    }
 }

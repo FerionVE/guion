@@ -1,4 +1,5 @@
 pub mod font;
+use crate::core::util::border::Border;
 pub use font::*;
 
 pub trait Style: Clone {
@@ -8,4 +9,6 @@ pub trait Style: Clone {
     fn font(&self) -> Option<&Self::F>;
 
     fn default() -> &'static Self;
+    #[inline]
+    fn default_border() -> &'static Border;
 }

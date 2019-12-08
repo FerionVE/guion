@@ -8,7 +8,7 @@ use crate::core::widget::Widget;
 pub mod ctx_meta;
 pub use ctx_meta::*;
 
-pub trait Context: Sized {
+pub trait Context: Sized + 'static {
     type Meta: ContextMeta<Self>;
     type Renderer: Render<Self>;
     type Event: Event;
