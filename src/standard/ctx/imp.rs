@@ -1,3 +1,4 @@
+use crate::core::ctx::ctx_meta::ContextMeta;
 use crate::core::widget::Widget;
 use crate::core::render::Render;
 use crate::core::ctx::Context;
@@ -5,7 +6,8 @@ use crate::core::lazout::size::Size;
 use crate::core::widget::link::Link;
 use super::*;
 ///NOTE that E is not the current Context but the underlying
-impl<E> Context for StandardCtx<E> where E: Context, E::Renderer: Render<Self>, E::DynWidget: Widget<Self> {
+impl<E> Context for StandardCtx<E> where E: Context, E::Meta: ContextMeta<Self>, E::Renderer: Render<Self>, E::DynWidget: Widget<Self> {
+    type Meta = E::Meta;
     type Renderer = E::Renderer;
     type Event = E::Event;
     ///regularly just dyn Widget

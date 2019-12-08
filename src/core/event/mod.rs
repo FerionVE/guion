@@ -8,6 +8,8 @@ pub trait Event: Sized + Clone {
     fn filter_cloned(&self, subbounds: &Bounds) -> Option<Self>; 
 
     fn consuming(&self) -> bool;
+
+    fn empty() -> Self;
 }
 
 pub enum Events<E> where E: Event {

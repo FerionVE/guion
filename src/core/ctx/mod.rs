@@ -5,7 +5,11 @@ use crate::core::event::Event;
 use crate::core::render::Render;
 use crate::core::widget::Widget;
 
+pub mod ctx_meta;
+pub use ctx_meta::*;
+
 pub trait Context: Sized {
+    type Meta: ContextMeta<Self>;
     type Renderer: Render<Self>;
     type Event: Event;
     ///regularly just dyn Widget
