@@ -36,15 +36,22 @@ impl<E> Context for StandardCtx<E> where E: Context, E::Meta: ContextMeta<Self>,
     #[inline]
     fn pre_render(&mut self, i: &Self::WidgetID, e: &mut Self::Renderer) {
         unimplemented!();
+        //set the cursor from widget's style
     }
     #[inline]
     fn post_render(&mut self, i: &Self::WidgetID, e: &mut Self::Renderer) {
         unimplemented!();
+        //draw selected if current widget is in SelectedState
     }
     
     #[inline]
     fn pre_event(&mut self, i: &Self::WidgetID, e: Self::Event) -> Self::Event {
         unimplemented!();
+        //Wkeydown: add to respective keystate
+        //Wkeyup: remove from respective keystate
+        //Wmousemove: after sending mousemove, send mouseenter/leave if HoverState changed
+        //mousemove: set HoverState to Some(current)
+        //Wmouseleave: set HoverState to None
         e
     }
     #[inline]
@@ -60,6 +67,7 @@ impl<E> Context for StandardCtx<E> where E: Context, E::Meta: ContextMeta<Self>,
     fn post_size(&mut self, i: &Self::WidgetID, s: Size) -> Size {
         unimplemented!();
         s
+        //ROOT: store the minimum window size
     }
 
     #[inline]

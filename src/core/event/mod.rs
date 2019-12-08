@@ -1,8 +1,12 @@
+use crate::core::util::bounds::Offset;
 use crate::core::util::bounds::Bounds;
+use std::any::TypeId;
+
+pub mod variants;
 
 pub trait Event: Sized + Clone {
     ///split Self into some known cases to handle
-    fn case(self) -> Events<Self>;
+    //fn variant(&self) -> EventVariant;
 
     fn filter(self, subbounds: &Bounds) -> Option<Self>;
     fn filter_cloned(&self, subbounds: &Bounds) -> Option<Self>; 
@@ -10,22 +14,32 @@ pub trait Event: Sized + Clone {
     fn consuming(&self) -> bool;
 
     fn empty() -> Self;
+    fn from<V: Variant>(v: V) -> Self;
+
+    fn is_root_event(&self) -> bool;
+    fn set_root_event(&mut self) -> bool;
+    fn with_root_event(&self, b: bool) -> Self;
+
+    fn is<V: Variant>(&self) -> Option<V>;
+    fn set<V: Variant>(&mut self, v: Option<V>);
+    fn with<V: Variant>(&self, v: V) -> Self;
+    fn without<V: Variant>(&self, v: V) -> Self;
+
+    fn try_from<V: Variant>(v: V) -> Result<Self,V>;
+
+    fn try_is<V: Variant>(&self) -> Option<V>;
+    fn try_set<V: Variant>(&mut self, v: Option<V>) -> Result<(),V>;
+    fn try_with<V: Variant>(&self, v: V) -> Result<Self,()>;
+    fn try_without<V: Variant>(&self, v: V) -> Result<Self,()>;
 }
 
-pub enum Events<E> where E: Event {
-    MouseMove(u32,u32,E),
-    MouseDown(u32,E),
-    MouseUp(u32,E),
-
-    KeyDown(u32,E),
-    KeyUp(u32,E),
-    KeyPress(u32,E),
-
-    //Resize(u32,u32,E),
-
-    //DropExternal(String,E), //TODO actually dragdrop driver will set current_drag and trigger MouseUp on spontaneus external drag
-
-    //filtered events...
-    ///If the event is not of the generic cases
-    Any(E),
+pub trait Variant: Clone + 'static {
+    
 }
+
+/*
+ *  pub struct EventImpl {
+ *      pub inner: SDLEvent,
+ *      pub root: bool,
+ *  }
+ */

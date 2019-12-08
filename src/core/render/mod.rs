@@ -41,4 +41,6 @@ pub trait Render<E>: Sized where E: Context<Renderer=Self> {
 
     fn render_text(&mut self, text: &str, style: &E::Style);
     fn render_preprocessed_text(&mut self, text: &<<E::Style as Style>::F as Font>::PP, style: &E::Style);
+
+    fn set_cursor(&mut self, cursor: <E::Style as Style>::C);
 }
