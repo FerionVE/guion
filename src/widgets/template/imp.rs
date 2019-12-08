@@ -23,8 +23,8 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::id(self)
         }
         #[inline]
-        fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$c> {
-            $crate::macro_prelude::HandlerFns{
+        fn _fns(&self) -> $crate::macro_prelude::WidgetFns<$c> {
+            $crate::macro_prelude::WidgetFns{
                 render: $crate::widgets::template::_render::<$s,$c>,
                 event: $crate::widgets::template::_event::<$s,$c>,
                 size: $crate::widgets::template::_size::<$s,$c>,
@@ -75,7 +75,7 @@ macro_rules! impl_template_inner {
     };
 }
 
-pub fn _render<W: ITemplate<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: &mut E::Renderer) {
+pub fn _render<W: ITemplate<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: E::Renderer) {
     unimplemented!()
 }
 

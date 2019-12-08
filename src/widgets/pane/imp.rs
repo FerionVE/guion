@@ -1,4 +1,4 @@
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use super::*;
 
 #[macro_export]
@@ -18,8 +18,8 @@ macro_rules! impl_pane_inner {
             $crate::widgets::pane::IPane::id(self)
         }
         #[inline]
-        fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$c> {
-            $crate::macro_prelude::HandlerFns{
+        fn _fns(&self) -> $crate::macro_prelude::WidgetFns<$c> {
+            $crate::macro_prelude::WidgetFns{
                 render: $crate::widgets::pane::_render::<$s,$c>,
                 event: $crate::widgets::pane::_event::<$s,$c>,
                 size: $crate::widgets::pane::_size::<$s,$c>,
@@ -70,27 +70,25 @@ macro_rules! impl_pane_inner {
     };
 }
 
-pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: &mut E::Renderer) {
+pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: E::Renderer) {
     let o = l.me::<W>().orientation();
     
     let c = childs::<W,E>(&l);
     
     let b = c.iter()
     .map(|c| 
-        l.widget(c)
-        .expect("Lost Widget")
-        .handler()
+        c
         .size(&mut l)
+        .expect("Lost Widget")
     )
     .collect::<Vec<_>>();
     
     let b = calc_bounds(r.bounds_abs().size, &b[..], o);
     
     for (cc,bb) in c.iter().zip(b.iter()) {
-        l.widget(cc)
-        .expect("Pane contains lost Widget")
-        .handler()
-        .render( &mut *l, &mut r.slice(bb) );
+        cc
+        .render( &mut *l, r.slice(bb) )
+        .expect("Pane contains lost Widget");
     }
     
 }
@@ -105,10 +103,9 @@ pub fn _size<W: IPane<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Siz
     let mut s = Size::empty();
     
     for c in childs::<W,E>(&l) {
-        let cs = l.widget(&c)
-        .expect("Lost Widget")
-        .handler()
-        .size(&mut l);
+        let cs = c
+        .size(&mut l)
+        .expect("Lost Widget");
         
         s.add(&cs, o)
     }

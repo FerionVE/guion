@@ -1,12 +1,12 @@
+use crate::core::ctx::id::WidgetID;
 use crate::core::ctx::ctx_meta::ContextMeta;
 use crate::core::widget::Widget;
 use crate::core::render::Render;
 use crate::core::ctx::Context;
 use crate::core::lazout::size::Size;
-use crate::core::widget::link::Link;
 use super::*;
 ///NOTE that E is not the current Context but the underlying
-impl<E> Context for StandardCtx<E> where E: Context, E::Meta: ContextMeta<Self>, E::Renderer: Render<Self>, E::DynWidget: Widget<Self> {
+impl<E> Context for StandardCtx<E> where E: Context, E::Meta: ContextMeta<Self>, E::Renderer: Render<Self>, E::DynWidget: Widget<Self>, E::WidgetID: WidgetID<Self> {
     type Meta = E::Meta;
     type Renderer = E::Renderer;
     type Event = E::Event;
@@ -34,48 +34,28 @@ impl<E> Context for StandardCtx<E> where E: Context, E::Meta: ContextMeta<Self>,
     }
 
     #[inline]
-    fn pre_render(&mut self, i: &Self::WidgetID, e: &mut Self::Renderer) {
+    fn _render(&mut self, i: &Self::WidgetID, r: Self::Renderer) {
         unimplemented!();
         //set the cursor from widget's style
-    }
-    #[inline]
-    fn post_render(&mut self, i: &Self::WidgetID, e: &mut Self::Renderer) {
-        unimplemented!();
+        self.sup._render(i,r);
         //draw selected if current widget is in SelectedState
     }
     
     #[inline]
-    fn pre_event(&mut self, i: &Self::WidgetID, e: Self::Event) -> Self::Event {
+    fn _event(&mut self, i: &Self::WidgetID, e: Self::Event) {
         unimplemented!();
         //Wkeydown: add to respective keystate
         //Wkeyup: remove from respective keystate
         //Wmousemove: after sending mousemove, send mouseenter/leave if HoverState changed
         //mousemove: set HoverState to Some(current)
         //Wmouseleave: set HoverState to None
-        e
-    }
-    #[inline]
-    fn post_event(&mut self, i: &Self::WidgetID, e: Self::Event) {
-        unimplemented!();
+        self.sup._event(i,e);
     }
     
     #[inline]
-    fn pre_size(&mut self, i: &Self::WidgetID) {
+    fn _size(&mut self, i: &Self::WidgetID) -> Size {
         unimplemented!();
-    }
-    #[inline]
-    fn post_size(&mut self, i: &Self::WidgetID, s: Size) -> Size {
-        unimplemented!();
-        s
-        //ROOT: store the minimum window size
-    }
-
-    #[inline]
-    fn link<'a>(&'a mut self, i: Self::WidgetID) -> Link<'a,Self> {
-        Link{
-            ctx: self,
-            widget_id: i
-        }
+        self.sup._size(i)
     }
 
     #[inline]

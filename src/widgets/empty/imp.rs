@@ -18,8 +18,8 @@ macro_rules! impl_empty_inner {
             $crate::macro_prelude::IEmpty::id(self)
         }
         #[inline]
-        fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$c> {
-            $crate::macro_prelude::HandlerFns{
+        fn _fns(&self) -> $crate::macro_prelude::WidgetFns<$c> {
+            $crate::macro_prelude::WidgetFns{
                 render: $crate::widgets::empty::_render::<$s,$c>,
                 event: $crate::widgets::empty::_event::<$s,$c>,
                 size: $crate::widgets::empty::_size::<$s,$c>,
@@ -70,7 +70,7 @@ macro_rules! impl_empty_inner {
     };
 }
 
-pub fn _render<W: IEmpty<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: &mut E::Renderer) {
+pub fn _render<W: IEmpty<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: E::Renderer) {
     
 }
 

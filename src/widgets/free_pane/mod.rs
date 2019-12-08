@@ -1,6 +1,6 @@
 use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::*;
-use crate::core::widget::handler::HandlerFns;
+use crate::core::widget::handler::WidgetFns;
 use crate::core::widget::link::Link;
 use std::any::Any;
 use crate::core::widget::Widget;
@@ -35,8 +35,8 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Context + 'static {
         Pane::id(self)
     }
     #[inline]
-    fn _handler(&self) -> HandlerFns<E> {
-        HandlerFns{
+    fn _fns(&self) -> WidgetFns<E> {
+        WidgetFns{
             render: render::<T,E>,
             event: event::<T,E>,
             size: size::<T,E>,

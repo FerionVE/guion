@@ -1,3 +1,4 @@
+use crate::core::ctx::id::WidgetID;
 use crate::core::widget::Widget;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -24,7 +25,7 @@ impl<'a,E> Link<'a,E> where E: Context {
             .downcast_mut::<S>().expect("Link: Wrong Widget Type")
     }
 
-    pub fn with_ctx<'b,F: Context<WidgetID=E::WidgetID>>(self, ctx: &'b mut F) -> Link<'b,F> {
+    pub fn with_ctx<'b,F: Context<WidgetID=E::WidgetID>>(self, ctx: &'b mut F) -> Link<'b,F> where E::WidgetID: WidgetID<F> {
         Link{
             ctx,
             widget_id: self.widget_id,

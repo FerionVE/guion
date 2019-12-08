@@ -1,5 +1,5 @@
 use crate::core::util::bounded_widget::IBoundedWidget;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use crate::core::widget::Widget;
 use crate::core::util::bounds::Bounds;
 use crate::core::style::*;
@@ -17,7 +17,7 @@ pub trait Render<E>: Sized where E: Context<Renderer=Self> {
                 let ww = c.widget_mut(&w.id()).expect("Lost Child");
                 render |= self.requires_render(&ww);
                 if render {
-                    ww.handler().render(c,&mut self.slice(w.bounds()));
+                    w.id().render(c,self.slice(w.bounds())).expect("Lost Widget");
                 }
                 render &= overlap;
             }

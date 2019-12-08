@@ -18,8 +18,8 @@ macro_rules! impl_button_inner {
             $crate::macro_prelude::IButton::id(self)
         }
         #[inline]
-        fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$c> {
-            $crate::macro_prelude::HandlerFns{
+        fn _fns(&self) -> $crate::macro_prelude::WidgetFns<$c> {
+            $crate::macro_prelude::WidgetFns{
                 render: $crate::widgets::button::_render::<$s,$c>,
                 event: $crate::widgets::button::_event::<$s,$c>,
                 size: $crate::widgets::button::_size::<$s,$c>,
@@ -70,7 +70,7 @@ macro_rules! impl_button_inner {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: &mut E::Renderer) {
+pub fn _render<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: E::Renderer) {
     unimplemented!()
 }
 

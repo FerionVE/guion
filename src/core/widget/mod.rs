@@ -1,5 +1,5 @@
 use crate::core::util::border::Border;
-use crate::core::widget::handler::HandlerFns;
+use crate::core::widget::handler::WidgetFns;
 use crate::core::widget::handler::Handler;
 use std::any::Any;
 use crate::core::ctx::Context;
@@ -12,14 +12,14 @@ pub mod handler;
 pub trait Widget<E>: Any where E: Context + 'static {
     fn id(&self) -> E::WidgetID;
     #[inline]
-    fn handler<'a>(&self) -> Handler<E> {
+    fn handler<'a>(&self, c: &'a mut E) -> Handler<'a,E> { //TODO deprecate in future
         Handler {
             id: self.id(),
-            fns: self._handler(),
+            ctx: c,
         }
     }
     
-    fn _handler(&self) -> HandlerFns<E>;
+    fn _fns(&self) -> WidgetFns<E>;
 
     ///commit accessors may moved to Handler
     fn invalid(&self) -> bool;

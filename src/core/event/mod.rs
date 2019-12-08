@@ -1,6 +1,4 @@
-use crate::core::util::bounds::Offset;
 use crate::core::util::bounds::Bounds;
-use std::any::TypeId;
 
 pub mod variants;
 

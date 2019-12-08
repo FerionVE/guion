@@ -23,8 +23,8 @@ macro_rules! impl_label_inner {
             $crate::macro_prelude::ILabel::id(self)
         }
         #[inline]
-        fn _handler(&self) -> $crate::macro_prelude::HandlerFns<$c> {
-            $crate::macro_prelude::HandlerFns{
+        fn _fns(&self) -> $crate::macro_prelude::WidgetFns<$c> {
+            $crate::macro_prelude::WidgetFns{
                 render: $crate::widgets::label::_render::<$s,$c>,
                 event: $crate::widgets::label::_event::<$s,$c>,
                 size: $crate::widgets::label::_size::<$s,$c>,
@@ -75,7 +75,7 @@ macro_rules! impl_label_inner {
     };
 }
 
-pub fn _render<W: ILabel<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: &mut E::Renderer) {
+pub fn _render<W: ILabel<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: E::Renderer) {
     unimplemented!()
 }
 
