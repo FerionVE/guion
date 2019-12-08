@@ -1,57 +1,57 @@
 use super::*;
 
-impl<'b,E,T> Widget<E> for &'b mut T where T: Widget<E> + 'static, E: Context {
+impl<'b,E,T> Widget<E> for &'b mut T where T: Widget<E>, E: Context {
     #[inline]
     fn id(&self) -> E::WidgetID {
-        Widget::id(self)
+        Widget::id(*self)
     }
     #[inline]
     fn _handler(&self) -> HandlerFns<E> {
-        Widget::_handler(self)
+        Widget::_handler(*self)
     }
     #[inline]
     fn invalid(&self) -> bool {
-        Widget::invalid(self)
+        Widget::invalid(*self)
     }
     #[inline]
     fn set_invalid(&mut self, v: bool) {
-        Widget::set_invalid(self,v)
+        Widget::set_invalid(*self,v)
     }
     #[inline]
     fn parent(&self) -> Option<E::WidgetID> {
-        Widget::parent(self)
+        Widget::parent(*self)
     }
     #[inline]
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
-        Widget::set_parent(self,v)
+        Widget::set_parent(*self,v)
     }
     #[inline]
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a> {
-        Widget::childs(self)
+        Widget::childs(*self)
     }
     #[inline]
     fn childs_vec<'a>(&'a self) -> Vec<E::WidgetID> {
-        Widget::childs_vec(self)
+        Widget::childs_vec(*self)
     }
     #[inline]
     fn as_any(&self) -> &dyn Any {
-        Widget::as_any(self)
+        Widget::as_any(*self)
     }
     #[inline]
     fn as_any_mut(&mut self) -> &mut dyn Any {
-        Widget::as_any_mut(self)
+        Widget::as_any_mut(*self)
     }
     #[inline]
     fn selectable(&self) -> bool {
-        Widget::selectable(self)
+        Widget::selectable(*self)
     }
     #[inline]
     fn has_childs(&self) -> bool {
-        Widget::has_childs(self)
+        Widget::has_childs(*self)
     }
     #[inline]
     fn style(&self) -> &E::Style {
-        Widget::style(self)
+        Widget::style(*self)
     }
 }
 

@@ -1,35 +1,35 @@
 use super::*;
 
 
-impl<T,E> ILabel<E> for AsLabel<T,E> where T: ILabel<E>, E: Context + 'static {
+impl<T,E,C> ILabel<E> for AsLabel<T,E,C> where C: AsRef<T> + AsMut<T> + 'static, T: ILabel<E>, E: Context + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {
-        ILabel::id(self)
+        <T as ILabel<E>>::id(self)
     }
     
     #[inline]
     fn invalid(&self) -> bool {
-        ILabel::invalid(self)
+        <T as ILabel<E>>::invalid(self)
     }
     #[inline]
     fn set_invalid(&mut self, v: bool) {
-        ILabel::set_invalid(self,v)
+        <T as ILabel<E>>::set_invalid(self,v)
     }
     
     #[inline]
     fn parent(&self) -> Option<E::WidgetID> {
-        ILabel::parent(self)
+        <T as ILabel<E>>::parent(self)
     }
     #[inline]
     fn set_parent(&mut self, v: Option<E::WidgetID>) {
-        ILabel::set_parent(self,v)
+        <T as ILabel<E>>::set_parent(self,v)
     }
     #[inline]
     fn style(&self) -> &E::Style {
-        ILabel::style(self)
+        <T as ILabel<E>>::style(self)
     }
 }
 
-impl<T,E> Widget<E> for AsLabel<T,E> where T: ILabel<E>, E: Context + 'static {
-    crate::impl_label_inner!(AsLabel<T,E>,E);
+impl<T,E,C> Widget<E> for AsLabel<T,E,C> where C: AsRef<T> + AsMut<T> + 'static, T: ILabel<E>, E: Context + 'static {
+    crate::impl_label_inner!(AsLabel<T,E,C>,E);
 }
