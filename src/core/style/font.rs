@@ -1,19 +1,19 @@
-pub trait Font {
-    type PP: PreprocessedString;
+use crate::core::util::bounds::Offset;
+use crate::core::util::bounds::Dims;
+use super::*;
 
-    fn len_in_pixels(&self, s: &str) -> u32;
-
-    fn preprocess(&self, s: &str) -> Self::PP;
+pub trait Font<S>: Sized where S: Style<Font=Self> {
+    
 }
 
-pub trait PreprocessedString {
-    type C: PreprocessedChar;
-
-    fn chars(&self) -> [Self::C];
+pub trait PreprocessedText<S>: Sized where S: Style<PreprocessedText=Self> {
+    fn size(&self, s: &str) -> Dims;
+    fn style(&self) -> &S; //TODO TextCache validates invalidate state and compares style
+    fn chars(&self) -> [S::PreprocessedChar];
     fn back(&self) -> String;
 }
 
 pub trait PreprocessedChar {
-    fn offset(&self) -> u32;
+    fn offset(&self) -> Offset;
     fn char(&self) -> char;
 }
