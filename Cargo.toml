@@ -6,5 +6,5 @@ edition = "2018"
 
 [dependencies]
 #piston_window = "0.89"
-qwutils = { git = "https://github.com/qwertz19281/rust_utils", rev = "159e2451cbb6f493b62011a12b1d06822de53b9b" }
-#qwutils = { path = "../qwutils" }
+#qwutils = { git = "https://github.com/qwertz19281/rust_utils", rev = "159e2451cbb6f493b62011a12b1d06822de53b9b" }
+qwutils = { path = "../qwutils" }

@@ -1,3 +1,6 @@
+use crate::core::util::bounds::Dims;
+use crate::core::util::bounds::Offset;
+#[derive(Clone)]
 pub struct Border {
     pub left: u32,
     pub right: u32,
@@ -20,11 +23,18 @@ impl Border {
         Self::new(0,0,0,0)
     }
     #[inline]
-    pub fn width(&self) -> u32 {
-        self.left + self.right
+    pub fn inner(&self) -> Offset {
+        Offset{
+            x: self.left as i32,
+            y: self.top as i32,
+        }
     }
+    ///the size of the effective border
     #[inline]
-    pub fn height(&self) -> u32 {
-        self.top + self.bottom
+    pub fn border_effective(&self) -> Dims {
+        Dims{
+            w: self.left + self.right,
+            h: self.top + self.bottom,
+        }
     }
 }

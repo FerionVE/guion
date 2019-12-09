@@ -1,12 +1,11 @@
 //pub mod as_any;
+use crate::core::util::border::Border;
 use std::ops::BitAnd;
-use std::ops::AddAssign;
-use std::ops::SubAssign;
 
 #[derive(Clone)]
 pub struct Offset {
-    pub x: u32,
-    pub y: u32,
+    pub x: i32,
+    pub y: i32,
 }
 #[derive(Clone)]
 pub struct Dims {
@@ -20,7 +19,7 @@ pub struct Bounds {
 }
 
 impl Bounds {
-    pub fn from_xywh(x: u32, y: u32, w: u32, h: u32) -> Self {
+    pub fn from_xywh(x: i32, y: i32, w: u32, h: u32) -> Self {
         Self{
             off: Offset{
                 x,
@@ -33,30 +32,60 @@ impl Bounds {
         }
     }
 
-    #[inline] pub fn x(&self) -> u32 { self.off.x }
-    #[inline] pub fn y(&self) -> u32 { self.off.y }
+    #[inline] pub fn x(&self) -> i32 { self.off.x }
+    #[inline] pub fn y(&self) -> i32 { self.off.y }
     #[inline] pub fn w(&self) -> u32 { self.size.w }
     #[inline] pub fn h(&self) -> u32 { self.size.h }
 
-    #[inline] pub fn x_mut(&mut self) -> &mut u32 { &mut self.off.x }
-    #[inline] pub fn y_mut(&mut self) -> &mut u32 { &mut self.off.y }
+    #[inline] pub fn x_mut(&mut self) -> &mut i32 { &mut self.off.x }
+    #[inline] pub fn y_mut(&mut self) -> &mut i32 { &mut self.off.y }
     #[inline] pub fn w_mut(&mut self) -> &mut u32 { &mut self.size.w }
     #[inline] pub fn h_mut(&mut self) -> &mut u32 { &mut self.size.h }
-}
 
-impl<'a> AddAssign<&'a Offset> for Bounds {
-    fn add_assign(&mut self, o: &Offset) {
-        self.off.x += o.x;
-        self.off.y += o.y;
+    pub fn inside(&self, b: &Border) -> Self {
+        let mut s = self.clone();
+        s.off += b.inner();
+        s.size -= b.border_effective();
+        s
     }
 }
 
-impl<'a> SubAssign<&'a Offset> for Bounds {
-    fn sub_assign(&mut self, o: &Offset) {
-        self.off.x -= o.x;
-        self.off.y -= o.y;
-    }
-}
+qwutils::opion!(add(Bounds,Offset) |s,r| {
+    s.off.x += r.x;
+    s.off.y += r.y;
+});
+qwutils::opion!(sub(Bounds,Offset) |s,r| {
+    s.off.x -= r.x;
+    s.off.y -= r.y;
+});
+
+qwutils::opion!(add(Offset,Offset) |s,r| {
+    s.x += r.x;
+    s.y += r.y;
+});
+qwutils::opion!(sub(Offset,Offset) |s,r| {
+    s.x -= r.x;
+    s.y -= r.y;
+});
+
+qwutils::opion!(add(Dims,Dims) |s,r| {
+    s.w += r.w;
+    s.h += r.h;
+});
+qwutils::opion!(sub(Dims,Dims) |s,r| {
+    s.w = s.w.saturating_sub( r.w );
+    s.h = s.h.saturating_sub( r.h );
+});
+
+
+/*qwutils::opion!(add(Bounds,Border) |s,r| {
+    s.off.x += r.width();
+    s.off.y += r.height();
+});
+qwutils::opion!(sub(Bounds,Border) |s,r| {
+    s.off.x -= r.width();
+    s.off.y -= r.height();
+});*/
 
 impl<'a,'b> BitAnd<&'b Bounds> for &'a Bounds {
     type Output = Bounds;
