@@ -2,7 +2,7 @@ use crate::core::ctx::id::WidgetID;
 use crate::core::ctx::ctx_meta::ContextMeta;
 use crate::core::widget::Widget;
 use crate::core::render::Render;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use crate::core::lazout::size::Size;
 use super::*;
 ///NOTE that E is not the current Context but the underlying
@@ -57,7 +57,9 @@ impl<E> Context for StandardCtx<E> where E: Context, E::Meta: ContextMeta<Self>,
         unimplemented!();
         self.sup._size(i)
     }
+}
 
+impl<E> ContextStateful for StandardCtx<E> where E: Context, E::Meta: ContextMeta<Self>, E::Renderer: Render<Self>, E::DynWidget: Widget<Self>, E::WidgetID: WidgetID<Self> {
     #[inline]
     fn hovered(&self) -> Option<E::WidgetID> {
         None

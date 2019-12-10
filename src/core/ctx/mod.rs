@@ -60,7 +60,9 @@ pub trait Context: Sized + 'static {
             widget_id: i.clone(),
         }
     }
+}
 
+pub trait ContextStateful: Context {
     #[inline] fn hovered(&self) -> Option<Self::WidgetID> {
         None
     }

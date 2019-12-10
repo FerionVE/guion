@@ -1,8 +1,11 @@
 //TODO implement this stuff
 
+use crate::core::ctx::id::WidgetID;
+use crate::core::style::font::PreprocessedText;
+
 pub struct TextBoxState {
-    pp: PreprocessedText;
-    id: WidgetID;
+    pp: PreprocessedText,
+    id: WidgetID,
 }
 
 impl ITextBox {

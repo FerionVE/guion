@@ -45,9 +45,9 @@ pub trait Render<E>: Sized where E: Context<Renderer=Self> {
     #[inline]
     fn render_text(&mut self, text: &str, style: &E::Style) {
         let pp = style.preprocess_text(text);
-        self.render_preprocessed_text(pp);
+        self.render_preprocessed_text(&pp);
     }
-    fn render_preprocessed_text(&mut self, text: &<<E::Style as Style>::PreprocessedText);
+    fn render_preprocessed_text(&mut self, text: &<E::Style as Style>::PreprocessedText);
 
-    fn set_cursor(&mut self, cursor: <E::Style as Style>::C);
+    fn set_cursor(&mut self, cursor: <E::Style as Style>::Cursor);
 }

@@ -1,5 +1,5 @@
 use crate::core::lazout::size::Size;
-use crate::core::ctx::Context;
+use super::*;
 use qwutils::*;
 
 pub trait WidgetID<E>: Clone + PartialEq + Sized where E: Context<WidgetID=Self> {
@@ -36,11 +36,11 @@ pub trait WidgetID<E>: Clone + PartialEq + Sized where E: Context<WidgetID=Self>
     }
 
     #[inline]
-    fn is_hovered(&self, c: &E) -> bool {
+    fn is_hovered(&self, c: &E) -> bool where E: ContextStateful {
         c.is_hovered(self)
     }
     #[inline]
-    fn is_selected(&self, c: &E) -> bool {
+    fn is_selected(&self, c: &E) -> bool where E: ContextStateful {
         c.is_selected(self)
     }
 }

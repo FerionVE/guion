@@ -8,7 +8,9 @@ pub struct KbdState<E> where E: Context {
 
 pub struct KbdPressedKey<E> where E: Context {
     pub key: u32,
+    ///the widget which was selected (focused) where the key press started
     pub id: E::WidgetID,
+    ///the time the key press started
     pub ts: u64,
 }
 
