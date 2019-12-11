@@ -1,14 +1,15 @@
 //TODO implement this stuff
 
-use crate::core::ctx::id::WidgetID;
+use crate::core::ctx::aliases::EPPText;
+use crate::core::ctx::*;
 use crate::core::style::font::PreprocessedText;
 
-pub struct TextBoxState {
-    pp: PreprocessedText,
-    id: WidgetID,
+pub struct TextBoxState<E> where E: Context + ContextStateful {
+    pp: EPPText<E>,
+    id: E::WidgetID,
 }
 
-impl ITextBox {
+/*impl ITextBox { TODO impl
     /// So you are the currently cached/selected TextBox any you invalidated, so please fix the state
     /// return if revalidating was successful, else state will be resetted
     /// 
@@ -16,4 +17,4 @@ impl ITextBox {
     fn revalidate_state(&mut self, s: &mut Option<TextBoxState>) -> bool {
         false
     }
-}
+}*/

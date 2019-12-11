@@ -12,6 +12,8 @@ pub use ctx_meta::*;
 pub mod id;
 pub use id::*;
 
+pub mod aliases;
+
 pub trait Context: Sized + 'static {
     type Meta: ContextMeta<Self>;
     type Renderer: Render<Self>;
@@ -79,3 +81,4 @@ pub trait ContextStateful: Context {
         self.selected().map_or(false, |w| w == *i )
     }
 }
+
