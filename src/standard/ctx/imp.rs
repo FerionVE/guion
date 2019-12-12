@@ -10,6 +10,9 @@ impl<E,S> ContextLayer<E> for StandardCtx<S,E> where E: Context + AsMut<Self>, S
 
 }
 
-impl<E,S> AsMut<S> for E where E: Context + AsMut<StandardCtx<S,E>>, S: ContextLayer<E> {
-
+impl<T,S,E> AsMut<T> for StandardCtx<S,E> where S: ContextLayer<E> + AsMut<T>, E: Context {
+    fn as_mut(&mut self) -> &mut T {
+        let sup: &mut S = &mut self.sup;
+        <S as AsMut<T>>::as_mut(sup)
+    }
 }
