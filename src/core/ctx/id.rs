@@ -36,11 +36,11 @@ pub trait WidgetID<E>: Clone + PartialEq + Sized where E: Context<WidgetID=Self>
     }
 
     #[inline]
-    fn is_hovered(&self, c: &E) -> bool where E: ContextStateful {
+    fn is_hovered(&self, c: &E) -> bool where E: ContextStateful, E::Handler: ContextLayerStateful<E> {
         c.is_hovered(self)
     }
     #[inline]
-    fn is_selected(&self, c: &E) -> bool where E: ContextStateful {
+    fn is_selected(&self, c: &E) -> bool where E: ContextStateful, E::Handler: ContextLayerStateful<E> {
         c.is_selected(self)
     }
 }

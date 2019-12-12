@@ -29,8 +29,6 @@ pub trait Context: Sized + 'static {
     type Commit: Eq + Ord;
     type Style: Style;
 
-    fn ha(&mut self) -> &mut Self::Handler;
-
     fn widget(&self, i: &Self::WidgetID) -> Option<&Self::DynWidget>;
     fn widget_mut(&mut self, i: &Self::WidgetID) -> Option<&mut Self::DynWidget>;
 
@@ -71,9 +69,7 @@ pub trait Context: Sized + 'static {
     }
 }
 
-pub trait ContextLayer<E> where E: Context {
-    type Super: ContextLayer<E>;
-
+pub trait ContextLayer<E>: Sized where E: Context {
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _render(senf: &mut E, i: &E::WidgetID, r: E::Renderer) {
@@ -91,7 +87,16 @@ pub trait ContextLayer<E> where E: Context {
     }
 }
 
-pub trait ContextStateful: Context {
+pub trait ContextLayerStateful<E>: Sized where E: Context {
+    #[inline] fn hovered(&self) -> Option<E::WidgetID> {
+        None
+    }
+    #[inline] fn selected(&self) -> Option<E::WidgetID> {
+        None
+    }
+}
+
+pub trait ContextStateful: Context where Self::Handler: ContextLayerStateful<Self> {
     #[inline] fn hovered(&self) -> Option<Self::WidgetID> {
         None
     }
@@ -108,4 +113,3 @@ pub trait ContextStateful: Context {
         self.selected().map_or(false, |w| w == *i )
     }
 }
-
