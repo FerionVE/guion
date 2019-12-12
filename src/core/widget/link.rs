@@ -1,4 +1,4 @@
-use crate::core::ctx::id::WidgetID;
+use crate::core::ctx::*;
 use crate::core::widget::Widget;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -30,6 +30,10 @@ impl<'a,E> Link<'a,E> where E: Context {
             ctx,
             widget_id: self.widget_id,
         }
+    }
+    #[inline]
+    pub fn enqueue<Q: Queue<E>>(&'a mut self, args: Q::Args, f: Q::Callback) -> Q::Return where E: AccessQueue<Q> {
+        self.ctx.queue_mut().add(args,f)
     }
 }
 
