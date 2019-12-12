@@ -82,30 +82,27 @@ pub trait ContextLayer<E>: Sized + 'static where E: Context {
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _render(senf: &mut E, i: &E::WidgetID, r: E::Renderer) {
-        (senf.widget_fns(i).render)(senf.link(i),r)
+        Self::Child::_render(senf,i,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _event(senf: &mut E, i: &E::WidgetID, e: E::Event) {
-        (senf.widget_fns(i).event)(senf.link(i),e)
+        Self::Child::_event(senf,i,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _size(senf: &mut E, i: &E::WidgetID) -> Size {
-        (senf.widget_fns(i).size)(senf.link(i))
+        Self::Child::_size(senf,i)
     }
 
-    fn child_mut(&mut self) -> Option<&mut Self::Child>;
+    fn _child_mut(&mut self) -> &mut Self::Child;
 
     #[inline]
     fn ref_of<L: ContextLayer<E>>(&mut self) -> Option<&mut L> {
         if Any::is::<L>(self) {
             Any::downcast_mut::<L>(self)
         }else{
-            self.child_mut()
-            .and_then(|c|
-                <Self::Child as ContextLayer<E>>::ref_of(c)
-            )
+            <Self::Child as ContextLayer<E>>::ref_of( self._child_mut() )
         }
     }
 
@@ -139,5 +136,42 @@ pub trait ContextStateful: Context where Self::Handler: ContextLayerStateful<Sel
     #[inline]
     fn is_selected(&self, i: &Self::WidgetID) -> bool {
         self.selected().map_or(false, |w| w == *i )
+    }
+}
+
+//TODO move this to impl module
+impl<E> ContextLayer<E> for () where E: Context {
+    type Child = ();
+    /// PANICKS if widget doesn't exists
+    #[inline] 
+    fn _render(senf: &mut E, i: &E::WidgetID, r: E::Renderer) {
+        (senf.widget_fns(i).render)(senf.link(i),r)
+    }
+    /// PANICKS if widget doesn't exists
+    #[inline] 
+    fn _event(senf: &mut E, i: &E::WidgetID, e: E::Event) {
+        (senf.widget_fns(i).event)(senf.link(i),e)
+    }
+    /// PANICKS if widget doesn't exists
+    #[inline] 
+    fn _size(senf: &mut E, i: &E::WidgetID) -> Size {
+        (senf.widget_fns(i).size)(senf.link(i))
+    }
+    #[inline]
+    fn _child_mut(&mut self) -> &mut Self::Child {
+        unreachable!()
+    }
+    #[inline]
+    fn ref_of<L: ContextLayer<E>>(&mut self) -> Option<&mut L> {
+        if Any::is::<L>(self) {
+            Any::downcast_mut::<L>(self)
+        }else{
+            None
+        }
+    }
+
+    #[inline]
+    fn get_self(senf: &mut E) -> Option<&mut Self> {
+        senf.get_handler()
     }
 }

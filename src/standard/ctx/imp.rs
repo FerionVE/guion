@@ -9,8 +9,8 @@ use super::*;
 impl<E,S> ContextLayer<E> for StandardCtx<S,E> where E: Context + AsMut<Self>, S: ContextLayer<E> {
     type Child = S;
 
-    fn child_mut(&mut self) -> Option<&mut Self::Child> {
-        Some(&mut self.sup)
+    fn _child_mut(&mut self) -> &mut Self::Child {
+        &mut self.sup
     }
 }
 
