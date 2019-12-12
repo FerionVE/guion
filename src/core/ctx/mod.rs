@@ -6,6 +6,7 @@ use crate::core::widget::link::Link;
 use crate::core::event::Event;
 use crate::core::render::Render;
 use crate::core::widget::Widget;
+use std::any::Any;
 
 pub mod ctx_meta;
 pub use ctx_meta::*;
@@ -28,6 +29,8 @@ pub trait Context: Sized + 'static {
     type WidgetID: WidgetID<Self>;
     type Commit: Eq + Ord;
     type Style: Style;
+
+    fn handler_mut(&mut self) -> &mut Self::Handler;
 
     fn widget(&self, i: &Self::WidgetID) -> Option<&Self::DynWidget>;
     fn widget_mut(&mut self, i: &Self::WidgetID) -> Option<&mut Self::DynWidget>;
@@ -67,9 +70,15 @@ pub trait Context: Sized + 'static {
             widget_id: i.clone(),
         }
     }
+
+    #[inline]
+    fn get_handler<L: ContextLayer<Self>>(&mut self) -> Option<&mut L> {
+        self.handler_mut().ref_of()
+    }
 }
 
-pub trait ContextLayer<E>: Sized where E: Context {
+pub trait ContextLayer<E>: Sized + 'static where E: Context {
+    type Child: ContextLayer<E> + Sized + 'static;
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _render(senf: &mut E, i: &E::WidgetID, r: E::Renderer) {
@@ -84,6 +93,25 @@ pub trait ContextLayer<E>: Sized where E: Context {
     #[inline] 
     fn _size(senf: &mut E, i: &E::WidgetID) -> Size {
         (senf.widget_fns(i).size)(senf.link(i))
+    }
+
+    fn child_mut(&mut self) -> Option<&mut Self::Child>;
+
+    #[inline]
+    fn ref_of<L: ContextLayer<E>>(&mut self) -> Option<&mut L> {
+        if Any::is::<L>(self) {
+            Any::downcast_mut::<L>(self)
+        }else{
+            self.child_mut()
+            .and_then(|c|
+                <Self::Child as ContextLayer<E>>::ref_of(c)
+            )
+        }
+    }
+
+    #[inline]
+    fn get_self(senf: &mut E) -> Option<&mut Self> {
+        senf.get_handler()
     }
 }
 
