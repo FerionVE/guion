@@ -18,7 +18,7 @@ pub mod aliases;
 pub mod queue;
 pub use queue::*;
 
-pub trait Context: Sized + 'static + BorrowMut<Self::Handler> {
+pub trait Context: Sized + 'static {
     type Handler: ContextLayer<Self>;
     type Meta: ContextMeta<Self>;
     type Renderer: Render<Self>;
@@ -28,6 +28,8 @@ pub trait Context: Sized + 'static + BorrowMut<Self::Handler> {
     type WidgetID: WidgetID<Self>;
     type Commit: Eq + Ord;
     type Style: Style;
+
+    fn ha(&mut self) -> &mut Self::Handler;
 
     fn widget(&self, i: &Self::WidgetID) -> Option<&Self::DynWidget>;
     fn widget_mut(&mut self, i: &Self::WidgetID) -> Option<&mut Self::DynWidget>;
@@ -48,12 +50,12 @@ pub trait Context: Sized + 'static + BorrowMut<Self::Handler> {
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _event(&mut self, i: &Self::WidgetID, e: Self::Event) {
-        Self::Handler::_render(self,i,e)
+        Self::Handler::_event(self,i,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _size(&mut self, i: &Self::WidgetID) -> Size {
-        Self::Handler::_render(self,i)
+        Self::Handler::_size(self,i)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
