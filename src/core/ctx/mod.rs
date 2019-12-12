@@ -1,3 +1,4 @@
+use std::borrow::BorrowMut;
 use crate::core::widget::handler::fns::WidgetFns;
 use crate::core::style::Style;
 use crate::core::lazout::size::Size;
@@ -17,7 +18,8 @@ pub mod aliases;
 pub mod queue;
 pub use queue::*;
 
-pub trait Context: Sized + 'static {
+pub trait Context: Sized + 'static + BorrowMut<Self::Handler> {
+    type Handler: ContextLayer<Self>;
     type Meta: ContextMeta<Self>;
     type Renderer: Render<Self>;
     type Event: Event;
@@ -41,17 +43,17 @@ pub trait Context: Sized + 'static {
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _render(&mut self, i: &Self::WidgetID, r: Self::Renderer) {
-        (self.widget_fns(i).render)(self.link(i),r)
+        Self::Handler::_render(self,i,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _event(&mut self, i: &Self::WidgetID, e: Self::Event) {
-        (self.widget_fns(i).event)(self.link(i),e)
+        Self::Handler::_render(self,i,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _size(&mut self, i: &Self::WidgetID) -> Size {
-        (self.widget_fns(i).size)(self.link(i))
+        Self::Handler::_render(self,i)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
@@ -64,6 +66,26 @@ pub trait Context: Sized + 'static {
             ctx: self,
             widget_id: i.clone(),
         }
+    }
+}
+
+pub trait ContextLayer<E> where E: Context {
+    type Super: ContextLayer<E>;
+
+    /// PANICKS if widget doesn't exists
+    #[inline] 
+    fn _render(senf: &mut E, i: &E::WidgetID, r: E::Renderer) {
+        (senf.widget_fns(i).render)(senf.link(i),r)
+    }
+    /// PANICKS if widget doesn't exists
+    #[inline] 
+    fn _event(senf: &mut E, i: &E::WidgetID, e: E::Event) {
+        (senf.widget_fns(i).event)(senf.link(i),e)
+    }
+    /// PANICKS if widget doesn't exists
+    #[inline] 
+    fn _size(senf: &mut E, i: &E::WidgetID) -> Size {
+        (senf.widget_fns(i).size)(senf.link(i))
     }
 }
 
