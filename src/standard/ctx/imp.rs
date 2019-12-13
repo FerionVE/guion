@@ -6,24 +6,10 @@ use crate::core::ctx::*;
 use crate::core::lazout::size::Size;
 use super::*;
 ///NOTE that E is not the current Context but the underlying
-impl<E,S> ContextLayer<E> for StandardCtx<S,E> where E: Context + AsMut<Self>, S: ContextLayer<E> {
+impl<E,S> ContextLayer<E> for StandardCtx<S,E> where E: Context, S: ContextLayer<E> {
     type Child = S;
 
     fn _child_mut(&mut self) -> &mut Self::Child {
         &mut self.sup
     }
 }
-
-impl<T,S,E> AsMut<T> for StandardCtx<S,E> where S: ContextLayer<E> + AsMut<T>, E: Context {
-    fn as_mut(&mut self) -> &mut T {
-        let sup: &mut S = &mut self.sup;
-        <S as AsMut<T>>::as_mut(sup)
-    }
-}
-
-/*impl<T,E> AsMut<T> for StandardCtx<T,E> where E: Context {
-    fn as_mut(&mut self) -> &mut T {
-        let sup: &mut S = &mut self.sup;
-        <S as AsMut<T>>::as_mut(sup)
-    }
-}*/

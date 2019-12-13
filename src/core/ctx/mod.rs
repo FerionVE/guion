@@ -75,11 +75,12 @@ pub trait Context: Sized + 'static {
 
     #[inline]
     fn get_handler<L: ContextLayer<Self>>(&mut self) -> Option<&mut L> {
-        self.handler_mut().ref_of()
+        self.handler_mut()._ref_of()
     }
 }
 
 pub trait ContextLayer<E>: Sized + 'static where E: Context {
+    //
     type Child: ContextLayer<E> + Sized + 'static;
     /// PANICKS if widget doesn't exists
     #[inline] 
@@ -97,20 +98,26 @@ pub trait ContextLayer<E>: Sized + 'static where E: Context {
         Self::Child::_size(senf,i)
     }
 
+    #[deprecated = "Should not be called as it will panic on the impl of ()"]
     fn _child_mut(&mut self) -> &mut Self::Child;
+    #[allow(deprecated)]
+    #[inline]
+    fn child_mut(&mut self) -> Option<&mut Self::Child> {
+        Some(self._child_mut())
+    }
 
     #[inline]
-    fn ref_of<L: ContextLayer<E>>(&mut self) -> Option<&mut L> {
+    fn _ref_of<L: ContextLayer<E>>(&mut self) -> Option<&mut L> {
         if Any::is::<L>(self) {
             Any::downcast_mut::<L>(self)
         }else{
-            <Self::Child as ContextLayer<E>>::ref_of( self._child_mut() )
+            self.child_mut().and_then(<Self::Child as ContextLayer<E>>::_ref_of)
         }
     }
 
     #[inline]
-    fn get_self(senf: &mut E) -> Option<&mut Self> {
-        senf.get_handler()
+    fn get_self(senf: &mut E) -> &mut Self {
+        senf.get_handler().expect("ContextLayer<E> must be or be a child of E::Handler")
     }
 }
 

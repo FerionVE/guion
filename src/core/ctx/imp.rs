@@ -17,22 +17,14 @@ impl<E> ContextLayer<E> for () where E: Context {
     fn _size(senf: &mut E, i: &E::WidgetID) -> Size {
         (senf.widget_fns(i).size)(senf.link(i))
     }
-    #[inline]
-    fn _child_mut(&mut self) -> &mut Self::Child {
-        unreachable!()
-    }
-    #[inline]
-    fn ref_of<L: ContextLayer<E>>(&mut self) -> Option<&mut L> {
-        if Any::is::<L>(self) {
-            Any::downcast_mut::<L>(self)
-        }else{
-            None
-        }
-    }
 
     #[inline]
-    fn get_self(senf: &mut E) -> Option<&mut Self> {
-        senf.get_handler()
+    fn _child_mut(&mut self) -> &mut Self::Child {
+        unreachable!("ContextLayer::_child_mut shouldn't be called from external")
+    }
+    #[inline]
+    fn child_mut(&mut self) -> Option<&mut Self::Child> {
+        None
     }
 }
 
