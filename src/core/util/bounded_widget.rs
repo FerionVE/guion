@@ -1,7 +1,7 @@
 use crate::core::util::bounds::Bounds;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 
-pub trait IBoundedWidget<E>: Clone where E: Context {
+pub trait IBoundedWidget<E>: Clone where E: Env {
     fn bounds(&self) -> &Bounds;
     fn id(&self) -> E::WidgetID;
     #[inline]
@@ -14,12 +14,12 @@ pub trait IBoundedWidget<E>: Clone where E: Context {
 }
 
 //#[derive(Clone)]
-pub struct BoundedWidget<E> where E: Context {
+pub struct BoundedWidget<E> where E: Env {
     pub bounds: Bounds,
     pub id: E::WidgetID,
 }
 
-impl<E> IBoundedWidget<E> for BoundedWidget<E> where E: Context {
+impl<E> IBoundedWidget<E> for BoundedWidget<E> where E: Env {
     #[inline]
     fn bounds(&self) -> &Bounds {
         &self.bounds
@@ -30,7 +30,7 @@ impl<E> IBoundedWidget<E> for BoundedWidget<E> where E: Context {
     }
 }
 
-impl<E> Clone for BoundedWidget<E> where E: Context {
+impl<E> Clone for BoundedWidget<E> where E: Env {
     #[inline]
     fn clone(&self) -> Self {
         Self{

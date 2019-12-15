@@ -1,7 +1,7 @@
 use super::*;
 
 
-impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ITemplate<E>, E: Context + 'static {
+impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ITemplate<E>, E: Env + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {
         <T as ITemplate<E>>::id(self)
@@ -30,6 +30,6 @@ impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>
     }
 }
 
-impl<T,E,C> Widget<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ITemplate<E>, E: Context + 'static {
+impl<T,E,C> Widget<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ITemplate<E>, E: Env + 'static {
     crate::impl_template_inner!(AsTemplate<T,E,C>,E);
 }

@@ -1,16 +1,16 @@
 use crate::core::lazout::size::Size;
 use crate::core::util::bounded_widget::*;
-use crate::core::widget::handler::WidgetFns;
+use crate::core::widget::handlez::WidgetFns;
 use crate::core::widget::link::Link;
 use std::any::Any;
 use crate::core::widget::Widget;
-use crate::core::ctx::Context::*;
+use crate::core::ctx::*::*;
 use crate::core::render::*;
 use crate::core::event::Event;
 
 pub mod imp;
 
-pub trait Pane<E> where E: Context {
+pub trait Pane<E> where E: Env {
     type C: IBoundedWidget<E> + 'static;
 
     fn id(&self) -> E::WidgetID;
@@ -29,7 +29,7 @@ pub trait Pane<E> where E: Context {
     
 }
 
-impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Context + 'static {
+impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {
         Pane::id(self)
@@ -70,7 +70,7 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Context + 'static {
     #[inline] fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
-fn render<W: Pane<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
     for c in childs::<W,_>(&l) {
         l.widget(&c.id)
             .expect("Pane contains lost Widget")
@@ -79,7 +79,7 @@ fn render<W: Pane<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: E::
     }
 }
 
-fn event<W: Pane<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
+fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     //TODO special focus/hover enter/leave handling
     for c in childs::<W,_>(&l).into_iter().rev() {
         if let Some(e) = e.filter_cloned(&c.bounds) {
@@ -95,11 +95,11 @@ fn event<W: Pane<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event
     }
 }
 
-fn size<W: Pane<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
+fn size<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     unimplemented!()
 }
 #[inline]
-fn childs<W: Pane<E> + 'static, E: Context + 'static>(l: &Link<E>) -> Vec<BoundedWidget<E>> {
+fn childs<W: Pane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<BoundedWidget<E>> {
     l.me::<W>().childs()
         .iter()
         .map(IBoundedWidget::into_a)

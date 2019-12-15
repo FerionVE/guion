@@ -4,13 +4,13 @@ use crate::core::widget::Widget;
 use crate::core::util::bounds::Bounds;
 use crate::core::style::*;
 
-pub trait Render<E>: Sized where E: Context<Renderer=Self> {
+pub trait Render<E>: Sized where E: Env<Renderer=Self> {
     #[inline]
     fn requires_render(&self, w: &E::DynWidget) -> bool {
         w.invalid() || self.force()
     }
     #[inline] 
-    fn render_widgets<'a,W: IBoundedWidget<E> + 'a>(&mut self, i: impl Iterator<Item=&'a W>, c: &mut E, overlap: bool) {
+    fn render_widgets<'a,W: IBoundedWidget<E> + 'a>(&mut self, i: impl Iterator<Item=&'a W>, c: &mut E::Context, overlap: bool) {
         if overlap {
             let mut render = false;
             for w in i {
@@ -20,7 +20,7 @@ pub trait Render<E>: Sized where E: Context<Renderer=Self> {
                     let border = ww.border().clone();
                     let sliced = self.slice( &w.bounds().inside(&border) );
 
-                    w.id().render(c,sliced).expect("Lost Widget");
+                    w.id().render::<E>(c,sliced).expect("Lost Widget");
                 }
                 render &= overlap;
             }

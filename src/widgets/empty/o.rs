@@ -1,11 +1,11 @@
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 
-pub struct Empty<E> where E: Context {
+pub struct Empty<E> where E: Env {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
 }
 
-impl<E> super::IEmpty<E> for Empty<E> where E: Context + 'static {
+impl<E> super::IEmpty<E> for Empty<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

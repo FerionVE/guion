@@ -1,23 +1,23 @@
 use crate::standard::state::mouse::drag::DragItem;
 use crate::core::util::bounds::Offset;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 
 pub mod drag;
 
-pub struct MouseState<E> where E: Context {
+pub struct MouseState<E> where E: Env {
     pub pressed: Vec<MousePressedKey<E>>,
     pub drag: Option<DragItem<E>>,
     pub pos: Option<Offset>,
 }
 
-pub struct MousePressedKey<E> where E: Context {
+pub struct MousePressedKey<E> where E: Env {
     pub key: u32,
     pub start: Offset,
     pub id: E::WidgetID,
     pub ts: u64,
 }
 
-impl<E> MouseState<E> where E: Context {
+impl<E> MouseState<E> where E: Env {
     #[inline]
     pub fn down(&mut self, key: u32, start: Offset, id: E::WidgetID, ts: u64) {
         self.up(key);

@@ -3,7 +3,7 @@ pub mod o;
 pub mod as_label;
 
 use crate::core::widget::Widget;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use crate::core::widget::link::Link;
 pub use imp::*;
 pub use o::*;
@@ -18,7 +18,7 @@ pub use o::*;
 /// 
 /// Then put the reference or owned type inside a AsLabel to use as widget
 /// If your type should only be viewed as one widget, you can use impl_label! to implement Widget directly
-pub trait ILabel<E>: Widget<E> where E: Context {
+pub trait ILabel<E>: Widget<E> where E: Env {
     fn id(&self) -> E::WidgetID;
 
     fn style(&self) -> &E::Style;

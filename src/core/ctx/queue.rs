@@ -1,6 +1,6 @@
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 
-pub trait Queue<E> where E: Context {
+pub trait Queue<E> where E: Env {
     type Callback;
     type Args;
     type Return;
@@ -8,6 +8,6 @@ pub trait Queue<E> where E: Context {
     fn add(&mut self, a: Self::Args, f: Self::Callback) -> Self::Return;
 }
 
-pub trait AccessQueue<Q>: Context where Q: Queue<Self> {
+pub trait AccessQueue<Q,E>: Context where Q: Queue<E>, E: Env<Context=Self>, Self: Widgets<E> {
     fn queue_mut(&mut self) -> &mut Q;
 }

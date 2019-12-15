@@ -4,7 +4,7 @@ use super::*;
 #[macro_export]
 macro_rules! impl_button {
     ($t:ty) => {
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IButton<E>, E: $crate::macro_prelude::Context + 'static {
+        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IButton<E>, E: $crate::macro_prelude::Env + 'static {
             $crate::impl_button_inner!($t,E);
         }
     };
@@ -70,14 +70,14 @@ macro_rules! impl_button_inner {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: E::Renderer) {
+pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: E::Renderer) {
     unimplemented!()
 }
 
-pub fn _event<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
+pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     unimplemented!()
 }
 
-pub fn _size<W: IButton<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
+pub fn _size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     unimplemented!()
 }

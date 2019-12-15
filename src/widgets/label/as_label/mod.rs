@@ -9,13 +9,13 @@ use super::*;
 mod imp;
 
 /// put a type or mutable reference implementing ILabel inside this to enforce view as Label
-pub struct AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Context + 'static {
+pub struct AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Env + 'static {
     pub inner: C,
     _e: PhantomData<E>,
     _t: PhantomData<T>,
 }
 
-impl<T,E,C> AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Context + 'static {
+impl<T,E,C> AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Env + 'static {
     #[inline]
     pub fn new(inner: C) -> Self {
         Self{
@@ -26,14 +26,14 @@ impl<T,E,C> AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: C
     }
 }
 
-impl<T,E,C> From<C> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Context + 'static {
+impl<T,E,C> From<C> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Env + 'static {
     #[inline]
     fn from(inner: C) -> Self {
         Self::new(inner)
     }
 }
 
-impl<T,E,C> Deref for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Context + 'static {
+impl<T,E,C> Deref for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Env + 'static {
     type Target=T;
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -41,13 +41,13 @@ impl<T,E,C> Deref for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabe
     }
 }
 
-impl<T,E,C> DerefMut for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Context + 'static {
+impl<T,E,C> DerefMut for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Env + 'static {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.inner.borrow_mut()
     }
 }
 
-/*impl<T,E,C> ScopedMut for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Context + 'static {
+/*impl<T,E,C> ScopedMut for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ILabel<E>, E: Env + 'static {
     impl_scoped_mut_inner!(T);
 }*/

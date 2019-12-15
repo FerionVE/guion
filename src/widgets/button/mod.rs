@@ -2,12 +2,12 @@ pub mod imp;
 pub mod o;
 
 use crate::core::widget::Widget;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use crate::core::widget::link::Link;
 pub use imp::*;
 pub use o::*;
 
-pub trait IButton<E>: Widget<E> where E: Context {
+pub trait IButton<E>: Widget<E> where E: Env {
     fn id(&self) -> E::WidgetID;
 
     fn action(&self) -> fn(Link<E>);

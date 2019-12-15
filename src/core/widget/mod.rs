@@ -1,19 +1,20 @@
+use crate::core::ctx::Env;
 use crate::core::util::border::Border;
-use crate::core::widget::handler::WidgetFns;
-use crate::core::widget::handler::Handler;
+use crate::core::widget::handlez::WidgetFns;
+use crate::core::widget::handlez::Handlez;
 use std::any::Any;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use crate::core::style::Style;
 
 pub mod link;
-pub mod handler;
+pub mod handlez;
 //pub mod imp;
 
-pub trait Widget<E>: Any where E: Context + 'static {
+pub trait Widget<E>: Any where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
     #[inline]
-    fn handler<'a>(&self, c: &'a mut E) -> Handler<'a,E> { //TODO deprecate in future
-        Handler {
+    fn handler<'a>(&self, c: &'a mut E::Context) -> Handlez<'a,E> { //TODO deprecate in future
+        Handlez {
             id: self.id(),
             ctx: c,
         }

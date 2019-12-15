@@ -1,7 +1,7 @@
 use crate::core::widget::link::Link;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 
-pub struct Button<E> where E: Context {
+pub struct Button<E> where E: Env {
     id: E::WidgetID,
     invalid: bool,
     parent: Option<E::WidgetID>,
@@ -10,7 +10,7 @@ pub struct Button<E> where E: Context {
     action: fn(Link<E>),
 }
 
-impl<E> super::IButton<E> for Button<E> where E: Context + 'static {
+impl<E> super::IButton<E> for Button<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

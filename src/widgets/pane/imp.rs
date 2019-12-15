@@ -4,7 +4,7 @@ use super::*;
 #[macro_export]
 macro_rules! impl_pane {
     ($t:ty) => {
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IPane<E>, E: $crate::macro_prelude::Context + 'static {
+        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IPane<E>, E: $crate::macro_prelude::Env + 'static {
             $crate::impl_pane_inner!($t,E);
         }
     };
@@ -70,7 +70,7 @@ macro_rules! impl_pane_inner {
     };
 }
 
-pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
     let o = l.me::<W>().orientation();
     
     let c = childs::<W,E>(&l);
@@ -78,7 +78,7 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: L
     let b = c.iter()
     .map(|c| 
         c
-        .size(&mut l)
+        .size::<E>(&mut l)
         .expect("Lost Widget")
     )
     .collect::<Vec<_>>();
@@ -87,24 +87,24 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Context + 'static>(mut l: L
     
     for (cc,bb) in c.iter().zip(b.iter()) {
         cc
-        .render( &mut *l, r.slice(bb) )
+        .render::<E>( &mut *l, r.slice(bb) )
         .expect("Pane contains lost Widget");
     }
     
 }
 
-pub fn _event<W: IPane<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
+pub fn _event<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     unimplemented!()
 }
 
-pub fn _size<W: IPane<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
+pub fn _size<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     let o = l.me::<W>().orientation();
     
     let mut s = Size::empty();
     
     for c in childs::<W,E>(&l) {
         let cs = c
-        .size(&mut l)
+        .size::<E>(&mut l)
         .expect("Lost Widget");
         
         s.add(&cs, o)
@@ -113,6 +113,6 @@ pub fn _size<W: IPane<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Siz
     s
 }
 #[inline]
-fn childs<W: IPane<E> + 'static, E: Context + 'static>(l: &Link<E>) -> Vec<E::WidgetID> {
+fn childs<W: IPane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<E::WidgetID> {
     IPane::childs(l.me::<W>()).to_owned()
 }

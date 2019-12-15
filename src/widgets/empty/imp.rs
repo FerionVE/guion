@@ -4,7 +4,7 @@ use super::*;
 #[macro_export]
 macro_rules! impl_empty {
     ($t:ty) => {
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IEmpty<E>, E: $crate::macro_prelude::Context + 'static {
+        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IEmpty<E>, E: $crate::macro_prelude::Env + 'static {
             $crate::impl_empty_inner!($t,E);
         }
     };
@@ -70,14 +70,14 @@ macro_rules! impl_empty_inner {
     };
 }
 
-pub fn _render<W: IEmpty<E> + 'static, E: Context + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+pub fn _render<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
     
 }
 
-pub fn _event<W: IEmpty<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
+pub fn _event<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     
 }
 
-pub fn _size<W: IEmpty<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
+pub fn _size<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     Size::empty()
 }

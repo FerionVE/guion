@@ -1,10 +1,9 @@
 use std::marker::PhantomData;
-use crate::core::ctx::ContextLayer;
-use crate::core::ctx::Context;
+use crate::core::ctx::Handler;
+use crate::core::ctx::*;
 
 pub mod imp;
 
-pub struct StandardCtx<S,E> where S: ContextLayer<E>, E: Context {
+pub struct StandardCtx<S> where S: Handler {
     pub sup: S,
-    _e: PhantomData<E>,
 }

@@ -10,12 +10,12 @@ macro_rules! create_widget_as_widget_module {
         use super::*;
 
         /// put a type or mutable reference implementing ITemplate inside this to enforce view as Template
-        pub struct $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Context + 'static {
+        pub struct $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Env + 'static {
             pub inner: T,
             _e: PhantomData<E>,
         }
 
-        impl<T,U,E> $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Context + 'static {
+        impl<T,U,E> $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Env + 'static {
             #[inline]
             pub fn new(inner: T) -> Self {
                 Self{
@@ -25,14 +25,14 @@ macro_rules! create_widget_as_widget_module {
             }
         }
 
-        impl<T,U,E> From<T> for $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Context + 'static {
+        impl<T,U,E> From<T> for $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Env + 'static {
             #[inline]
             fn from(inner: T) -> Self {
                 Self::new(inner)
             }
         }
 
-        impl<T,U,E> Deref for $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Context + 'static {
+        impl<T,U,E> Deref for $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Env + 'static {
             type Target=T;
             #[inline]
             fn deref(&self) -> &Self::Target {
@@ -40,14 +40,14 @@ macro_rules! create_widget_as_widget_module {
             }
         }
 
-        impl<T,U,E> DerefMut for $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Context + 'static {
+        impl<T,U,E> DerefMut for $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Env + 'static {
             #[inline]
             fn deref_mut(&mut self) -> &mut Self::Target {
                 &mut self.inner
             }
         }
 
-        /*impl<T,U,E> ScopedMut for $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Context + 'static {
+        /*impl<T,U,E> ScopedMut for $as_struct_name<T,U,E> where T: ScopedMut<T=U> + 'static, U: $trait<E>, E: Env + 'static {
             impl_scoped_mut_inner!(T);
         }*/
     };

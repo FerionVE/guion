@@ -1,8 +1,8 @@
 use crate::core::lazout::Orientation;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use crate::core::style::Style;
 
-pub struct Pane<E> where E: Context {
+pub struct Pane<E> where E: Env {
     id: E::WidgetID,
     childs: Vec<E::WidgetID>,
     invalid: bool,
@@ -10,7 +10,7 @@ pub struct Pane<E> where E: Context {
     orientation: Orientation,
 }
 
-impl<E> super::IPane<E> for Pane<E> where E: Context + 'static {
+impl<E> super::IPane<E> for Pane<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

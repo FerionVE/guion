@@ -2,14 +2,14 @@ use crate::core::ctx::*;
 use crate::core::widget::Widget;
 use std::ops::DerefMut;
 use std::ops::Deref;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 
-pub struct Link<'a,E> where E: Context {
-    pub ctx: &'a mut E,
+pub struct Link<'a,E> where E: Env {
+    pub ctx: &'a mut E::Context,
     pub widget_id: E::WidgetID,
 }
 
-impl<'a,E> Link<'a,E> where E: Context {
+impl<'a,E> Link<'a,E> where E: Env {
     #[inline]
     pub fn me<S: Widget<E> + 'static>(&'a self) -> &'a S {
         self.ctx.widget(&self.widget_id)
@@ -25,26 +25,26 @@ impl<'a,E> Link<'a,E> where E: Context {
             .downcast_mut::<S>().expect("Link: Wrong Widget Type")
     }
 
-    pub fn with_ctx<'b,F: Context<WidgetID=E::WidgetID>>(self, ctx: &'b mut F) -> Link<'b,F> where E::WidgetID: WidgetID<F> {
+    pub fn with_ctx<'b,F: Env<WidgetID=E::WidgetID>>(self, ctx: &'b mut F::Context) -> Link<'b,F> {
         Link{
             ctx,
             widget_id: self.widget_id,
         }
     }
     #[inline]
-    pub fn enqueue<Q: Queue<E>>(&'a mut self, args: Q::Args, f: Q::Callback) -> Q::Return where E: AccessQueue<Q> {
+    pub fn enqueue<Q: Queue<E>>(&'a mut self, args: Q::Args, f: Q::Callback) -> Q::Return where E::Context: AccessQueue<Q,E> {
         self.ctx.queue_mut().add(args,f)
     }
 }
 
-impl<'a,E> Deref for Link<'a,E> where E: Context {
-    type Target = E;
+impl<'a,E> Deref for Link<'a,E> where E: Env {
+    type Target = E::Context;
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.ctx
     }
 }
-impl<'a,E> DerefMut for Link<'a,E> where E: Context {
+impl<'a,E> DerefMut for Link<'a,E> where E: Env {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.ctx

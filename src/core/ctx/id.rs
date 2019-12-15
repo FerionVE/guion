@@ -2,45 +2,51 @@ use crate::core::lazout::size::Size;
 use super::*;
 use qwutils::*;
 
-pub trait WidgetID<E>: Clone + PartialEq + Sized where E: Context<WidgetID=Self> {
+pub trait WidgetID: Clone + PartialEq + Sized {
     #[inline]
-    fn render(&self, c: &mut E, r: E::Renderer) -> Result<(),()> {
+    fn id_eq<I: WidgetID + 'static>(&self, o: &I) -> bool where Self: 'static {
+        Any::downcast_ref::<Self>(o)
+            .map_or(false, |r| self.eq(r) )
+    }
+    
+    #[inline]
+    fn render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: E::Renderer) -> Result<(),()> {
         c.has_widget(self).result()
-            .map(|_| self._render(c,r) )
+            .map(|_| self._render::<E>(c,r) )
     }
     #[inline]
-    fn event(&self, c: &mut E, e: E::Event) -> Result<(),()> {
+    fn event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: E::Event) -> Result<(),()> {
         c.has_widget(self).result()
-            .map(|_| self._event(c,e) )
+            .map(|_| self._event::<E>(c,e) )
     }
     #[inline]
-    fn size(&self, c: &mut E) -> Result<Size,()> {
+    fn size<E: Env<WidgetID=Self>>(&self, c: &mut E::Context) -> Result<Size,()> {
         c.has_widget(self).result()
-            .map(|_| self._size(c) )
+            .map(|_| self._size::<E>(c) )
     }
 
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _render(&self, c: &mut E, r: E::Renderer) {
+    fn _render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: E::Renderer) {
         c._render(self,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _event(&self, c: &mut E, e: E::Event) {
+    fn _event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: E::Event) {
         c._event(self,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _size(&self, c: &mut E) -> Size {
+    fn _size<E: Env<WidgetID=Self>>(&self, c: &mut E::Context) -> Size {
         c._size(self)
     }
 
     #[inline]
-    fn is_hovered(&self, c: &E) -> bool where E: ContextStateful, E::Handler: ContextLayerStateful<E> {
+    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
         c.is_hovered(self)
     }
     #[inline]
-    fn is_selected(&self, c: &E) -> bool where E: ContextStateful, E::Handler: ContextLayerStateful<E> {
+    fn is_selected<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
         c.is_selected(self)
     }
 }

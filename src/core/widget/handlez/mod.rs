@@ -9,26 +9,26 @@ pub mod imp;
 pub use fns::*;
 pub use imp::*;
 
-pub struct Handler<'a,E> where E: Context {
+pub struct Handlez<'a,E> where E: Env {
     pub(crate) id: E::WidgetID,
-    pub(crate) ctx: &'a mut E,
+    pub(crate) ctx: &'a mut E::Context,
 }
 
-impl<'a,E> Handler<'a,E> where E: Context {
+impl<'a,E> Handlez<'a,E> where E: Env {
     #[deprecated]
     #[inline]
     pub fn render(&mut self, r: E::Renderer) { //TODO fix &mut Renderer back to owned
-        self.id._render(self.ctx,r)
+        self.id._render::<E>(self.ctx,r)
     }
     #[deprecated]
     #[inline]
     pub fn event(&mut self, e: E::Event) {
-        self.id._event(self.ctx,e)
+        self.id._event::<E>(self.ctx,e)
     }
     #[deprecated]
     #[inline]
     pub fn size(&mut self) -> Size {
-        self.id._size(self.ctx)
+        self.id._size::<E>(self.ctx)
     }
     #[deprecated]
     #[inline]
@@ -39,11 +39,11 @@ impl<'a,E> Handler<'a,E> where E: Context {
         }
     }
     #[inline]
-    pub fn is_hovered(&self) -> bool where E: ContextStateful, E::Handler: ContextLayerStateful<E> {
+    pub fn is_hovered(&self) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
         self.ctx.hovered().map_or(false, |i| i == self.id )
     }
     #[inline]
-    pub fn is_selected(&self) -> bool where E: ContextStateful, E::Handler: ContextLayerStateful<E> {
+    pub fn is_selected(&self) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
         self.ctx.selected().map_or(false, |i| i == self.id )
     }
     /// iterate over childs

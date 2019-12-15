@@ -1,8 +1,8 @@
 
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use crate::core::widget::Widget;
 ///tabulate through widget tree
-pub fn tabulate<E: Context>(c: &mut E, selected: E::WidgetID, reverse: bool) -> E::WidgetID {
+pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetID, reverse: bool) -> E::WidgetID {
     //for recognizing infinite loops
     let initial_selected = selected.clone();
     let mut current = selected;

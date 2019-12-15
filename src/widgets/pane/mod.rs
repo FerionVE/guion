@@ -3,7 +3,7 @@ use crate::core::util::bounds::Bounds;
 use crate::core::lazout::size::Size;
 use crate::core::widget::link::Link;
 use crate::core::widget::Widget;
-use crate::core::ctx::Context;
+use crate::core::ctx::*;
 use crate::core::render::*;
 use crate::core::lazout::Orientation;
 
@@ -13,7 +13,7 @@ pub mod o;
 pub use imp::*;
 pub use o::*;
 
-pub trait IPane<E>: Widget<E> where E: Context {
+pub trait IPane<E>: Widget<E> where E: Env {
 
     fn id(&self) -> E::WidgetID;
 

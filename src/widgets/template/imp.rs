@@ -7,12 +7,12 @@ use super::*;
 #[macro_export]
 macro_rules! impl_template {
     ($t:ty) => {
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::ITemplate<E>, E: $crate::macro_prelude::Context + 'static {
+        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::ITemplate<E>, E: $crate::macro_prelude::Env + 'static {
             $crate::impl_template_inner!($t,E);
         }
     };
 }
-/// impl<E> Widget<E> for T where T: ITemplate<E>, E: Context + 'static {
+/// impl<E> Widget<E> for T where T: ITemplate<E>, E: Env + 'static {
 ///     crate::impl_template_inner!(T,E);
 /// }
 #[macro_export]
@@ -75,14 +75,14 @@ macro_rules! impl_template_inner {
     };
 }
 
-pub fn _render<W: ITemplate<E> + 'static, E: Context + 'static>(mut l: Link<E>, r: E::Renderer) {
+pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: E::Renderer) {
     unimplemented!()
 }
 
-pub fn _event<W: ITemplate<E> + 'static, E: Context + 'static>(mut l: Link<E>, e: E::Event) {
+pub fn _event<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
     unimplemented!()
 }
 
-pub fn _size<W: ITemplate<E> + 'static, E: Context + 'static>(mut l: Link<E>) -> Size {
+pub fn _size<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     unimplemented!()
 }

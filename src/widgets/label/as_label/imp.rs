@@ -1,7 +1,7 @@
 use super::*;
 
 
-impl<T,E,C> ILabel<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ILabel<E>, E: Context + 'static {
+impl<T,E,C> ILabel<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ILabel<E>, E: Env + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {
         <T as ILabel<E>>::id(self)
@@ -30,6 +30,6 @@ impl<T,E,C> ILabel<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'st
     }
 }
 
-impl<T,E,C> Widget<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ILabel<E>, E: Context + 'static {
+impl<T,E,C> Widget<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ILabel<E>, E: Env + 'static {
     crate::impl_label_inner!(AsLabel<T,E,C>,E);
 }
