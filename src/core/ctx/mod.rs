@@ -135,7 +135,22 @@ pub trait Handler: Sized + 'static {
     }
 }
 
-pub trait HandlerWithChild: Handler + Sized + 'static {}
+pub trait HandlerWithChild: Handler + Sized + 'static {
+    #[allow(deprecated)]
+    #[inline]
+    fn hwc_child_mut(&mut self) -> &mut Self::Child {
+        self._child_mut()
+    }
+    #[allow(deprecated)]
+    #[inline]
+    fn hwc_child(&self) -> &Self::Child {
+        self._child()
+    }
+}
+//TODO remove this again
+pub trait AsHandler<C> where C: Handler {
+    fn handler_mut(&mut self) -> &mut C;
+}
 
 pub trait HandlerStateful<E>: 'static where E: Env {
     #[inline] fn hovered(&self) -> Option<E::WidgetID> {

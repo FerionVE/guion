@@ -37,49 +37,17 @@ impl Handler for () {
     }
 }
 //TODO Look out!! This is part of the way to solve the DerefMut<Handler> problem
-impl<T,E> HandlerStateful<E> for T where T: HandlerWithChild, E: Env, T::Child: HandlerStateful<E> {
+/*impl<T,E> HandlerStateful<E> for T where T: HandlerWithChild, E: Env, T::Child: HandlerStateful<E> {
     #[inline] fn hovered(&self) -> Option<E::WidgetID> {
         self.child().expect("HandlerWithChild but doesn't child").hovered()
     }
     #[inline] fn selected(&self) -> Option<E::WidgetID> {
         self.child().expect("HandlerWithChild but doesn't child").selected()
     }
-}
-
-/*pub struct Reee;
-
-impl Context for Reee {
-
-}
-
-pub trait AsHandler<C>: Context where C: Handler<Self> {
-    fn handler_mut(&mut self) -> &mut C;
-}
-
-impl<E> AsHandler<E::Handler> for Option<E> where E: Env {
-    fn handler_mut(&mut self) -> &mut E::Handler {
-        self.handler_mut()
-    }
-}
-
-impl<E> AsHandler<<E::Handler as Handler<E>>::Child> for Option<E> where E: Env {
-    fn handler_mut(&mut self) -> &mut <E::Handler as Handler<E>>::Child {
-        self.handler_mut()
-    }
 }*/
 
-/*pub trait HandlerOf<E>: Handler<E> where E: Env {
-    fn handler_mut(r: &mut E) -> &mut Self;
-}
-
-impl<E> HandlerOf<E> for E::Handler where E: Env {
-    fn handler_mut(r: &mut E) -> &mut Self {
-        r.handler_mut()
-    }
-}
-
-impl<E> HandlerOf<E> for <E::Handler as Handler<E>>::Child where E: Env {
-    fn handler_mut(r: &mut E) -> &mut Self {
-        r.handler_mut()._child_mut()
+/*impl<T,U> AsHandler<U> for T where T: HandlerWithChild, T::Child: AsHandler<U>, U: Handler {
+    fn handler_mut(&mut self) -> &mut U {
+        self.hwc_child_mut().handler_mut()
     }
 }*/
