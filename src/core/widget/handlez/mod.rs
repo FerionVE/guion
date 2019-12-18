@@ -39,11 +39,11 @@ impl<'a,E> Handlez<'a,E> where E: Env {
         }
     }
     #[inline]
-    pub fn is_hovered(&self) -> bool where E::Context: ContextStateful<E>, <E::Context as Context<E::HDeref>>::Handler: HandlerStateful<E> {
+    pub fn is_hovered(&self) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
         self.ctx.hovered().map_or(false, |i| i == self.id )
     }
     #[inline]
-    pub fn is_selected(&self) -> bool where E::Context: ContextStateful<E>, <E::Context as Context<E::HDeref>>::Handler: HandlerStateful<E> {
+    pub fn is_selected(&self) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
         self.ctx.selected().map_or(false, |i| i == self.id )
     }
     /// iterate over childs

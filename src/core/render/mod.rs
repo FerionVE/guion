@@ -10,7 +10,7 @@ pub trait Render<E>: Sized where E: Env<Renderer=Self> {
         w.invalid() || self.force()
     }
     #[inline] 
-    fn render_widgets<'a,W: IBoundedWidget<E> + 'a>(&mut self, i: impl Iterator<Item=&'a W>, c: &mut E::Context, overlap: bool) where E::HDeref: for<'b> From<&'b mut E::Context> {
+    fn render_widgets<'a,W: IBoundedWidget<E> + 'a>(&mut self, i: impl Iterator<Item=&'a W>, c: &mut E::Context, overlap: bool) {
         if overlap {
             let mut render = false;
             for w in i {
