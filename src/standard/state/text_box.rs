@@ -4,7 +4,7 @@ use crate::core::ctx::aliases::EPPText;
 use crate::core::ctx::*;
 use crate::core::style::font::PreprocessedText;
 
-pub struct TextBoxState<E> where E: Env, E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
+pub struct TextBoxState<E> where E: Env, E::Context: ContextStateful<E>, <E::Context as Context<E::HDeref>>::Handler: HandlerStateful<E> {
     pp: EPPText<E>,
     id: E::WidgetID,
 }

@@ -22,7 +22,7 @@ pub use queue::*;
 mod imp;
 
 pub trait Env: Sized + 'static {
-    type Context: Context + Widgets<Self>;
+    type Context: Context<Self::HDeref> + Widgets<Self>;
     type Renderer: Render<Self>;
     type Event: Event;
     ///regularly just dyn Widget
@@ -30,6 +30,7 @@ pub trait Env: Sized + 'static {
     type WidgetID: WidgetID;
     type Commit: Eq + Ord;
     type Style: Style;
+    type HDeref: for<'a> From<&'a mut Self::Context>;
 }
 
 pub trait Widgets<E>: 'static where E: Env {
@@ -45,112 +46,65 @@ pub trait Widgets<E>: 'static where E: Env {
     #[inline] fn tune_id_mut(&mut self, _i: &mut E::WidgetID) {}
 }
 
-pub trait Context: Sized + 'static {
-    type Handler: Handler;
+pub trait Context<H>: Sized + 'static where H: for<'a> From<&'a mut Self> {
+    type Handler: Handler<H>;
     //type Meta: ContextMeta;
 
     fn handler_mut(&mut self) -> &mut Self::Handler;
 
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _render<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, r: E::Renderer) where Self: Widgets<E> {
-        Self::Handler::_render::<E>(self,i,r)
+    fn _render<E: Env<Context=Self,HDeref=H>>(&mut self, i: &E::WidgetID, r: E::Renderer) where Self: Widgets<E> {
+        Self::Handler::_render::<E>(self.into(),i,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _event<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, e: E::Event) where Self: Widgets<E> {
-        Self::Handler::_event::<E>(self,i,e)
+    fn _event<E: Env<Context=Self,HDeref=H>>(&mut self, i: &E::WidgetID, e: E::Event) where Self: Widgets<E> {
+        Self::Handler::_event::<E>(self.into(),i,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _size<E: Env<Context=Self>>(&mut self, i: &E::WidgetID) -> Size where Self: Widgets<E> {
-        Self::Handler::_size::<E>(self,i)
+    fn _size<E: Env<Context=Self,HDeref=H>>(&mut self, i: &E::WidgetID) -> Size where Self: Widgets<E> {
+        Self::Handler::_size::<E>(self.into(),i)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn widget_fns<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> WidgetFns<E> where Self: Widgets<E> {
+    fn widget_fns<E: Env<Context=Self,HDeref=H>>(&self, i: &E::WidgetID) -> WidgetFns<E> where Self: Widgets<E> {
         Widget::_fns(self.widget(i).expect("Lost Widget"))
     }
 
-    #[inline] fn link<'a,E: Env<Context=Self>>(&'a mut self, i: &E::WidgetID) -> Link<'a,E> where Self: Widgets<E> {
+    #[inline] fn link<'a,E: Env<Context=Self,HDeref=H>>(&'a mut self, i: &E::WidgetID) -> Link<'a,E> where Self: Widgets<E> {
         Link{
             ctx: self,
             widget_id: i.clone(),
         }
     }
-
-    #[inline]
-    fn get_handler<L: Handler>(&mut self) -> Option<&mut L> {
-        self.handler_mut()._ref_of()
-    }
 }
 
-pub trait Handler: Sized + 'static {
-    //
-    type Child: Handler + 'static;
+pub trait Handler<H>: Sized + 'static {
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _render<E: Env>(senf: &mut E::Context, i: &E::WidgetID, r: E::Renderer) {
-        Self::Child::_render::<E>(senf,i,r)
-    }
+    fn _render<E: Env>(senf: H, i: &E::WidgetID, r: E::Renderer);
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _event<E: Env>(senf: &mut E::Context, i: &E::WidgetID, e: E::Event) {
-        Self::Child::_event::<E>(senf,i,e)
-    }
+    fn _event<E: Env>(senf: H, i: &E::WidgetID, e: E::Event);
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _size<E: Env>(senf: &mut E::Context, i: &E::WidgetID) -> Size {
-        Self::Child::_size::<E>(senf,i)
-    }
-
-    #[deprecated = "Should not be called as it will panic on the impl of ()"]
-    fn _child_mut(&mut self) -> &mut Self::Child;
-    #[allow(deprecated)]
-    #[inline]
-    fn child_mut(&mut self) -> Option<&mut Self::Child> {
-        Some(self._child_mut())
-    }
-
-    #[deprecated = "Should not be called as it will panic on the impl of ()"]
-    fn _child(&self) -> &Self::Child;
-    #[allow(deprecated)]
-    #[inline]
-    fn child(&self) -> Option<&Self::Child> {
-        Some(self._child())
-    }
-
-    #[inline]
-    fn _ref_of<L: Handler>(&mut self) -> Option<&mut L> {
-        if Any::is::<L>(self) {
-            Any::downcast_mut::<L>(self)
-        }else{
-            self.child_mut().and_then(<Self::Child as Handler>::_ref_of)
-        }
-    }
-
-    #[inline]
-    fn get_self<C: Context>(senf: &mut C) -> &mut Self {
-        senf.get_handler().expect("This Handler must be or be a child of E::Context::Handler")
-    }
+    fn _size<E: Env>(senf: H, i: &E::WidgetID) -> Size;
 }
 
-pub trait HandlerWithChild: Handler + Sized + 'static {
-    #[allow(deprecated)]
-    #[inline]
-    fn hwc_child_mut(&mut self) -> &mut Self::Child {
-        self._child_mut()
-    }
-    #[allow(deprecated)]
-    #[inline]
-    fn hwc_child(&self) -> &Self::Child {
-        self._child()
-    }
+pub trait AsHandler<H>: Sized where H: Handler<Self> {
+    fn handler_mut(&mut self) -> &mut H;
 }
-//TODO remove this again
-pub trait AsHandler<C> where C: Handler {
-    fn handler_mut(&mut self) -> &mut C;
+
+/*pub trait HandlerDeref<'a> {
+    type C: Handler;
+    fn handler_mut(self) -> &'a mut C;
 }
+
+pub trait AsHandlerDeref<'a,H,C> where H: HandlerDeref<'a,C>, C: Handler {
+    fn handler_mut(&'a mut self) -> H;
+}*/
 
 pub trait HandlerStateful<E>: 'static where E: Env {
     #[inline] fn hovered(&self) -> Option<E::WidgetID> {
@@ -161,7 +115,7 @@ pub trait HandlerStateful<E>: 'static where E: Env {
     }
 }
 
-pub trait ContextStateful<E>: Context where Self::Handler: HandlerStateful<E>, E: Env {
+pub trait ContextStateful<E>: Context<E::HDeref> where Self::Handler: HandlerStateful<E>, E: Env, E::HDeref: for<'a> From<&'a mut Self> {
     #[inline] fn hovered(&self) -> Option<E::WidgetID> {
         None
     }
