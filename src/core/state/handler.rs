@@ -8,19 +8,14 @@ use event::key::PressedKey;
 use event::key::Key;
 use super::*;
 
-pub trait AsHandlerStateful<E,C>: Sized where E: Env<Context=C>, C: Context<Link=Self> + Widgets<E>, C::Link: AsHandler<Self::T,C> + AsHandler<C::Handler,C> {
+pub trait AsHandlerStateful<E,C>: Sized where E: Env<Context=C>, C: Context<Link=Self> + Widgets<E> {
     type T: HandlerStateful<E,C>;
-    #[inline]
-    fn stateful_mut(e: &mut C) -> &mut Self::T {
-        AsHandler::as_mut(e)
-    }
-    #[inline]
-    fn stateful(e: &C) -> &Self::T {
-        AsHandler::as_ref(e)
-    }
+    
+    fn stateful_mut(e: &mut C) -> &mut Self::T;
+    fn stateful(e: &C) -> &Self::T;
 } 
 
-pub trait HandlerStateful<E,C>: Handler<C> + 'static where E: Env<Context=C>, C: Context + Widgets<E>, C::Link: AsHandler<Self,C> {
+pub trait HandlerStateful<E,C>: Handler<C> + 'static where E: Env<Context=C>, C: Context + Widgets<E> {
     type K: PressedKey<E>;
     
     fn hovered(&self) -> Option<E::WidgetID>;

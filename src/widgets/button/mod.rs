@@ -14,7 +14,7 @@ use event::key::Key;
 pub use imp::*;
 pub use o::*;
 
-pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context>, E::Renderer: RenderStdWidgets<E> {
+pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Renderer: RenderStdWidgets<E> {
     fn id(&self) -> E::WidgetID;
     
     #[inline]

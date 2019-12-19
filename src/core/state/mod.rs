@@ -7,10 +7,10 @@ use crate::core::ctx::Env;
 
 pub mod handler;
 
-pub trait EnvStateful: Env where ECHLink<Self>: AsHandlerStateful<Self,Self::Context> + AsHandler<ECStateful<Self>,Self::Context>, Self::Renderer: RenderStdWidgets<Self> {
+pub trait EnvStateful: Env where ECHLink<Self>: AsHandlerStateful<Self,Self::Context>, Self::Renderer: RenderStdWidgets<Self> {
 
 }
 
-impl<T> EnvStateful for T where Self: Env, ECHLink<Self>: AsHandlerStateful<Self,Self::Context> + AsHandler<ECStateful<Self>,Self::Context>, Self::Renderer: RenderStdWidgets<Self> {
+impl<T> EnvStateful for T where Self: Env, ECHLink<Self>: AsHandlerStateful<Self,Self::Context>, Self::Renderer: RenderStdWidgets<Self> {
 
 }

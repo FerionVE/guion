@@ -39,11 +39,11 @@ impl<'a,E> Link<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn is_hovered(&self) -> bool where ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
+    pub fn is_hovered(&self) -> bool where ECHLink<E>: AsHandlerStateful<E,E::Context> {
         self.ctx.state().is_hovered(&self.widget_id)
     }
     #[inline]
-    pub fn is_selected(&self) -> bool where ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
+    pub fn is_selected(&self) -> bool where ECHLink<E>: AsHandlerStateful<E,E::Context> {
         self.ctx.state().is_selected(&self.widget_id)
     }
 }

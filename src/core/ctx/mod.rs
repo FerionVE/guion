@@ -41,7 +41,7 @@ pub trait Env: Sized + 'static {
 }
 
 pub trait Context: Sized + 'static {
-    type Link: AsHandler<Self::Handler,Self>;
+    type Link;
     type Handler: Handler<Self>;
     //type Meta: ContextMeta;
 
@@ -78,7 +78,7 @@ pub trait Context: Sized + 'static {
         }
     }
 
-    #[inline] fn state<E: Env<Context=Self>>(&self) -> &<Self::Link as AsHandlerStateful<E,Self>>::T where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self> + AsHandler<ECStateful<E>,E::Context> {
+    #[inline] fn state<E: Env<Context=Self>>(&self) -> &ECStateful<E> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self> {
         Self::Link::stateful(self)
     }
 }

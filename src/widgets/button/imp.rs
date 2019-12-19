@@ -15,7 +15,7 @@ macro_rules! impl_button {
             $t: $crate::macro_prelude::IButton<E>,
             E: $crate::macro_prelude::Env + 'static,
             E::Renderer: $crate::macro_prelude::RenderStdWidgets<E>,
-            $crate::macro_prelude::ECHLink<E>: $crate::macro_prelude::AsHandlerStateful<E,E::Context> + $crate::macro_prelude::AsHandler<$crate::macro_prelude::ECStateful<E>,E::Context> 
+            $crate::macro_prelude::ECHLink<E>: $crate::macro_prelude::AsHandlerStateful<E,E::Context>, 
         {
             $crate::impl_button_inner!($t,E);
         }
@@ -78,7 +78,7 @@ macro_rules! impl_button_inner {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
+pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> {
     let senf = l.me::<W>();
     let down = 
         l.is_hovered() && l.state().is_pressed_and_id(&[EKey::<E>::MOUSE_LEFT], &l.widget_id) ||
@@ -87,7 +87,7 @@ pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r:
     r.draw_text_button(down,senf.caption(),IButton::style(senf));
 }
 
-pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
+pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> {
     let senf = l.me::<W>();
     
     if let Some(e) = e.is::<KbdDown<_>>() {
@@ -97,6 +97,6 @@ pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::E
     }
 }
 
-pub fn _size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
+pub fn _size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> {
     unimplemented!()
 }
