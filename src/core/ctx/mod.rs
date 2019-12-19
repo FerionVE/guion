@@ -53,33 +53,29 @@ pub trait Widgets<E>: 'static where E: Env {
 }
 
 pub trait Context: Sized + 'static {
-    type Link: for<'a> HandlerAccess<'a,Self>;
+    type Link: AsHandler<Self::Handler,Self>;
     type Handler: Handler<Self>;
     //type Meta: ContextMeta;
 
     #[inline] 
-    fn handler<H: Handler<Self>>(&mut self) -> &mut H where Self::Link: for<'a> AsHandler<'a,H> {
-        self.handler_access().into_mut()
-    }
-    #[inline] 
-    fn handler_access(&mut self) -> Self::Link {
-        HandlerAccess::from_ctx(self)
+    fn handler<H: Handler<Self>>(&mut self) -> &mut H where Self::Link: AsHandler<H,Self> {
+        Self::Link::as_mut(self)
     }
 
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _render<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, r: E::Renderer) where Self: Widgets<E> {
-        Self::Handler::_render::<E>(self.handler_access(),i,r)
+        Self::Handler::_render::<E>(self,i,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _event<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, e: E::Event) where Self: Widgets<E> {
-        Self::Handler::_event::<E>(self.handler_access(),i,e)
+        Self::Handler::_event::<E>(self,i,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _size<E: Env<Context=Self>>(&mut self, i: &E::WidgetID) -> Size where Self: Widgets<E> {
-        Self::Handler::_size::<E>(self.handler_access(),i)
+        Self::Handler::_size::<E>(self,i)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
@@ -94,19 +90,19 @@ pub trait Context: Sized + 'static {
         }
     }
 
-    #[inline] fn hovered<E: Env<Context=Self>>(&self) -> Option<E::WidgetID> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E>, Self::Link: for<'a> AsHandler<'a,ECStateful<E>> {
-        self.handler_access().stateful().hovered()
+    #[inline] fn hovered<E: Env<Context=Self>>(&self) -> Option<E::WidgetID> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self>, Self::Link: AsHandler<ECStateful<E>,E::Context> {
+        Self::Link::stateful(self).hovered()
     }
-    #[inline] fn selected<E: Env<Context=Self>>(&self) -> Option<E::WidgetID> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E>, Self::Link: for<'a> AsHandler<'a,ECStateful<E>> {
-        self.handler_access().stateful().selected()
+    #[inline] fn selected<E: Env<Context=Self>>(&self) -> Option<E::WidgetID> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self>, Self::Link: AsHandler<ECStateful<E>,E::Context> {
+        Self::Link::stateful(self).selected()
     }
 
     #[inline]
-    fn is_hovered<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> bool where Self: Widgets<E>, Self::Link: AsHandlerStateful<E>, Self::Link: for<'a> AsHandler<'a,ECStateful<E>> {
-        self.hovered().map_or(false, |w| w == *i )
+    fn is_hovered<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> bool where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self>, Self::Link: AsHandler<ECStateful<E>,E::Context> {
+        Self::Link::stateful(self).is_hovered(i)
     }
     #[inline]
-    fn is_selected<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> bool where Self: Widgets<E>, Self::Link: AsHandlerStateful<E>, Self::Link: for<'a> AsHandler<'a,ECStateful<E>> {
-        self.selected().map_or(false, |w| w == *i )
+    fn is_selected<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> bool where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self>, Self::Link: AsHandler<ECStateful<E>,E::Context> {
+        Self::Link::stateful(self).is_selected(i)
     }
 }

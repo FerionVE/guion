@@ -5,19 +5,19 @@ use crate::core::ctx::*;
 use crate::core::lazout::size::Size;
 use super::*;
 ///NOTE that E is not the current Context but the underlying
-impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, for<'a> C::Link: AsHandler<'a,Self> + AsHandler<'a,S> + 'static {
+impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, C::Link: AsHandler<Self,C> + AsHandler<S,C> + 'static {
     #[inline] 
-    fn _render<E: Env>(senf: C::Link, i: &E::WidgetID, r: E::Renderer) {
+    fn _render<E: Env>(senf: &mut C, i: &E::WidgetID, r: E::Renderer) {
         //Self::Child::_render::<E>(senf,i,r)
         unimplemented!()
     }
     #[inline] 
-    fn _event<E: Env>(senf: C::Link, i: &E::WidgetID, e: E::Event) {
+    fn _event<E: Env>(senf: &mut C, i: &E::WidgetID, e: E::Event) {
         //Self::Child::_event::<E>(senf,i,e)
         unimplemented!()
     }
     #[inline] 
-    fn _size<E: Env>(senf: C::Link, i: &E::WidgetID) -> Size {
+    fn _size<E: Env>(senf: &mut C, i: &E::WidgetID) -> Size {
         //Self::Child::_size::<E>(senf,i)
         unimplemented!()
     }

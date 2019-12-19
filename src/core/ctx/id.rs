@@ -43,11 +43,11 @@ pub trait WidgetID: Clone + PartialEq + Sized {
     }
 
     #[inline]
-    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where ECHLink<E>: AsHandlerStateful<E>, ECHLink<E>: for<'a> AsHandler<'a,ECStateful<E>> {
+    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where ECHLink<E>: AsHandlerStateful<E,E::Context>, ECHLink<E>: AsHandler<ECStateful<E>,E::Context> {
         c.is_hovered(self)
     }
     #[inline]
-    fn is_selected<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where ECHLink<E>: AsHandlerStateful<E>, ECHLink<E>: for<'a> AsHandler<'a,ECStateful<E>> {
+    fn is_selected<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where ECHLink<E>: AsHandlerStateful<E,E::Context>, ECHLink<E>: AsHandler<ECStateful<E>,E::Context> {
         c.is_selected(self)
     }
 }

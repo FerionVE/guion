@@ -1,14 +1,18 @@
 use super::*;
 
-pub trait AsHandlerStateful<E>: Sized where E: Env, E::Context: Context<Link=Self> + Widgets<E>, <E::Context as Context>::Link: for<'a> HandlerAccess<'a,E::Context> + for<'a> AsHandler<'a,Self::T> {
-    type T: HandlerStateful<E>;
+pub trait AsHandlerStateful<E,C>: Sized where E: Env<Context=C>, C: Context<Link=Self> + Widgets<E>, <E::Context as Context>::Link: AsHandler<Self::T,C> + AsHandler<C::Handler,C> {
+    type T: HandlerStateful<E,C>;
     #[inline]
-    fn stateful_mut(&mut self) -> &mut Self::T {
-        AsHandler::as_mut(self)
+    fn stateful_mut(e: &mut C) -> &mut Self::T {
+        AsHandler::as_mut(e)
     }
-}
+    #[inline]
+    fn stateful(e: &C) -> &Self::T {
+        AsHandler::as_ref(e)
+    }
+} 
 
-pub trait HandlerStateful<E>: Handler<E::Context> + 'static where E: Env, <E::Context as Context>::Link: for<'a> AsHandler<'a,Self> {
+pub trait HandlerStateful<E,C>: Handler<C> + 'static where E: Env<Context=C>, C: Context + Widgets<E>, C::Link: AsHandler<Self,C> {
     #[inline] fn hovered(&self) -> Option<E::WidgetID> {
         None
     }

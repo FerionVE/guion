@@ -1,10 +1,6 @@
 use super::*;
 
-pub trait HandlerAccess<'a,C>: AsMut<C> + AsHandler<'a,C::Handler> where C: Context {
-    fn from_ctx(c: &'a mut C) -> Self;
-}
-
-pub trait AsHandler<'a,H> {
-    fn as_mut(&'a mut self) -> &'a mut H;
-    fn into_mut(self) -> &'a mut H;
+pub trait AsHandler<H,C>: Sized where C: Context<Link=Self>, H: Handler<C>, C::Link: AsHandler<C::Handler,C> {
+    fn as_mut(c: &mut C) -> &mut H;
+    fn as_ref(c: &C) -> &H;
 }
