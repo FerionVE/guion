@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::widget::link::Link;
 use crate::core::lazout::size::Size;
 use crate::core::widget::Widget;
@@ -39,11 +40,11 @@ impl<'a,E> Handlez<'a,E> where E: Env {
         }
     }
     #[inline]
-    pub fn is_hovered(&self) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
+    pub fn is_hovered(&self) -> bool where ECHLink<E>: AsHandlerStateful<E>, ECHLink<E>: AsMut<ECStateful<E>> {
         self.ctx.hovered().map_or(false, |i| i == self.id )
     }
     #[inline]
-    pub fn is_selected(&self) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
+    pub fn is_selected(&self) -> bool where ECHLink<E>: AsHandlerStateful<E>, ECHLink<E>: AsMut<ECStateful<E>> {
         self.ctx.selected().map_or(false, |i| i == self.id )
     }
     /// iterate over childs

@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::lazout::size::Size;
 use super::*;
 use qwutils::*;
@@ -42,11 +43,11 @@ pub trait WidgetID: Clone + PartialEq + Sized {
     }
 
     #[inline]
-    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
+    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where ECHLink<E>: AsHandlerStateful<E>, ECHLink<E>: AsMut<ECStateful<E>> {
         c.is_hovered(self)
     }
     #[inline]
-    fn is_selected<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: ContextStateful<E>, <E::Context as Context>::Handler: HandlerStateful<E> {
+    fn is_selected<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where ECHLink<E>: AsHandlerStateful<E>, ECHLink<E>: AsMut<ECStateful<E>> {
         c.is_selected(self)
     }
 }

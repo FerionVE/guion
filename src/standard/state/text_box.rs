@@ -1,13 +1,13 @@
 //TODO implement this stuff
 
-use crate::core::ctx::aliases::EPPText;
+use crate::core::ctx::aliases::*;
 use crate::core::ctx::*;
 use crate::core::style::font::PreprocessedText;
 
 pub struct TextBoxState<E> where
-    E: Env, E::Context: ContextStateful<E>,
-    <E::Context as Context>::Link: AsHandlerStateful<E>,
-    <E::Context as Context>::Link: AsMut<<<E::Context as Context>::Link as AsHandlerStateful<E>>::T>
+    E: Env,
+    ECHLink<E>: AsHandlerStateful<E>,
+    ECHLink<E>: AsMut<ECStateful<E>>,
 {
     pp: EPPText<E>,
     id: E::WidgetID,

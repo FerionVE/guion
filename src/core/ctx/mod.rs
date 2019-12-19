@@ -15,9 +15,16 @@ pub mod id;
 pub use id::*;
 
 pub mod aliases;
+use aliases::*;
 
 pub mod queue;
 pub use queue::*;
+
+pub mod handler;
+pub use handler::*;
+
+pub mod stateful;
+pub use stateful::*;
 
 mod imp;
 
@@ -46,7 +53,7 @@ pub trait Widgets<E>: 'static where E: Env {
 }
 
 pub trait Context: Sized + 'static {
-    type Link: for<'a> From<&'a mut Self> + AsMut<Self> + AsMut<Self::Handler>;
+    type Link: CtxLink<Self>;
     type Handler: Handler<Self>;
     //type Meta: ContextMeta;
 
@@ -79,51 +86,24 @@ pub trait Context: Sized + 'static {
             widget_id: i.clone(),
         }
     }
-}
 
-pub trait Handler<C>: Sized + 'static where C: Context, C::Link: AsMut<Self> {
-    /// PANICKS if widget doesn't exists
-    #[inline] 
-    fn _render<E: Env>(senf: C::Link, i: &E::WidgetID, r: E::Renderer);
-    /// PANICKS if widget doesn't exists
-    #[inline] 
-    fn _event<E: Env>(senf: C::Link, i: &E::WidgetID, e: E::Event);
-    /// PANICKS if widget doesn't exists
-    #[inline] 
-    fn _size<E: Env>(senf: C::Link, i: &E::WidgetID) -> Size;
-}
-
-
-
-pub trait AsHandlerStateful<E> where E: Env, <E::Context as Context>::Link: AsMut<Self::T> {
-    type T: HandlerStateful<E>;
-
-    fn stateful_mut(&mut self) -> &mut Self::T;
-}
-
-pub trait HandlerStateful<E>: Handler<E::Context> + 'static where E: Env, <E::Context as Context>::Link: AsMut<Self> {
-    #[inline] fn hovered(&self) -> Option<E::WidgetID> {
+    #[inline] fn hovered<E: Env<Context=Self>>(&self) -> Option<E::WidgetID> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E>, Self::Link: AsMut<ECStateful<E>> {
         None
     }
-    #[inline] fn selected(&self) -> Option<E::WidgetID> {
-        None
-    }
-}
-
-pub trait ContextStateful<E>: Context + Widgets<E> where E: Env<Context=Self> {
-    #[inline] fn hovered(&self) -> Option<E::WidgetID> {
-        None
-    }
-    #[inline] fn selected(&self) -> Option<E::WidgetID> {
+    #[inline] fn selected<E: Env<Context=Self>>(&self) -> Option<E::WidgetID> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E>, Self::Link: AsMut<ECStateful<E>> {
         None
     }
 
     #[inline]
-    fn is_hovered(&self, i: &E::WidgetID) -> bool {
+    fn is_hovered<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> bool where Self: Widgets<E>, Self::Link: AsHandlerStateful<E>, Self::Link: AsMut<ECStateful<E>> {
         self.hovered().map_or(false, |w| w == *i )
     }
     #[inline]
-    fn is_selected(&self, i: &E::WidgetID) -> bool {
+    fn is_selected<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> bool where Self: Widgets<E>, Self::Link: AsHandlerStateful<E>, Self::Link: AsMut<ECStateful<E>> {
         self.selected().map_or(false, |w| w == *i )
     }
 }
+
+pub trait CtxLink<C>: for<'a> From<&'a mut C> + AsMut<C> + AsMut<C::Handler> where C: Context {}
+
+impl<C,T> CtxLink<C> for T where C: Context, T: for<'a> From<&'a mut C> + AsMut<C> + AsMut<C::Handler> {}
