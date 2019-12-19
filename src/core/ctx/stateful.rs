@@ -1,5 +1,4 @@
-use crate::core::event::key::StdCombos;
-use crate::core::event::key::KeyCombo;
+use crate::core::event::key::PressedKey;
 use crate::core::event::key::Key;
 use super::*;
 
@@ -16,8 +15,7 @@ pub trait AsHandlerStateful<E,C>: Sized where E: Env<Context=C>, C: Context<Link
 } 
 
 pub trait HandlerStateful<E,C>: Handler<C> + 'static where E: Env<Context=C>, C: Context + Widgets<E>, C::Link: AsHandler<Self,C> {
-    type K: Key;
-    type KC: KeyCombo;
+    type K: PressedKey<E::WidgetID>;
     
     fn hovered(&self) -> Option<E::WidgetID>;
     fn selected(&self) -> Option<E::WidgetID>;
@@ -37,6 +35,14 @@ pub trait HandlerStateful<E,C>: Handler<C> + 'static where E: Env<Context=C>, C:
         unimplemented!()
     }*/
 
-    fn is_down(&self, c: &Self::KC) -> bool;
-    fn is_down_std(&self, c: StdCombos) -> bool;
+    fn pressed(&self) -> &[Self::K];
+    #[inline]
+    fn is_pressed(&self, c: &[<Self::K as PressedKey<E::WidgetID>>::K]) -> Option<&Self::K> {
+        unimplemented!()
+    }
+    #[inline]
+    fn is_pressed_and_id(&self, c: &[<Self::K as PressedKey<E::WidgetID>>::K], id: &E::WidgetID) -> bool {
+        unimplemented!()
+    }
 }
+

@@ -1,22 +1,15 @@
-pub trait Key: Clone {}
-pub trait KeyCombo: Clone {}
-//TODO move to widgets
-///key combos of standard widgets
-pub enum StdCombos {
-    MouseLeft(),
-    MouseRight(),
-    MouseMiddle(),
-    
-    ///button click, takes focus
-    ButtonClickActive(), //MouseLeft
-    ///click button if focused
-    ButtonClickPassive(), //Enter
+use crate::core::ctx::id::WidgetID;
 
-    TextPaste(), //Ctrl+V
-    TextCopy(), //Ctrl+C
-    TextSelectAll(), //Ctrl+A
+pub trait PressedKey<W> where W: WidgetID {
+    type K: Key;
 
-    WindowClose(),
+    fn key(&self) -> &Self::K;
+    fn widget(&self) -> &W;
+    fn ts(&self) -> u64;
+}
 
-
+pub trait Key: Clone + PartialEq {
+    //TODO variant enum
+    fn mouse_left() -> Self;
+    fn enter() -> Self;
 }
