@@ -5,7 +5,7 @@ use crate::core::ctx::*;
 use crate::core::lazout::size::Size;
 use super::*;
 ///NOTE that E is not the current Context but the underlying
-impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, C::Link: AsMut<Self> + AsMut<S> + 'static {
+impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, for<'a> C::Link: AsHandler<'a,Self> + AsHandler<'a,S> + 'static {
     #[inline] 
     fn _render<E: Env>(senf: C::Link, i: &E::WidgetID, r: E::Renderer) {
         //Self::Child::_render::<E>(senf,i,r)

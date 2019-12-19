@@ -7,7 +7,7 @@ use crate::core::style::font::PreprocessedText;
 pub struct TextBoxState<E> where
     E: Env,
     ECHLink<E>: AsHandlerStateful<E>,
-    ECHLink<E>: AsMut<ECStateful<E>>,
+    ECHLink<E>: for<'a> AsHandler<'a,ECStateful<E>>,
 {
     pp: EPPText<E>,
     id: E::WidgetID,
