@@ -17,6 +17,9 @@ pub use id::*;
 pub mod aliases;
 use aliases::*;
 
+pub mod widgets;
+pub use widgets::*;
+
 pub mod queue;
 pub use queue::*;
 
@@ -25,8 +28,6 @@ pub use handler::*;
 
 pub mod stateful;
 pub use stateful::*;
-
-mod imp;
 
 pub trait Env: Sized + 'static {
     type Context: Context + Widgets<Self>;
@@ -37,19 +38,6 @@ pub trait Env: Sized + 'static {
     type WidgetID: WidgetID;
     type Commit: Eq + Ord;
     type Style: Style;
-}
-
-pub trait Widgets<E>: 'static where E: Env {
-    fn widget(&self, i: &E::WidgetID) -> Option<&E::DynWidget>;
-    fn widget_mut(&mut self, i: &E::WidgetID) -> Option<&mut E::DynWidget>;
-
-    #[inline]
-    fn has_widget(&self, i: &E::WidgetID) -> bool {
-        self.widget(i).is_some()
-    }
-
-    #[inline] fn tune_id(&self, _i: &mut E::WidgetID) {}
-    #[inline] fn tune_id_mut(&mut self, _i: &mut E::WidgetID) {}
 }
 
 pub trait Context: Sized + 'static {
@@ -90,19 +78,7 @@ pub trait Context: Sized + 'static {
         }
     }
 
-    #[inline] fn hovered<E: Env<Context=Self>>(&self) -> Option<E::WidgetID> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self>, Self::Link: AsHandler<ECStateful<E>,E::Context> {
-        Self::Link::stateful(self).hovered()
-    }
-    #[inline] fn selected<E: Env<Context=Self>>(&self) -> Option<E::WidgetID> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self>, Self::Link: AsHandler<ECStateful<E>,E::Context> {
-        Self::Link::stateful(self).selected()
-    }
-
-    #[inline]
-    fn is_hovered<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> bool where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self>, Self::Link: AsHandler<ECStateful<E>,E::Context> {
-        Self::Link::stateful(self).is_hovered(i)
-    }
-    #[inline]
-    fn is_selected<E: Env<Context=Self>>(&self, i: &E::WidgetID) -> bool where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self>, Self::Link: AsHandler<ECStateful<E>,E::Context> {
-        Self::Link::stateful(self).is_selected(i)
+    #[inline] fn state<E: Env<Context=Self>>(&self) -> &<Self::Link as AsHandlerStateful<E,Self>>::T where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self> + AsHandler<ECStateful<E>,E::Context> {
+        Self::Link::stateful(self)
     }
 }

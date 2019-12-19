@@ -1,7 +1,10 @@
+use crate::core::ctx::aliases::ECStateful;
+use crate::core::ctx::aliases::ECHLink;
+use crate::core::render::widgets::RenderStdWidgets;
 use crate::core::widget::link::Link;
 use crate::core::ctx::*;
 
-pub struct Button<E> where E: Env {
+pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
     id: E::WidgetID,
     invalid: bool,
     parent: Option<E::WidgetID>,
@@ -10,7 +13,7 @@ pub struct Button<E> where E: Env {
     action: fn(Link<E>),
 }
 
-impl<E> super::IButton<E> for Button<E> where E: Env + 'static {
+impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

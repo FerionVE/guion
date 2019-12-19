@@ -4,6 +4,8 @@ use crate::core::widget::Widget;
 use crate::core::util::bounds::Bounds;
 use crate::core::style::*;
 
+pub mod widgets;
+
 pub trait Render<E>: Sized where E: Env<Renderer=Self> {
     #[inline]
     fn requires_render(&self, w: &E::DynWidget) -> bool {

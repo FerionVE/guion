@@ -1,10 +1,18 @@
+use crate::core::render::widgets::RenderStdWidgets;
 use crate::core::lazout::size::Size;
+use crate::core::ctx::aliases::*;
+use crate::core::event::key::StdCombos;
 use super::*;
 
 #[macro_export]
 macro_rules! impl_button {
     ($t:ty) => {
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IButton<E>, E: $crate::macro_prelude::Env + 'static {
+        impl<E> $crate::macro_prelude::Widget<E> for $t where 
+            $t: $crate::macro_prelude::IButton<E>,
+            E: $crate::macro_prelude::Env + 'static,
+            E::Renderer: $crate::macro_prelude::RenderStdWidgets<E>,
+            $crate::macro_prelude::ECHLink<E>: $crate::macro_prelude::AsHandlerStateful<E,E::Context> + $crate::macro_prelude::AsHandler<$crate::macro_prelude::ECStateful<E>,E::Context> 
+        {
             $crate::impl_button_inner!($t,E);
         }
     };
@@ -70,8 +78,13 @@ macro_rules! impl_button_inner {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: E::Renderer) {
-    unimplemented!()
+pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
+    let senf = l.me::<W>();
+    let down = 
+        l.state().is_down_std(StdCombos::ButtonClickActive()) ||
+        (l.is_selected() && l.state().is_down_std(StdCombos::ButtonClickPassive()));
+        
+    r.draw_text_button(down,senf.caption(),IButton::style(senf));
 }
 
 pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {

@@ -11,4 +11,6 @@ pub mod macro_prelude {
     pub use crate::core::widget::*;
     pub use crate::core::widget::handlez::*;
     pub use crate::core::ctx::*;
+    pub use crate::core::ctx::aliases::*;
+    pub use crate::core::render::widgets::*;
 }

@@ -1,6 +1,7 @@
 use crate::core::util::bounds::Bounds;
 
 pub mod variants;
+pub mod key;
 
 pub trait Event: Sized + Clone {
     ///split Self into some known cases to handle

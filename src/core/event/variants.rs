@@ -40,3 +40,4 @@ impl Variant for MouseUp {}
 impl Variant for MouseMove {}
 impl Variant for MouseEnter {}
 impl Variant for MouseLeave {}
+
