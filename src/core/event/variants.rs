@@ -1,23 +1,26 @@
 use crate::core::*;
 use event::Variant;
 use util::bounds::Offset;
+use ctx::*;
+use ctx::aliases::*;
+use event::key::Key;
 
 #[derive(Clone)]
-pub struct KbdDown {
-    pub key: u32,
+pub struct KbdDown<K> where K: Key {
+    pub key: K,
 }
 #[derive(Clone)]
-pub struct KbdUp {
-    pub key: u32,
+pub struct KbdUp<K> where K: Key {
+    pub key: K,
 }
 
 #[derive(Clone)]
-pub struct MouseDown {
-    pub key: u32,
+pub struct MouseDown<K> where K: Key {
+    pub key: K,
 }
 #[derive(Clone)]
-pub struct MouseUp {
-    pub key: u32,
+pub struct MouseUp<K> where K: Key {
+    pub key: K,
 }
 
 #[derive(Clone)]
@@ -34,11 +37,11 @@ pub struct MouseLeave {
     pub dest: Offset,
 }
 
-impl Variant for KbdDown {}
-impl Variant for KbdUp {}
-impl Variant for MouseDown {}
-impl Variant for MouseUp {}
-impl Variant for MouseMove {}
-impl Variant for MouseEnter {}
-impl Variant for MouseLeave {}
+impl<E> Variant<E> for KbdDown<EKey<E>> where E: Env {}
+impl<E> Variant<E> for KbdUp<EKey<E>> where E: Env {}
+impl<E> Variant<E> for MouseDown<EKey<E>> where E: Env {}
+impl<E> Variant<E> for MouseUp<EKey<E>> where E: Env {}
+impl<E> Variant<E> for MouseMove where E: Env {}
+impl<E> Variant<E> for MouseEnter where E: Env {}
+impl<E> Variant<E> for MouseLeave where E: Env {}
 

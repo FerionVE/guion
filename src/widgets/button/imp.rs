@@ -3,6 +3,8 @@ use render::widgets::RenderStdWidgets;
 use lazout::size::Size;
 use ctx::aliases::*;
 use event::key::Key;
+use event::variants::*;
+use event::*;
 use state::handler::*;
 use super::*;
 
@@ -29,11 +31,7 @@ macro_rules! impl_button_inner {
         }
         #[inline]
         fn _fns(&self) -> $crate::macro_prelude::WidgetFns<$c> {
-            $crate::macro_prelude::WidgetFns{
-                render: $crate::widgets::button::_render::<$s,$c>,
-                event: $crate::widgets::button::_event::<$s,$c>,
-                size: $crate::widgets::button::_size::<$s,$c>,
-            }
+            $crate::macro_prelude::IButton::_fns(self)
         }
         #[inline]
         fn invalid(&self) -> bool {
@@ -83,16 +81,22 @@ macro_rules! impl_button_inner {
 pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
     let senf = l.me::<W>();
     let down = 
-        l.is_hovered() && l.state().is_pressed_and_id(&[ECStateKCode::<E>::mouse_left()], &l.widget_id) ||
-        l.is_selected() && l.state().is_pressed_and_id(&[ECStateKCode::<E>::enter()], &l.widget_id);
+        l.is_hovered() && l.state().is_pressed_and_id(&[EKey::<E>::MOUSE_LEFT], &l.widget_id) ||
+        l.is_selected() && l.state().is_pressed_and_id(&[EKey::<E>::ENTER], &l.widget_id);
         
     r.draw_text_button(down,senf.caption(),IButton::style(senf));
 }
 
-pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
-    unimplemented!()
+pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
+    let senf = l.me::<W>();
+    
+    if let Some(e) = e.is::<KbdDown<_>>() {
+        if e.key == senf.kbd_trigger() {
+            (senf.action())(l)
+        }
+    }
 }
 
-pub fn _size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
+pub fn _size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
     unimplemented!()
 }

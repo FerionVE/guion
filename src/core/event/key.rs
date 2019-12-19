@@ -1,16 +1,16 @@
 use crate::core::*;
 use ctx::id::WidgetID;
+use ctx::*;
+use ctx::aliases::*;
 
-pub trait PressedKey<W> where W: WidgetID {
-    type K: Key;
-
-    fn key(&self) -> &Self::K;
-    fn widget(&self) -> &W;
+pub trait PressedKey<E> where E: Env {
+    fn key(&self) -> &EKey<E>;
+    fn widget(&self) -> &E::WidgetID;
     fn ts(&self) -> u64;
 }
 
 pub trait Key: Clone + PartialEq {
-    //TODO variant enum
-    fn mouse_left() -> Self;
-    fn enter() -> Self;
+    const MOUSE_LEFT: Self;
+    const ENTER: Self;
+    const TAB: Self;
 }

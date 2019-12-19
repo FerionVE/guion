@@ -32,7 +32,7 @@ pub use handler::*;
 pub trait Env: Sized + 'static {
     type Context: Context + Widgets<Self>;
     type Renderer: Render<Self>;
-    type Event: Event;
+    type Event: Event<Self>;
     ///regularly just dyn Widget
     type DynWidget: Widget<Self> + ?Sized;
     type WidgetID: WidgetID;
