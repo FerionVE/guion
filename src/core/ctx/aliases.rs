@@ -1,6 +1,7 @@
-use crate::core::ctx::*;
-use crate::core::style::Style;
-use crate::core::event::key::PressedKey;
+use crate::core::*;
+use ctx::*;
+use style::Style;
+use event::key::PressedKey;
 
 pub type EPPText<E: Env> = <E::Style as Style>::PreprocessedText;
 pub type EPPChar<E: Env> = <E::Style as Style>::PreprocessedText;

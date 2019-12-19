@@ -1,11 +1,12 @@
-use crate::core::lazout::calc::calc_bounds;
-use crate::core::util::bounds::Bounds;
-use crate::core::lazout::size::Size;
-use crate::core::widget::link::Link;
-use crate::core::widget::Widget;
-use crate::core::ctx::*;
-use crate::core::render::*;
-use crate::core::lazout::Orientation;
+use crate::core::*;
+use lazout::calc::calc_bounds;
+use util::bounds::Bounds;
+use lazout::size::Size;
+use widget::link::Link;
+use widget::Widget;
+use ctx::*;
+use render::*;
+use lazout::Orientation;
 
 pub mod imp;
 pub mod o;

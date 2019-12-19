@@ -1,8 +1,9 @@
-use crate::core::util::bounded_widget::IBoundedWidget;
-use crate::core::ctx::*;
-use crate::core::widget::Widget;
-use crate::core::util::bounds::Bounds;
-use crate::core::style::*;
+use crate::core::*;
+use util::bounded_widget::IBoundedWidget;
+use ctx::*;
+use widget::Widget;
+use util::bounds::Bounds;
+use style::*;
 
 pub mod widgets;
 

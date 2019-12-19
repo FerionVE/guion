@@ -1,7 +1,9 @@
-use crate::core::render::widgets::RenderStdWidgets;
-use crate::core::lazout::size::Size;
-use crate::core::ctx::aliases::*;
-use crate::core::event::key::Key;
+use crate::core::*;
+use render::widgets::RenderStdWidgets;
+use lazout::size::Size;
+use ctx::aliases::*;
+use event::key::Key;
+use state::handler::*;
 use super::*;
 
 #[macro_export]

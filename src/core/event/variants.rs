@@ -1,5 +1,6 @@
-use crate::core::event::Variant;
-use crate::core::util::bounds::Offset;
+use crate::core::*;
+use event::Variant;
+use util::bounds::Offset;
 
 #[derive(Clone)]
 pub struct KbdDown {

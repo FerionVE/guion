@@ -1,5 +1,7 @@
+use crate::core::*;
+use util::border::Border;
+
 pub mod font;
-use crate::core::util::border::Border;
 pub use font::*;
 
 pub mod cursor;

@@ -1,5 +1,6 @@
 //pub mod as_any;
-use crate::core::util::border::Border;
+use crate::core::*;
+use util::border::Border;
 use std::ops::BitAnd;
 
 #[derive(Clone)]

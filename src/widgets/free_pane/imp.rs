@@ -1,6 +1,7 @@
-use crate::core::lazout::size::Size;
-use crate::core::util::bounded_widget::BoundedWidget;
-use crate::core::ctx::*;
+use crate::core::*;
+use lazout::size::Size;
+use util::bounded_widget::BoundedWidget;
+use ctx::*;
 
 pub struct Pane<E> where E: Env {
     id: E::WidgetID,

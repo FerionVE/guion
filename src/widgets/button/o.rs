@@ -1,8 +1,10 @@
-use crate::core::ctx::aliases::ECStateful;
-use crate::core::ctx::aliases::ECHLink;
-use crate::core::render::widgets::RenderStdWidgets;
-use crate::core::widget::link::Link;
-use crate::core::ctx::*;
+use crate::core::*;
+use ctx::aliases::ECStateful;
+use ctx::aliases::ECHLink;
+use render::widgets::RenderStdWidgets;
+use widget::link::Link;
+use ctx::*;
+use state::handler::*;
 
 pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> + AsHandler<ECStateful<E>,E::Context> {
     id: E::WidgetID,

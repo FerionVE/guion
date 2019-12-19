@@ -1,12 +1,13 @@
-use crate::core::lazout::size::Size;
-use crate::core::util::bounded_widget::*;
-use crate::core::widget::handlez::WidgetFns;
-use crate::core::widget::link::Link;
+use crate::core::*;
+use lazout::size::Size;
+use util::bounded_widget::*;
+use widget::handlez::WidgetFns;
+use widget::link::Link;
 use std::any::Any;
-use crate::core::widget::Widget;
-use crate::core::ctx::*::*;
-use crate::core::render::*;
-use crate::core::event::Event;
+use widget::Widget;
+use ctx::*::*;
+use render::*;
+use event::Event;
 
 pub mod imp;
 

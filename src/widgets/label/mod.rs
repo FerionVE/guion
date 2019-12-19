@@ -1,10 +1,12 @@
+use crate::core::*;
+use widget::Widget;
+use ctx::*;
+use widget::link::Link;
+
 pub mod imp;
 pub mod o;
 pub mod as_label;
 
-use crate::core::widget::Widget;
-use crate::core::ctx::*;
-use crate::core::widget::link::Link;
 pub use imp::*;
 pub use o::*;
 

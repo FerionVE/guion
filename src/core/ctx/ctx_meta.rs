@@ -1,4 +1,5 @@
-use crate::core::ctx::*;
+use crate::core::*;
+use ctx::*;
 
 pub trait ContextMeta<C,E>: Sized where E: Env<Context=C>, C: Context<Meta=Self> {
     fn default_style(&self) -> &E::Style;

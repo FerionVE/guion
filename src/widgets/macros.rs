@@ -6,7 +6,7 @@ macro_rules! create_widget_as_widget_module {
         use std::marker::PhantomData;
         use $crate::core::util::ScopedMut;
         use $crate::core::ctx::Context;
-        //use crate::core::util::qwutils::impl_scoped_mut_inner;
+        //use util::qwutils::impl_scoped_mut_inner;
         use super::*;
 
         /// put a type or mutable reference implementing ITemplate inside this to enforce view as Template

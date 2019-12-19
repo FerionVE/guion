@@ -1,4 +1,5 @@
-use crate::core::util::bounds::Bounds;
+use crate::core::*;
+use util::bounds::Bounds;
 
 pub mod variants;
 pub mod key;

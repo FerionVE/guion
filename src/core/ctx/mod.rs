@@ -1,12 +1,15 @@
 use std::borrow::BorrowMut;
-use crate::core::widget::handlez::fns::WidgetFns;
-use crate::core::style::Style;
-use crate::core::lazout::size::Size;
-use crate::core::widget::link::Link;
-use crate::core::event::Event;
-use crate::core::render::Render;
-use crate::core::widget::Widget;
 use std::any::Any;
+
+use crate::core::*;
+use widget::handlez::fns::WidgetFns;
+use style::Style;
+use lazout::size::Size;
+use widget::link::Link;
+use event::Event;
+use render::Render;
+use widget::Widget;
+use state::handler::*;
 
 //pub mod ctx_meta; TODO fix CtxMeta
 //pub use ctx_meta::*;
@@ -25,9 +28,6 @@ pub use queue::*;
 
 pub mod handler;
 pub use handler::*;
-
-pub mod stateful;
-pub use stateful::*;
 
 pub trait Env: Sized + 'static {
     type Context: Context + Widgets<Self>;

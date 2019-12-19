@@ -1,6 +1,7 @@
-use crate::core::lazout::size::Size;
-use crate::core::widget::link::Link;
-use crate::core::ctx::*;
+use crate::core::*;
+use lazout::size::Size;
+use widget::link::Link;
+use ctx::*;
 
 pub trait IHandler<E> where E: Env {
     fn render(l: Link<E>, r: E::Renderer);

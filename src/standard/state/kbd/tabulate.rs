@@ -1,6 +1,6 @@
-
-use crate::core::ctx::*;
-use crate::core::widget::Widget;
+use crate::core::*;
+use ctx::*;
+use widget::Widget;
 ///tabulate through widget tree
 pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetID, reverse: bool) -> E::WidgetID {
     //for recognizing infinite loops

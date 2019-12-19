@@ -1,6 +1,5 @@
 use super::*;
 
-
 impl<T,E,C> ILabel<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ILabel<E>, E: Env + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {

@@ -1,5 +1,6 @@
-use crate::core::ctx::*;
-use crate::core::widget::Widget;
+use crate::core::*;
+use ctx::*;
+use widget::Widget;
 use std::any::Any;
 
 pub trait AsAny {

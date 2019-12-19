@@ -1,6 +1,7 @@
-use crate::core::event::key::PressedKey;
-use crate::core::ctx::aliases::*;
-use crate::core::lazout::size::Size;
+use crate::core::*;
+use event::key::PressedKey;
+use ctx::aliases::*;
+use lazout::size::Size;
 use super::*;
 use qwutils::*;
 

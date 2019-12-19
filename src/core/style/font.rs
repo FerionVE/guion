@@ -1,5 +1,6 @@
-use crate::core::util::bounds::Offset;
-use crate::core::util::bounds::Dims;
+use crate::core::*;
+use util::bounds::Offset;
+use util::bounds::Dims;
 use super::*;
 
 pub trait Font<S>: Sized where S: Style<Font=Self> {

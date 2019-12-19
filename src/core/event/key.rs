@@ -1,4 +1,5 @@
-use crate::core::ctx::id::WidgetID;
+use crate::core::*;
+use ctx::id::WidgetID;
 
 pub trait PressedKey<W> where W: WidgetID {
     type K: Key;

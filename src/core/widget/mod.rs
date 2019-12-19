@@ -1,10 +1,11 @@
-use crate::core::ctx::Env;
-use crate::core::util::border::Border;
-use crate::core::widget::handlez::WidgetFns;
-use crate::core::widget::handlez::Handlez;
+use crate::core::*;
+use ctx::Env;
+use util::border::Border;
+use widget::handlez::WidgetFns;
+use widget::handlez::Handlez;
 use std::any::Any;
-use crate::core::ctx::*;
-use crate::core::style::Style;
+use ctx::*;
+use style::Style;
 
 pub mod link;
 pub mod handlez;

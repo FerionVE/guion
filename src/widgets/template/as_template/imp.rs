@@ -1,6 +1,5 @@
 use super::*;
 
-
 impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ITemplate<E>, E: Env + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {

@@ -1,6 +1,7 @@
-use crate::core::lazout::Orientation;
-use crate::core::ctx::*;
-use crate::core::style::Style;
+use crate::core::*;
+use lazout::Orientation;
+use ctx::*;
+use style::Style;
 
 pub struct Pane<E> where E: Env {
     id: E::WidgetID,

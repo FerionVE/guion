@@ -1,8 +1,9 @@
-use crate::core::util::bounds::Dims;
-use crate::core::lazout::size::SizeAxis;
-use crate::core::lazout::Orientation;
-use crate::core::lazout::size::Size;
-use crate::core::util::bounds::Bounds;
+use crate::core::*;
+use util::bounds::Dims;
+use lazout::size::SizeAxis;
+use lazout::Orientation;
+use lazout::size::Size;
+use util::bounds::Bounds;
 
 pub fn calc_bounds(outer: Dims, w: &[Size], o: Orientation) -> Vec<Bounds> {
     unimplemented!()

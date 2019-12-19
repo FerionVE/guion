@@ -1,4 +1,5 @@
-use crate::core::ctx::*;
+use crate::core::*;
+use ctx::*;
 
 pub struct Template<E> where E: Env {
     id: E::WidgetID,

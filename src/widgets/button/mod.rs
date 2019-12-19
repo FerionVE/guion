@@ -1,9 +1,10 @@
 pub mod imp;
 pub mod o;
 
-use crate::core::widget::Widget;
-use crate::core::ctx::*;
-use crate::core::widget::link::Link;
+use crate::core::*;
+use widget::Widget;
+use ctx::*;
+use widget::link::Link;
 pub use imp::*;
 pub use o::*;
 

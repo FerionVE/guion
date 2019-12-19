@@ -1,8 +1,9 @@
-use crate::core::ctx::id::WidgetID;
-use crate::core::widget::Widget;
-use crate::core::render::Render;
-use crate::core::ctx::*;
-use crate::core::lazout::size::Size;
+use crate::core::*;
+use ctx::id::WidgetID;
+use widget::Widget;
+use render::Render;
+use ctx::*;
+use lazout::size::Size;
 use super::*;
 
 impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, C::Link: AsHandler<Self,C> + AsHandler<S,C> + 'static {

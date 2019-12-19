@@ -1,4 +1,5 @@
-use crate::core::lazout::size::Size;
+use crate::core::*;
+use lazout::size::Size;
 use super::*;
 
 /// implement Widget for a ILabel implementor
