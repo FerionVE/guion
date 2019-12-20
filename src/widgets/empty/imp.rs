@@ -65,9 +65,6 @@ macro_rules! impl_empty_inner {
         fn style(&self) -> &E::Style {
             <E::Style as $crate::core::style::Style>::default()
         }
-        
-        #[inline] fn as_any(&self) -> &dyn std::any::Any {self}
-        #[inline] fn as_any_mut(&mut self) -> &mut dyn std::any::Any {self}
     };
 }
 

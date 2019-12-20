@@ -1,3 +1,4 @@
+use std::any::Any;
 use super::*;
 
 impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ITemplate<E>, E: Env + 'static {
@@ -31,4 +32,12 @@ impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>
 
 impl<T,E,C> Widget<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ITemplate<E>, E: Env + 'static {
     crate::impl_template_inner!(AsTemplate<T,E,C>,E);
+    #[inline]
+    fn as_any_inner(&self) -> &dyn Any {
+        &self.inner
+    }
+    #[inline]
+    fn as_any_inner_mut(&mut self) -> &mut dyn Any {
+        &mut self.inner
+    }
 }

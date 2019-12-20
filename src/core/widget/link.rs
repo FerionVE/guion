@@ -1,7 +1,7 @@
 use crate::core::*;
 use ctx::aliases::*;
 use ctx::*;
-use widget::Widget;
+use widget::*;
 use std::ops::DerefMut;
 use std::ops::Deref;
 use state::handler::*;

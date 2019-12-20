@@ -70,9 +70,6 @@ macro_rules! impl_template_inner {
         fn style(&self) -> &E::Style {
             $crate::macro_prelude::ITemplate::style(self)
         }
-        
-        #[inline] fn as_any(&self) -> &dyn std::any::Any {self}
-        #[inline] fn as_any_mut(&mut self) -> &mut dyn std::any::Any {self}
     };
 }
 
