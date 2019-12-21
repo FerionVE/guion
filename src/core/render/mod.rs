@@ -29,15 +29,16 @@ pub trait Render<E>: Sized where E: Env<Renderer=Self> {
             }
         }
     }
-
+    /// Get the size and absolute offset of the current renderer inside a window
     fn bounds_abs(&self) -> Bounds;
+    /// Renderer with current viewport sliced to the given relative bounds inside
     fn slice(&mut self, b: &Bounds) -> Self;
 
-    ///if widgets should be rendered even if the don't require to
+    /// if widgets should be rendered even if the don't require to
     fn force(&self) -> bool {
         false
     }
-    ///return false if rendered widgets should not be set rendered
+    /// return false if rendered widgets should not be set rendered
     fn validate_widgets(&self) -> bool {
         true
     }

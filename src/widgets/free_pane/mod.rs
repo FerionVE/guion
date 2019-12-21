@@ -30,6 +30,7 @@ pub trait Pane<E> where E: Env {
     
 }
 
+#[doc(hidden)]
 impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     #[inline]
     fn id(&self) -> E::WidgetID {

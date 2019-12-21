@@ -29,7 +29,7 @@ impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>
         <T as ITemplate<E>>::style(self)
     }
 }
-
+#[doc(hidden)]
 impl<T,E,C> Widget<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ITemplate<E>, E: Env + 'static {
     crate::impl_template_inner!(AsTemplate<T,E,C>,E);
     #[inline]

@@ -8,6 +8,7 @@ use super::*;
 #[macro_export]
 macro_rules! impl_template {
     ($t:ty) => {
+        #[doc(hidden)]
         impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::ITemplate<E>, E: $crate::macro_prelude::Env + 'static {
             $crate::impl_template_inner!($t,E);
         }

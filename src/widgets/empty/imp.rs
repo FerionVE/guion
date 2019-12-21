@@ -5,6 +5,7 @@ use super::*;
 #[macro_export]
 macro_rules! impl_empty {
     ($t:ty) => {
+        #[doc(hidden)]
         impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IEmpty<E>, E: $crate::macro_prelude::Env + 'static {
             $crate::impl_empty_inner!($t,E);
         }

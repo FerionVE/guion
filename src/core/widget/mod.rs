@@ -22,23 +22,24 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             ctx: c,
         }
     }
-    
+    #[doc(hidden)]
     fn _fns(&self) -> WidgetFns<E>;
 
-    ///commit accessors may moved to Handler
+    /// returns if the widget should be rendered
     fn invalid(&self) -> bool;
     fn set_invalid(&mut self, v: bool);
 
     fn parent(&self) -> Option<E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);
 
+    fn has_childs(&self) -> bool;
+    /// iterator over widget's child widgets
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a>;
-
+    /// id of child widgets as vec
     fn childs_vec<'a>(&'a self) -> Vec<E::WidgetID>;
-
+    /// should the widget be focusable, regularly true for interactive widgets, false for layouts
     fn selectable(&self) -> bool;
 
-    fn has_childs(&self) -> bool;
     #[inline]
     fn style(&self) -> &E::Style {
         E::Style::default()
@@ -47,18 +48,22 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn border(&self) -> &Border {
         E::Style::default_border()
     }
+    /// returns this widget as Any
     #[inline]
     fn as_any(&self) -> &dyn Any {
         WidgetAsAny::_as_any(self)
     }
+    /// returns this widget as Any
     #[inline]
     fn as_any_mut(&mut self) -> &mut dyn Any {
         WidgetAsAny::_as_any_mut(self)
     }
+    /// returns a erased reference to a underlying struct for a wrapper, else to this widget
     #[inline]
     fn as_any_inner(&self) -> &dyn Any {
         WidgetAsAny::_as_any(self)
     }
+    /// returns a erased reference to a underlying struct for a wrapper, else to this widget
     #[inline]
     fn as_any_inner_mut(&mut self) -> &mut dyn Any {
         WidgetAsAny::_as_any_mut(self)

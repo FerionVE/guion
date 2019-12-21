@@ -1,7 +1,8 @@
 use crate::core::*;
 use ctx::*;
 use widget::Widget;
-///tabulate through widget tree
+/// tabulate through widget tree
+/// returns the next widget from selected in the specific direction
 pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetID, reverse: bool) -> E::WidgetID {
     //for recognizing infinite loops
     let initial_selected = selected.clone();

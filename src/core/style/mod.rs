@@ -24,7 +24,7 @@ pub trait Style: Clone + PartialEq {
         }
         s
     }
-
+    #[doc(hidden)]
     fn _with(&mut self, v: StyleVerb);
 
     fn font(&self) -> Option<&Self::Font>;

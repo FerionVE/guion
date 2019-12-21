@@ -5,6 +5,7 @@ use super::*;
 #[macro_export]
 macro_rules! impl_pane {
     ($t:ty) => {
+        #[doc(hidden)]
         impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::IPane<E>, E: $crate::macro_prelude::Env + 'static {
             $crate::impl_pane_inner!($t,E);
         }

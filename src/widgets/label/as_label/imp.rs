@@ -29,7 +29,7 @@ impl<T,E,C> ILabel<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'st
         <T as ILabel<E>>::style(self)
     }
 }
-
+#[doc(hidden)]
 impl<T,E,C> Widget<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: ILabel<E>, E: Env + 'static {
     crate::impl_label_inner!(AsLabel<T,E,C>,E);
     #[inline]

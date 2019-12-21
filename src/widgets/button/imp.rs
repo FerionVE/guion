@@ -11,6 +11,7 @@ use super::*;
 #[macro_export]
 macro_rules! impl_button {
     ($t:ty) => {
+        #[doc(hidden)]
         impl<E> $crate::macro_prelude::Widget<E> for $t where 
             $t: $crate::macro_prelude::IButton<E>,
             E: $crate::macro_prelude::Env + 'static,

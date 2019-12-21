@@ -1,3 +1,5 @@
+#![doc(html_logo_url = "https://git.mkg20001.io/ferionve/pm/raw/master/logos/ferionve.svg")]
+
 pub mod core;
 pub mod widgets;
 pub mod standard;
