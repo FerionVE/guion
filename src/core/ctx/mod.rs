@@ -1,5 +1,6 @@
+use crate::core::event::key::Key;
+use crate::core::event::Destination;
 use widget::dyn_widget::DynWidget;
-use std::borrow::BorrowMut;
 use std::any::Any;
 
 use crate::core::*;
@@ -39,6 +40,8 @@ pub trait Env: Sized + 'static {
     type WidgetID: WidgetID;
     type Commit: Eq + Ord;
     type Style: Style;
+    type EventDest: Destination;
+    type EventKey: Key;
 }
 
 pub trait Context: Sized + 'static {

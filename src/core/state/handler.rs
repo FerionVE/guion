@@ -1,12 +1,8 @@
 use crate::core::*;
 use ctx::handler::Handler;
-use ctx::handler::access::AsHandler;
 use ctx::widgets::Widgets;
 use ctx::*;
-use ctx::aliases::*;
 use event::key::PressedKey;
-use event::key::Key;
-use super::*;
 
 pub trait AsHandlerStateful<E,C>: Sized where E: Env<Context=C>, C: Context<Link=Self> + Widgets<E> {
     type T: HandlerStateful<E,C>;
@@ -38,11 +34,11 @@ pub trait HandlerStateful<E,C>: Handler<C> + 'static where E: Env<Context=C>, C:
 
     fn pressed(&self) -> &[Self::K];
     #[inline]
-    fn is_pressed(&self, c: &[EKey<E>]) -> Option<&Self::K> {
+    fn is_pressed(&self, c: &[E::EventKey]) -> Option<&Self::K> {
         unimplemented!()
     }
     #[inline]
-    fn is_pressed_and_id(&self, c: &[EKey<E>], id: &E::WidgetID) -> bool {
+    fn is_pressed_and_id(&self, c: &[E::EventKey], id: &E::WidgetID) -> bool {
         unimplemented!()
     }
 }

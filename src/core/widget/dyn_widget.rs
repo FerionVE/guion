@@ -36,6 +36,8 @@ pub trait WidgetAsAny<E>: 'static where E: Env {
 }
 
 impl<T,E> WidgetAsAny<E> for T where T: Widget<E>, E: Env {
+    #[inline]
     fn _as_any(&self) -> &dyn Any {self}
+    #[inline]
     fn _as_any_mut(&mut self) -> &mut dyn Any {self}
 }

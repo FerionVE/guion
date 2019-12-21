@@ -1,20 +1,25 @@
 pub mod imp;
 pub mod o;
 
+use crate::core::event::VariantSupport;
+use crate::core::event::variants::KbdDown;
 use render::widgets::RenderStdWidgets;
 use ctx::aliases::*;
 use state::handler::*;
 use widget::handlez::fns::WidgetFns;
-use ctx::aliases::EKey;
 use crate::core::*;
 use widget::Widget;
 use ctx::*;
 use widget::link::Link;
 use event::key::Key;
+use event::imp::StdVarSup;
+
+#[doc(inline)]
 pub use imp::*;
+#[doc(inline)]
 pub use o::*;
 
-pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Renderer: RenderStdWidgets<E> {
+pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Renderer: RenderStdWidgets<E>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {
     fn id(&self) -> E::WidgetID;
     
     #[inline]
@@ -37,7 +42,7 @@ pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHLink<E>: AsHandlerState
     fn parent(&self) -> Option<E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);
     #[inline]
-    fn kbd_trigger(&self) -> EKey<E> {
-        EKey::<E>::ENTER
+    fn kbd_trigger(&self) -> E::EventKey {
+        E::EventKey::ENTER
     }
 }

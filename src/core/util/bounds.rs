@@ -51,6 +51,12 @@ impl Bounds {
     }
 }
 
+impl Offset {
+    pub fn is_inside(&self, b: &Bounds) -> bool {
+        unimplemented!()
+    }
+}
+
 qwutils::opion!(add(Bounds,Offset) |s,r| {
     s.off.x += r.x;
     s.off.y += r.y;

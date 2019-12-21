@@ -7,7 +7,9 @@ pub mod imp;
 pub mod o;
 pub mod as_template;
 
+#[doc(inline)]
 pub use imp::*;
+#[doc(inline)]
 pub use o::*;
 
 /*pub mod as_template {

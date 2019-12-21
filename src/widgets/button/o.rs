@@ -1,3 +1,5 @@
+use crate::core::event::variants::KbdDown;
+use crate::core::event::VariantSupport;
 use crate::core::*;
 use ctx::aliases::ECStateful;
 use ctx::aliases::ECHLink;
@@ -15,7 +17,7 @@ pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHLink<E>:
     action: fn(Link<E>),
 }
 
-impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> {
+impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

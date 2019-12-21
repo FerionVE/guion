@@ -18,6 +18,11 @@ impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, C::Li
         unimplemented!()
     }
     #[inline] 
+    fn _event_root<E: Env>(senf: &mut C, i: &E::WidgetID, e: E::Event) {
+        Self::_event::<E>(senf,i,e);
+        unimplemented!()
+    }
+    #[inline] 
     fn _size<E: Env>(senf: &mut C, i: &E::WidgetID) -> Size {
         unimplemented!();
         S::_size::<E>(senf,i)

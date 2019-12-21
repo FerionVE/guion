@@ -5,6 +5,7 @@ use super::*;
 /// implement Widget for a ITemplate implementor
 /// 
 /// INFO: using AsWidget is recommended over this, because you can only implement one widget view for one type
+#[doc(hidden)] //remove this
 #[macro_export]
 macro_rules! impl_template {
     ($t:ty) => {
@@ -17,6 +18,7 @@ macro_rules! impl_template {
 /// impl<E> Widget<E> for T where T: ITemplate<E>, E: Env + 'static {
 ///     crate::impl_template_inner!(T,E);
 /// }
+#[doc(hidden)] //remove this
 #[macro_export]
 macro_rules! impl_template_inner {
     ($s:ty,$c:ty) => {

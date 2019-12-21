@@ -5,8 +5,9 @@ use widget::link::Link;
 
 pub mod imp;
 pub mod o;
-
+#[doc(inline)]
 pub use imp::*;
+#[doc(inline)]
 pub use o::*;
 
 pub trait IEmpty<E>: Widget<E> where E: Env {

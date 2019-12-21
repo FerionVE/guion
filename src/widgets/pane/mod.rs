@@ -11,7 +11,9 @@ use lazout::Orientation;
 pub mod imp;
 pub mod o;
 
+#[doc(inline)]
 pub use imp::*;
+#[doc(inline)]
 pub use o::*;
 
 pub trait IPane<E>: Widget<E> where E: Env {
