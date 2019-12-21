@@ -6,9 +6,11 @@ use widget::handlez::Handlez;
 use std::any::Any;
 use ctx::*;
 use style::Style;
+use dyn_widget::*;
 
 pub mod link;
 pub mod handlez;
+pub mod dyn_widget;
 //pub mod imp;
 
 pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
@@ -46,21 +48,19 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         E::Style::default_border()
     }
     #[inline]
+    fn as_any(&self) -> &dyn Any {
+        WidgetAsAny::_as_any(self)
+    }
+    #[inline]
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        WidgetAsAny::_as_any_mut(self)
+    }
+    #[inline]
     fn as_any_inner(&self) -> &dyn Any {
-        WidgetAsAny::as_any(self)
+        WidgetAsAny::_as_any(self)
     }
     #[inline]
     fn as_any_inner_mut(&mut self) -> &mut dyn Any {
-        WidgetAsAny::as_any_mut(self)
+        WidgetAsAny::_as_any_mut(self)
     }
-}
-
-pub trait WidgetAsAny<E>: 'static where E: Env {
-    fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
-}
-
-impl<T,E> WidgetAsAny<E> for T where T: Widget<E>, E: Env {
-    fn as_any(&self) -> &dyn Any {self}
-    fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }

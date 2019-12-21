@@ -66,9 +66,6 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
             .map(IBoundedWidget::into_a)
         )
     }
-    
-    #[inline] fn as_any(&self) -> &dyn Any {self}
-    #[inline] fn as_any_mut(&mut self) -> &mut dyn Any {self}
 }
 
 fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {

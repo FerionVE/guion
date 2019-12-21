@@ -1,3 +1,4 @@
+use widget::dyn_widget::DynWidget;
 use std::borrow::BorrowMut;
 use std::any::Any;
 
@@ -34,7 +35,7 @@ pub trait Env: Sized + 'static {
     type Renderer: Render<Self>;
     type Event: Event<Self>;
     ///regularly just dyn Widget
-    type DynWidget: Widget<Self> + ?Sized;
+    type DynWidget: DynWidget<Self> + ?Sized;
     type WidgetID: WidgetID;
     type Commit: Eq + Ord;
     type Style: Style;

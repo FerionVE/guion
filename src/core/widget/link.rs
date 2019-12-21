@@ -1,6 +1,7 @@
 use crate::core::*;
 use ctx::aliases::*;
 use ctx::*;
+use widget::dyn_widget::*;
 use widget::*;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -16,14 +17,12 @@ impl<'a,E> Link<'a,E> where E: Env {
     pub fn me<S: Widget<E> + 'static>(&'a self) -> &'a S {
         self.ctx.widget(&self.widget_id)
             .expect("Link: Widget Gone")
-            .as_any()
             .downcast_ref::<S>().expect("Link: Wrong Widget Type")
     }
     #[inline] 
     pub fn me_mut<S: Widget<E> + 'static>(&'a mut self) -> &'a mut S {
         self.ctx.widget_mut(&self.widget_id)
             .expect("Link: Widget Gone")
-            .as_any_mut()
             .downcast_mut::<S>().expect("Link: Wrong Widget Type")
     }
 
