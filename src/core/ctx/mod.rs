@@ -59,7 +59,7 @@ pub trait Context: Sized + 'static {
 
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _render<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, r: E::Renderer) where Self: Widgets<E> {
+    fn _render<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, r: (&mut E::Renderer,&Bounds)) where Self: Widgets<E> {
         Self::Handler::_render::<E>(self,i,r)
     }
     /// PANICKS if widget doesn't exists

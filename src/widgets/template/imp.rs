@@ -1,3 +1,4 @@
+use crate::core::util::bounds::Bounds;
 use crate::core::*;
 use lazout::size::Size;
 use super::*;
@@ -76,7 +77,7 @@ macro_rules! impl_template_inner {
     };
 }
 
-pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: E::Renderer) {
+pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut E::Renderer,&Bounds)) {
     unimplemented!()
 }
 

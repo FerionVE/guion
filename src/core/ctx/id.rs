@@ -13,7 +13,7 @@ pub trait WidgetID: Clone + PartialEq + Sized {
     }
     
     #[inline]
-    fn render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: E::Renderer) -> Result<(),()> {
+    fn render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: (&mut E::Renderer,&Bounds)) -> Result<(),()> {
         c.has_widget(self).result()
             .map(|_| self._render::<E>(c,r) )
     }
@@ -30,7 +30,7 @@ pub trait WidgetID: Clone + PartialEq + Sized {
 
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: E::Renderer) {
+    fn _render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: (&mut E::Renderer,&Bounds)) {
         c._render(self,r)
     }
     /// PANICKS if widget doesn't exists

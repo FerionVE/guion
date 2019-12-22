@@ -1,3 +1,4 @@
+use crate::core::util::bounds::Bounds;
 use crate::core::*;
 use ctx::id::WidgetID;
 use widget::Widget;
@@ -8,7 +9,7 @@ use super::*;
 
 impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, C::Link: AsHandler<Self,C> + AsHandler<S,C> + 'static {
     #[inline] 
-    fn _render<E: Env>(senf: &mut C, i: &E::WidgetID, r: E::Renderer) {
+    fn _render<E: Env>(senf: &mut C, i: &E::WidgetID, r: (&mut E::Renderer,&Bounds)) {
         S::_render::<E>(senf,i,r);
         unimplemented!()
     }

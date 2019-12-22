@@ -69,7 +69,7 @@ macro_rules! impl_pane_inner {
     };
 }
 
-pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut E::Renderer,&Bounds)) {
     let o = l.me::<W>().orientation();
     
     let c = childs::<W,E>(&l);
@@ -82,11 +82,11 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<
     )
     .collect::<Vec<_>>();
     
-    let b = calc_bounds(r.bounds_abs().size, &b[..], o);
+    let b = calc_bounds(r.1.size.clone(), &b[..], o);
     
     for (cc,bb) in c.iter().zip(b.iter()) {
         cc
-        .render::<E>( &mut *l, r.slice(bb) )
+        .render::<E>( &mut *l, (r.0,&r.1.slice(bb)) )
         .expect("Pane contains lost Widget");
     }
     

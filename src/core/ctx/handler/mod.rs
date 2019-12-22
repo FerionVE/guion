@@ -6,7 +6,7 @@ pub use access::*;
 pub trait Handler<C>: Sized + 'static where C: Context {
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _render<E: Env>(senf: &mut C, i: &E::WidgetID, r: E::Renderer);
+    fn _render<E: Env>(senf: &mut C, i: &E::WidgetID, r: (&mut E::Renderer,&Bounds));
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _event<E: Env>(senf: &mut C, i: &E::WidgetID, e: E::Event);

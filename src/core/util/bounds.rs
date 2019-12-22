@@ -49,6 +49,10 @@ impl Bounds {
         s.size -= b.border_effective();
         s
     }
+
+    pub fn slice(&self, b: &Bounds) -> Self {
+        unimplemented!()
+    }
 }
 
 impl Offset {

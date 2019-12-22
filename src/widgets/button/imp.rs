@@ -1,3 +1,4 @@
+use crate::core::util::bounds::Bounds;
 use crate::core::*;
 use render::widgets::RenderStdWidgets;
 use lazout::size::Size;
@@ -78,13 +79,13 @@ macro_rules! impl_button_inner {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {
+pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut E::Renderer,&Bounds)) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {
     let senf = l.me::<W>();
     let down = 
         l.is_hovered() && l.state().is_pressed_and_id(&[E::EventKey::MOUSE_LEFT], &l.id) ||
         l.is_selected() && l.state().is_pressed_and_id(&[E::EventKey::ENTER], &l.id);
         
-    r.draw_text_button(down,senf.caption(),IButton::style(senf));
+    r.0.draw_text_button(r.1,down,senf.caption(),IButton::style(senf));
 }
 
 pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {

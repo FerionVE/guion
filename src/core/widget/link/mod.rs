@@ -34,7 +34,7 @@ impl<'a,E> Link<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn render(&mut self, r: E::Renderer) { //TODO fix &mut Renderer back to owned
+    pub fn render(&mut self, r: (&mut E::Renderer,&Bounds)) { //TODO fix &mut Renderer back to owned
         self.id._render::<E>(self.ctx,r)
     }
     #[inline]
