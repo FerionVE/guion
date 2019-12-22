@@ -11,7 +11,7 @@ pub struct Border {
 
 impl Border {
     #[inline]
-    pub fn new(left: u32, right: u32, top: u32, bottom: u32) -> Self {
+    pub const fn new(left: u32, right: u32, top: u32, bottom: u32) -> Self {
         Self{
             left,
             right,
@@ -20,11 +20,11 @@ impl Border {
         }
     }
     #[inline]
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         Self::new(0,0,0,0)
     }
     #[inline]
-    pub fn inner(&self) -> Offset {
+    pub const fn inner(&self) -> Offset {
         Offset{
             x: self.left as i32,
             y: self.top as i32,
@@ -32,7 +32,7 @@ impl Border {
     }
     ///the size of the effective border
     #[inline]
-    pub fn border_effective(&self) -> Dims {
+    pub const fn border_effective(&self) -> Dims {
         Dims{
             w: self.left + self.right,
             h: self.top + self.bottom,

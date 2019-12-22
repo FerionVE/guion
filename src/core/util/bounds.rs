@@ -20,7 +20,7 @@ pub struct Bounds {
 }
 
 impl Bounds {
-    pub fn from_xywh(x: i32, y: i32, w: u32, h: u32) -> Self {
+    pub const fn from_xywh(x: i32, y: i32, w: u32, h: u32) -> Self {
         Self{
             off: Offset{
                 x,

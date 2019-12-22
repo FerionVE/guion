@@ -17,15 +17,15 @@ pub trait Style<C>: Clone + PartialEq where C: Context<Style=Self> {
     type PreprocessedChar: PreprocessedChar;
 
     #[inline]
-    fn with(&self, verbs: impl IntoIterator<Item=StyleVerb>, c: &mut C) -> Self {
+    fn with(&self, verbs: impl IntoIterator<Item=StyleVerb>) -> Self {
         let mut s = self.clone();
         for v in verbs {
-            s._with(v,c);
+            s._with(v);
         }
         s
     }
     #[doc(hidden)]
-    fn _with(&mut self, v: StyleVerb, c: &mut C);
+    fn _with(&mut self, v: StyleVerb);
 
     fn font(&self) -> Option<&Self::Font>;
     fn cursor(&self) -> Self::Cursor;

@@ -18,7 +18,7 @@ pub struct SizeAxis {
 }
 
 impl Size {
-    pub fn fixed(w: u32, h: u32) -> Self {
+    pub const fn fixed(w: u32, h: u32) -> Self {
         Self{
             x: SizeAxis{
                 min: w,
@@ -50,7 +50,7 @@ impl Size {
         self.y += &o.y;
     }
 
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         Size {
             x: SizeAxis::empty(),
             y: SizeAxis::empty(),
@@ -59,7 +59,7 @@ impl Size {
 }
 
 impl SizeAxis {
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         SizeAxis {
             min: 0,
             preferred: 0,
