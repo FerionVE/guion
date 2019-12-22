@@ -12,6 +12,7 @@ pub mod imp;
 pub mod dyn_evt;
 
 /// Use is() for querying as a specific variant
+/// IMPORTANT Events are not filter for specific widgets, use the filter_ methods for filtering
 pub trait Event<E>: Sized + Clone where E: Env<Event=Self> {
     fn filter(self, subbounds: &Bounds) -> Option<Self>;
     #[inline]
@@ -23,27 +24,35 @@ pub trait Event<E>: Sized + Clone where E: Env<Event=Self> {
     /// Where there Event should be initially injected into the context
     fn destination(&self) -> E::EventDest;
     /// Create the event from a variant. returns empty event if variant is not supported
-    fn from<V: Variant<E>>(v: V) -> Self where Self: VariantSupport<V,E>;
+    #[inline]
+    fn from<V: Variant<E>>(v: V) -> Self where Self: VariantSupport<V,E> {
+        VariantSupport::<V,E>::from_variant(v)
+    }
     /// Try to cast the Event as a specific variant.  
     /// Use this for filtering and reading events  
-    fn is<V: Variant<E>>(&self) -> Option<V> where Self: VariantSupport<V,E>;
+    #[inline]
+    fn is<V: Variant<E>>(&self) -> Option<V> where Self: VariantSupport<V,E> {
+        VariantSupport::<V,E>::to_variant(self)
+    }
+
+    fn position(&self) -> Option<Offset>;
 }
 
 pub trait VariantSupport<V,E>: Event<E> where E: Env<Event=Self>, V: Variant<E> {
-    fn from_variant(v: &V) -> Self;
-    fn to_variant(&self) -> Self;
+    fn from_variant(v: V) -> Self;
+    fn to_variant(&self) -> Option<V>;
 }
 
 pub trait Variant<E>: VariantDerive<E> where E: Env {
     #[inline]
-    fn pos(&self) -> Option<&Offset> {
+    fn position(&self) -> Option<Offset> {
         None
     }
     #[inline]
     fn filter(&self, subbounds: &Bounds) -> bool {
-        self.pos().map_or(true, |p| p.is_inside(subbounds) )
+        self.position().map_or(true, |p| p.is_inside(subbounds) )
     }
-    /// true 
+
     #[inline]
     fn consuming(&self) -> bool {
         false

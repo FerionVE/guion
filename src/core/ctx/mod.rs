@@ -1,10 +1,11 @@
+use crate::core::util::bounds::Bounds;
 use crate::core::event::key::Key;
 use crate::core::event::Destination;
 use widget::dyn_widget::DynWidget;
 use std::any::Any;
 
 use crate::core::*;
-use widget::handlez::fns::WidgetFns;
+use widget::fns::WidgetFns;
 use style::Style;
 use lazout::size::Size;
 use widget::link::Link;
@@ -19,6 +20,7 @@ use state::handler::*;
 pub mod id;
 pub use id::*;
 
+#[allow(type_alias_bounds)]
 pub mod aliases;
 use aliases::*;
 
@@ -42,6 +44,7 @@ pub trait Env: Sized + 'static {
     type Style: Style;
     type EventDest: Destination;
     type EventKey: Key;
+    type EventConsuming;
 }
 
 pub trait Context: Sized + 'static {
@@ -75,10 +78,11 @@ pub trait Context: Sized + 'static {
         Widget::_fns(self.widget(i).expect("Lost Widget"))
     }
 
-    #[inline] fn link<'a,E: Env<Context=Self>>(&'a mut self, i: &E::WidgetID) -> Link<'a,E> where Self: Widgets<E> {
+    #[inline] fn link<'a,E: Env<Context=Self>>(&'a mut self, i: &E::WidgetID, b: Bounds) -> Link<'a,E> where Self: Widgets<E> {
         Link{
             ctx: self,
-            widget_id: i.clone(),
+            id: i.clone(),
+            bounds: b,
         }
     }
 

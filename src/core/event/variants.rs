@@ -50,6 +50,15 @@ pub struct WindowResize {
     pub size: Size,
 }
 
+macro_rules! pos {
+    ($field:ident) => {
+        #[inline]
+        fn position(&self) -> Option<Offset> {
+            Some(self.$field.clone())
+        }
+    };
+}
+
 macro_rules! consuming {
     () => {
         #[inline]
@@ -80,8 +89,8 @@ macro_rules! root {
 impl<E> Variant<E> for KbdDown<E::EventKey> where E: Env {selected!();}
 impl<E> Variant<E> for KbdUp<E::EventKey> where E: Env {selected!();}
 
-impl<E> Variant<E> for MouseDown<E::EventKey> where E: Env {consuming!();root!();}
-impl<E> Variant<E> for MouseUp<E::EventKey> where E: Env {consuming!();root!();}
-impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();}
-impl<E> Variant<E> for MouseEnter where E: Env {consuming!();root!();}
-impl<E> Variant<E> for MouseLeave where E: Env {consuming!();root!();}
+impl<E> Variant<E> for MouseDown<E::EventKey> where E: Env {consuming!();root!();pos!(pos);}
+impl<E> Variant<E> for MouseUp<E::EventKey> where E: Env {consuming!();root!();pos!(pos);}
+impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(dest);}
+impl<E> Variant<E> for MouseEnter where E: Env {consuming!();root!();pos!(dest);}
+impl<E> Variant<E> for MouseLeave where E: Env {consuming!();root!();pos!(dest);}

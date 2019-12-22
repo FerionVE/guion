@@ -6,7 +6,7 @@ use crate::core::event::variants::KbdDown;
 use render::widgets::RenderStdWidgets;
 use ctx::aliases::*;
 use state::handler::*;
-use widget::handlez::fns::WidgetFns;
+use widget::fns::WidgetFns;
 use crate::core::*;
 use widget::Widget;
 use ctx::*;

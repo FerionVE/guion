@@ -1,27 +1,19 @@
+use crate::core::widget::fns::WidgetFns;
 use crate::core::*;
 use ctx::Env;
 use util::border::Border;
-use widget::handlez::WidgetFns;
-use widget::handlez::Handlez;
 use std::any::Any;
 use ctx::*;
 use style::Style;
 use dyn_widget::*;
 
 pub mod link;
-pub mod handlez;
 pub mod dyn_widget;
+pub mod fns;
 //pub mod imp;
 
 pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
-    #[inline]
-    fn handler<'a>(&self, c: &'a mut E::Context) -> Handlez<'a,E> { //TODO deprecate in future
-        Handlez {
-            id: self.id(),
-            ctx: c,
-        }
-    }
     #[doc(hidden)]
     fn _fns(&self) -> WidgetFns<E>;
 

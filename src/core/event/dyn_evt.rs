@@ -32,15 +32,21 @@ impl<E> Event<E> for DynEvent<E> where E: Env<Event=Self> {
         self.event.destination()
     }
     #[inline]
-    fn from<V: Variant<E>>(v: V) -> Self {
+    fn position(&self) -> Option<Offset> {
+        self.event.position()
+    }
+}
+
+impl<V,E> VariantSupport<V,E> for DynEvent<E> where V: Variant<E>, E: Env<Event=Self> {
+    #[inline]
+    fn from_variant(v: V) -> Self {
         Self {
             event: Box::new(v),
         }
     }
     #[inline]
-    fn is<V: Variant<E>>(&self) -> Option<V> {
+    fn to_variant(&self) -> Option<V> {
         Any::downcast_ref(self.event._as_any())
             .map(|e: &V| e.clone() )
     }
 }
-

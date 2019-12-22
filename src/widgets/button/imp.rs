@@ -81,8 +81,8 @@ macro_rules! impl_button_inner {
 pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) where E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {
     let senf = l.me::<W>();
     let down = 
-        l.is_hovered() && l.state().is_pressed_and_id(&[E::EventKey::MOUSE_LEFT], &l.widget_id) ||
-        l.is_selected() && l.state().is_pressed_and_id(&[E::EventKey::ENTER], &l.widget_id);
+        l.is_hovered() && l.state().is_pressed_and_id(&[E::EventKey::MOUSE_LEFT], &l.id) ||
+        l.is_selected() && l.state().is_pressed_and_id(&[E::EventKey::ENTER], &l.id);
         
     r.draw_text_button(down,senf.caption(),IButton::style(senf));
 }

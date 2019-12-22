@@ -1,54 +1,60 @@
+use crate::core::lazout::size::Size;
+use crate::core::util::bounds::Bounds;
 use crate::core::*;
-use state::handler::*;
 use ctx::aliases::*;
-use widget::link::Link;
-use lazout::size::Size;
-use widget::Widget;
 use ctx::*;
+use widget::dyn_widget::*;
+use widget::*;
+use std::ops::DerefMut;
+use std::ops::Deref;
+use state::handler::*;
 
-pub mod fns;
 pub mod imp;
+use imp::*;
 
-pub use fns::*;
-pub use imp::*;
-
-pub struct Handlez<'a,E> where E: Env {
-    pub(crate) id: E::WidgetID,
-    pub(crate) ctx: &'a mut E::Context,
+pub struct Link<'a,E> where E: Env {
+    pub ctx: &'a mut E::Context,
+    pub id: E::WidgetID,
+    /// absolute pos ans size of current widget
+    pub bounds: Bounds,
 }
 
-impl<'a,E> Handlez<'a,E> where E: Env {
-    #[deprecated]
+impl<'a,E> Link<'a,E> where E: Env {
+    #[inline]
+    pub fn me<S: Widget<E> + 'static>(&'a self) -> &'a S {
+        self.ctx.widget(&self.id)
+            .expect("Link: Widget Gone")
+            .downcast_ref::<S>().expect("Link: Wrong Widget Type")
+    }
+    #[inline] 
+    pub fn me_mut<S: Widget<E> + 'static>(&'a mut self) -> &'a mut S {
+        self.ctx.widget_mut(&self.id)
+            .expect("Link: Widget Gone")
+            .downcast_mut::<S>().expect("Link: Wrong Widget Type")
+    }
+
     #[inline]
     pub fn render(&mut self, r: E::Renderer) { //TODO fix &mut Renderer back to owned
         self.id._render::<E>(self.ctx,r)
     }
-    #[deprecated]
     #[inline]
     pub fn event(&mut self, e: E::Event) {
         self.id._event::<E>(self.ctx,e)
     }
-    #[deprecated]
     #[inline]
     pub fn size(&mut self) -> Size {
         self.id._size::<E>(self.ctx)
     }
-    #[deprecated]
-    #[inline]
-    pub fn link(&'a mut self) -> Link<'a,E> {
-        Link{
-            widget_id: self.id.clone(),
-            ctx: self.ctx,
-        }
-    }
+
     #[inline]
     pub fn is_hovered(&self) -> bool where ECHLink<E>: AsHandlerStateful<E,E::Context> {
-        self.ctx.state().hovered().map_or(false, |i| i == self.id )
+        self.ctx.state().is_hovered(&self.id)
     }
     #[inline]
     pub fn is_selected(&self) -> bool where ECHLink<E>: AsHandlerStateful<E,E::Context> {
-        self.ctx.state().selected().map_or(false, |i| i == self.id )
+        self.ctx.state().is_selected(&self.id)
     }
+
     /// iterate over childs
     #[inline]
     pub fn childs(&'a self, predicate: impl FnMut(&E::WidgetID)->bool ) -> impl Iterator<Item=&'a E::DynWidget> {
@@ -93,4 +99,31 @@ impl<'a,E> Handlez<'a,E> where E: Env {
             next = r.parent();
         }
     }
+
+    pub fn with_ctx<'b,F: Env<WidgetID=E::WidgetID>>(self, ctx: &'b mut F::Context) -> Link<'b,F> {
+        Link{
+            ctx,
+            id: self.id,
+            bounds: self.bounds,
+        }
+    }
+    #[inline]
+    pub fn enqueue<Q: Queue<E>>(&'a mut self, args: Q::Args, f: Q::Callback) -> Q::Return where E::Context: AccessQueue<Q,E> {
+        self.ctx.queue_mut().add(args,f)
+    }
 }
+
+impl<'a,E> Deref for Link<'a,E> where E: Env {
+    type Target = E::Context;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.ctx
+    }
+}
+impl<'a,E> DerefMut for Link<'a,E> where E: Env {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.ctx
+    }
+}
+

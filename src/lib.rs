@@ -14,11 +14,19 @@ pub mod macro_prelude {
     pub use crate::widgets::label::ILabel;
     pub(crate) use crate::widgets::template::ITemplate;
     pub use crate::core::widget::*;
-    pub use crate::core::widget::handlez::*;
+    pub use crate::core::widget::fns::WidgetFns;
     pub use crate::core::ctx::*;
     pub use crate::core::ctx::aliases::*;
     pub use crate::core::render::widgets::*;
     pub use crate::core::state::handler::*;
     pub use crate::core::event::VariantSupport;
     pub use crate::core::event::variants::*;
+}
+
+macro_rules! std_bounds {
+    () => {
+        E::Renderer: $crate::macro_prelude::RenderStdWidgets<E>,
+        $crate::macro_prelude::ECHLink<E>: $crate::macro_prelude::AsHandlerStateful<E,E::Context>, 
+        E::Event: $crate::macro_prelude::VariantSupport<$crate::macro_prelude::KbdDown<E::EventKey>,E>
+    };
 }
