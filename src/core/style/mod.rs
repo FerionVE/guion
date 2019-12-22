@@ -1,4 +1,3 @@
-use crate::core::ctx::aliases::EStyle;
 use crate::core::ctx::Context;
 use crate::core::ctx::Env;
 use crate::core::*;
@@ -10,10 +9,14 @@ pub use font::*;
 pub mod variant;
 pub use variant::*;
 
-pub trait Style<C>: Clone + PartialEq where C: Context<Style=Self> {
+pub mod color;
+pub use color::*;
+
+pub trait Style<E>: Clone + PartialEq where E: Env<Style=Self> {
     type Font;
     type Cursor;
-    type PreprocessedText: PreprocessedText<Self,C>;
+    type Color: Color;
+    type PreprocessedText: PreprocessedText<Self,E>;
     type PreprocessedChar: PreprocessedChar;
 
     #[inline]
@@ -34,9 +37,9 @@ pub trait Style<C>: Clone + PartialEq where C: Context<Style=Self> {
     #[inline]
     fn default_border() -> &'static Border;
     
-    fn preprocess_text(&self, s: &str, c: &mut C) -> Self::PreprocessedText;
+    fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::PreprocessedText;
     #[inline]
-    fn is_cached_valid(&self, s: &Self::PreprocessedText, c: &mut C) -> bool {
+    fn is_cached_valid(&self, s: &Self::PreprocessedText, c: &mut E::Context) -> bool {
         s.style() == self
     }
 

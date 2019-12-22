@@ -1,4 +1,3 @@
-use crate::core::ctx::aliases::EStyle;
 use std::any::Any;
 use super::*;
 
@@ -26,7 +25,7 @@ impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>
         <T as ITemplate<E>>::set_parent(self,v)
     }
     #[inline]
-    fn style(&self) -> &EStyle<E> {
+    fn style(&self) -> &E::Style {
         <T as ITemplate<E>>::style(self)
     }
 }

@@ -1,4 +1,5 @@
 //pub mod as_any;
+use crate::core::lazout::size::Size;
 use crate::core::*;
 use util::border::Border;
 use std::ops::BitAnd;
@@ -52,6 +53,19 @@ impl Bounds {
 
     pub fn slice(&self, b: &Bounds) -> Self {
         unimplemented!()
+    }
+    ///TODO doc
+    pub fn step(&self, step: i32) -> Self {
+        let mut senf = self.clone();
+        senf.off.x += step;
+        senf.off.y += step;
+        senf.size.w = (senf.size.w as i32 - step*2).max(0) as u32;
+        senf.size.h = (senf.size.h as i32 - step*2).max(0) as u32;
+        senf
+    }
+
+    pub fn inner_centered(&self, s: Size) -> Self {
+        unimplemented!();
     }
 }
 

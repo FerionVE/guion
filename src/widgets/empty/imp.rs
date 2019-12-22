@@ -64,7 +64,7 @@ macro_rules! impl_empty_inner {
             false
         }
         #[inline] //TODO remove redundant impls
-        fn style(&self) -> &$crate::macro_prelude::EStyle<E> {
+        fn style(&self) -> &E::Style {
             &$crate::macro_prelude::e_default_style::<E>()
         }
     };

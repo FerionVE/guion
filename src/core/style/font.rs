@@ -3,11 +3,11 @@ use util::bounds::Offset;
 use util::bounds::Dims;
 use super::*;
 
-pub trait Font<S,C>: Sized where S: Style<C,Font=Self>, C: Context<Style=S> {
+pub trait Font<S,E>: Sized where S: Style<E,Font=Self>, E: Env<Style=S> {
     
 }
 
-pub trait PreprocessedText<S,C>: Sized where S: Style<C,PreprocessedText=Self>, C: Context<Style=S> {
+pub trait PreprocessedText<S,E>: Sized where S: Style<E,PreprocessedText=Self>, E: Env<Style=S> {
     fn size(&self) -> Dims;
     fn style(&self) -> &S; //TODO TextCache validates invalidate state and compares style
     fn chars(&self) -> &[S::PreprocessedChar];

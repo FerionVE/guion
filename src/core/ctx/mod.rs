@@ -44,12 +44,12 @@ pub trait Env: Sized + 'static {
     type EventDest: Destination;
     type EventKey: Key;
     type EventConsuming;
+    type Style: Style<Self>;
 }
 
 pub trait Context: Sized + 'static {
     type Link;
     type Handler: Handler<Self>;
-    type Style: Style<Self>;
     //type Meta: ContextMeta;
 
     #[inline] 

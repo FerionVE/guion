@@ -1,4 +1,3 @@
-use crate::core::ctx::aliases::EStyle;
 use crate::core::*;
 use lazout::calc::calc_bounds;
 use util::bounds::Bounds;
@@ -21,7 +20,7 @@ pub trait IPane<E>: Widget<E> where E: Env {
 
     fn id(&self) -> E::WidgetID;
 
-    fn style(&self) -> &EStyle<E>;
+    fn style(&self) -> &E::Style;
 
     fn cached(&mut self) -> Option<&mut Option<Vec<Bounds>>> {
         None

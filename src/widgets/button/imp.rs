@@ -73,7 +73,7 @@ macro_rules! impl_button_inner {
             false
         }
         #[inline]
-        fn style(&self) -> &$crate::macro_prelude::EStyle<E> {
+        fn style(&self) -> &E::Style {
             $crate::macro_prelude::IButton::style(self)
         }
     };

@@ -11,7 +11,7 @@ pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHLink<E>:
     id: E::WidgetID,
     invalid: bool,
     parent: Option<E::WidgetID>,
-    style: EStyle<E>,
+    style: E::Style,
     caption: String,
     action: fn(Link<E>),
 }
@@ -27,7 +27,7 @@ impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: Ren
     fn caption(&self) -> &str {
         &self.caption
     }
-    fn style(&self) -> &EStyle<E> {
+    fn style(&self) -> &E::Style {
         &self.style
     }
 
