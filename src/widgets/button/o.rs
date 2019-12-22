@@ -1,8 +1,7 @@
 use crate::core::event::variants::KbdDown;
 use crate::core::event::VariantSupport;
 use crate::core::*;
-use ctx::aliases::ECStateful;
-use ctx::aliases::ECHLink;
+use ctx::aliases::*;
 use render::widgets::RenderStdWidgets;
 use widget::link::Link;
 use ctx::*;
@@ -12,7 +11,7 @@ pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHLink<E>:
     id: E::WidgetID,
     invalid: bool,
     parent: Option<E::WidgetID>,
-    style: E::Style,
+    style: EStyle<E>,
     caption: String,
     action: fn(Link<E>),
 }
@@ -28,7 +27,7 @@ impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: Ren
     fn caption(&self) -> &str {
         &self.caption
     }
-    fn style(&self) -> &E::Style {
+    fn style(&self) -> &EStyle<E> {
         &self.style
     }
 

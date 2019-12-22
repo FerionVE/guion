@@ -22,7 +22,7 @@ pub trait Pane<E> where E: Env {
     fn set_invalid(&mut self, v: bool);
 
     fn size(&self) -> Size;
-    fn style(&self) -> &E::Style;
+    fn style(&self) -> &EStyle<E>;
 
     fn parent(&self) -> Option<&E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);

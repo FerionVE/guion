@@ -1,3 +1,4 @@
+use ctx::aliases::EStyle;
 use crate::core::*;
 use widget::Widget;
 use ctx::*;
@@ -25,7 +26,7 @@ pub use as_template::*;
 pub trait ITemplate<E>: Widget<E> where E: Env {
     fn id(&self) -> E::WidgetID;
 
-    fn style(&self) -> &E::Style;
+    fn style(&self) -> &EStyle<E>;
     
     fn invalid(&self) -> bool;
     fn set_invalid(&mut self, v: bool);

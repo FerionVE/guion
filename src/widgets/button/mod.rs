@@ -34,7 +34,7 @@ pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHLink<E>: AsHandlerState
     fn action(&self) -> fn(Link<E>);
     fn caption(&self) -> &str;
     
-    fn style(&self) -> &E::Style;
+    fn style(&self) -> &EStyle<E>;
     
     fn invalid(&self) -> bool;
     fn set_invalid(&mut self, v: bool);

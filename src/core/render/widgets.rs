@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use super::*;
 
 pub trait RenderStdWidgets<E>: Render<E> where E: Env<Renderer=Self> {
@@ -5,15 +6,15 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env<Renderer=Self> {
     fn border_rect_rgba(&mut self, b: &Bounds, c: [u8;4], thickness: u32);
     #[deprecated = "avoid this because stuff is not cached"]
     #[inline]
-    fn render_text(&mut self, b: &Bounds, text: &str, style: &E::Style) {
-        let pp = style.preprocess_text(text);
+    fn render_text(&mut self, b: &Bounds, text: &str, style: &EStyle<E>, c: &mut E::Context) {
+        let pp = style.preprocess_text(text,c);
         self.render_preprocessed_text(b,&pp);
     }
-    fn render_preprocessed_text(&mut self, b: &Bounds, text: &<E::Style as Style>::PreprocessedText);
+    fn render_preprocessed_text(&mut self, b: &Bounds, text: &ESPPText<E>);
 
-    fn set_cursor(&mut self, b: &Bounds, cursor: <E::Style as Style>::Cursor);
+    fn set_cursor(&mut self, b: &Bounds, cursor: ESCursor<E>);
 
-    fn draw_text_button(&mut self, b: &Bounds, pressed: bool, caption: &str, style: &E::Style);
+    fn draw_text_button(&mut self, b: &Bounds, pressed: bool, caption: &str, style: &EStyle<E>);
 
-    fn draw_selected(&mut self, b: &Bounds, s: &E::Style);
+    fn draw_selected(&mut self, b: &Bounds, s: &EStyle<E>);
 }

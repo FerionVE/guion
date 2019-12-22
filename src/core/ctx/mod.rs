@@ -41,7 +41,6 @@ pub trait Env: Sized + 'static {
     type DynWidget: DynWidget<Self> + ?Sized;
     type WidgetID: WidgetID;
     type Commit: Eq + Ord;
-    type Style: Style;
     type EventDest: Destination;
     type EventKey: Key;
     type EventConsuming;
@@ -50,6 +49,7 @@ pub trait Env: Sized + 'static {
 pub trait Context: Sized + 'static {
     type Link;
     type Handler: Handler<Self>;
+    type Style: Style<Self>;
     //type Meta: ContextMeta;
 
     #[inline] 

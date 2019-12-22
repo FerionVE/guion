@@ -1,4 +1,5 @@
-use crate::core::widget::fns::WidgetFns;
+use ctx::aliases::*;
+use widget::fns::WidgetFns;
 use crate::core::*;
 use ctx::Env;
 use util::border::Border;
@@ -33,12 +34,12 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn selectable(&self) -> bool;
 
     #[inline]
-    fn style(&self) -> &E::Style {
-        E::Style::default()
+    fn style(&self) -> &EStyle<E> {
+        e_default_style::<E>()
     }
     #[inline]
     fn border(&self) -> &Border {
-        E::Style::default_border()
+        e_default_border::<E>()
     }
     /// returns this widget as Any
     #[inline]

@@ -63,9 +63,9 @@ macro_rules! impl_empty_inner {
         fn has_childs(&self) -> bool {
             false
         }
-        #[inline]
-        fn style(&self) -> &E::Style {
-            <E::Style as $crate::core::style::Style>::default()
+        #[inline] //TODO remove redundant impls
+        fn style(&self) -> &$crate::macro_prelude::EStyle<E> {
+            &$crate::macro_prelude::e_default_style::<E>()
         }
     };
 }
