@@ -5,7 +5,7 @@ use ctx::aliases::*;
 use ctx::*;
 use state::handler::*;
 
-pub struct TextBoxState<E> where E: Env, ECHLink<E>: AsHandlerStateful<E,E::Context> {
+pub struct TextBoxState<E> where E: Env, ECHandler<E>: AsHandlerStateful<E> {
     pp: ESPPText<E>,
     id: E::WidgetID,
 }

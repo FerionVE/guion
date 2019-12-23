@@ -7,7 +7,7 @@ use widget::link::Link;
 use ctx::*;
 use state::handler::*;
 
-pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context> {
+pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E> {
     id: E::WidgetID,
     invalid: bool,
     parent: Option<E::WidgetID>,
@@ -16,7 +16,7 @@ pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHLink<E>:
     action: fn(Link<E>),
 }
 
-impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: RenderStdWidgets<E>, ECHLink<E>: AsHandlerStateful<E,E::Context>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {
+impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

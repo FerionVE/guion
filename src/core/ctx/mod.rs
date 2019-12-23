@@ -48,14 +48,20 @@ pub trait Env: Sized + 'static {
 }
 
 pub trait Context: Sized + 'static {
-    type Link;
     type Handler: Handler<Self>;
     //type Meta: ContextMeta;
 
     #[inline] 
-    fn handler<H: Handler<Self>>(&mut self) -> &mut H where Self::Link: AsHandler<H,Self> {
-        Self::Link::as_mut(self)
+    fn handler_mut<H: Handler<Self>>(&mut self) -> &mut H where Self::Handler: AsHandler<H,Self> {
+        Self::Handler::as_mut(self)
     }
+    #[inline] 
+    fn handler<H: Handler<Self>>(&self) -> &H where Self::Handler: AsHandler<H,Self> {
+        Self::Handler::as_ref(self)
+    }
+
+    fn _handler_mut(&mut self) -> &mut Self::Handler;
+    fn _handler(&self) -> &Self::Handler;
 
     /// PANICKS if widget doesn't exists
     #[inline] 
@@ -86,7 +92,7 @@ pub trait Context: Sized + 'static {
         }
     }
 
-    #[inline] fn state<E: Env<Context=Self>>(&self) -> &ECStateful<E> where Self: Widgets<E>, Self::Link: AsHandlerStateful<E,Self> {
-        Self::Link::stateful(self)
+    #[inline] fn state<E: Env<Context=Self>>(&self) -> &ECStateful<E> where Self: Widgets<E>, Self::Handler: AsHandlerStateful<E> {
+        Self::Handler::stateful(self)
     }
 }

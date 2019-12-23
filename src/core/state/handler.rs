@@ -4,14 +4,14 @@ use ctx::widgets::Widgets;
 use ctx::*;
 use event::key::PressedKey;
 
-pub trait AsHandlerStateful<E,C>: Sized where E: Env<Context=C>, C: Context<Link=Self> + Widgets<E> {
-    type T: HandlerStateful<E,C>;
+pub trait AsHandlerStateful<E>: Handler<E::Context> + Sized where E: Env, E::Context: Context<Handler=Self> + Widgets<E> {
+    type T: HandlerStateful<E>;
     
-    fn stateful_mut(e: &mut C) -> &mut Self::T;
-    fn stateful(e: &C) -> &Self::T;
+    fn stateful_mut(e: &mut E::Context) -> &mut Self::T;
+    fn stateful(e: &E::Context) -> &Self::T;
 } 
 
-pub trait HandlerStateful<E,C>: Handler<C> + 'static where E: Env<Context=C>, C: Context + Widgets<E> {
+pub trait HandlerStateful<E>: Handler<E::Context> + 'static where E: Env, E::Context: Widgets<E> {
     type K: PressedKey<E>;
     
     fn hovered(&self) -> Option<E::WidgetID>;
