@@ -44,6 +44,9 @@ impl Bounds {
     #[inline] pub fn w_mut(&mut self) -> &mut u32 { &mut self.size.w }
     #[inline] pub fn h_mut(&mut self) -> &mut u32 { &mut self.size.h }
 
+    #[inline] pub fn x1(&self) -> i32 { self.off.x + (self.size.w as i32) }
+    #[inline] pub fn y1(&self) -> i32 { self.off.y + (self.size.h as i32) }
+
     pub fn inside(&self, b: &Border) -> Self {
         let mut s = self.clone();
         s.off += b.inner();
@@ -52,7 +55,13 @@ impl Bounds {
     }
 
     pub fn slice(&self, b: &Bounds) -> Self {
-        unimplemented!()
+        Self{
+            off: &self.off + &b.off,
+            size: Dims{
+                w: b.size.w .min( (self.size.w as i32).saturating_sub(b.off.x) as u32 ),
+                h: b.size.h .min( (self.size.h as i32).saturating_sub(b.off.y) as u32 ),
+            }
+        }
     }
     ///TODO doc
     pub fn step(&self, step: i32) -> Self {
@@ -64,14 +73,23 @@ impl Bounds {
         senf
     }
 
-    pub fn inner_centered(&self, s: Size) -> Self {
-        unimplemented!();
+    pub fn inner_centered(&self, s: Dims) -> Self {
+        let nx = (self.size.w as i32 - s.w as i32)/2;
+        let ny = (self.size.h as i32 - s.h as i32)/2;
+        Self{
+            off: Offset{
+                x: self.off.x + nx,
+                y: self.off.y + ny,
+            },
+            size: s,
+        }
     }
 }
 
 impl Offset {
     pub fn is_inside(&self, b: &Bounds) -> bool {
-        unimplemented!()
+        self.x >= b.x() && self.x < b.x1() &&
+        self.y >= b.y() && self.y < b.y1()
     }
 }
 
@@ -116,6 +134,17 @@ impl<'a,'b> BitAnd<&'b Bounds> for &'a Bounds {
     type Output = Bounds;
 
     fn bitand(self, o: &Bounds) -> Self::Output {
-        unimplemented!()
+        let nx = self.off.x.max(o.off.x);
+        let ny = self.off.y.max(o.off.y);
+        Bounds{
+            off: Offset{
+                x: nx,
+                y: ny,
+            },
+            size: Dims{
+                w: (self.x1().min(o.x1()) - nx).max(0) as u32,
+                h: (self.y1().min(o.y1()) - ny).max(0) as u32,
+            }
+        }
     }
 }
