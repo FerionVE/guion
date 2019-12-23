@@ -1,8 +1,5 @@
 use crate::core::util::bounds::Bounds;
 use crate::core::*;
-use ctx::id::WidgetID;
-use widget::Widget;
-use render::Render;
 use ctx::*;
 use lazout::size::Size;
 use super::*;

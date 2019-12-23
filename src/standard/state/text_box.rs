@@ -3,7 +3,6 @@
 use crate::core::*;
 use ctx::aliases::*;
 use ctx::*;
-use style::font::PreprocessedText;
 use state::handler::*;
 
 pub struct TextBoxState<E> where E: Env, ECHLink<E>: AsHandlerStateful<E,E::Context> {

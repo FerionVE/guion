@@ -6,7 +6,6 @@ use ctx::aliases::*;
 use event::key::Key;
 use event::variants::*;
 use event::*;
-use event::imp::StdVarSup;
 use state::handler::*;
 use super::*;
 

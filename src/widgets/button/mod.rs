@@ -12,7 +12,6 @@ use widget::Widget;
 use ctx::*;
 use widget::link::Link;
 use event::key::Key;
-use event::imp::StdVarSup;
 
 #[doc(inline)]
 pub use imp::*;

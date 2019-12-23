@@ -1,4 +1,3 @@
-use crate::core::ctx::Context;
 use crate::core::ctx::Env;
 use crate::core::*;
 use util::border::Border;
@@ -39,7 +38,7 @@ pub trait Style<E>: Clone + PartialEq where E: Env<Style=Self> {
     
     fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::PreprocessedText;
     #[inline]
-    fn is_cached_valid(&self, s: &Self::PreprocessedText, c: &mut E::Context) -> bool {
+    fn is_cached_valid(&self, s: &Self::PreprocessedText, _c: &mut E::Context) -> bool {
         s.style() == self
     }
 

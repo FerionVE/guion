@@ -2,7 +2,6 @@ use crate::core::ctx::aliases::*;
 use crate::core::*;
 use lazout::Orientation;
 use ctx::*;
-use style::Style;
 
 pub struct Pane<E> where E: Env {
     id: E::WidgetID,

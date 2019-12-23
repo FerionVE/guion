@@ -5,7 +5,6 @@ use lazout::size::Size;
 use widget::link::Link;
 use widget::Widget;
 use ctx::*;
-use render::*;
 use lazout::Orientation;
 
 pub mod imp;

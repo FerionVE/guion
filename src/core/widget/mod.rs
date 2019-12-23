@@ -5,7 +5,6 @@ use ctx::Env;
 use util::border::Border;
 use std::any::Any;
 use ctx::*;
-use style::Style;
 use dyn_widget::*;
 
 pub mod link;

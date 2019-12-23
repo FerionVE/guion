@@ -1,8 +1,6 @@
 use crate::standard::state::kbd::KbdState;
 use crate::standard::state::mouse::MouseState;
 use crate::core::*;
-use crate::standard::state::mouse::drag::DragItem;
-use util::bounds::Offset;
 use ctx::Env;
 
 pub mod kbd;
