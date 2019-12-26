@@ -8,19 +8,23 @@ pub mod standard;
 
 #[doc(hidden)]
 pub mod macro_prelude {
-    pub use crate::widgets::button::IButton;
-    pub use crate::widgets::pane::IPane;
-    pub use crate::widgets::empty::IEmpty;
-    pub use crate::widgets::label::ILabel;
     pub(crate) use crate::widgets::template::ITemplate;
-    pub use crate::core::widget::*;
-    pub use crate::core::widget::fns::WidgetFns;
-    pub use crate::core::ctx::*;
-    pub use crate::core::ctx::aliases::*;
-    pub use crate::core::render::widgets::*;
-    pub use crate::core::state::handler::*;
-    pub use crate::core::event::VariantSupport;
-    pub use crate::core::event::variants::*;
+    pub use crate::widgets::*;
+    pub use button::IButton;
+    pub use pane::IPane;
+    pub use empty::IEmpty;
+    pub use label::ILabel;
+    pub use crate::core::*;
+    pub use env::*;
+    pub use backend::*;
+    pub use widget::*;
+    pub use widget::fns::WidgetFns;
+    pub use ctx::*;
+    pub use ctx::aliases::*;
+    pub use render::widgets::*;
+    pub use state::handler::*;
+    pub use event::*;
+    pub use event::variants::*;
 }
 
 macro_rules! std_bounds {

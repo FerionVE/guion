@@ -1,6 +1,5 @@
-use crate::core::*;
-use ctx::*;
-use widget::*;
+use crate::core::ctx::widgets::Widgets;
+use super::*;
 
 pub struct Parents<'a,E> where E: Env {
     pub(super) ctx: &'a E::Context,

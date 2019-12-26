@@ -1,6 +1,4 @@
-use crate::core::*;
-use util::bounds::Bounds;
-use ctx::*;
+use super::*;
 
 pub trait IBoundedWidget<E>: Clone where E: Env {
     fn bounds(&self) -> &Bounds;

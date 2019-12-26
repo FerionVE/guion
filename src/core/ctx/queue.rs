@@ -1,5 +1,4 @@
-use crate::core::*;
-use ctx::*;
+use super::*;
 
 pub trait Queue<E> where E: Env {
     type Callback;

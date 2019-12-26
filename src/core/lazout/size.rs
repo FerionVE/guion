@@ -1,5 +1,4 @@
-use crate::core::*;
-use lazout::Orientation;
+use super::*;
 
 /// Size +/+= Border
 #[derive(Clone)]

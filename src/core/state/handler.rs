@@ -1,9 +1,5 @@
-use crate::core::ctx::aliases::*;
-use crate::core::*;
-use ctx::handler::Handler;
-use ctx::widgets::Widgets;
-use ctx::*;
-use event::key::PressedKey;
+use crate::core::ctx::widgets::Widgets;
+use super::*;
 
 pub trait AsHandlerStateful<E>: Handler<E::Context> + Sized where E: Env, E::Context: Context<Handler=Self> + Widgets<E> {
     type T: HandlerStateful<E>;

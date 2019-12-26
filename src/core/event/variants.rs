@@ -1,10 +1,4 @@
-use crate::core::ctx::aliases::*;
-use crate::core::lazout::size::Size;
-use crate::core::*;
-use event::Variant;
-use util::bounds::Offset;
-use ctx::*;
-use event::key::Key;
+use crate::core::event::key::Key;
 use super::*;
 
 #[derive(Clone)]

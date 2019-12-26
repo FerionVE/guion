@@ -1,13 +1,7 @@
-use crate::core::lazout::size::Size;
-use crate::core::util::bounds::Bounds;
-use crate::core::*;
-use ctx::aliases::*;
-use ctx::*;
-use widget::dyn_widget::*;
-use widget::*;
+use crate::core::ctx::widgets::Widgets;
 use std::ops::DerefMut;
 use std::ops::Deref;
-use state::handler::*;
+use super::*;
 
 pub mod imp;
 use imp::*;

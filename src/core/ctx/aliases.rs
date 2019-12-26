@@ -1,7 +1,4 @@
-use crate::core::util::border::Border;
-use crate::core::*;
-use ctx::*;
-use style::Style;
+use super::*;
 
 pub type ERenderer<E: Env> = <E::Backend as Backend<E>>::Renderer;
 pub type EEvent<E: Env> = <E::Backend as Backend<E>>::Event;

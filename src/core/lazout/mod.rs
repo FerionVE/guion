@@ -1,5 +1,4 @@
-use crate::core::*;
-use util::border::Border;
+use super::*;
 //TODO may use priv-mod-but-pub-use trick everywhere
 pub mod size;
 pub mod weight;

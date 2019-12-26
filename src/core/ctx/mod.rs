@@ -1,18 +1,6 @@
-use crate::core::util::bounds::Bounds;
-use crate::core::event::key::Key;
-use crate::core::event::Destination;
-use widget::dyn_widget::DynWidget;
 use std::any::Any;
 
-use crate::core::*;
-use widget::fns::WidgetFns;
-use style::Style;
-use lazout::size::Size;
-use widget::link::Link;
-use event::Event;
-use render::Render;
-use widget::Widget;
-use state::handler::*;
+use super::*;
 
 //pub mod ctx_meta; TODO fix CtxMeta
 //pub use ctx_meta::*;
@@ -32,24 +20,6 @@ pub use queue::*;
 
 pub mod handler;
 pub use handler::*;
-
-pub trait Env: Sized + 'static {
-    type Backend: Backend<Self>;
-    type Context: Context + Widgets<Self>;
-    ///regularly just dyn Widget
-    type DynWidget: DynWidget<Self> + ?Sized;
-    type WidgetID: WidgetID;
-    type Commit: Eq + Ord;
-}
-
-pub trait Backend<E>: Sized + 'static where E: Env<Backend=Self> {
-    type Renderer: Render<E>;
-    type Event: Event<E>;
-    type EventDest: Destination;
-    type EventKey: Key;
-    type EventConsuming;
-    type Style: Style<E>;
-}
 
 pub trait Context: Sized + 'static {
     type Handler: Handler<Self>;

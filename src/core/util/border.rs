@@ -1,6 +1,5 @@
-use crate::core::*;
-use util::bounds::Dims;
-use util::bounds::Offset;
+use super::*;
+
 #[derive(Clone)]
 pub struct Border {
     pub left: u32,

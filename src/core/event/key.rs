@@ -1,6 +1,4 @@
-use crate::core::ctx::aliases::*;
-use crate::core::*;
-use ctx::*;
+use super::*;
 
 pub trait PressedKey<E> where E: Env {
     fn key(&self) -> &EEventDest<E>;
