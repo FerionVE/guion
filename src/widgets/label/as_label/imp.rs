@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use std::any::Any;
 use super::*;
 
@@ -25,7 +26,7 @@ impl<T,E,C> ILabel<E> for AsLabel<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'st
         <T as ILabel<E>>::set_parent(self,v)
     }
     #[inline]
-    fn style(&self) -> &E::Style {
+    fn style(&self) -> &EStyle<E> {
         <T as ILabel<E>>::style(self)
     }
 }

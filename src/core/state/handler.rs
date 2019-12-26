@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::*;
 use ctx::handler::Handler;
 use ctx::widgets::Widgets;
@@ -34,11 +35,11 @@ pub trait HandlerStateful<E>: Handler<E::Context> + 'static where E: Env, E::Con
 
     fn pressed(&self) -> &[Self::K];
     #[inline]
-    fn is_pressed(&self, c: &[E::EventKey]) -> Option<&Self::K> {
+    fn is_pressed(&self, c: &[EEventKey<E>]) -> Option<&Self::K> {
         unimplemented!()
     }
     #[inline]
-    fn is_pressed_and_id(&self, c: &[E::EventKey], id: &E::WidgetID) -> bool {
+    fn is_pressed_and_id(&self, c: &[EEventKey<E>], id: &E::WidgetID) -> bool {
         unimplemented!()
     }
 }

@@ -33,7 +33,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn selectable(&self) -> bool;
 
     #[inline]
-    fn style(&self) -> &E::Style {
+    fn style(&self) -> &EStyle<E> {
         e_default_style::<E>()
     }
     #[inline]

@@ -1,11 +1,12 @@
+use crate::core::ctx::aliases::*;
 use super::*;
 use std::any::Any;
 
-pub struct DynEvent<E> where E: Env<Event=Self> {
+pub struct DynEvent<E> where E: Env, E::Backend: Backend<E,Event=Self> {
     pub event: Box<dyn Variant<E>>,
 }
 
-impl<E> Clone for DynEvent<E> where E: Env<Event=Self>{
+impl<E> Clone for DynEvent<E> where E: Env, E::Backend: Backend<E,Event=Self> {
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -14,7 +15,7 @@ impl<E> Clone for DynEvent<E> where E: Env<Event=Self>{
     }
 }
 
-impl<E> Event<E> for DynEvent<E> where E: Env<Event=Self> {
+impl<E> Event<E> for DynEvent<E> where E: Env, E::Backend: Backend<E,Event=Self> {
     #[inline]
     fn filter(self, subbounds: &Bounds) -> Option<Self> {
         if self.event.filter(subbounds) {
@@ -28,7 +29,7 @@ impl<E> Event<E> for DynEvent<E> where E: Env<Event=Self> {
         self.event.consuming()
     }
     #[inline]
-    fn destination(&self) -> E::EventDest {
+    fn destination(&self) -> EEventDest<E> {
         self.event.destination()
     }
     #[inline]
@@ -37,7 +38,7 @@ impl<E> Event<E> for DynEvent<E> where E: Env<Event=Self> {
     }
 }
 
-impl<V,E> VariantSupport<V,E> for DynEvent<E> where V: Variant<E>, E: Env<Event=Self> {
+impl<V,E> VariantSupport<V,E> for DynEvent<E> where V: Variant<E>, E: Env, E::Backend: Backend<E,Event=Self> {
     #[inline]
     fn from_variant(v: V) -> Self {
         Self {

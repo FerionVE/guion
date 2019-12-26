@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::util::bounds::Bounds;
 use crate::core::*;
 use lazout::size::Size;
@@ -69,17 +70,17 @@ macro_rules! impl_label_inner {
             false
         }
         #[inline]
-        fn style(&self) -> &E::Style {
+        fn style(&self) -> &$crate::macro_prelude::EStyle<E> {
             $crate::macro_prelude::ILabel::style(self)
         }
     };
 }
 
-pub fn _render<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut E::Renderer,&Bounds)) {
+pub fn _render<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
     unimplemented!()
 }
 
-pub fn _event<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
+pub fn _event<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
     unimplemented!()
 }
 

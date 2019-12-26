@@ -34,11 +34,11 @@ impl<'a,E> Link<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn render(&mut self, r: (&mut E::Renderer,&Bounds)) { //TODO fix &mut Renderer back to owned
+    pub fn render(&mut self, r: (&mut ERenderer<E>,&Bounds)) { //TODO fix &mut Renderer back to owned
         self.id._render::<E>(self.ctx,r)
     }
     #[inline]
-    pub fn event(&mut self, e: E::Event) {
+    pub fn event(&mut self, e: EEvent<E>) {
         self.id._event::<E>(self.ctx,e)
     }
     #[inline]

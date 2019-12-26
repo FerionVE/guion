@@ -19,7 +19,7 @@ impl<E> super::IPane<E> for Pane<E> where E: Env + 'static {
     fn childs(&self) -> &[E::WidgetID] {
         &self.childs[..]
     }
-    fn style(&self) -> &E::Style {
+    fn style(&self) -> &EStyle<E> {
         e_default_style::<E>()
     }
 

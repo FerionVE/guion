@@ -7,16 +7,16 @@ use widget::link::Link;
 use ctx::*;
 use state::handler::*;
 
-pub struct Button<E> where E: Env, E::Renderer: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E> {
+pub struct Button<E> where E: Env, ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E> {
     id: E::WidgetID,
     invalid: bool,
     parent: Option<E::WidgetID>,
-    style: E::Style,
+    style: EStyle<E>,
     caption: String,
     action: fn(Link<E>),
 }
 
-impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, E::Event: VariantSupport<KbdDown<E::EventKey>,E> {
+impl<E> super::IButton<E> for Button<E> where E: Env + 'static, ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEventKey<E>>,E> {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -27,7 +27,7 @@ impl<E> super::IButton<E> for Button<E> where E: Env + 'static, E::Renderer: Ren
     fn caption(&self) -> &str {
         &self.caption
     }
-    fn style(&self) -> &E::Style {
+    fn style(&self) -> &EStyle<E> {
         &self.style
     }
 

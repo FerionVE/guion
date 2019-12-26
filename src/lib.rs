@@ -25,8 +25,8 @@ pub mod macro_prelude {
 
 macro_rules! std_bounds {
     () => {
-        E::Renderer: $crate::macro_prelude::RenderStdWidgets<E>,
+        ERenderer<E>: $crate::macro_prelude::RenderStdWidgets<E>,
         $crate::macro_prelude::ECHandler<E>: $crate::macro_prelude::AsHandlerStateful<E>, 
-        E::Event: $crate::macro_prelude::VariantSupport<$crate::macro_prelude::KbdDown<E::EventKey>,E>
+        EEvent<E>: $crate::macro_prelude::VariantSupport<$crate::macro_prelude::KbdDown<EEventKey<E>>,E>
     };
 }

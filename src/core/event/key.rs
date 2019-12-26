@@ -1,8 +1,9 @@
+use crate::core::ctx::aliases::*;
 use crate::core::*;
 use ctx::*;
 
 pub trait PressedKey<E> where E: Env {
-    fn key(&self) -> &E::EventDest;
+    fn key(&self) -> &EEventDest<E>;
     /// the widget at which the keypress started
     fn widget(&self) -> &E::WidgetID;
     /// the timestamp at which the keypress started

@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::*;
 use ctx::*;
 
@@ -5,7 +6,7 @@ pub struct Label<E> where E: Env {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
     invalid: bool,
-    style: E::Style,
+    style: EStyle<E>,
 }
 
 impl<E> super::ILabel<E> for Label<E> where E: Env + 'static {
@@ -13,7 +14,7 @@ impl<E> super::ILabel<E> for Label<E> where E: Env + 'static {
         self.id.clone()
     }
     
-    fn style(&self) -> &E::Style {
+    fn style(&self) -> &EStyle<E> {
         &self.style
     }
 

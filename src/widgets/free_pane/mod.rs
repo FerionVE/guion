@@ -22,7 +22,7 @@ pub trait Pane<E> where E: Env {
     fn set_invalid(&mut self, v: bool);
 
     fn size(&self) -> Size;
-    fn style(&self) -> &E::Style;
+    fn style(&self) -> &EStyle<E>;
 
     fn parent(&self) -> Option<&E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);
@@ -69,7 +69,7 @@ impl<E,T> Widget<E> for T where T: Pane<E> + 'static, E: Env + 'static {
     }
 }
 
-fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Renderer) {
+fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: ERenderer<E>) {
     for c in childs::<W,_>(&l) {
         l.widget(&c.id)
             .expect("Pane contains lost Widget")
@@ -78,7 +78,7 @@ fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: E::Rend
     }
 }
 
-fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
+fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
     //TODO special focus/hover enter/leave handling
     for c in childs::<W,_>(&l).into_iter().rev() {
         if let Some(e) = e.filter_cloned(&c.bounds) {

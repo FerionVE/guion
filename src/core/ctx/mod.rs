@@ -34,17 +34,21 @@ pub mod handler;
 pub use handler::*;
 
 pub trait Env: Sized + 'static {
+    type Backend: Backend<Self>;
     type Context: Context + Widgets<Self>;
-    type Renderer: Render<Self>;
-    type Event: Event<Self>;
     ///regularly just dyn Widget
     type DynWidget: DynWidget<Self> + ?Sized;
     type WidgetID: WidgetID;
     type Commit: Eq + Ord;
+}
+
+pub trait Backend<E>: Sized + 'static where E: Env<Backend=Self> {
+    type Renderer: Render<E>;
+    type Event: Event<E>;
     type EventDest: Destination;
     type EventKey: Key;
     type EventConsuming;
-    type Style: Style<Self>;
+    type Style: Style<E>;
 }
 
 pub trait Context: Sized + 'static {
@@ -65,12 +69,12 @@ pub trait Context: Sized + 'static {
 
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _render<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, r: (&mut E::Renderer,&Bounds)) where Self: Widgets<E> {
+    fn _render<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, r: (&mut ERenderer<E>,&Bounds)) where Self: Widgets<E> {
         Self::Handler::_render::<E>(self,i,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _event<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, e: E::Event) where Self: Widgets<E> {
+    fn _event<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, e: EEvent<E>) where Self: Widgets<E> {
         Self::Handler::_event::<E>(self,i,e)
     }
     /// PANICKS if widget doesn't exists

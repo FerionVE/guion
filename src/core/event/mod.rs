@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::event::imp::VariantDerive;
 use std::any::Any;
 use crate::core::util::bounds::Offset;
@@ -13,7 +14,7 @@ pub mod dyn_evt;
 
 /// Use is() for querying as a specific variant
 /// IMPORTANT Events are not filter for specific widgets, use the filter_ methods for filtering
-pub trait Event<E>: Sized + Clone where E: Env<Event=Self> {
+pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self> {
     fn filter(self, subbounds: &Bounds) -> Option<Self>;
     #[inline]
     fn filter_cloned(&self, subbounds: &Bounds) -> Option<Self> {
@@ -22,7 +23,7 @@ pub trait Event<E>: Sized + Clone where E: Env<Event=Self> {
     /// True if container widgets should sent this to only one widget  
     fn consuming(&self) -> bool;
     /// Where there Event should be initially injected into the context
-    fn destination(&self) -> E::EventDest;
+    fn destination(&self) -> EEventDest<E>;
     /// Create the event from a variant. returns empty event if variant is not supported
     #[inline]
     fn from<V: Variant<E>>(v: V) -> Self where Self: VariantSupport<V,E> {
@@ -38,7 +39,7 @@ pub trait Event<E>: Sized + Clone where E: Env<Event=Self> {
     fn position(&self) -> Option<Offset>;
 }
 
-pub trait VariantSupport<V,E>: Event<E> where E: Env<Event=Self>, V: Variant<E> {
+pub trait VariantSupport<V,E>: Event<E> where E: Env, E::Backend: Backend<E,Event=Self>, V: Variant<E> {
     fn from_variant(v: V) -> Self;
     fn to_variant(&self) -> Option<V>;
 }
@@ -58,7 +59,7 @@ pub trait Variant<E>: VariantDerive<E> where E: Env {
         false
     }
     #[inline]
-    fn destination(&self) -> E::EventDest {
+    fn destination(&self) -> EEventDest<E> {
         Destination::default()
     }
 }

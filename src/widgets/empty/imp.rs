@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::util::bounds::Bounds;
 use crate::core::*;
 use lazout::size::Size;
@@ -64,17 +65,17 @@ macro_rules! impl_empty_inner {
             false
         }
         #[inline] //TODO remove redundant impls
-        fn style(&self) -> &E::Style {
+        fn style(&self) -> &$crate::macro_prelude::EStyle<E> {
             &$crate::macro_prelude::e_default_style::<E>()
         }
     };
 }
 
-pub fn _render<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut E::Renderer,&Bounds)) {
+pub fn _render<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds)) {
     
 }
 
-pub fn _event<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
+pub fn _event<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
     
 }
 

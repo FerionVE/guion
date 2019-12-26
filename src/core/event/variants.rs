@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::lazout::size::Size;
 use crate::core::*;
 use event::Variant;
@@ -71,7 +72,7 @@ macro_rules! consuming {
 macro_rules! selected {
     () => {
         #[inline]
-        fn destination(&self) -> E::EventDest {
+        fn destination(&self) -> EEventDest<E> {
             Destination::SELECTED
         }
     };
@@ -80,17 +81,17 @@ macro_rules! selected {
 macro_rules! root {
     () => {
         #[inline]
-        fn destination(&self) -> E::EventDest {
+        fn destination(&self) -> EEventDest<E> {
             Destination::ROOT
         }
     };
 }
 
-impl<E> Variant<E> for KbdDown<E::EventKey> where E: Env {selected!();}
-impl<E> Variant<E> for KbdUp<E::EventKey> where E: Env {selected!();}
+impl<E> Variant<E> for KbdDown<EEventKey<E>> where E: Env {selected!();}
+impl<E> Variant<E> for KbdUp<EEventKey<E>> where E: Env {selected!();}
 
-impl<E> Variant<E> for MouseDown<E::EventKey> where E: Env {consuming!();root!();pos!(pos);}
-impl<E> Variant<E> for MouseUp<E::EventKey> where E: Env {consuming!();root!();pos!(pos);}
+impl<E> Variant<E> for MouseDown<EEventKey<E>> where E: Env {consuming!();root!();pos!(pos);}
+impl<E> Variant<E> for MouseUp<EEventKey<E>> where E: Env {consuming!();root!();pos!(pos);}
 impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(dest);}
 impl<E> Variant<E> for MouseEnter where E: Env {consuming!();root!();pos!(dest);}
 impl<E> Variant<E> for MouseLeave where E: Env {consuming!();root!();pos!(dest);}

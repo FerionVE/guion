@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::event::variants::*;
 use super::*;
 
@@ -33,25 +34,25 @@ impl<T,E> VariantDerive<E> for T where T: Variant<E> + Clone, E: Env {
 }
 
 pub trait StdVarSup<E>:
-    VariantSupport<KbdDown<E::EventKey>,E> +
-    VariantSupport<KbdUp<E::EventKey>,E> +
-    VariantSupport<MouseDown<E::EventKey>,E> +
-    VariantSupport<MouseUp<E::EventKey>,E> +
+    VariantSupport<KbdDown<EEventKey<E>>,E> +
+    VariantSupport<KbdUp<EEventKey<E>>,E> +
+    VariantSupport<MouseDown<EEventKey<E>>,E> +
+    VariantSupport<MouseUp<EEventKey<E>>,E> +
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E>
-where E: Env<Event=Self> {
+where E: Env, E::Backend: Backend<E,Event=Self> {
 
 }
 
 impl<E,T> StdVarSup<E> for T where T: 
-    VariantSupport<KbdDown<E::EventKey>,E> +
-    VariantSupport<KbdUp<E::EventKey>,E> +
-    VariantSupport<MouseDown<E::EventKey>,E> +
-    VariantSupport<MouseUp<E::EventKey>,E> +
+    VariantSupport<KbdDown<EEventKey<E>>,E> +
+    VariantSupport<KbdUp<EEventKey<E>>,E> +
+    VariantSupport<MouseDown<EEventKey<E>>,E> +
+    VariantSupport<MouseUp<EEventKey<E>>,E> +
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E>
-, E: Env<Event=T> {
+, E: Env, E::Backend: Backend<E,Event=T> {
 
 }

@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::*;
 use ctx::*;
 use super::*;
@@ -63,13 +64,13 @@ macro_rules! impl_pane_inner {
             true
         }
         #[inline]
-        fn style(&self) -> &E::Style {
+        fn style(&self) -> &$crate::macro_prelude::EStyle<E> {
             $crate::macro_prelude::IPane::style(self)
         }
     };
 }
 
-pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut E::Renderer,&Bounds)) {
+pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds)) {
     let o = l.me::<W>().orientation();
     
     let c = childs::<W,E>(&l);
@@ -92,7 +93,7 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<
     
 }
 
-pub fn _event<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: E::Event) {
+pub fn _event<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
     unimplemented!()
 }
 

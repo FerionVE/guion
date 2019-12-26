@@ -7,7 +7,7 @@ use style::*;
 
 pub mod widgets;
 
-pub trait Render<E>: Sized where E: Env<Renderer=Self> {
+pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
     #[inline]
     fn requires_render(&mut self, b: &Bounds, w: &E::DynWidget) -> bool {
         w.invalid() || self.force(b)

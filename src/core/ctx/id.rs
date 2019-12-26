@@ -13,12 +13,12 @@ pub trait WidgetID: Clone + PartialEq + Sized {
     }
     
     #[inline]
-    fn render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: (&mut E::Renderer,&Bounds)) -> Result<(),()> {
+    fn render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
         c.has_widget(self).result()
             .map(|_| self._render::<E>(c,r) )
     }
     #[inline]
-    fn event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: E::Event) -> Result<(),()> {
+    fn event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: EEvent<E>) -> Result<(),()> {
         c.has_widget(self).result()
             .map(|_| self._event::<E>(c,e) )
     }
@@ -30,12 +30,12 @@ pub trait WidgetID: Clone + PartialEq + Sized {
 
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: (&mut E::Renderer,&Bounds)) {
+    fn _render<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) {
         c._render(self,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: E::Event) {
+    fn _event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: EEvent<E>) {
         c._event(self,e)
     }
     /// PANICKS if widget doesn't exists

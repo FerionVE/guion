@@ -1,3 +1,4 @@
+use crate::core::ctx::aliases::*;
 use crate::core::*;
 use ctx::*;
 
@@ -5,14 +6,14 @@ pub struct Template<E> where E: Env {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
     invalid: bool,
-    style: E::Style,
+    style: EStyle<E>,
 }
 
 impl<E> super::ITemplate<E> for Template<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn style(&self) -> &E::Style {
+    fn style(&self) -> &EStyle<E> {
         &self.style
     }
 

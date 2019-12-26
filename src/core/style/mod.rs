@@ -1,3 +1,4 @@
+use crate::core::ctx::Backend;
 use crate::core::ctx::Env;
 use crate::core::*;
 use util::border::Border;
@@ -11,7 +12,7 @@ pub use variant::*;
 pub mod color;
 pub use color::*;
 
-pub trait Style<E>: Clone + PartialEq where E: Env<Style=Self> {
+pub trait Style<E>: Clone + PartialEq where E: Env, E::Backend: Backend<E,Style=Self> {
     type Font;
     type Cursor;
     type Color: Color;
