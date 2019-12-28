@@ -1,20 +1,26 @@
+use std::marker::PhantomData;
 use super::*;
 use std::any::Any;
 
-pub struct DynEvent<E> where E: Env, E::Backend: Backend<E,Event=Self> {
+pub struct DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {
     pub event: Box<dyn Variant<E>>,
+    _m: PhantomData<(K,D)>,
 }
 
-impl<E> Clone for DynEvent<E> where E: Env, E::Backend: Backend<E,Event=Self> {
+impl<E,K,D> Clone for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {
     #[inline]
     fn clone(&self) -> Self {
         Self {
             event: self.event.clone(),
+            _m: PhantomData,
         }
     }
 }
 
-impl<E> Event<E> for DynEvent<E> where E: Env, E::Backend: Backend<E,Event=Self> {
+impl<E,K,D> Event<E> for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {
+    type Dest = D;
+    type Key = K;
+
     #[inline]
     fn filter(self, subbounds: &Bounds) -> Option<Self> {
         if self.event.filter(subbounds) {
@@ -28,7 +34,7 @@ impl<E> Event<E> for DynEvent<E> where E: Env, E::Backend: Backend<E,Event=Self>
         self.event.consuming()
     }
     #[inline]
-    fn destination(&self) -> EEventDest<E> {
+    fn destination(&self) -> Self::Dest {
         self.event.destination()
     }
     #[inline]
@@ -37,11 +43,12 @@ impl<E> Event<E> for DynEvent<E> where E: Env, E::Backend: Backend<E,Event=Self>
     }
 }
 
-impl<V,E> VariantSupport<V,E> for DynEvent<E> where V: Variant<E>, E: Env, E::Backend: Backend<E,Event=Self> {
+impl<V,E,K,D> VariantSupport<V,E> for DynEvent<E,K,D> where V: Variant<E>, E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {
     #[inline]
     fn from_variant(v: V) -> Self {
         Self {
             event: Box::new(v),
+            _m: PhantomData,
         }
     }
     #[inline]

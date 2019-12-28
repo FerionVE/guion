@@ -18,7 +18,7 @@ macro_rules! impl_button {
             E: $crate::macro_prelude::Env + 'static,
             ERenderer<E>: $crate::macro_prelude::RenderStdWidgets<E>,
             $crate::macro_prelude::ECHandler<E>: $crate::macro_prelude::AsHandlerStateful<E>, 
-            EEvent<E>: $crate::macro_prelude::VariantSupport<$crate::macro_prelude::KbdDown<EEventKey<E>>,E>,
+            EEvent<E>: $crate::macro_prelude::VariantSupport<$crate::macro_prelude::KbdDown<EEKey<E>>,E>,
         {
             $crate::impl_button_inner!($t,E);
         }
@@ -78,16 +78,16 @@ macro_rules! impl_button_inner {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds)) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEventKey<E>>,E> {
+pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds)) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
     let senf = l.me::<W>();
     let down = 
-        l.is_hovered() && l.state().is_pressed_and_id(&[<EEventKey<E> as Key>::MOUSE_LEFT], &l.id) ||
-        l.is_selected() && l.state().is_pressed_and_id(&[<EEventKey<E> as Key>::ENTER], &l.id);
+        l.is_hovered() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::MOUSE_LEFT], &l.id) ||
+        l.is_selected() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::ENTER], &l.id);
         
     r.0.draw_text_button(r.1,down,senf.caption(),IButton::style(senf));
 }
 
-pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEventKey<E>>,E> {
+pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
     let senf = l.me::<W>();
     
     if let Some(e) = e.is::<KbdDown<_>>() {
@@ -97,6 +97,6 @@ pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEve
     }
 }
 
-pub fn _size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEventKey<E>>,E> {
+pub fn _size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
     unimplemented!()
 }

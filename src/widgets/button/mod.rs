@@ -18,7 +18,7 @@ pub use imp::*;
 #[doc(inline)]
 pub use o::*;
 
-pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHandler<E>: AsHandlerStateful<E>, ERenderer<E>: RenderStdWidgets<E>, EEvent<E>: VariantSupport<KbdDown<EEventKey<E>>,E> {
+pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHandler<E>: AsHandlerStateful<E>, ERenderer<E>: RenderStdWidgets<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
     fn id(&self) -> E::WidgetID;
     
     #[inline]
@@ -41,7 +41,7 @@ pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHandler<E>: AsHandlerSta
     fn parent(&self) -> Option<E::WidgetID>;
     fn set_parent(&mut self, v: Option<E::WidgetID>);
     #[inline]
-    fn kbd_trigger(&self) -> EEventKey<E> {
-        <EEventKey<E> as Key>::ENTER
+    fn kbd_trigger(&self) -> EEKey<E> {
+        <EEKey<E> as Key>::ENTER
     }
 }

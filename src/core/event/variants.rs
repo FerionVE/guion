@@ -66,7 +66,7 @@ macro_rules! consuming {
 macro_rules! selected {
     () => {
         #[inline]
-        fn destination(&self) -> EEventDest<E> {
+        fn destination(&self) -> EEDest<E> {
             Destination::SELECTED
         }
     };
@@ -75,17 +75,17 @@ macro_rules! selected {
 macro_rules! root {
     () => {
         #[inline]
-        fn destination(&self) -> EEventDest<E> {
+        fn destination(&self) -> EEDest<E> {
             Destination::ROOT
         }
     };
 }
 
-impl<E> Variant<E> for KbdDown<EEventKey<E>> where E: Env {selected!();}
-impl<E> Variant<E> for KbdUp<EEventKey<E>> where E: Env {selected!();}
+impl<E> Variant<E> for KbdDown<EEKey<E>> where E: Env {selected!();}
+impl<E> Variant<E> for KbdUp<EEKey<E>> where E: Env {selected!();}
 
-impl<E> Variant<E> for MouseDown<EEventKey<E>> where E: Env {consuming!();root!();pos!(pos);}
-impl<E> Variant<E> for MouseUp<EEventKey<E>> where E: Env {consuming!();root!();pos!(pos);}
+impl<E> Variant<E> for MouseDown<EEKey<E>> where E: Env {consuming!();root!();pos!(pos);}
+impl<E> Variant<E> for MouseUp<EEKey<E>> where E: Env {consuming!();root!();pos!(pos);}
 impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(dest);}
 impl<E> Variant<E> for MouseEnter where E: Env {consuming!();root!();pos!(dest);}
 impl<E> Variant<E> for MouseLeave where E: Env {consuming!();root!();pos!(dest);}

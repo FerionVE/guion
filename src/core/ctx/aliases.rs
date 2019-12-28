@@ -2,13 +2,12 @@ use super::*;
 
 pub type ERenderer<E: Env> = <E::Backend as Backend<E>>::Renderer;
 pub type EEvent<E: Env> = <E::Backend as Backend<E>>::Event;
-pub type EEventDest<E: Env> = <E::Backend as Backend<E>>::EventDest;
-pub type EEventKey<E: Env> = <E::Backend as Backend<E>>::EventKey;
-pub type EEventConsuming<E: Env> = <E::Backend as Backend<E>>::EventConsuming;
+pub type EEDest<E: Env> = <EEvent<E> as Event<E>>::Dest;
+pub type EEKey<E: Env> = <EEvent<E> as Event<E>>::Key;
 pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
 
 pub type ESPPText<E: Env> = <EStyle<E> as Style<E>>::PreprocessedText;
-pub type ESPPChar<E: Env> = <EStyle<E> as Style<E>>::PreprocessedText;
+pub type ESPPChar<E: Env> = <EStyle<E> as Style<E>>::PreprocessedChar;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;

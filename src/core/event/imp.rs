@@ -33,10 +33,10 @@ impl<T,E> VariantDerive<E> for T where T: Variant<E> + Clone, E: Env {
 }
 
 pub trait StdVarSup<E>:
-    VariantSupport<KbdDown<EEventKey<E>>,E> +
-    VariantSupport<KbdUp<EEventKey<E>>,E> +
-    VariantSupport<MouseDown<EEventKey<E>>,E> +
-    VariantSupport<MouseUp<EEventKey<E>>,E> +
+    VariantSupport<KbdDown<EEKey<E>>,E> +
+    VariantSupport<KbdUp<EEKey<E>>,E> +
+    VariantSupport<MouseDown<EEKey<E>>,E> +
+    VariantSupport<MouseUp<EEKey<E>>,E> +
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E>
@@ -45,10 +45,10 @@ where E: Env, E::Backend: Backend<E,Event=Self> {
 }
 
 impl<E,T> StdVarSup<E> for T where T: 
-    VariantSupport<KbdDown<EEventKey<E>>,E> +
-    VariantSupport<KbdUp<EEventKey<E>>,E> +
-    VariantSupport<MouseDown<EEventKey<E>>,E> +
-    VariantSupport<MouseUp<EEventKey<E>>,E> +
+    VariantSupport<KbdDown<EEKey<E>>,E> +
+    VariantSupport<KbdUp<EEKey<E>>,E> +
+    VariantSupport<MouseDown<EEKey<E>>,E> +
+    VariantSupport<MouseUp<EEKey<E>>,E> +
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E>

@@ -1,3 +1,4 @@
+use crate::core::event::key::Key;
 use super::*;
 use std::any::Any;
 
@@ -8,8 +9,10 @@ pub mod imp;
 pub mod dyn_evt;
 
 /// Use is() for querying as a specific variant
-/// IMPORTANT Events are not filter for specific widgets, use the filter_ methods for filtering
 pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self> {
+    type Dest: Destination;
+    type Key: Key;
+
     fn filter(self, subbounds: &Bounds) -> Option<Self>;
     #[inline]
     fn filter_cloned(&self, subbounds: &Bounds) -> Option<Self> {
@@ -18,7 +21,7 @@ pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self
     /// True if container widgets should sent this to only one widget  
     fn consuming(&self) -> bool;
     /// Where there Event should be initially injected into the context
-    fn destination(&self) -> EEventDest<E>;
+    fn destination(&self) -> Self::Dest;
     /// Create the event from a variant. returns empty event if variant is not supported
     #[inline]
     fn from<V: Variant<E>>(v: V) -> Self where Self: VariantSupport<V,E> {
@@ -54,7 +57,7 @@ pub trait Variant<E>: VariantDerive<E> where E: Env {
         false
     }
     #[inline]
-    fn destination(&self) -> EEventDest<E> {
+    fn destination(&self) -> EEDest<E> {
         Destination::default()
     }
 }

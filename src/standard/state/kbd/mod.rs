@@ -9,7 +9,7 @@ pub struct KbdState<E> where E: Env {
 }
 
 pub struct KbdPressedKey<E> where E: Env {
-    pub key: EEventKey<E>,
+    pub key: EEKey<E>,
     ///the widget which was selected (focused) where the key press started
     pub id: E::WidgetID,
     ///the time the key press started
@@ -18,7 +18,7 @@ pub struct KbdPressedKey<E> where E: Env {
 
 impl<E> KbdState<E> where E: Env {
     #[inline]
-    pub fn down(&mut self, key: EEventKey<E>, id: E::WidgetID, ts: u64) {
+    pub fn down(&mut self, key: EEKey<E>, id: E::WidgetID, ts: u64) {
         self.up(key.clone());
         self.pressed.push(
             KbdPressedKey{
@@ -29,15 +29,15 @@ impl<E> KbdState<E> where E: Env {
         );
     }
     #[inline]
-    pub fn up(&mut self, key: EEventKey<E>) {
+    pub fn up(&mut self, key: EEKey<E>) {
         self.pressed.retain(#[inline] |e| e.key != key );
     }
     #[inline]
-    pub fn get(&self, key: EEventKey<E>) -> Option<&KbdPressedKey<E>> {
+    pub fn get(&self, key: EEKey<E>) -> Option<&KbdPressedKey<E>> {
         self.pressed.iter().find(#[inline] |i| i.key == key )
     }
     #[inline]
-    pub fn get_mut(&mut self, key: EEventKey<E>) -> Option<&mut KbdPressedKey<E>> {
+    pub fn get_mut(&mut self, key: EEKey<E>) -> Option<&mut KbdPressedKey<E>> {
         self.pressed.iter_mut().find(#[inline] |i| i.key == key )
     }
 }
