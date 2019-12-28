@@ -7,5 +7,6 @@ pub trait Env: Sized + 'static {
     ///regularly just dyn Widget
     type DynWidget: DynWidget<Self> + ?Sized;
     type WidgetID: WidgetID;
+    type SubWidgetID: WidgetID;
     type Commit: Eq + Ord;
 }
