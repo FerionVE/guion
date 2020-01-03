@@ -20,9 +20,15 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
 
     fn has_childs(&self) -> bool;
     /// iterator over widget's child widgets
-    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a>;
+    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=WPSlice<'a,E>> + 'a>;
     /// id of child widgets as vec
-    fn childs_vec<'a>(&'a self) -> Vec<E::WidgetID>;
+    fn childs_vec<'a>(&'a self) -> Vec<WPSlice<'a,E>>;
+    #[inline]
+    fn childs_vec_owned(&self) -> Vec<E::WidgetPath> {
+        self.childs()
+            .map(|p| p.unslice() )
+            .collect()
+    }
     /*#[inline]
     fn resolve_mut<'a>(&'a mut self, i: &ESubWidgetID<E>) -> Option<&'a mut E::DynWidget> {
         if self.has_childs() {

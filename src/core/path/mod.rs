@@ -5,89 +5,139 @@ use super::*;
 pub mod sub;
 pub use sub::*;
 
-pub trait WidgetPath: Clone + PartialEq + Sized + 'static {
+pub trait WidgetPath<E>: AsWPSlice<E> + Clone + PartialEq + Sized + 'static where E: Env<WidgetPath=Self> {
     type SubPath: SubPath;
     
     fn attach(&mut self, sub: Self::SubPath);
     fn attached(&self, sub: Self::SubPath) -> Self;
 
-    fn id<E: Env<WidgetPath=Self>>(&self) -> &E::WidgetID;
+    fn id(&self) -> &E::WidgetID;
 
-    fn slice<E: Env<WidgetPath=Self>>(&self) -> EWPSlice<E>;
+    fn parent(&self) -> Option<WPSlice<E>>;
 
     #[inline]
-    fn path_eq<I: WidgetPath + 'static>(&self, o: &I) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
-        Any::downcast_ref::<Self>(o)
-            .map_or(false, |r| self.eq(r) )
+    fn eq<F: Env + 'static>(&self, o: &F::WidgetPath) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
+        self.id().id_eq(o.id())
+    }
+
+    #[inline]
+    fn eq_of_slice<F: Env>(s: WPSlice<E>, o: WPSlice<F>) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
+        s.id().id_eq(o.id())
     }
     
     #[inline]
-    fn render<E: Env<WidgetPath=Self>>(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
-        c.has_widget(self).result()
-            .map(|_| self._render::<E>(c,r) )
+    fn render_of_slice(s: WPSlice<E>, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
+        c.has_widget(s).result()
+            .map(|_| Self::_render_of_slice(s,c,r) )
     }
     #[inline]
-    fn event<E: Env<WidgetPath=Self>>(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
-        c.has_widget(self).result()
-            .map(|_| self._event::<E>(c,e) )
+    fn event_of_slice(s: WPSlice<E>, c: &mut E::Context, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
+        c.has_widget(s).result()
+            .map(|_| Self::_event_of_slice(s,c,e) )
     }
     #[inline]
-    fn size<E: Env<WidgetPath=Self>>(&self, c: &mut E::Context) -> Result<Size,()> {
-        c.has_widget(self).result()
-            .map(|_| self._size::<E>(c) )
+    fn size_of_slice(s: WPSlice<E>, c: &mut E::Context) -> Result<Size,()> {
+        c.has_widget(s).result()
+            .map(|_| Self::_size_of_slice(s,c) )
     }
 
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _render<E: Env<WidgetPath=Self>>(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) {
-        c._render(self,r)
+    fn _render_of_slice(s: WPSlice<E>, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) {
+        c._render(s,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _event<E: Env<WidgetPath=Self>>(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) {
-        c._event(self,e)
+    fn _event_of_slice(s: WPSlice<E>, c: &mut E::Context, e: (EEvent<E>,&Bounds)) {
+        c._event(s,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _size<E: Env<WidgetPath=Self>>(&self, c: &mut E::Context) -> Size {
-        c._size(self)
+    fn _size_of_slice(s: WPSlice<E>, c: &mut E::Context) -> Size {
+        c._size(s)
+    }
+
+    fn id_of_slice(s: WPSlice<E>) -> &E::WidgetID;
+    fn parent_of_slice(s: WPSlice<E>) -> Option<WPSlice<E>>;
+    fn from_slice(s: WPSlice<E>) -> Self;
+}
+
+pub struct WPSlice<'a,E> where E: Env {
+    pub slice: EWPSlice<'a,E>,
+}
+
+impl<'a,E> WPSlice<'a,E> where E: Env {
+    #[inline]
+    pub fn id(&self) -> &E::WidgetID {
+        E::WidgetPath::id_of_slice(*self)
+    }
+    #[inline]
+    pub fn parent(&self) -> Option<Self> {
+        E::WidgetPath::parent_of_slice(*self)
+    }
+
+    #[inline]
+    pub fn unslice(&self) -> E::WidgetPath {
+        E::WidgetPath::from_slice(*self)
+    }
+
+    #[inline]
+    pub fn path_eq<F: Env + 'static>(&self, o: &F::WidgetPath) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
+        Any::downcast_ref::<Self>(o)
+            .map_or(false, |r| self == r )
+    }
+    
+    #[inline]
+    pub fn render(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
+        E::WidgetPath::render_of_slice(*self,c,r)
+    }
+    #[inline]
+    pub fn event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
+        E::WidgetPath::event_of_slice(*self,c,e)
+    }
+    #[inline]
+    pub fn size(&self, c: &mut E::Context) -> Result<Size,()> {
+        E::WidgetPath::size_of_slice(*self,c)
+    }
+
+    /// PANICKS if widget doesn't exists
+    #[inline]
+    pub fn _render(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) {
+        E::WidgetPath::_render_of_slice(*self,c,r)
+    }
+    /// PANICKS if widget doesn't exists
+    #[inline]
+    pub fn _event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) {
+        E::WidgetPath::_event_of_slice(*self,c,e)
+    }
+    /// PANICKS if widget doesn't exists
+    #[inline]
+    pub fn _size(&self, c: &mut E::Context) -> Size {
+        E::WidgetPath::_size_of_slice(*self,c)
+    }
+
+    #[inline]
+    pub fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> WPSlice<'a,F> where F::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>> {
+        WPSlice{slice: self.slice}
     }
 }
 
-pub trait WidgetPathSlice<'a>: Sized {
-    fn parent(self) -> Option<Self>;
+impl<'a,E> PartialEq for WPSlice<'a,E> where E: Env {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        E::WidgetPath::eq_of_slice(*self,*other)
+    }
+}
 
-    fn from_ref<E: Env>(r: &'a E::WidgetPath) where &'a E: EnvLt<PathSlice=Self>;
+impl<'a,E> Clone for WPSlice<'a,E> where E: Env {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self{slice: self.slice}
+    }
+}
 
-    #[inline]
-    fn render<E: Env>(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
-        c.has_widget(self).result()
-            .map(|_| self._render::<E>(c,r) )
-    }
-    #[inline]
-    fn event<E: Env>(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
-        c.has_widget(self).result()
-            .map(|_| self._event::<E>(c,e) )
-    }
-    #[inline]
-    fn size<E: Env>(&self, c: &mut E::Context) -> Result<Size,()> where E: WidgetPath<Slice=Self>/*, for<'a> Self: WidgetPathSlice<'a>*/ {
-        c.has_widget(self).result()
-            .map(|_| self._size::<E>(c) )
-    }
+impl<'a,E> Copy for WPSlice<'a,E> where E: Env {}
 
-    /// PANICKS if widget doesn't exists
-    #[inline]
-    fn _render<E: Env>(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) {
-        c._render(self,r)
-    }
-    /// PANICKS if widget doesn't exists
-    #[inline]
-    fn _event<E: Env>(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) {
-        c._event(self,e)
-    }
-    /// PANICKS if widget doesn't exists
-    #[inline]
-    fn _size<E: Env<WidgetPath=Self>>(&self, c: &mut E::Context) -> Size {
-        c._size(self)
-    }
+pub trait AsWPSlice<E> where E: Env {
+    fn slice(&self) -> WPSlice<E>;
 }

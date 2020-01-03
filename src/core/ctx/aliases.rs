@@ -16,13 +16,15 @@ pub type ECStateful<E: Env> = <ECHandler<E> as AsHandlerStateful<E>>::T;
 pub type EPressedKey<E: Env> = <ECStateful<E> as HandlerStateful<E>>::K;
 
 //pub type ESubWidgetID<E: Env> = <E::WidgetID as WidgetID>::SubWidgetID;
-pub type EWPSlice<'a,E: Env> = <&'a E as EnvLt<'a>>::PathSlice;
+//pub type EWPSlice<'a,E: Env> = <&'a E as EnvLt<'a>>::PathSlice;
+pub type EWPSub<E: Env> = <E::WidgetPath as WidgetPath<E>>::SubPath;
+pub type EWPSlice<'a,E: Env> = &'a [EWPSub<E>];
 
 #[inline]
-pub fn e_default_style<E: Env>() -> &'static EStyle<E> where for<'e> &'e E: EnvLt<'e> {
+pub fn e_default_style<E: Env>() -> &'static EStyle<E> {
     <EStyle<E> as Style<E>>::default()
 }
 #[inline]
-pub fn e_default_border<E: Env>() -> &'static Border where for<'e> &'e E: EnvLt<'e> {
+pub fn e_default_border<E: Env>() -> &'static Border {
     <EStyle<E> as Style<E>>::default_border()
 }

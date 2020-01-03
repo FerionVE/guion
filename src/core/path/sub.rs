@@ -1,13 +1,18 @@
 use super::*;
 
-pub trait SubPath {
+pub trait SubPath: Clone + PartialEq + Sized {
     fn is<T: Any>(&self) -> bool;
     fn downcast_ref<T: Any>(&self) -> Option<&T>;
     fn downcast_mut<T: Any>(&mut self) -> Option<&mut T>;
     fn downcast_into<T: Any>(self) -> Result<T,Self> where Self: Sized;
+    #[inline]
+    fn eq<I: SubPath + 'static>(&self, o: &I) -> bool where Self: 'static {
+        Any::downcast_ref::<Self>(o)
+            .map_or(false, |r| self == r )
+    }
 }
 
-impl SubPath for Box<dyn Any> {
+/*impl SubPath for Box<dyn Any> {
     #[inline]
     fn is<T: Any>(&self) -> bool {
        (**self).is::<T>() 
@@ -24,4 +29,4 @@ impl SubPath for Box<dyn Any> {
     fn downcast_into<T: Any>(self) -> Result<T,Self> {
         self.downcast().map(|v| *v )
     }
-}
+}*/

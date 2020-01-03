@@ -53,14 +53,14 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::set_parent(self,v)
         }
         #[inline]
-        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=<$c>::WidgetID> + 'a> {
+        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=$crate::macro_prelude::WPSlice<$c>> + 'a> {
             Box::new(
                 std::iter::empty()
             )
         }
 
         #[inline]
-        fn childs_vec<'a>(&'a self) -> Vec<<$c>::WidgetID> {
+        fn childs_vec<'a>(&'a self) -> Vec<$crate::macro_prelude::WPSlice<$c>> {
             std::vec![]
         }
         #[inline]

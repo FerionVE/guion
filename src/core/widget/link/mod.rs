@@ -6,14 +6,14 @@ use super::*;
 pub mod imp;
 use imp::*;
 
-pub struct Link<'c,'p,E> where E: Env, for<'e> &'e E: EnvLt<'e> {
+pub struct Link<'c,E> where E: Env {
     pub ctx: &'c mut E::Context,
-    pub path: EWPSlice<'p,E>,
+    pub path: WPSlice<'c,E>,
     // absolute pos ans size of current widget
     //pub bounds: Bounds,
 }
 
-impl<'c,'p,E> Link<'c,'p,E> where E: Env, for<'e> &'e E: EnvLt<'e> {
+impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn me<S: Widget<E> + 'static>(&self) -> &S {
         self.widget()
@@ -27,18 +27,23 @@ impl<'c,'p,E> Link<'c,'p,E> where E: Env, for<'e> &'e E: EnvLt<'e> {
 
     #[inline]
     pub fn widget(&self) -> &E::DynWidget {
-        self.ctx.widget(&self.path)
+        self.ctx.widget(self.path)
             .expect("Link: Widget Gone")
     }
     #[inline] 
     pub fn widget_mut(&mut self) -> &mut E::DynWidget {
-        self.ctx.widget_mut(&self.path)
+        self.ctx.widget_mut(self.path)
             .expect("Link: Widget Gone")
     }
 
     #[inline]
     pub fn widget_fns(&self) -> WidgetFns<E> {
-        self.ctx.widget_fns(&self.path)
+        self.ctx.widget_fns(self.path)
+    }
+
+    #[inline]
+    pub fn id(&self) -> &E::WidgetID {
+        self.path.id()
     }
 
     /*#[inline]
@@ -65,58 +70,58 @@ impl<'c,'p,E> Link<'c,'p,E> where E: Env, for<'e> &'e E: EnvLt<'e> {
 
     /// iterate over childs
     #[inline]
-    pub fn childs(&'a self, predicate: impl FnMut(&E::WidgetID)->bool ) -> impl Iterator<Item=&'a E::DynWidget> {
-        self.ctx.widget(&self.path).unwrap()
+    pub fn childs(&'c self, predicate: impl Fn(WPSlice<'c,E>)->bool + 'c ) -> impl Iterator<Item=&'c E::DynWidget> + 'c {
+        self.ctx.widget(self.path).unwrap()
             .childs()
-            .filter(predicate)
+            .filter(#[inline] move |s| predicate(*s) )
             .map(move |e| {
                 (
-                    self.ctx.widget(&e).expect("Lost Child")
+                    self.ctx.widget(e).expect("Lost Child")
                 )
             })
     }
     /// iterate over childs mut
     #[inline]
-    pub fn childs_mut(&'a mut self, mut f: impl FnMut(&mut E::DynWidget), mut predicate: impl FnMut(&E::WidgetID)->bool) {
-        let childs: Vec<E::WidgetID> = self.ctx.widget(&self.path).unwrap().childs().collect();
+    pub fn childs_mut(&'c mut self, mut f: impl FnMut(&mut E::DynWidget), mut predicate: impl FnMut(&E::WidgetPath)->bool) {
+        let childs: Vec<E::WidgetPath> = self.ctx.widget(self.path).unwrap().childs_vec_owned();
 
         for e in childs {
             if predicate(&e) {
                 f(
-                    self.ctx.widget_mut(&e).expect("Lost Child")
+                    self.ctx.widget_mut(e.slice()).expect("Lost Child")
                 );
             }
         }
     }
     /// iterate from current up to the root element
     #[inline]
-    pub fn parents(&'a self) -> Parents<'a,E> {
+    pub fn parents(&'c self) -> Parents<'c,E> {
         Parents{
             ctx: self.ctx,
-            next: Some(self.path.slice()),
+            next: Some(self.path),
         }
     }
     /// iterate from current up to the root element mut
     #[inline]
-    pub fn parents_mut(&'a mut self, mut f: impl FnMut(&mut E::DynWidget) ) {
-        let mut next = Some(self.path.slice());
+    pub fn parents_mut(&'c mut self, mut f: impl FnMut(&mut E::DynWidget) ) { //TODO optimize
+        let mut next = Some(self.path);
 
         while let Some(n) = next {
-            let r = self.ctx.widget_mut(&n).expect("Lost Parent");
+            let r = self.ctx.widget_mut(n).expect("Lost Parent");
             f(r);
-            next = r.parent();
+            next = n.parent();
         }
     }
 
-    pub fn with_ctx<'b,F: Env<WidgetID=E::WidgetID>>(self, ctx: &'b mut F::Context) -> Link<'b,F> {
+    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where F::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>> {
         Link{
             ctx,
-            id: self.id,
+            path: self.path.with_env::<F>(),
             //bounds: self.bounds,
         }
     }
     #[inline]
-    pub fn enqueue<Q: Queue<E>>(&'a mut self, args: Q::Args, f: Q::Callback) -> Q::Return where E::Context: AccessQueue<Q,E> {
+    pub fn enqueue<Q: Queue<E>>(&'c mut self, args: Q::Args, f: Q::Callback) -> Q::Return where E::Context: AccessQueue<Q,E> {
         self.ctx.queue_mut().add(args,f)
     }
 }

@@ -53,14 +53,14 @@ macro_rules! impl_button_inner {
             $crate::macro_prelude::IButton::set_parent(self,v)
         }
         #[inline]
-        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=<$c>::WidgetID> + 'a> {
+        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=$crate::macro_prelude::WPSlice<$c>> + 'a> {
             Box::new(
                 std::iter::empty()
             )
         }
 
         #[inline]
-        fn childs_vec<'a>(&'a self) -> Vec<<$c>::WidgetID> {
+        fn childs_vec<'a>(&'a self) -> Vec<$crate::macro_prelude::WPSlice<$c>> {
             std::vec![]
         }
         #[inline]
@@ -81,8 +81,8 @@ macro_rules! impl_button_inner {
 pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds)) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
     let senf = l.me::<W>();
     let down = 
-        l.is_hovered() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::MOUSE_LEFT], &l.id) ||
-        l.is_selected() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::ENTER], &l.id);
+        l.is_hovered() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::MOUSE_LEFT], l.id()) ||
+        l.is_selected() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::ENTER], l.id());
         
     r.0.draw_text_button(r.1,down,senf.caption(),IButton::style(senf));
 }

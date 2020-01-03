@@ -7,10 +7,6 @@ pub trait Env: Sized + 'static {
     ///regularly just dyn Widget
     type DynWidget: DynWidget<Self> + ?Sized;
     type WidgetID: WidgetID;
-    type WidgetPath: WidgetPath;
+    type WidgetPath: WidgetPath<Self>;
     //type Commit: Eq + Ord;
-}
-
-pub trait EnvLt<'a>: Sized {
-    type PathSlice: WidgetPathSlice<'a>;
 }

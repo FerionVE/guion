@@ -3,7 +3,7 @@ use ctx::*;
 use widget::Widget;
 /// tabulate through widget tree
 /// returns the next widget from selected in the specific direction
-pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetID, reverse: bool) -> E::WidgetID {
+pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetPath, reverse: bool) -> E::WidgetPath {
     //for recognizing infinite loops
     let initial_selected = selected.clone();
     let mut current = selected;
@@ -15,13 +15,13 @@ pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetID, reverse: bool
     while repeat {
         repeat = false;
 
-        let w = c.widget(&current).expect("Lost Widget");
+        let w = c.widget(current.slice()).expect("Lost Widget");
 
         if !traverse_parents {
             traverse_parents = true;
             if w.has_childs() {
                 if let Some(c) = w.childs().next() {
-                    current = c;
+                    current = c.unslice();
                     //traverse into child, skip parent traverse
                     traverse_parents = false;
                 }
@@ -29,20 +29,20 @@ pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetID, reverse: bool
         }
         if traverse_parents {
             traverse_parents = false;
-            if let Some(p) = w.parent() {
-                let pc = c.widget(&current).expect("Lost Widget").childs_vec();
+            if let Some(p) = current.parent() {
+                let pc = c.widget(current.slice()).expect("Lost Widget").childs_vec();
                 //find current child in parent
-                let idx = pc.iter().position(|c| *c == current ).expect("Parent Lost Child Widget");
+                let idx = pc.iter().position(|c| *c == current.slice() ).expect("Parent Lost Child Widget");
 
                 if !reverse && pc.len()-idx-1 != 0 {
                     //traverse into next silbing
-                    current = pc[idx+1].clone();
+                    current = pc[idx+1].unslice();
                 } else if reverse && idx != 0 {
                     //traverse into next silbing
-                    current = pc[idx-1].clone();
+                    current = pc[idx-1].unslice();
                 }else{
                     //parent traverse end was reached, traverse grandpa
-                    current = p.clone();
+                    current = p.unslice();
                     traverse_parents = true;
                     repeat = true;
                 }
@@ -51,7 +51,7 @@ pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetID, reverse: bool
             }
         }
 
-        if !c.widget(&current).expect("Lost Widget").selectable() {
+        if !c.widget(current.slice()).expect("Lost Widget").selectable() {
             repeat = true;
         }
 

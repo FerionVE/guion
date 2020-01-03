@@ -17,6 +17,7 @@ pub use imp::*;
 pub use o::*;
 
 pub trait IPane<E>: Widget<E> where E: Env {
+    type Child: AsWPSlice<E>;
 
     fn id(&self) -> E::WidgetID;
 
@@ -26,7 +27,7 @@ pub trait IPane<E>: Widget<E> where E: Env {
         None
     }
 
-    fn childs(&self) -> &[E::WidgetID];
+    fn childs(&self) -> &[Self::Child];
 
     fn orientation(&self) -> Orientation;
     fn set_orientation(&mut self, v: Orientation);

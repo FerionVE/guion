@@ -5,18 +5,20 @@ use ctx::*;
 
 pub struct Pane<E> where E: Env {
     id: E::WidgetID,
-    childs: Vec<E::WidgetID>,
+    childs: Vec<E::WidgetPath>,
     invalid: bool,
     parent: Option<E::WidgetID>,
     orientation: Orientation,
 }
 
 impl<E> super::IPane<E> for Pane<E> where E: Env + 'static {
+    type Child = E::WidgetPath;
+
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
 
-    fn childs(&self) -> &[E::WidgetID] {
+    fn childs(&self) -> &[Self::Child] {
         &self.childs[..]
     }
     fn style(&self) -> &EStyle<E> {

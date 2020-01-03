@@ -44,16 +44,19 @@ macro_rules! impl_pane_inner {
             $crate::macro_prelude::IPane::set_parent(self,v)
         }
         #[inline]
-        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=<$c>::WidgetID> + 'a> {
+        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=$crate::macro_prelude::WPSlice<$c>> + 'a> {
             Box::new(
                 $crate::macro_prelude::IPane::childs(self)
-                .iter()
-                .cloned()
+                    .iter()
+                    .map(|p| p.slice() )
             )
         }
         #[inline]
-        fn childs_vec<'a>(&'a self) -> Vec<<$c>::WidgetID> {
-            $crate::macro_prelude::IPane::childs(self).to_owned()
+        fn childs_vec<'a>(&'a self) -> Vec<$crate::macro_prelude::WPSlice<$c>> {
+            $crate::macro_prelude::IPane::childs(self)
+                .iter()
+                .map(|p| p.slice() )
+                .collect()
         }
         #[inline]
         fn selectable(&self) -> bool {
@@ -71,14 +74,16 @@ macro_rules! impl_pane_inner {
 }
 
 pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds)) {
-    let o = l.me::<W>().orientation();
+    let senf = l.me::<W>();
+    let o = senf.orientation();
     
-    let c = childs::<W,E>(&l);
+    let c = senf.childs_vec_owned();
     
     let b = c.iter()
     .map(|c| 
         c
-        .size::<E>(&mut l)
+        .slice() //TODO remove constant slice() requirement
+        .size(&mut l)
         .expect("Lost Widget")
     )
     .collect::<Vec<_>>();
@@ -87,7 +92,8 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<
     
     for (cc,bb) in c.iter().zip(b.iter()) {
         cc
-        .render::<E>( &mut *l, (r.0,&r.1.slice(bb)) )
+        .slice()
+        .render( &mut *l, (r.0,&r.1.slice(bb)) )
         .expect("Pane contains lost Widget");
     }
     
@@ -98,21 +104,19 @@ pub fn _event<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEven
 }
 
 pub fn _size<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
-    let o = l.me::<W>().orientation();
+    let senf = l.me::<W>();
+    let o = senf.orientation();
     
     let mut s = Size::empty();
     
-    for c in childs::<W,E>(&l) {
+    for c in senf.childs_vec_owned() {
         let cs = c
-        .size::<E>(&mut l)
+        .slice()
+        .size(&mut l)
         .expect("Lost Widget");
         
         s.add(&cs, o)
     }
     
     s
-}
-#[inline]
-fn childs<W: IPane<E> + 'static, E: Env + 'static>(l: &Link<E>) -> Vec<E::WidgetID> {
-    IPane::childs(l.me::<W>()).to_owned()
 }
