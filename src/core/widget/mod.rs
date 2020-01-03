@@ -23,14 +23,22 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=E::WidgetID> + 'a>;
     /// id of child widgets as vec
     fn childs_vec<'a>(&'a self) -> Vec<E::WidgetID>;
-    #[inline]
-    fn resolve(&self, i: &E::SubWidgetID) -> Option<&E::DynWidget> {
+    /*#[inline]
+    fn resolve_mut<'a>(&'a mut self, i: &ESubWidgetID<E>) -> Option<&'a mut E::DynWidget> {
         if self.has_childs() {
             unimplemented!()
         }else{
             None
         }
     }
+    #[inline]
+    fn resolve<'a>(&'a self, i: &ESubWidgetID<E>) -> Option<&'a E::DynWidget> {
+        if self.has_childs() {
+            unimplemented!()
+        }else{
+            None
+        }
+    }*/
 
     /// should the widget be focusable, regularly true for interactive widgets, false for layouts
     fn selectable(&self) -> bool;

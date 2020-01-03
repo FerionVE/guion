@@ -87,10 +87,10 @@ pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r:
     r.0.draw_text_button(r.1,down,senf.caption(),IButton::style(senf));
 }
 
-pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
+pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
     let senf = l.me::<W>();
     
-    if let Some(e) = e.is::<KbdDown<_>>() {
+    if let Some(e) = e.0.is::<KbdDown<_>>() {
         if e.key == senf.kbd_trigger() {
             (senf.action())(l)
         }

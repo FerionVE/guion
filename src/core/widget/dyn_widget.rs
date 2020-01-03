@@ -1,6 +1,10 @@
+use std::ops::DerefMut;
+use std::ops::Deref;
 use super::*;
 
 pub trait DynWidget<E>: Widget<E> where E: Env + 'static {
+    type Owned: Deref<Target=Self> + DerefMut<Target=Self>;
+
     #[inline]
     fn is<T: Any>(&self) -> bool {
         self.as_any().is::<T>() || self.as_any_inner().is::<T>()
@@ -20,14 +24,19 @@ pub trait DynWidget<E>: Widget<E> where E: Env + 'static {
             self.as_any_inner_mut().downcast_mut()
         }
     }
-}
-
-impl<T,E> DynWidget<E> for T where T: Widget<E>, E: Env + 'static {
-
+    fn erase<T: Widget<E>>(w: &T) -> &Self;
+    fn erase_mut<T: Widget<E>>(w: &mut T) -> &mut Self;
+    fn erase_move<T: Widget<E>>(w: T) -> Self::Owned;
+    //fn downcast_into<T: Widget<E>>(e: Self::Owned) -> Result<T,Self::Owned>;
 }
 
 impl<E> DynWidget<E> for dyn Widget<E> where E: Env + 'static {
+    type Owned = Box<dyn Widget<E>>;
 
+    fn erase<T: Widget<E>>(w: &T) -> &Self {w}
+    fn erase_mut<T: Widget<E>>(w: &mut T) -> &mut Self {w}
+    fn erase_move<T: Widget<E>>(w: T) -> Self::Owned {Box::new(w)}
+    //fn downcast_into<T: Widget<E>>(e: Self::Owned) -> Result<T,Self::Owned> {Box::downcast(e)}
 }
 /// is implemented on any Widget, shouldn't be used from external
 pub trait WidgetAsAny<E>: 'static where E: Env {

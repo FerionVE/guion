@@ -75,7 +75,7 @@ pub fn _render<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: 
     
 }
 
-pub fn _event<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
+pub fn _event<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
     
 }
 

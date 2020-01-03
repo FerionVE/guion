@@ -15,6 +15,8 @@ pub type ECHandler<E: Env> = <E::Context as Context>::Handler;
 pub type ECStateful<E: Env> = <ECHandler<E> as AsHandlerStateful<E>>::T;
 pub type EPressedKey<E: Env> = <ECStateful<E> as HandlerStateful<E>>::K;
 
+//pub type ESubWidgetID<E: Env> = <E::WidgetID as WidgetID>::SubWidgetID;
+
 #[inline]
 pub fn e_default_style<E: Env>() -> &'static EStyle<E> {
     <EStyle<E> as Style<E>>::default()

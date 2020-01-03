@@ -37,17 +37,17 @@ pub trait Context: Sized + 'static {
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _render<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, r: (&mut ERenderer<E>,&Bounds)) where Self: Widgets<E> {
-        Self::Handler::_render::<E>(self,i,r)
+        Self::Handler::_render::<E>(self.link(i),r)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _event<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, e: EEvent<E>) where Self: Widgets<E> {
-        Self::Handler::_event::<E>(self,i,e)
+    fn _event<E: Env<Context=Self>>(&mut self, i: &E::WidgetID, e: (EEvent<E>,&Bounds)) where Self: Widgets<E> {
+        Self::Handler::_event::<E>(self.link(i),e)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
     fn _size<E: Env<Context=Self>>(&mut self, i: &E::WidgetID) -> Size where Self: Widgets<E> {
-        Self::Handler::_size::<E>(self,i)
+        Self::Handler::_size::<E>(self.link(i))
     }
     /// PANICKS if widget doesn't exists
     #[inline]
@@ -55,11 +55,10 @@ pub trait Context: Sized + 'static {
         Widget::_fns(self.widget(i).expect("Lost Widget"))
     }
 
-    #[inline] fn link<'a,E: Env<Context=Self>>(&'a mut self, i: &E::WidgetID, b: Bounds) -> Link<'a,E> where Self: Widgets<E> {
+    #[inline] fn link<'a,E: Env<Context=Self>>(&'a mut self, i: &E::WidgetID) -> Link<'a,E> where Self: Widgets<E> {
         Link{
             ctx: self,
             id: i.clone(),
-            bounds: b,
         }
     }
 

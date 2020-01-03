@@ -4,7 +4,16 @@ use super::*;
 
 //pub mod resolvable;
 
-pub trait WidgetID: Clone + PartialEq + Sized {
+//pub mod sub;
+
+pub trait WidgetID: Clone + PartialEq + Sized + 'static {
+    /*type SubWidgetID: SubWidgetID;
+
+    fn attach(&mut self, sub: Self::SubWidgetID);
+    fn attached(&self, sub: Self::SubWidgetID) -> Self;
+
+    fn parts(&self) -> &[Self::SubWidgetID];*/
+
     #[inline]
     fn id_eq<I: WidgetID + 'static>(&self, o: &I) -> bool where Self: 'static {
         Any::downcast_ref::<Self>(o)
@@ -17,7 +26,7 @@ pub trait WidgetID: Clone + PartialEq + Sized {
             .map(|_| self._render::<E>(c,r) )
     }
     #[inline]
-    fn event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: EEvent<E>) -> Result<(),()> {
+    fn event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
         c.has_widget(self).result()
             .map(|_| self._event::<E>(c,e) )
     }
@@ -34,7 +43,7 @@ pub trait WidgetID: Clone + PartialEq + Sized {
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: EEvent<E>) {
+    fn _event<E: Env<WidgetID=Self>>(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) {
         c._event(self,e)
     }
     /// PANICKS if widget doesn't exists
@@ -52,3 +61,7 @@ pub trait WidgetID: Clone + PartialEq + Sized {
         c.state().is_selected(self)
     }
 }
+
+/*impl WidgetID for Vec<Box<dyn Any>> {
+    
+}*/

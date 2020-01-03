@@ -82,7 +82,7 @@ pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (
     unimplemented!()
 }
 
-pub fn _event<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
+pub fn _event<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
     unimplemented!()
 }
 

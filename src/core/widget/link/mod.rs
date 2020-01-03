@@ -9,36 +9,50 @@ use imp::*;
 pub struct Link<'a,E> where E: Env {
     pub ctx: &'a mut E::Context,
     pub id: E::WidgetID,
-    /// absolute pos ans size of current widget
-    pub bounds: Bounds,
+    // absolute pos ans size of current widget
+    //pub bounds: Bounds,
 }
 
 impl<'a,E> Link<'a,E> where E: Env {
     #[inline]
     pub fn me<S: Widget<E> + 'static>(&'a self) -> &'a S {
-        self.ctx.widget(&self.id)
-            .expect("Link: Widget Gone")
+        self.widget()
             .downcast_ref::<S>().expect("Link: Wrong Widget Type")
     }
     #[inline] 
     pub fn me_mut<S: Widget<E> + 'static>(&'a mut self) -> &'a mut S {
-        self.ctx.widget_mut(&self.id)
-            .expect("Link: Widget Gone")
+        self.widget_mut()
             .downcast_mut::<S>().expect("Link: Wrong Widget Type")
     }
 
     #[inline]
+    pub fn widget(&'a self) -> &'a E::DynWidget {
+        self.ctx.widget(&self.id)
+            .expect("Link: Widget Gone")
+    }
+    #[inline] 
+    pub fn widget_mut(&'a mut self) -> &'a mut E::DynWidget {
+        self.ctx.widget_mut(&self.id)
+            .expect("Link: Widget Gone")
+    }
+
+    #[inline]
+    pub fn widget_fns(&'a self) -> WidgetFns<E> {
+        self.ctx.widget_fns(&self.id)
+    }
+
+    /*#[inline]
     pub fn render(&mut self, r: (&mut ERenderer<E>,&Bounds)) { //TODO fix &mut Renderer back to owned
         self.id._render::<E>(self.ctx,r)
     }
     #[inline]
-    pub fn event(&mut self, e: EEvent<E>) {
+    pub fn event(&mut self, e: (EEvent<E>,&Bounds)) {
         self.id._event::<E>(self.ctx,e)
     }
     #[inline]
     pub fn size(&mut self) -> Size {
         self.id._size::<E>(self.ctx)
-    }
+    }*/
 
     #[inline]
     pub fn is_hovered(&self) -> bool where ECHandler<E>: AsHandlerStateful<E> {
@@ -98,7 +112,7 @@ impl<'a,E> Link<'a,E> where E: Env {
         Link{
             ctx,
             id: self.id,
-            bounds: self.bounds,
+            //bounds: self.bounds,
         }
     }
     #[inline]
