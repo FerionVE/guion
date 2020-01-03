@@ -16,19 +16,19 @@ pub trait Handler<C>: Sized + 'static where C: Context {
 
 impl<C> Handler<C> for () where C: Context {
     #[inline] 
-    fn _render<E>(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) where E: Env<Context=C>, C: Widgets<E> {
+    fn _render<E>(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) where E: Env<Context=C>, for<'e> &'e E: EnvLt<'e>, C: Widgets<E> {
         (l.widget_fns().render)(l,r);
     }
     #[inline] 
-    fn _event<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C>, C: Widgets<E> {
+    fn _event<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C>, for<'e> &'e E: EnvLt<'e>, C: Widgets<E> {
         (l.widget_fns().event)(l,e);
     }
     #[inline] 
-    fn _event_root<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C>, C: Widgets<E> {
-        l.ctx._event(&l.id,e)
+    fn _event_root<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C>, for<'e> &'e E: EnvLt<'e>, C: Widgets<E> {
+        l.ctx._event(&l.path,e)
     }
     #[inline] 
-    fn _size<E>(l: Link<E>) -> Size where E: Env<Context=C>, C: Widgets<E> {
+    fn _size<E>(l: Link<E>) -> Size where E: Env<Context=C>, for<'e> &'e E: EnvLt<'e>, C: Widgets<E> {
         (l.widget_fns().size)(l)
     }
 }

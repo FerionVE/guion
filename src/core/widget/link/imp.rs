@@ -3,7 +3,7 @@ use super::*;
 
 pub struct Parents<'a,E> where E: Env {
     pub(super) ctx: &'a E::Context,
-    pub(super) next: Option<E::WidgetID>,
+    pub(super) next: Option<EWPSlice<E>>,
 }
 
 impl<'a,E> Iterator for Parents<'a,E> where E: Env {

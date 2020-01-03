@@ -9,6 +9,7 @@ pub mod state;
 pub mod env;
 pub mod backend;
 pub mod id;
+pub mod path;
 
 pub(crate) use env::*;
 pub(crate) use backend::*;
@@ -34,4 +35,5 @@ pub(crate) use widget::dyn_widget::*;
 pub(crate) use widget::fns::*;
 pub(crate) use widget::link::*;
 pub(crate) use id::*;
+pub(crate) use path::*;
 pub(crate) use std::any::Any;
