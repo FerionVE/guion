@@ -29,22 +29,30 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             .map(|p| p.unslice() )
             .collect()
     }
-    /*#[inline]
-    fn resolve_mut<'a>(&'a mut self, i: &ESubWidgetID<E>) -> Option<&'a mut E::DynWidget> {
+    #[inline]
+    fn resolve_mut(&mut self, i: &EWPSub<E>) -> ResolveResultMut<E> {
         if self.has_childs() {
             unimplemented!()
         }else{
-            None
+            ResolveResultMut::Miss()
         }
     }
     #[inline]
-    fn resolve<'a>(&'a self, i: &ESubWidgetID<E>) -> Option<&'a E::DynWidget> {
+    fn resolve(&self, i: &EWPSub<E>) -> ResolveResult<E> {
         if self.has_childs() {
             unimplemented!()
         }else{
-            None
+            ResolveResult::Miss()
         }
-    }*/
+    }
+    #[inline]
+    fn self_in_parent(&self, parent: WPSlice<E>) -> E::WidgetPath {
+        parent.unslice().attached(SubPath::from_id(self.id()))
+    }
+    #[inline]
+    fn is_subpath(&self, p: &EWPSub<E>) -> bool {
+        p.eq_id(self.id())
+    }
 
     /// should the widget be focusable, regularly true for interactive widgets, false for layouts
     fn selectable(&self) -> bool;

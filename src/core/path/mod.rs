@@ -5,11 +5,17 @@ use super::*;
 pub mod sub;
 pub use sub::*;
 
-pub trait WidgetPath<E>: AsWPSlice<E> + Clone + PartialEq + Sized + 'static where E: Env<WidgetPath=Self> {
-    type SubPath: SubPath;
+pub mod provider;
+pub use provider::*;
+
+pub mod result;
+pub use result::*;
+
+pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Sized + 'static where E: Env<WidgetPath=Self> {
+    type SubPath: SubPath<E>;
     
     fn attach(&mut self, sub: Self::SubPath);
-    fn attached(&self, sub: Self::SubPath) -> Self;
+    fn attached(self, sub: Self::SubPath) -> Self;
 
     fn id(&self) -> &E::WidgetID;
 
@@ -117,7 +123,7 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> WPSlice<'a,F> where F::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>> {
+    pub fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> WPSlice<'a,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F> {
         WPSlice{slice: self.slice}
     }
 }

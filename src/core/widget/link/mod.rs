@@ -113,7 +113,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
     }
 
-    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where F::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>> {
+    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F> {
         Link{
             ctx,
             path: self.path.with_env::<F>(),
