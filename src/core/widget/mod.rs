@@ -19,31 +19,32 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn set_parent(&mut self, v: Option<E::WidgetID>);
 
     fn has_childs(&self) -> bool;
-    /// iterator over widget's child widgets
-    fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=WPSlice<'a,E>> + 'a>;
-    /// id of child widgets as vec
-    fn childs_vec<'a>(&'a self) -> Vec<WPSlice<'a,E>>;
+
+    fn childs(&self) -> Vec<&dyn WPProvider<E>>;
+    fn childs_mut(&mut self) -> Vec<&mut dyn WPProvider<E>>;
     #[inline]
-    fn childs_vec_owned(&self) -> Vec<E::WidgetPath> {
-        self.childs()
-            .map(|p| p.unslice() )
+    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath> {
+        self.childs().iter()
+            .map(|p| p.path(own_path) )
             .collect()
     }
     #[inline]
-    fn resolve_mut(&mut self, i: &EWPSub<E>) -> ResolveResultMut<E> {
-        if self.has_childs() {
-            unimplemented!()
-        }else{
-            ResolveResultMut::Miss()
+    fn resolve_mut(&mut self, i: &EWPSub<E>) -> Option<&mut E::DynWidget> {
+        for c in self.childs_mut() {
+            if let Some(w) = c.widget_if_id_eq_mut(i) {
+                return Some(w);
+            }
         }
+        None
     }
     #[inline]
-    fn resolve(&self, i: &EWPSub<E>) -> ResolveResult<E> {
-        if self.has_childs() {
-            unimplemented!()
-        }else{
-            ResolveResult::Miss()
+    fn resolve(&self, i: &EWPSub<E>) -> Option<&E::DynWidget> {
+        for c in self.childs() {
+            if let Some(w) = c.widget_if_id_eq(i) {
+                return Some(w);
+            }
         }
+        None
     }
     #[inline]
     fn self_in_parent(&self, parent: WPSlice<E>) -> E::WidgetPath {

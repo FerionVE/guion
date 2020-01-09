@@ -21,6 +21,10 @@ impl<E> super::IPane<E> for Pane<E> where E: Env + 'static {
     fn childs(&self) -> &[Self::Child] {
         &self.childs[..]
     }
+    fn childs_mut(&mut self) -> &mut [Self::Child] {
+        &mut self.childs[..]
+    }
+
     fn style(&self) -> &EStyle<E> {
         e_default_style::<E>()
     }

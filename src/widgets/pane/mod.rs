@@ -17,7 +17,7 @@ pub use imp::*;
 pub use o::*;
 
 pub trait IPane<E>: Widget<E> where E: Env {
-    type Child: AsWPSlice<E>;
+    type Child: WPProvider<E>;
 
     fn id(&self) -> E::WidgetID;
 
@@ -28,6 +28,7 @@ pub trait IPane<E>: Widget<E> where E: Env {
     }
 
     fn childs(&self) -> &[Self::Child];
+    fn childs_mut(&mut self) -> &mut [Self::Child];
 
     fn orientation(&self) -> Orientation;
     fn set_orientation(&mut self, v: Orientation);

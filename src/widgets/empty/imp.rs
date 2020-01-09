@@ -46,14 +46,11 @@ macro_rules! impl_empty_inner {
             $crate::macro_prelude::IEmpty::set_parent(self,v)
         }
         #[inline]
-        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=$crate::macro_prelude::WPSlice<$c>> + 'a> {
-            Box::new(
-                std::iter::empty()
-            )
+        fn childs(&self) -> Vec<&dyn $crate::macro_prelude::WPProvider<E>> {
+            std::vec![]
         }
-
         #[inline]
-        fn childs_vec<'a>(&'a self) -> Vec<$crate::macro_prelude::WPSlice<$c>> {
+        fn childs_mut(&mut self) -> Vec<&mut dyn $crate::macro_prelude::WPProvider<E>> {
             std::vec![]
         }
         #[inline]

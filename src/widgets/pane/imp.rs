@@ -44,18 +44,17 @@ macro_rules! impl_pane_inner {
             $crate::macro_prelude::IPane::set_parent(self,v)
         }
         #[inline]
-        fn childs<'a>(&'a self) -> Box<dyn Iterator<Item=$crate::macro_prelude::WPSlice<$c>> + 'a> {
-            Box::new(
-                $crate::macro_prelude::IPane::childs(self)
-                    .iter()
-                    .map(|p| p.slice() )
-            )
-        }
-        #[inline]
-        fn childs_vec<'a>(&'a self) -> Vec<$crate::macro_prelude::WPSlice<$c>> {
+        fn childs(&self) -> Vec<&dyn $crate::macro_prelude::WPProvider<E>> {
             $crate::macro_prelude::IPane::childs(self)
                 .iter()
-                .map(|p| p.slice() )
+                .map(|p| p as &dyn $crate::macro_prelude::WPProvider<E> )
+                .collect()
+        }
+        #[inline]
+        fn childs_mut(&mut self) -> Vec<&mut dyn $crate::macro_prelude::WPProvider<E>> {
+            $crate::macro_prelude::IPane::childs_mut(self)
+                .iter_mut()
+                .map(|p| p as &mut dyn $crate::macro_prelude::WPProvider<E> )
                 .collect()
         }
         #[inline]
@@ -77,7 +76,7 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<
     let senf = l.me::<W>();
     let o = senf.orientation();
     
-    let c = senf.childs_vec_owned();
+    let c = l.child_paths();
     
     let b = c.iter()
     .map(|c| 
@@ -109,7 +108,7 @@ pub fn _size<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     
     let mut s = Size::empty();
     
-    for c in senf.childs_vec_owned() {
+    for c in l.child_paths() {
         let cs = c
         .slice()
         .size(&mut l)

@@ -68,22 +68,30 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.state().is_selected(self.path.id())
     }
 
-    /// iterate over childs
     #[inline]
+    pub fn child_paths(&self) -> Vec<E::WidgetPath> {
+        self.ctx.widget(self.path)
+            .unwrap()
+            .child_paths(self.path)
+    }
+
+    /// iterate over childs
+    /*#[inline]
     pub fn childs(&'c self, predicate: impl Fn(WPSlice<'c,E>)->bool + 'c ) -> impl Iterator<Item=&'c E::DynWidget> + 'c {
         self.ctx.widget(self.path).unwrap()
-            .childs()
-            .filter(#[inline] move |s| predicate(*s) )
+            .child_paths(self.path)
+            .into_iter()
+            .filter(#[inline] move |s| predicate(s.slice()) )
             .map(move |e| {
                 (
-                    self.ctx.widget(e).expect("Lost Child")
+                    self.ctx.widget(e.slice()).expect("Lost Child")
                 )
             })
     }
     /// iterate over childs mut
     #[inline]
     pub fn childs_mut(&'c mut self, mut f: impl FnMut(&mut E::DynWidget), mut predicate: impl FnMut(&E::WidgetPath)->bool) {
-        let childs: Vec<E::WidgetPath> = self.ctx.widget(self.path).unwrap().childs_vec_owned();
+        let childs: Vec<E::WidgetPath> = self.ctx.widget(self.path).unwrap().child_paths(self.path);
 
         for e in childs {
             if predicate(&e) {
@@ -92,7 +100,7 @@ impl<'c,E> Link<'c,E> where E: Env {
                 );
             }
         }
-    }
+    }*/
     /// iterate from current up to the root element
     #[inline]
     pub fn parents(&'c self) -> Parents<'c,E> {

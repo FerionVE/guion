@@ -8,9 +8,6 @@ pub use sub::*;
 pub mod provider;
 pub use provider::*;
 
-pub mod result;
-pub use result::*;
-
 pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Sized + 'static where E: Env<WidgetPath=Self> {
     type SubPath: SubPath<E>;
     
@@ -45,6 +42,18 @@ pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Size
     fn size_of_slice(s: WPSlice<E>, c: &mut E::Context) -> Result<Size,()> {
         c.has_widget(s).result()
             .map(|_| Self::_size_of_slice(s,c) )
+    }
+    #[inline]
+    fn childs_of_slice<'a>(s: WPSlice<E>, c: &'a E::Context) -> Result<Vec<&'a dyn WPProvider<E>>,()> {
+        c.widget(s).ok_or(()).map(Widget::childs)
+    }
+    #[inline]
+    fn childs_of_slice_mut<'a>(s: WPSlice<E>, c: &'a mut E::Context) -> Result<Vec<&'a mut dyn WPProvider<E>>,()> {
+        c.widget_mut(s).ok_or(()).map(Widget::childs_mut)
+    }
+    #[inline]
+    fn child_paths_of_slice<'a>(s: WPSlice<E>, c: &'a E::Context) -> Result<Vec<E::WidgetPath>,()> {
+        c.widget(s).ok_or(()).map(|w| w.child_paths(s) )
     }
 
     /// PANICKS if widget doesn't exists
@@ -91,6 +100,20 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
     pub fn path_eq<F: Env + 'static>(&self, o: &F::WidgetPath) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
         Any::downcast_ref::<Self>(o)
             .map_or(false, |r| self == r )
+    }
+
+    #[inline]
+    pub fn childs<'c>(&self, c: &'c E::Context) -> Result<Vec<&'c dyn WPProvider<E>>,()> {
+        E::WidgetPath::childs_of_slice(*self,c)
+    }
+    #[inline]
+    pub fn childs_mut<'c>(&self, c: &'c mut E::Context) -> Result<Vec<&'c mut dyn WPProvider<E>>,()> {
+        E::WidgetPath::childs_of_slice_mut(*self,c)
+    }
+
+    #[inline]
+    pub fn child_paths<'c>(&self, c: &'c E::Context) -> Result<Vec<E::WidgetPath>,()> {
+        E::WidgetPath::child_paths_of_slice(*self,c)
     }
     
     #[inline]

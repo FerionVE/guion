@@ -20,8 +20,8 @@ pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetPath, reverse: bo
         if !traverse_parents {
             traverse_parents = true;
             if w.has_childs() {
-                if let Some(c) = w.childs().next() {
-                    current = c.unslice();
+                if let Some(c) = w.child_paths(current.slice()).into_iter().next() {
+                    current = c;
                     //traverse into child, skip parent traverse
                     traverse_parents = false;
                 }
@@ -30,16 +30,16 @@ pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetPath, reverse: bo
         if traverse_parents {
             traverse_parents = false;
             if let Some(p) = current.parent() {
-                let pc = c.widget(current.slice()).expect("Lost Widget").childs_vec();
+                let pc = w.child_paths(current.slice());
                 //find current child in parent
-                let idx = pc.iter().position(|c| *c == current.slice() ).expect("Parent Lost Child Widget");
+                let idx = pc.iter().position(|c| c.id_eq(current.id()) ).expect("Parent Lost Child Widget");
 
                 if !reverse && pc.len()-idx-1 != 0 {
                     //traverse into next silbing
-                    current = pc[idx+1].unslice();
+                    current = pc[idx+1].clone();
                 } else if reverse && idx != 0 {
                     //traverse into next silbing
-                    current = pc[idx-1].unslice();
+                    current = pc[idx-1].clone();
                 }else{
                     //parent traverse end was reached, traverse grandpa
                     current = p.unslice();
