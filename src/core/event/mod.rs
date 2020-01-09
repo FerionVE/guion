@@ -22,7 +22,7 @@ pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self
     fn consuming(&self) -> bool;
     /// Where there Event should be initially injected into the context
     fn destination(&self) -> Self::Dest;
-    /// Create the event from a variant. returns empty event if variant is not supported
+    /// Create the event from a variant
     #[inline]
     fn from<V: Variant<E>>(v: V) -> Self where Self: VariantSupport<V,E> {
         VariantSupport::<V,E>::from_variant(v)

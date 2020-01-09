@@ -14,11 +14,13 @@ pub struct Link<'c,E> where E: Env {
 }
 
 impl<'c,E> Link<'c,E> where E: Env {
+    ///PANICKS if current widget is not the requested type
     #[inline]
     pub fn me<S: Widget<E> + 'static>(&self) -> &S {
         self.widget()
             .downcast_ref::<S>().expect("Link: Wrong Widget Type")
     }
+    ///PANICKS if current widget is not the requested type
     #[inline] 
     pub fn me_mut<S: Widget<E> + 'static>(&mut self) -> &mut S {
         self.widget_mut()
