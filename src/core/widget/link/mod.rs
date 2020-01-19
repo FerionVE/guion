@@ -7,6 +7,7 @@ pub mod imp;
 use imp::*;
 
 pub struct Link<'c,E> where E: Env {
+    pub stor: &'c E::Storage,
     pub ctx: &'c mut E::Context,
     pub path: WPSlice<'c,E>,
     // absolute pos ans size of current widget
@@ -14,33 +15,19 @@ pub struct Link<'c,E> where E: Env {
 }
 
 impl<'c,E> Link<'c,E> where E: Env {
-    ///PANICKS if current widget is not the requested type
-    #[inline]
-    pub fn me<S: Widget<E> + 'static>(&self) -> &S {
-        self.widget()
-            .downcast_ref::<S>().expect("Link: Wrong Widget Type")
-    }
-    ///PANICKS if current widget is not the requested type
     #[inline] 
-    pub fn me_mut<S: Widget<E> + 'static>(&mut self) -> &mut S {
-        self.widget_mut()
-            .downcast_mut::<S>().expect("Link: Wrong Widget Type")
+    pub fn mutate<S: Widget<E> + 'static>(&mut self, l: impl FnOnce(&mut E::DynWidget)) {
+        unimplemented!()
+    }
+    #[inline] 
+    pub fn later<S: Widget<E> + 'static>(&mut self, l: impl FnOnce(&E::DynWidget)) {
+        unimplemented!()
     }
 
     #[inline]
-    pub fn widget(&self) -> &E::DynWidget {
-        self.ctx.widget(self.path)
+    pub fn widget(&self) -> &'c E::DynWidget {
+        self.stor.widget(self.path)
             .expect("Link: Widget Gone")
-    }
-    #[inline] 
-    pub fn widget_mut(&mut self) -> &mut E::DynWidget {
-        self.ctx.widget_mut(self.path)
-            .expect("Link: Widget Gone")
-    }
-
-    #[inline]
-    pub fn widget_fns(&self) -> WidgetFns<E> {
-        self.ctx.widget_fns(self.path)
     }
 
     #[inline]
@@ -72,7 +59,7 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     #[inline]
     pub fn child_paths(&self) -> Vec<E::WidgetPath> {
-        self.ctx.widget(self.path)
+        self.stor.widget(self.path)
             .unwrap()
             .child_paths(self.path)
     }
@@ -107,24 +94,14 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn parents(&'c self) -> Parents<'c,E> {
         Parents{
-            ctx: self.ctx,
+            stor: self.stor,
             next: Some(self.path),
         }
     }
-    /// iterate from current up to the root element mut
-    #[inline]
-    pub fn parents_mut(&'c mut self, mut f: impl FnMut(&mut E::DynWidget) ) { //TODO optimize
-        let mut next = Some(self.path);
-
-        while let Some(n) = next {
-            let r = self.ctx.widget_mut(n).expect("Lost Parent");
-            f(r);
-            next = n.parent();
-        }
-    }
-
-    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F> {
+    
+    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
         Link{
+            stor: self.stor.with_env::<F>(),
             ctx,
             path: self.path.with_env::<F>(),
             //bounds: self.bounds,

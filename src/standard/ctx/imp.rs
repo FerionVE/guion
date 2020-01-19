@@ -7,22 +7,22 @@ use super::*;
 
 impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, C::Handler: AsHandler<Self,C> + 'static {
     #[inline] 
-    fn _render<E>(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) where E: Env<Context=C>, C: Widgets<E> {
+    fn _render<E>(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) where E: Env<Context=C> {
         S::_render::<E>(l,r);
         unimplemented!()
     }
     #[inline] 
-    fn _event<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C>, C: Widgets<E> {
+    fn _event<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C> {
         S::_event::<E>(l,e);
         unimplemented!()
     }
     #[inline] 
-    fn _event_root<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C>, C: Widgets<E> {
+    fn _event_root<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C> {
         Self::_event::<E>(l,e);
         unimplemented!()
     }
     #[inline] 
-    fn _size<E>(l: Link<E>) -> Size where E: Env<Context=C>, C: Widgets<E> {
+    fn _size<E>(l: Link<E>) -> Size where E: Env<Context=C> {
         unimplemented!();
         S::_size::<E>(l)
     }

@@ -11,3 +11,5 @@ pub trait Queue<E> where E: Env {
 pub trait AccessQueue<Q,E>: Context where Q: Queue<E>, E: Env<Context=Self>, Self: Widgets<E> {
     fn queue_mut(&mut self) -> &mut Q;
 }
+
+type DynWidgetMut<E: Env> = Box<dyn FnOnce(&mut E::DynWidget)>;

@@ -29,47 +29,47 @@ pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Size
     }
     
     #[inline]
-    fn render_of_slice(s: WPSlice<E>, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
-        c.has_widget(s).result()
+    fn render_of_slice(s: WPSlice<E>, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
+        c.0.has_widget(s).result()
             .map(|_| Self::_render_of_slice(s,c,r) )
     }
     #[inline]
-    fn event_of_slice(s: WPSlice<E>, c: &mut E::Context, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
-        c.has_widget(s).result()
+    fn event_of_slice(s: WPSlice<E>, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
+        c.0.has_widget(s).result()
             .map(|_| Self::_event_of_slice(s,c,e) )
     }
     #[inline]
-    fn size_of_slice(s: WPSlice<E>, c: &mut E::Context) -> Result<Size,()> {
-        c.has_widget(s).result()
+    fn size_of_slice(s: WPSlice<E>, c: CtxRef<E>) -> Result<Size,()> {
+        c.0.has_widget(s).result()
             .map(|_| Self::_size_of_slice(s,c) )
     }
     #[inline]
-    fn childs_of_slice<'a>(s: WPSlice<E>, c: &'a E::Context) -> Result<Vec<&'a dyn WPProvider<E>>,()> {
-        c.widget(s).ok_or(()).map(Widget::childs)
+    fn childs_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<&'a dyn WPProvider<E>>,()> {
+        c.0.widget(s).ok_or(()).map(Widget::childs)
     }
     #[inline]
-    fn childs_of_slice_mut<'a>(s: WPSlice<E>, c: &'a mut E::Context) -> Result<Vec<&'a mut dyn WPProvider<E>>,()> {
-        c.widget_mut(s).ok_or(()).map(Widget::childs_mut)
+    fn childs_of_slice_mut<'a>(s: WPSlice<E>, c: CtxRefM<'a,E>) -> Result<Vec<&'a mut dyn WPProvider<E>>,()> {
+        c.0.widget_mut(s).ok_or(()).map(Widget::childs_mut)
     }
     #[inline]
-    fn child_paths_of_slice<'a>(s: WPSlice<E>, c: &'a E::Context) -> Result<Vec<E::WidgetPath>,()> {
-        c.widget(s).ok_or(()).map(|w| w.child_paths(s) )
+    fn child_paths_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<E::WidgetPath>,()> {
+        c.0.widget(s).ok_or(()).map(|w| w.child_paths(s) )
     }
 
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _render_of_slice(s: WPSlice<E>, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) {
-        c._render(s,r)
+    fn _render_of_slice(s: WPSlice<E>, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds)) {
+        c.1._render(c.0,s,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _event_of_slice(s: WPSlice<E>, c: &mut E::Context, e: (EEvent<E>,&Bounds)) {
-        c._event(s,e)
+    fn _event_of_slice(s: WPSlice<E>, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) {
+        c.1._event(c.0,s,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    fn _size_of_slice(s: WPSlice<E>, c: &mut E::Context) -> Size {
-        c._size(s)
+    fn _size_of_slice(s: WPSlice<E>, c: CtxRef<E>) -> Size {
+        c.1._size(c.0,s)
     }
 
     fn id_of_slice(s: WPSlice<E>) -> &E::WidgetID;
@@ -103,45 +103,45 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn childs<'c>(&self, c: &'c E::Context) -> Result<Vec<&'c dyn WPProvider<E>>,()> {
+    pub fn childs<'c>(&self, c: CtxRefR<'c,E>) -> Result<Vec<&'c dyn WPProvider<E>>,()> {
         E::WidgetPath::childs_of_slice(*self,c)
     }
     #[inline]
-    pub fn childs_mut<'c>(&self, c: &'c mut E::Context) -> Result<Vec<&'c mut dyn WPProvider<E>>,()> {
+    pub fn childs_mut<'c>(&self, c: CtxRefM<'c,E>) -> Result<Vec<&'c mut dyn WPProvider<E>>,()> {
         E::WidgetPath::childs_of_slice_mut(*self,c)
     }
 
     #[inline]
-    pub fn child_paths<'c>(&self, c: &'c E::Context) -> Result<Vec<E::WidgetPath>,()> {
+    pub fn child_paths<'c>(&self, c: CtxRefR<'c,E>) -> Result<Vec<E::WidgetPath>,()> {
         E::WidgetPath::child_paths_of_slice(*self,c)
     }
     
     #[inline]
-    pub fn render(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
+    pub fn render(&self, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
         E::WidgetPath::render_of_slice(*self,c,r)
     }
     #[inline]
-    pub fn event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
+    pub fn event(&self, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
         E::WidgetPath::event_of_slice(*self,c,e)
     }
     #[inline]
-    pub fn size(&self, c: &mut E::Context) -> Result<Size,()> {
+    pub fn size(&self, c: CtxRef<E>) -> Result<Size,()> {
         E::WidgetPath::size_of_slice(*self,c)
     }
 
     /// PANICKS if widget doesn't exists
     #[inline]
-    pub fn _render(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) {
+    pub fn _render(&self, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds)) {
         E::WidgetPath::_render_of_slice(*self,c,r)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    pub fn _event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) {
+    pub fn _event(&self, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) {
         E::WidgetPath::_event_of_slice(*self,c,e)
     }
     /// PANICKS if widget doesn't exists
     #[inline]
-    pub fn _size(&self, c: &mut E::Context) -> Size {
+    pub fn _size(&self, c: CtxRef<E>) -> Size {
         E::WidgetPath::_size_of_slice(*self,c)
     }
 

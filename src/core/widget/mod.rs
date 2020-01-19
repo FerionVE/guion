@@ -8,8 +8,10 @@ pub mod fns;
 
 pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
-    #[doc(hidden)]
-    fn _fns(&self) -> WidgetFns<E>;
+
+    fn render(&self, l: Link<E>, r: (&mut ERenderer<E>,&Bounds));
+    fn event(&self, l: Link<E>, r: (EEvent<E>,&Bounds));
+    fn size(&self, l: Link<E>) -> Size;
 
     /// returns if the widget should be rendered
     fn invalid(&self) -> bool;

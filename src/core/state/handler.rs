@@ -1,14 +1,14 @@
 use crate::core::ctx::widgets::Widgets;
 use super::*;
 
-pub trait AsHandlerStateful<E>: Handler<E::Context> + Sized where E: Env, E::Context: Context<Handler=Self> + Widgets<E> {
+pub trait AsHandlerStateful<E>: Handler<E::Context> + Sized where E: Env, E::Context: Context<Handler=Self> {
     type T: HandlerStateful<E>;
     
     fn stateful_mut(e: &mut E::Context) -> &mut Self::T;
     fn stateful(e: &E::Context) -> &Self::T;
 } 
 
-pub trait HandlerStateful<E>: Handler<E::Context> + 'static where E: Env, E::Context: Widgets<E> {
+pub trait HandlerStateful<E>: Handler<E::Context> + 'static where E: Env {
     type K: PressedKey<E>;
     
     fn hovered(&self) -> Option<E::WidgetID>;

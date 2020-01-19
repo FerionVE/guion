@@ -36,33 +36,29 @@ pub trait Context: Sized + 'static {
 
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _render<E: Env<Context=Self>>(&mut self, i: WPSlice<E>, r: (&mut ERenderer<E>,&Bounds)) where Self: Widgets<E> {
-        Self::Handler::_render::<E>(self.link(i),r)
+    fn _render<E: Env<Context=Self>>(&mut self, s: &E::Storage, i: WPSlice<E>, r: (&mut ERenderer<E>,&Bounds)) {
+        Self::Handler::_render::<E>(self.link(s,i),r)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _event<E: Env<Context=Self>>(&mut self, i: WPSlice<E>, e: (EEvent<E>,&Bounds)) where Self: Widgets<E> {
-        Self::Handler::_event::<E>(self.link(i),e)
+    fn _event<E: Env<Context=Self>>(&mut self, s: &E::Storage, i: WPSlice<E>, e: (EEvent<E>,&Bounds)) {
+        Self::Handler::_event::<E>(self.link(s,i),e)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _size<E: Env<Context=Self>>(&mut self, i: WPSlice<E>) -> Size where Self: Widgets<E> {
-        Self::Handler::_size::<E>(self.link(i))
-    }
-    /// PANICKS if widget doesn't exists
-    #[inline]
-    fn widget_fns<E: Env<Context=Self>>(&self, i: WPSlice<E>) -> WidgetFns<E> where Self: Widgets<E> {
-        Widget::_fns(self.widget(i).expect("Lost Widget"))
+    fn _size<E: Env<Context=Self>>(&mut self, s: &E::Storage, i: WPSlice<E>) -> Size {
+        Self::Handler::_size::<E>(self.link(s,i))
     }
 
-    #[inline] fn link<'a,E: Env<Context=Self>>(&'a mut self, i: WPSlice<'a,E>) -> Link<'a,E> where Self: Widgets<E> {
+    #[inline] fn link<'a,E: Env<Context=Self>>(&'a mut self, s: &'a E::Storage, i: WPSlice<'a,E>) -> Link<'a,E> {
         Link{
+            stor: s,
             ctx: self,
             path: i,
         }
     }
 
-    #[inline] fn state<E: Env<Context=Self>>(&self) -> &ECStateful<E> where Self: Widgets<E>, Self::Handler: AsHandlerStateful<E> {
+    #[inline] fn state<E: Env<Context=Self>>(&self) -> &ECStateful<E> where Self::Handler: AsHandlerStateful<E> {
         Self::Handler::stateful(self)
     }
 }

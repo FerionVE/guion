@@ -20,6 +20,10 @@ pub type EPressedKey<E: Env> = <ECStateful<E> as HandlerStateful<E>>::K;
 pub type EWPSub<E: Env> = <E::WidgetPath as WidgetPath<E>>::SubPath;
 pub type EWPSlice<'a,E: Env> = &'a [EWPSub<E>];
 
+pub type CtxRef<'a,E: Env> = (&'a E::Storage,&'a mut E::Context);
+pub type CtxRefR<'a,E: Env> = (&'a E::Storage,&'a E::Context);
+pub type CtxRefM<'a,E: Env> = (&'a mut E::Storage,&'a mut E::Context);
+
 #[inline]
 pub fn e_default_style<E: Env>() -> &'static EStyle<E> {
     <EStyle<E> as Style<E>>::default()

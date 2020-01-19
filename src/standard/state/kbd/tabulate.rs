@@ -3,7 +3,7 @@ use ctx::*;
 use widget::Widget;
 /// tabulate through widget tree
 /// returns the next widget from selected in the specific direction
-pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetPath, reverse: bool) -> E::WidgetPath {
+pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) -> E::WidgetPath {
     //for recognizing infinite loops
     let initial_selected = selected.clone();
     let mut current = selected;
@@ -15,7 +15,7 @@ pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetPath, reverse: bo
     while repeat {
         repeat = false;
 
-        let w = c.widget(current.slice()).expect("Lost Widget");
+        let w = s.widget(current.slice()).expect("Lost Widget");
 
         if !traverse_parents {
             traverse_parents = true;
@@ -51,7 +51,7 @@ pub fn tabulate<E: Env>(c: &mut E::Context, selected: E::WidgetPath, reverse: bo
             }
         }
 
-        if !c.widget(current.slice()).expect("Lost Widget").selectable() {
+        if !s.widget(current.slice()).expect("Lost Widget").selectable() {
             repeat = true;
         }
 

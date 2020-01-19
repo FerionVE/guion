@@ -9,17 +9,17 @@ pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
         w.invalid() || self.force(b)
     }
     #[inline] 
-    fn render_widgets<'a>(&mut self, b: &Bounds, i: impl Iterator<Item=WPSlice<'a,E>>, c: &mut E::Context, overlap: bool) {
+    fn render_widgets<'a>(&mut self, b: &Bounds, i: impl Iterator<Item=WPSlice<'a,E>>, c: CtxRef<E>, overlap: bool) {
         if overlap {
             let mut render = false;
             for w in i {
-                let ww = c.widget_mut(w).expect("Lost Child");
+                let ww = c.0.widget(w).expect("Lost Child");
                 render |= self.requires_render(b,&ww);
                 if render {
                     let border = ww.border().clone();
                     let sliced = b.inside(&border);
 
-                    w.render(c,(self,&sliced)).expect("Lost Widget");
+                    w.render((c.0,c.1),(self,&sliced)).expect("Lost Widget");
                 }
                 render &= overlap;
             }
