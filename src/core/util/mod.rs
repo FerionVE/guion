@@ -3,6 +3,7 @@ use super::*;
 pub mod bounds;
 pub mod border;
 pub mod bounded_widget;
+pub mod wpps;
 
 //pub use qwutils;
 
