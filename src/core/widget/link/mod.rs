@@ -108,8 +108,8 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
     }
     #[inline]
-    pub fn enqueue<Q: Queue<E>>(&'c mut self, args: Q::Args, f: Q::Callback) -> Q::Return where E::Context: AccessQueue<Q,E> {
-        self.ctx.queue_mut().add(args,f)
+    pub fn enqueue<I>(&'c mut self, i: I) -> Q::Return where E::Queue: Enqueue<I> {
+        self.ctx.queue_mut().enqueue(i)
     }
 }
 

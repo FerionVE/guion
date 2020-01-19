@@ -1,15 +1,14 @@
 use super::*;
 
 pub trait Queue<E> where E: Env {
-    type Callback;
-    type Args;
-    type Return;
-
-    fn add(&mut self, a: Self::Args, f: Self::Callback) -> Self::Return;
+    fn wake(&self);
+    fn enqueue_render(&self, force: bool);
+    fn enqueue_event(&self, e: EEvent<E>);
+    fn euqueue_widget_mut(&self, f: impl FnOnce(&mut E::DynWidget));
 }
 
-pub trait AccessQueue<Q,E>: Context where Q: Queue<E>, E: Env<Context=Self>, Self: Widgets<E> {
-    fn queue_mut(&mut self) -> &mut Q;
+pub trait Enqueue<E,I>: Queue<E> {
+    fn enqueue(&self, i: I);
 }
 
 type DynWidgetMut<E: Env> = Box<dyn FnOnce(&mut E::DynWidget)>;
