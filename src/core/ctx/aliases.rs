@@ -11,7 +11,9 @@ pub type ESPPChar<E: Env> = <EStyle<E> as Style<E>>::PreprocessedChar;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;
-pub type ECHandler<E: Env> = <E::Context as Context>::Handler;
+pub type ECHandler<E: Env> = <E::Context as Context<E>>::Handler;
+pub type ECQueue<E: Env> = <E::Context as Context<E>>::Queue;
+
 pub type ECStateful<E: Env> = <ECHandler<E> as AsHandlerStateful<E>>::T;
 pub type EPressedKey<E: Env> = <ECStateful<E> as HandlerStateful<E>>::K;
 

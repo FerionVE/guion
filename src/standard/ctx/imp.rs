@@ -5,43 +5,43 @@ use ctx::*;
 use lazout::size::Size;
 use super::*;
 
-impl<S,C> Handler<C> for StandardCtx<S,C> where S: Handler<C>, C: Context, C::Handler: AsHandler<Self,C> + 'static {
+impl<S,E> Handler<E> for StandardCtx<S,E> where S: Handler<E>, E: Env, ECHandler<E>: AsHandler<Self,E> + 'static {
     #[inline] 
-    fn _render<E>(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) where E: Env<Context=C> {
-        S::_render::<E>(l,r);
+    fn _render(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
+        S::_render(l,r);
         unimplemented!()
     }
     #[inline] 
-    fn _event<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C> {
-        S::_event::<E>(l,e);
+    fn _event(l: Link<E>, e: (EEvent<E>,&Bounds)) {
+        S::_event(l,e);
         unimplemented!()
     }
     #[inline] 
-    fn _event_root<E>(l: Link<E>, e: (EEvent<E>,&Bounds)) where E: Env<Context=C> {
-        Self::_event::<E>(l,e);
+    fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds)) {
+        Self::_event(l,e);
         unimplemented!()
     }
     #[inline] 
-    fn _size<E>(l: Link<E>) -> Size where E: Env<Context=C> {
+    fn _size(l: Link<E>) -> Size {
         unimplemented!();
-        S::_size::<E>(l)
+        S::_size(l)
     }
 }
 
-impl<S,C> AsHandler<Self,C> for StandardCtx<S,C> where S: Handler<C>, C: Context<Handler=Self> {
-    fn as_mut(c: &mut C) -> &mut Self {
+impl<S,E> AsHandler<Self,E> for StandardCtx<S,E> where S: Handler<E>, E: Env, E::Context: Context<E,Handler=Self> {
+    fn as_mut(c: &mut E::Context) -> &mut Self {
         c._handler_mut()
     }
-    fn as_ref(c: &C) -> &Self {
+    fn as_ref(c: &E::Context) -> &Self {
         c._handler()
     }
 }
 
-impl<S,C> AsHandler<S,C> for StandardCtx<S,C> where S: Handler<C>, C: Context<Handler=Self> {
-    fn as_mut(c: &mut C) -> &mut S {
+impl<S,E> AsHandler<S,E> for StandardCtx<S,E> where S: Handler<E>, E: Env, E::Context: Context<E,Handler=Self> {
+    fn as_mut(c: &mut E::Context) -> &mut S {
         &mut c._handler_mut().sup
     }
-    fn as_ref(c: &C) -> &S {
+    fn as_ref(c: &E::Context) -> &S {
         &c._handler().sup
     }
 }

@@ -108,7 +108,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
     }
     #[inline]
-    pub fn enqueue<I>(&'c mut self, i: I) -> Q::Return where E::Queue: Enqueue<I> {
+    pub fn enqueue<I>(&'c mut self, i: I) where ECQueue<E>: Enqueue<E,I> {
         self.ctx.queue_mut().enqueue(i)
     }
 }

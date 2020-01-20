@@ -5,8 +5,8 @@ use ctx::*;
 
 pub mod imp;
 
-pub struct StandardCtx<S,C> where S: Handler<C>, C: Context, C::Handler: AsHandler<Self,C> {
+pub struct StandardCtx<S,E> where S: Handler<E>, E: Env, ECHandler<E>: AsHandler<Self,E> {
     pub sup: S,
     //pub selected: Option<S>,
-    _c: PhantomData<C>,
+    _c: PhantomData<E>,
 }

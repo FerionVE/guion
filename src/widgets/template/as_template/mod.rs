@@ -9,6 +9,7 @@ use super::*;
 mod imp;
 
 /// put a type or mutable reference implementing ITemplate inside this to enforce view as Template
+#[repr(transparent)]
 pub struct AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ITemplate<E>, E: Env + 'static {
     pub inner: C,
     _e: PhantomData<E>,
@@ -23,6 +24,14 @@ impl<T,E,C> AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ITemplate<E>
             _e: PhantomData,
             _t: PhantomData,
         }
+    }
+    #[inline]
+    pub fn from_ref(ref: &'a C) -> &'a Self {
+        unimplemented!()
+    }
+    #[inline]
+    pub fn from_ref_mut(ref: &'a mut C) -> &'a mut Self {
+        unimplemented!()
     }
 }
 

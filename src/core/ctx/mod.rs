@@ -18,39 +18,43 @@ pub use queue::*;
 pub mod handler;
 pub use handler::*;
 
-pub trait Context: Sized + 'static {
-    type Handler: Handler<Self>;
+pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
+    type Handler: Handler<E>;
+    type Queue: Queue<E>;
     //type Meta: ContextMeta;
 
     #[inline] 
-    fn handler_mut<H: Handler<Self>>(&mut self) -> &mut H where Self::Handler: AsHandler<H,Self> {
+    fn handler_mut<H: Handler<E>>(&mut self) -> &mut H where Self::Handler: AsHandler<H,E> {
         Self::Handler::as_mut(self)
     }
     #[inline] 
-    fn handler<H: Handler<Self>>(&self) -> &H where Self::Handler: AsHandler<H,Self> {
+    fn handler<H: Handler<E>>(&self) -> &H where Self::Handler: AsHandler<H,E> {
         Self::Handler::as_ref(self)
     }
+
+    fn queue_mut(&mut self) -> &mut Self::Queue;
+    fn queue(&self) -> &Self::Queue;
 
     fn _handler_mut(&mut self) -> &mut Self::Handler;
     fn _handler(&self) -> &Self::Handler;
 
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _render<E: Env<Context=Self>>(&mut self, s: &E::Storage, i: WPSlice<E>, r: (&mut ERenderer<E>,&Bounds)) {
-        Self::Handler::_render::<E>(self.link(s,i),r)
+    fn _render(&mut self, s: &E::Storage, i: WPSlice<E>, r: (&mut ERenderer<E>,&Bounds)) {
+        Self::Handler::_render(self.link(s,i),r)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _event<E: Env<Context=Self>>(&mut self, s: &E::Storage, i: WPSlice<E>, e: (EEvent<E>,&Bounds)) {
-        Self::Handler::_event::<E>(self.link(s,i),e)
+    fn _event(&mut self, s: &E::Storage, i: WPSlice<E>, e: (EEvent<E>,&Bounds)) {
+        Self::Handler::_event(self.link(s,i),e)
     }
     /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _size<E: Env<Context=Self>>(&mut self, s: &E::Storage, i: WPSlice<E>) -> Size {
-        Self::Handler::_size::<E>(self.link(s,i))
+    fn _size(&mut self, s: &E::Storage, i: WPSlice<E>) -> Size {
+        Self::Handler::_size(self.link(s,i))
     }
 
-    #[inline] fn link<'a,E: Env<Context=Self>>(&'a mut self, s: &'a E::Storage, i: WPSlice<'a,E>) -> Link<'a,E> {
+    #[inline] fn link<'a>(&'a mut self, s: &'a E::Storage, i: WPSlice<'a,E>) -> Link<'a,E> {
         Link{
             stor: s,
             ctx: self,
@@ -58,7 +62,7 @@ pub trait Context: Sized + 'static {
         }
     }
 
-    #[inline] fn state<E: Env<Context=Self>>(&self) -> &ECStateful<E> where Self::Handler: AsHandlerStateful<E> {
+    #[inline] fn state(&self) -> &ECStateful<E> where Self::Handler: AsHandlerStateful<E> {
         Self::Handler::stateful(self)
     }
 }

@@ -1,6 +1,6 @@
 use super::*;
 
-pub trait AsHandler<H,C>: Sized where C: Context, H: Handler<C> {
-    fn as_mut(c: &mut C) -> &mut H;
-    fn as_ref(c: &C) -> &H;
+pub trait AsHandler<H,E>: Sized where E: Env, H: Handler<E> {
+    fn as_mut(c: &mut E::Context) -> &mut H;
+    fn as_ref(c: &E::Context) -> &H;
 }
