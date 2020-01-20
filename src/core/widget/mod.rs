@@ -22,31 +22,33 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
 
     fn has_childs(&self) -> bool;
 
-    fn childs(&self) -> Vec<&dyn WPProvider<E>>;
-    fn childs_mut(&mut self) -> Vec<&mut dyn WPProvider<E>>;
-    #[inline]
-    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath> {
+    fn for_childs(&self, f: &mut dyn FnOnce(&E::DynWidget,usize));
+    fn for_childs_mut(&mut self, f: &mut dyn FnOnce(&mut E::DynWidget,usize)->E::ValidState) -> E::ValidState;
+
+    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath>;/* {
         self.childs().iter()
             .map(|p| p.path(own_path) )
             .collect()
-    }
+    }*/
     #[inline]
-    fn resolve_mut(&mut self, i: &EWPSub<E>) -> Option<&mut E::DynWidget> {
-        for c in self.childs_mut() {
+    fn resolve_mut(&mut self, i: &EWPSub<E>, f: &mut dyn FnOnce(&mut E::DynWidget)->E::ValidState ) -> E::ValidState {
+        /*for c in self.childs_mut() {
             if let Some(w) = c.widget_if_id_eq_mut(i) {
                 return Some(w);
             }
         }
-        None
+        None*/
+        unimplemented!()
     }
     #[inline]
-    fn resolve(&self, i: &EWPSub<E>) -> Option<&E::DynWidget> {
-        for c in self.childs() {
+    fn resolve(&self, i: &EWPSub<E>, f: &mut dyn FnOnce(&E::DynWidget) ) {
+        /*for c in self.childs() {
             if let Some(w) = c.widget_if_id_eq(i) {
                 return Some(w);
             }
         }
-        None
+        None*/
+        unimplemented!();
     }
     #[inline]
     fn self_in_parent(&self, parent: WPSlice<E>) -> E::WidgetPath {

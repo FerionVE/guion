@@ -9,5 +9,12 @@ pub trait Env: Sized + 'static {
     type DynWidget: DynWidget<Self> + ?Sized;
     type WidgetID: WidgetID;
     type WidgetPath: WidgetPath<Self>;
+    type ValidState: ValidState;
     //type Commit: Eq + Ord;
+}
+
+pub trait ValidState {
+    fn valid() -> Self;
+    fn rerender(&self) -> bool;
+    fn relayout(&self) -> bool;
 }
