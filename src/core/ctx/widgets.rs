@@ -1,12 +1,12 @@
 use super::*;
 
 pub trait Widgets<E>: Sized + 'static where E: Env {
-    fn widget(&self, i: WPSlice<E>) -> Option<&E::DynWidget>;
-    fn widget_mut<'a>(&'a mut self, i: WPSlice<E>) -> Option<&'a mut E::DynWidget>;
+    fn widget(&self, i: WPSlice<E>, f: &mut dyn FnMut(&E::DynWidget) ) -> Result<(),()>;
+    fn widget_mut<'a>(&'a mut self, i: WPSlice<E>, f: &mut dyn FnMut(&mut E::DynWidget)->E::ValidState ) -> Result<E::ValidState,()>;
 
     #[inline]
     fn has_widget(&self, i: WPSlice<E>) -> bool {
-        self.widget(i).is_some()
+        self.widget(i,&mut |_|{}).is_ok() //TODO optimize
     }
 
     #[deprecated] #[inline] fn tune_path(&self, _i: &mut E::WidgetPath) {}

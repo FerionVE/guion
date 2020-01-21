@@ -44,16 +44,18 @@ pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Size
             .map(|_| Self::_size_of_slice(s,c) )
     }
     #[inline]
-    fn childs_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<&'a dyn WPProvider<E>>,()> {
-        c.0.widget(s).ok_or(()).map(Widget::childs)
+    fn for_childs_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>, f: &mut dyn FnMut(&E::DynWidget,usize) ) -> Result<(),()> {
+        c.0.widget(s,&mut |w| w.for_childs(f) )
     }
     #[inline]
-    fn childs_of_slice_mut<'a>(s: WPSlice<E>, c: CtxRefM<'a,E>) -> Result<Vec<&'a mut dyn WPProvider<E>>,()> {
-        c.0.widget_mut(s).ok_or(()).map(Widget::childs_mut)
+    fn for_childs_of_slice_mut<'a>(s: WPSlice<E>, c: CtxRefM<'a,E>, f: &mut dyn FnMut(&mut E::DynWidget,usize)->E::ValidState ) -> Result<E::ValidState,()> {
+        c.0.widget_mut(s,&mut |w| w.for_childs_mut(f) )
     }
     #[inline]
     fn child_paths_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<E::WidgetPath>,()> {
-        c.0.widget(s).ok_or(()).map(|w| w.child_paths(s) )
+        let mut dest: Option<Vec<E::WidgetPath>> = None;
+        c.0.widget(s,&mut |w| dest = Some(w.child_paths(s)) )?;
+        dest.ok_or(())
     }
 
     /// PANICKS if widget doesn't exists
@@ -103,12 +105,12 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn childs<'c>(&self, c: CtxRefR<'c,E>) -> Result<Vec<&'c dyn WPProvider<E>>,()> {
-        E::WidgetPath::childs_of_slice(*self,c)
+    pub fn for_childs<'c>(&self, c: CtxRefR<'c,E>, f: &mut dyn FnMut(&E::DynWidget,usize) ) -> Result<(),()> {
+        E::WidgetPath::for_childs_of_slice(*self,c,f)
     }
     #[inline]
-    pub fn childs_mut<'c>(&self, c: CtxRefM<'c,E>) -> Result<Vec<&'c mut dyn WPProvider<E>>,()> {
-        E::WidgetPath::childs_of_slice_mut(*self,c)
+    pub fn for_childs_mut<'c>(&self, c: CtxRefM<'c,E>, f: &mut dyn FnMut(&mut E::DynWidget,usize)->E::ValidState ) -> Result<E::ValidState,()> {
+        E::WidgetPath::for_childs_of_slice_mut(*self,c,f)
     }
 
     #[inline]
