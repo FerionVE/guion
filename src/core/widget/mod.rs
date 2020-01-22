@@ -1,9 +1,11 @@
+use std::ops::Deref;
 use super::*;
 use std::any::Any;
 
 pub mod link;
 pub mod dyn_widget;
 pub mod fns;
+pub mod immediate;
 //pub mod imp;
 
 pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
@@ -22,8 +24,8 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
 
     fn has_childs(&self) -> bool;
 
-    fn for_childs(&self, f: &mut dyn FnMut(&E::DynWidget,usize));
-    fn for_childs_mut(&mut self, f: &mut dyn FnMut(&mut E::DynWidget,usize)->E::ValidState) -> E::ValidState;
+    fn childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>>;
+    fn childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>>;
 
     fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath>;/* {
         self.childs().iter()
@@ -31,7 +33,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             .collect()
     }*/
     #[inline]
-    fn resolve_mut(&mut self, i: &EWPSub<E>, f: &mut dyn FnMut(&mut E::DynWidget)->E::ValidState ) -> E::ValidState {
+    fn resolve_mut<'a>(&'a mut self, i: &EWPSub<E>) -> Result<WidgetRef<'a,E>,()> {
         /*for c in self.childs_mut() {
             if let Some(w) = c.widget_if_id_eq_mut(i) {
                 return Some(w);
@@ -41,7 +43,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         unimplemented!()
     }
     #[inline]
-    fn resolve(&self, i: &EWPSub<E>, f: &mut dyn FnMut(&E::DynWidget) ) {
+    fn resolve<'a>(&'a self, i: &EWPSub<E>) -> Result<WidgetRefMut<'a,E>,()> {
         /*for c in self.childs() {
             if let Some(w) = c.widget_if_id_eq(i) {
                 return Some(w);

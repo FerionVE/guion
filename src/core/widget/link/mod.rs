@@ -25,7 +25,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn widget(&self) -> &'c E::DynWidget {
+    pub fn widget(&self) -> WidgetRef<E> {
         self.stor.widget(self.path)
             .expect("Link: Widget Gone")
     }
