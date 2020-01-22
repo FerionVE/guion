@@ -1,3 +1,4 @@
+use crate::core::ctx::resolved::Resolved;
 use crate::core::ctx::widgets::Widgets;
 use std::ops::DerefMut;
 use std::ops::Deref;
@@ -25,7 +26,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn widget(&self) -> WidgetRef<E> {
+    pub fn widget(&self) -> Resolved<E> {
         self.stor.widget(self.path)
             .expect("Link: Widget Gone")
     }
@@ -34,19 +35,24 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn id(&self) -> &E::WidgetID {
         self.path.id()
     }
-
-    /*#[inline]
-    pub fn render(&mut self, r: (&mut ERenderer<E>,&Bounds)) { //TODO fix &mut Renderer back to owned
-        self.id._render::<E>(self.ctx,r)
+    #[inline]
+    pub fn resolve_render(&mut self, r: (&mut ERenderer<E>,&Bounds)) {
+        let res = self.stor.widget(self.path)
+            .expect("Link: Widget Gone");
+        res.render(self.ctx,r)
     }
     #[inline]
-    pub fn event(&mut self, e: (EEvent<E>,&Bounds)) {
-        self.id._event::<E>(self.ctx,e)
+    pub fn resolve_event(&mut self, e: (EEvent<E>,&Bounds)) {
+        let res = self.stor.widget(self.path)
+            .expect("Link: Widget Gone");
+        res.event(self.ctx,e)
     }
     #[inline]
-    pub fn size(&mut self) -> Size {
-        self.id._size::<E>(self.ctx)
-    }*/
+    pub fn resolve_size(&mut self) -> Size {
+        let res = self.stor.widget(self.path)
+            .expect("Link: Widget Gone");
+        res.size(self.ctx)
+    }
 
     #[inline]
     pub fn is_hovered(&self) -> bool where ECHandler<E>: AsHandlerStateful<E> {

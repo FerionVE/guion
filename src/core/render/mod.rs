@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use crate::core::ctx::widgets::Widgets;
 use super::*;
 
@@ -9,16 +10,16 @@ pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
         w.invalid() || self.force(b)
     }
     #[inline] 
-    fn render_widgets<'a>(&mut self, b: &Bounds, i: impl Iterator<Item=&'a E::DynWidget>, c: CtxRef<E>, overlap: bool) {
+    fn render_widgets<'a>(&mut self, b: &Bounds, i: impl Iterator<Item=WPSlice<'a,E>>+'a, c: CtxRef<E>, overlap: bool) {
         if overlap {
             let mut render = false;
             for w in i {
-                render |= self.requires_render(b,w);
+                let ww = c.0.widget(w).expect("Lost Widget");
+                render |= self.requires_render(b,&ww);
                 if render {
-                    let border = w.border().clone();
+                    let border = ww.border().clone();
                     let sliced = b.inside(&border);
-
-                    w.render((c.0,c.1),(self,&sliced)).expect("Lost Widget");
+                    ww.render(c.1,(self,&sliced));
                 }
                 render &= overlap;
             }

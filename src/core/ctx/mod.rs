@@ -18,6 +18,9 @@ pub use queue::*;
 pub mod handler;
 pub use handler::*;
 
+pub mod resolved;
+pub use resolved::*;
+
 pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     type Handler: Handler<E>;
     type Queue: Queue<E>;

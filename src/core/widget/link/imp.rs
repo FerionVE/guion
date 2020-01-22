@@ -7,7 +7,7 @@ pub struct Parents<'a,E> where E: Env {
 }
 
 impl<'a,E> Iterator for Parents<'a,E> where E: Env {
-    type Item = WidgetRef<'a,E>;
+    type Item = Resolved<'a,E>;
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(n) = self.next {

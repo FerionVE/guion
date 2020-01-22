@@ -1,8 +1,8 @@
 use super::*;
 
 pub trait Widgets<E>: Sized + 'static where E: Env {
-    fn widget<'a>(&'a self, i: WPSlice<E>) -> Option<WidgetRef<'a,E>>;
-    fn widget_mut<'a>(&'a mut self, i: WPSlice<E>) -> Option<WidgetRefMut<'a,E>>;
+    fn widget<'a>(&'a self, i: WPSlice<E>) -> Option<Resolved<'a,E>>;
+    fn widget_mut<'a>(&'a mut self, i: WPSlice<E>) -> Option<Resolved<'a,E>>;
 
     #[inline]
     fn has_widget(&self, i: WPSlice<E>) -> bool {

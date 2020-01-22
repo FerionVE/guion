@@ -43,14 +43,14 @@ pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Size
         c.0.has_widget(s).result()
             .map(|_| Self::_size_of_slice(s,c) )
     }
-    #[inline]
+    /*#[inline]
     fn childs_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<WidgetRef<'a,E>>,()> {
         c.0.widget(s).ok_or(()).map(|w| Widget::childs(&**w) )
     }
     #[inline]
     fn childs_of_slice_mut<'a>(s: WPSlice<E>, c: CtxRefM<'a,E>) -> Result<Vec<WidgetRefMut<'a,E>>,()> {
         c.0.widget_mut(s).ok_or(()).map(|w| Widget::childs_mut(&mut **w) )
-    }
+    }*/
     #[inline]
     fn child_paths_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<E::WidgetPath>,()> {
         c.0.widget(s).ok_or(()).map(|w| w.child_paths(s) )
@@ -102,14 +102,14 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
             .map_or(false, |r| self == r )
     }
 
-    #[inline]
+    /*#[inline]
     pub fn childs<'c>(&self, c: CtxRefR<'c,E>) -> Result<Vec<WidgetRef<'c,E>>,()> {
         E::WidgetPath::childs_of_slice(*self,c)
     }
     #[inline]
     pub fn childs_mut<'c>(&self, c: CtxRefM<'c,E>) -> Result<Vec<WidgetRefMut<'c,E>>,()> {
         E::WidgetPath::childs_of_slice_mut(*self,c)
-    }
+    }*/
 
     #[inline]
     pub fn child_paths<'c>(&self, c: CtxRefR<'c,E>) -> Result<Vec<E::WidgetPath>,()> {
