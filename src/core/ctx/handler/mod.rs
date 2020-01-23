@@ -16,8 +16,9 @@ pub trait Handler<E>: Sized + 'static where E: Env {
 
 impl<E> Handler<E> for () where E: Env {
     #[inline] 
-    fn _render(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
-        l.resolve_render(r)
+    fn _render(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
+        //l.resolve_render(r)
+        (*l.widget()).render(l,r) //TODO for all fns
     }
     #[inline] 
     fn _event(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {

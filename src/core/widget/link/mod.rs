@@ -26,9 +26,22 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn widget(&self) -> Resolved<E> {
+    pub fn widget(&self) -> Resolved<'c,E> {
         self.stor.widget(self.path)
             .expect("Link: Widget Gone")
+    }
+
+    #[inline]
+    pub fn widgetb(self) -> (Resolved<'c,E>,Link<'c,E>) {
+        (
+            self.stor.widget(self.path)
+                .expect("Link: Widget Gone"),
+            Link{
+                stor: self.stor,
+                ctx: self.ctx,
+                path: self.path,
+            }
+        )
     }
 
     #[inline]
