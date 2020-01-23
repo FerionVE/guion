@@ -24,6 +24,14 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     pub fn size(&self, c: &mut E::Context) -> Size {
         unimplemented!()
     }
+    #[inline]
+    pub fn link(&self, c: &'a mut E::Context) -> Link<'a,E> {
+        Link{
+            ctx: c,
+            stor: self.stor,
+            path: self.path,
+        }
+    }
 }
 
 impl<'a,E> Deref for Resolved<'a,E> where E: Env {
