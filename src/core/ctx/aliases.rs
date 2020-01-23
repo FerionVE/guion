@@ -5,6 +5,7 @@ pub type EEvent<E: Env> = <E::Backend as Backend<E>>::Event;
 pub type EEDest<E: Env> = <EEvent<E> as Event<E>>::Dest;
 pub type EEKey<E: Env> = <EEvent<E> as Event<E>>::Key;
 pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
+pub type ESize<E: Env> = <E::Backend as Backend<E>>::Size;
 
 pub type ESPPText<E: Env> = <EStyle<E> as Style<E>>::PreprocessedText;
 pub type ESPPChar<E: Env> = <EStyle<E> as Style<E>>::PreprocessedChar;

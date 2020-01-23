@@ -13,7 +13,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
 
     fn render(&self, l: Link<E>, r: (&mut ERenderer<E>,&Bounds));
     fn event(&self, l: Link<E>, r: (EEvent<E>,&Bounds));
-    fn size(&self, l: Link<E>) -> Size;
+    fn size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
     fn invalid(&self) -> bool;
