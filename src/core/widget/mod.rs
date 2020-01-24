@@ -6,13 +6,13 @@ pub mod link;
 pub mod dyn_widget;
 pub mod fns;
 pub mod immediate;
-//pub mod imp;
+//mod imp;
 
 pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
     fn render(&self, l: Link<E>, r: (&mut ERenderer<E>,&Bounds));
-    fn event(&self, l: Link<E>, r: (EEvent<E>,&Bounds));
+    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds));
     fn size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
@@ -24,8 +24,8 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
 
     fn has_childs(&self) -> bool;
 
-    fn childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>>;
-    fn childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>>;
+    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>>;
+    fn _childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>>;
 
     fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath>;/* {
         self.childs().iter()
@@ -33,24 +33,22 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             .collect()
     }*/
     #[inline]
-    fn resolve_mut<'a>(&'a mut self, i: &EWPSub<E>) -> Result<WidgetRef<'a,E>,()> {
-        /*for c in self.childs_mut() {
-            if let Some(w) = c.widget_if_id_eq_mut(i) {
-                return Some(w);
+    fn resolve_mut<'a>(&'a mut self, i: &EWPSub<E>) -> Result<WidgetRefMut<'a,E>,()> {
+        for c in self._childs_mut() {
+            if c.is_subpath(i) {
+                return Ok(c);
             }
         }
-        None*/
-        unimplemented!()
+        Err(())
     }
     #[inline]
-    fn resolve<'a>(&'a self, i: &EWPSub<E>) -> Result<WidgetRefMut<'a,E>,()> {
-        /*for c in self.childs() {
-            if let Some(w) = c.widget_if_id_eq(i) {
-                return Some(w);
+    fn resolve<'a>(&'a self, i: &EWPSub<E>) -> Result<Resolvable<'a,E>,()> {
+        for c in self.childs() {
+            if c.is_subpath(i) {
+                return Ok(c);
             }
         }
-        None*/
-        unimplemented!();
+        Err(())
     }
     #[inline]
     fn self_in_parent(&self, parent: WPSlice<E>) -> E::WidgetPath {

@@ -29,14 +29,6 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::id(self)
         }
         #[inline]
-        fn _fns(&self) -> $crate::macro_prelude::WidgetFns<$c> {
-            $crate::macro_prelude::WidgetFns{
-                render: $crate::widgets::template::_render::<$s,$c>,
-                event: $crate::widgets::template::_event::<$s,$c>,
-                size: $crate::widgets::template::_size::<$s,$c>,
-            }
-        }
-        #[inline]
         fn invalid(&self) -> bool {
             $crate::macro_prelude::ITemplate::invalid(self)
         }
@@ -53,11 +45,15 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::set_parent(self,v)
         }
         #[inline]
-        fn childs(&self) -> Vec<&dyn $crate::macro_prelude::WPProvider<E>> {
+        fn childs(&self) -> Vec<$crate::macro_prelude::Resolvable<$c>> {
             std::vec![]
         }
         #[inline]
-        fn childs_mut(&mut self) -> Vec<&mut dyn $crate::macro_prelude::WPProvider<E>> {
+        fn _childs_mut(&mut self) -> Vec<$crate::macro_prelude::WidgetRefMut<$c>> {
+            std::vec![]
+        }
+        #[inline]
+        fn child_paths(&self, own_path: $crate::macro_prelude::WPSlice<$c>) -> Vec<<$c>::WidgetPath> {
             std::vec![]
         }
         #[inline]
@@ -69,8 +65,20 @@ macro_rules! impl_template_inner {
             false
         }
         #[inline]
-        fn style(&self) -> &$crate::macro_prelude::EStyle<E> {
+        fn style(&self) -> &$crate::macro_prelude::EStyle<$c> {
             $crate::macro_prelude::ITemplate::style(self)
+        }
+        #[inline]
+        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: (&mut $crate::macro_prelude::ERenderer<$c>,&$crate::macro_prelude::Bounds)) {
+            $crate::widgets::template::_render::<Self,$c>(l,r)
+        }
+        #[inline]
+        fn event(&self, l: $crate::macro_prelude::Link<$c>, e: ($crate::macro_prelude::EEvent<$c>,&$crate::macro_prelude::Bounds)) {
+            $crate::widgets::template::_event::<Self,$c>(l,e)
+        }
+        #[inline]
+        fn size(&self, l: $crate::macro_prelude::Link<$c>) -> $crate::macro_prelude::ESize<$c> {
+            $crate::widgets::template::_size::<Self,$c>(l)
         }
     };
 }
@@ -83,6 +91,6 @@ pub fn _event<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (E
     unimplemented!()
 }
 
-pub fn _size<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
+pub fn _size<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> ESize<E> {
     unimplemented!()
 }

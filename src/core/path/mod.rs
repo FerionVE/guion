@@ -6,10 +6,7 @@ use super::*;
 pub mod sub;
 pub use sub::*;
 
-pub mod provider;
-pub use provider::*;
-
-pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Sized + Send + Sync + 'static where E: Env<WidgetPath=Self> {
+pub trait WidgetPath<E>: AsWPSlice<E> + Clone + PartialEq + Sized + Send + Sync + 'static where E: Env<WidgetPath=Self> {
     type SubPath: SubPath<E>;
     type RcPath: RefClonable + From<Self> + Into<Self> + Deref<Target=Self>;
     
@@ -17,6 +14,7 @@ pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Size
     fn attached(self, sub: Self::SubPath) -> Self;
 
     fn id(&self) -> &E::WidgetID;
+    fn tip(&self) -> &Self::SubPath;
 
     fn parent(&self) -> Option<WPSlice<E>>;
 

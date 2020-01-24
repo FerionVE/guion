@@ -18,6 +18,8 @@ pub(crate) use ctx::handler::*;
 pub(crate) use ctx::queue::*;
 pub(crate) use ctx::access::*;
 pub(crate) use ctx::aliases::*;
+pub(crate) use ctx::resolved::*;
+pub(crate) use ctx::resolvable::*;
 pub(crate) use widget::*;
 pub(crate) use event::key::PressedKey;
 pub(crate) use event::{Event,Variant,VariantSupport,imp::*};

@@ -26,12 +26,16 @@ impl<T,E,C> AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ITemplate<E>
         }
     }
     #[inline]
-    pub fn from_ref(ref: &'a C) -> &'a Self {
-        unimplemented!()
+    pub fn from_ref<'a>(r: &'a C) -> &'a Self {
+        unsafe{
+            &*(r as *const C as *const Self)
+        }
     }
     #[inline]
-    pub fn from_ref_mut(ref: &'a mut C) -> &'a mut Self {
-        unimplemented!()
+    pub fn from_ref_mut<'a>(r: &'a mut C) -> &'a mut Self {
+        unsafe{
+            &mut *(r as *mut C as *mut Self)
+        }
     }
 }
 

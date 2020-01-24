@@ -32,7 +32,7 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
             if let Some(p) = current.parent() {
                 let pc = w.child_paths();
                 //find current child in parent
-                let idx = pc.iter().position(|c| c.id_eq(current.id()) ).expect("Parent Lost Child Widget");
+                let idx = pc.iter().position(|c| c.tip() == current.tip() ).expect("Parent Lost Child Widget");
 
                 if !reverse && pc.len()-idx-1 != 0 {
                     //traverse into next silbing

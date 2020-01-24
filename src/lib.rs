@@ -2,13 +2,13 @@
 /// core traits, functionality and utils
 pub mod core;
 /// standard widgets
-//pub mod widgets;
+pub mod widgets;
 /// standard components like the StandardHandler context handler
 pub mod standard;
 
 #[doc(hidden)]
 pub mod macro_prelude {
-    //pub(crate) use crate::widgets::template::ITemplate;
+    pub(crate) use crate::widgets::template::ITemplate;
     //pub use crate::widgets::*;
     //pub use button::IButton;
     //pub use pane::IPane;
