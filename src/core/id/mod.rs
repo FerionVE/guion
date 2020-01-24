@@ -1,5 +1,3 @@
-use super::ctx::widgets::Widgets;
-use qwutils::*;
 use super::*;
 
 pub trait WidgetID: Clone + PartialEq + Sized + 'static {

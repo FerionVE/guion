@@ -20,8 +20,10 @@ pub type EPressedKey<E: Env> = <ECStateful<E> as HandlerStateful<E>>::K;
 
 //pub type ESubWidgetID<E: Env> = <E::WidgetID as WidgetID>::SubWidgetID;
 //pub type EWPSlice<'a,E: Env> = <&'a E as EnvLt<'a>>::PathSlice;
+pub type EWPRc<E: Env> = <E::WidgetPath as WidgetPath<E>>::RcPath;
 pub type EWPSub<E: Env> = <E::WidgetPath as WidgetPath<E>>::SubPath;
 pub type EWPSlice<'a,E: Env> = &'a [EWPSub<E>];
+
 
 pub type CtxRef<'a,E: Env> = (&'a E::Storage,&'a mut E::Context);
 pub type CtxRefR<'a,E: Env> = (&'a E::Storage,&'a E::Context);

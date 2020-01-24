@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use super::ctx::widgets::Widgets;
 use qwutils::*;
 use super::*;
@@ -8,8 +9,9 @@ pub use sub::*;
 pub mod provider;
 pub use provider::*;
 
-pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Sized + 'static where E: Env<WidgetPath=Self> {
+pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Sized + Send + Sync + 'static where E: Env<WidgetPath=Self> {
     type SubPath: SubPath<E>;
+    type RcPath: RefClonable + From<Self> + Into<Self> + Deref<Target=Self>;
     
     fn attach(&mut self, sub: Self::SubPath);
     fn attached(self, sub: Self::SubPath) -> Self;
@@ -57,6 +59,11 @@ pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Size
     fn id_of_slice(s: WPSlice<E>) -> &E::WidgetID;
     fn parent_of_slice(s: WPSlice<E>) -> Option<WPSlice<E>>;
     fn from_slice(s: WPSlice<E>) -> Self;
+
+    #[inline]
+    fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> Self where E::WidgetPath: WidgetPath<F> {
+        self
+    }
 }
 
 pub struct WPSlice<'a,E> where E: Env {
@@ -135,4 +142,9 @@ impl<'a,E> Copy for WPSlice<'a,E> where E: Env {}
 
 pub trait AsWPSlice<E> where E: Env {
     fn slice(&self) -> WPSlice<E>;
+}
+
+#[inline]
+pub fn rc_path_with_env<E: Env, F: Env<WidgetPath=E::WidgetPath>>(e: EWPRc<E>) -> EWPRc<F> where E::WidgetPath: WidgetPath<F,RcPath=EWPRc<E>> {
+    e
 }

@@ -106,11 +106,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn parents(&'c self) -> Parents<'c,E> {
         Parents{
             stor: self.widget.stor,
-            next: Some(self.widget.path),
+            next: Some(self.widget.path.slice()),
         }
     }
     
-    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
+    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>,RcPath=EWPRc<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
         Link{
             widget: self.widget.with_env::<F>(),
             ctx,

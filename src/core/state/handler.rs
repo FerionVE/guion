@@ -1,4 +1,3 @@
-use crate::core::ctx::widgets::Widgets;
 use super::*;
 
 pub trait AsHandlerStateful<E>: Handler<E> + Sized where E: Env, E::Context: Context<E,Handler=Self> {

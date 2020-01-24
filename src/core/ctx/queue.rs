@@ -11,4 +11,5 @@ pub trait Enqueue<E,I>: Queue<E> where E: Env, E::Context: Context<E,Queue=Self>
     fn enqueue(&self, i: I);
 }
 
+#[allow(type_alias_bounds)]
 type DynWidgetMut<E: Env> = Box<dyn FnOnce(&mut E::DynWidget)>;
