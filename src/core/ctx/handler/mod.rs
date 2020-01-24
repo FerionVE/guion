@@ -16,19 +16,19 @@ pub trait Handler<E>: Sized + 'static where E: Env {
 
 impl<E> Handler<E> for () where E: Env {
     #[inline] 
-    fn _render(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
-        (*l.widget()).render(l,r) //TODO for all fns
+    fn _render(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
+        l._render(r)
     }
     #[inline] 
     fn _event(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
-        (*l.widget()).event(l,e)
+        l._event(e)
     }
     #[inline] 
     fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds)) {
-        l.ctx._event(l.stor,l.path,e)
+        l.ctx.event(l.widget,e)
     }
     #[inline] 
     fn _size(mut l: Link<E>) -> ESize<E> {
-        (*l.widget()).size(l)
+        l._size()
     }
 }

@@ -41,27 +41,23 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     fn _handler_mut(&mut self) -> &mut Self::Handler;
     fn _handler(&self) -> &Self::Handler;
 
-    /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _render(&mut self, s: &E::Storage, i: WPSlice<E>, r: (&mut ERenderer<E>,&Bounds)) {
-        Self::Handler::_render(self.link(s,i),r)
+    fn render(&mut self, w: Resolved<E>, r: (&mut ERenderer<E>,&Bounds)) {
+        Self::Handler::_render(self.link(w),r)
     }
-    /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _event(&mut self, s: &E::Storage, i: WPSlice<E>, e: (EEvent<E>,&Bounds)) {
-        Self::Handler::_event(self.link(s,i),e)
+    fn event(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds)) {
+        Self::Handler::_event(self.link(w),e)
     }
-    /// PANICKS if widget doesn't exists
     #[inline] 
-    fn _size(&mut self, s: &E::Storage, i: WPSlice<E>) -> Size {
-        Self::Handler::_size(self.link(s,i))
+    fn size(&mut self, w: Resolved<E>) -> ESize<E> {
+        Self::Handler::_size(self.link(w))
     }
 
-    #[inline] fn link<'a>(&'a mut self, s: &'a E::Storage, i: WPSlice<'a,E>) -> Link<'a,E> {
+    #[inline] fn link<'a>(&'a mut self, w: Resolved<'a,E>) -> Link<'a,E> {
         Link{
-            stor: s,
             ctx: self,
-            path: i,
+            widget: w,
         }
     }
 

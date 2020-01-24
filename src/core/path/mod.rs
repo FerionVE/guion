@@ -28,21 +28,6 @@ pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Size
         s.id().id_eq(o.id())
     }
     
-    #[inline]
-    fn render_of_slice(s: WPSlice<E>, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
-        c.0.has_widget(s).result()
-            .map(|_| Self::_render_of_slice(s,c,r) )
-    }
-    #[inline]
-    fn event_of_slice(s: WPSlice<E>, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
-        c.0.has_widget(s).result()
-            .map(|_| Self::_event_of_slice(s,c,e) )
-    }
-    #[inline]
-    fn size_of_slice(s: WPSlice<E>, c: CtxRef<E>) -> Result<Size,()> {
-        c.0.has_widget(s).result()
-            .map(|_| Self::_size_of_slice(s,c) )
-    }
     /*#[inline]
     fn childs_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<WidgetRef<'a,E>>,()> {
         c.0.widget(s).ok_or(()).map(|w| Widget::childs(&**w) )
@@ -53,23 +38,20 @@ pub trait WidgetPath<E>: WPProvider<E> + AsWPSlice<E> + Clone + PartialEq + Size
     }*/
     #[inline]
     fn child_paths_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<E::WidgetPath>,()> {
-        c.0.widget(s).ok_or(()).map(|w| w.child_paths(s) )
+        Ok( c.0.widget(s)?.child_paths() )
     }
 
-    /// PANICKS if widget doesn't exists
     #[inline]
-    fn _render_of_slice(s: WPSlice<E>, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds)) {
-        c.1._render(c.0,s,r)
+    fn render_of_slice(s: WPSlice<E>, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds)) -> Result<(),()> {
+        Ok( c.1.render(c.0.widget(s)?,r) )
     }
-    /// PANICKS if widget doesn't exists
     #[inline]
-    fn _event_of_slice(s: WPSlice<E>, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) {
-        c.1._event(c.0,s,e)
+    fn event_of_slice(s: WPSlice<E>, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
+        Ok( c.1.event(c.0.widget(s)?,e) )
     }
-    /// PANICKS if widget doesn't exists
     #[inline]
-    fn _size_of_slice(s: WPSlice<E>, c: CtxRef<E>) -> Size {
-        c.1._size(c.0,s)
+    fn size_of_slice(s: WPSlice<E>, c: CtxRef<E>) -> Result<ESize<E>,()> {
+        Ok( c.1.size(c.0.widget(s)?) )
     }
 
     fn id_of_slice(s: WPSlice<E>) -> &E::WidgetID;
@@ -125,24 +107,8 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
         E::WidgetPath::event_of_slice(*self,c,e)
     }
     #[inline]
-    pub fn size(&self, c: CtxRef<E>) -> Result<Size,()> {
+    pub fn size(&self, c: CtxRef<E>) -> Result<ESize<E>,()> {
         E::WidgetPath::size_of_slice(*self,c)
-    }
-
-    /// PANICKS if widget doesn't exists
-    #[inline]
-    pub fn _render(&self, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds)) {
-        E::WidgetPath::_render_of_slice(*self,c,r)
-    }
-    /// PANICKS if widget doesn't exists
-    #[inline]
-    pub fn _event(&self, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) {
-        E::WidgetPath::_event_of_slice(*self,c,e)
-    }
-    /// PANICKS if widget doesn't exists
-    #[inline]
-    pub fn _size(&self, c: CtxRef<E>) -> Size {
-        E::WidgetPath::_size_of_slice(*self,c)
     }
 
     #[inline]

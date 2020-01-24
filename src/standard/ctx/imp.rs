@@ -22,7 +22,7 @@ impl<S,E> Handler<E> for StandardCtx<S,E> where S: Handler<E>, E: Env, ECHandler
         unimplemented!()
     }
     #[inline] 
-    fn _size(l: Link<E>) -> Size {
+    fn _size(l: Link<E>) -> ESize<E> {
         unimplemented!();
         S::_size(l)
     }

@@ -8,11 +8,8 @@ pub mod imp;
 use imp::*;
 
 pub struct Link<'c,E> where E: Env {
-    pub stor: &'c E::Storage,
     pub ctx: &'c mut E::Context,
-    pub path: WPSlice<'c,E>,
-    // absolute pos ans size of current widget
-    //pub bounds: Bounds,
+    pub widget: Resolved<'c,E>,
 }
 
 impl<'c,E> Link<'c,E> where E: Env {
@@ -27,60 +24,55 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     #[inline]
     pub fn widget(&self) -> Resolved<'c,E> {
-        self.stor.widget(self.path)
-            .expect("Link: Widget Gone")
+        self.widget.clone()
     }
 
     #[inline]
-    pub fn widgetb(self) -> (Resolved<'c,E>,Link<'c,E>) {
-        (
-            self.stor.widget(self.path)
-                .expect("Link: Widget Gone"),
-            Link{
-                stor: self.stor,
-                ctx: self.ctx,
-                path: self.path,
-            }
-        )
+    pub fn id(&self) -> E::WidgetID {
+        self.widget.id()
     }
 
     #[inline]
-    pub fn id(&self) -> &E::WidgetID {
-        self.path.id()
+    pub fn render(&mut self, r: (&mut ERenderer<E>,&Bounds)) {
+        self.ctx.render(self.widget(),r)
     }
     #[inline]
-    pub fn resolve_render(&mut self, r: (&mut ERenderer<E>,&Bounds)) {
-        let res = self.stor.widget(self.path)
-            .expect("Link: Widget Gone");
-        res.render(self.ctx,r)
+    pub fn event(&mut self, e: (EEvent<E>,&Bounds)) {
+        self.ctx.event(self.widget(),e)
     }
     #[inline]
-    pub fn resolve_event(&mut self, e: (EEvent<E>,&Bounds)) {
-        let res = self.stor.widget(self.path)
-            .expect("Link: Widget Gone");
-        res.event(self.ctx,e)
+    pub fn size(&mut self) -> ESize<E> {
+        self.ctx.size(self.widget())
+    }
+
+    #[inline]
+    pub fn _render(&mut self, r: (&mut ERenderer<E>,&Bounds)) {
+        let w = self.ctx.link(self.widget.clone());
+        self.widget.wref.render(w,r)
     }
     #[inline]
-    pub fn resolve_size(&mut self) -> Size {
-        let res = self.stor.widget(self.path)
-            .expect("Link: Widget Gone");
-        res.size(self.ctx)
+    pub fn _event(&mut self, e: (EEvent<E>,&Bounds)) {
+        let w = self.ctx.link(self.widget.clone());
+        self.widget.wref.event(w,e)
+    }
+    #[inline]
+    pub fn _size(&mut self) -> ESize<E> {
+        let w = self.ctx.link(self.widget.clone());
+        self.widget.wref.size(w)
     }
 
     #[inline]
     pub fn is_hovered(&self) -> bool where ECHandler<E>: AsHandlerStateful<E> {
-        self.ctx.state().is_hovered(self.path.id())
+        self.ctx.state().is_hovered(&self.id())
     }
     #[inline]
     pub fn is_selected(&self) -> bool where ECHandler<E>: AsHandlerStateful<E> {
-        self.ctx.state().is_selected(self.path.id())
+        self.ctx.state().is_selected(&self.id())
     }
 
     #[inline]
     pub fn child_paths(&self) -> Vec<E::WidgetPath> {
-        self.stor.widget(self.path)
-            .unwrap()
-            .child_paths(self.path)
+        self.widget.child_paths()
     }
 
     /// iterate over childs
@@ -113,17 +105,15 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn parents(&'c self) -> Parents<'c,E> {
         Parents{
-            stor: self.stor,
-            next: Some(self.path),
+            stor: self.widget.stor,
+            next: Some(self.widget.path),
         }
     }
     
     pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
         Link{
-            stor: self.stor.with_env::<F>(),
+            widget: self.widget.with_env::<F>(),
             ctx,
-            path: self.path.with_env::<F>(),
-            //bounds: self.bounds,
         }
     }
     #[inline]
