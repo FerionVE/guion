@@ -7,7 +7,14 @@ pub enum Resolvable<'a,E> where E: Env {
 
 impl<'a,E> Resolvable<'a,E> where E: Env {
     #[inline]
-    pub fn resolve(self, stor: &'a E::Storage) -> Result<WidgetRef<'a,E>,()> {
+    pub fn resolve(self, i: EWPSlice<E>) -> Result<Resolvable<'a,E>,()> {
+        match self {
+            Resolvable::Widget(w) => w.resolve(i),
+            Resolvable::Path(p) => Ok(Resolvable::Path(p)),
+        }
+    }
+    #[inline]
+    pub fn resolve_widget(self, stor: &'a E::Storage) -> Result<WidgetRef<'a,E>,()> {
         match self {
             Resolvable::Widget(w) => Ok(w),
             Resolvable::Path(p) => Ok(stor.widget(p.slice())?.wref),

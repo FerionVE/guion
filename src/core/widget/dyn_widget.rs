@@ -4,6 +4,8 @@ use super::*;
 
 pub trait DynWidget<E>: Widget<E> where E: Env + 'static {
     type Owned: Deref<Target=Self> + DerefMut<Target=Self>;
+    //type Ref: Widget<E>;
+    //type RefMut: Widget<E>;
 
     #[inline]
     fn is<T: Any>(&self) -> bool {

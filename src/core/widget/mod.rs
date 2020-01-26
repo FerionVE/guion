@@ -1,6 +1,7 @@
 use std::ops::Deref;
 use super::*;
 use std::any::Any;
+use std::rc::Rc;
 
 pub mod link;
 pub mod dyn_widget;
@@ -33,19 +34,25 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             .collect()
     }*/
     #[inline]
-    fn resolve_mut<'a>(&'a mut self, i: &EWPSub<E>) -> Result<WidgetRefMut<'a,E>,()> {
+    fn resolve_mut<'a>(&'a mut self, i: EWPSlice<E>) -> Result<WidgetRefMut<'a,E>,()> {
+        if i.is_empty() {
+            return Ok(Box::new(packe_mut(self)))
+        }
         for c in self._childs_mut() {
-            if c.is_subpath(i) {
-                return Ok(c);
+            if c.is_subpath(&i[0]) {
+                return c.resolve_mut(&i[1..]);
             }
         }
         Err(())
     }
     #[inline]
-    fn resolve<'a>(&'a self, i: &EWPSub<E>) -> Result<Resolvable<'a,E>,()> {
+    fn resolve<'a>(&'a self, i: EWPSlice<E>) -> Result<Resolvable<'a,E>,()> {
+        if i.is_empty() {
+            return Ok(Resolvable::Widget(packe(self)))
+        }
         for c in self.childs() {
-            if c.is_subpath(i) {
-                return Ok(c);
+            if c.is_subpath(&i[0]) {
+                return c.resolve(&i[1..]);
             }
         }
         Err(())
