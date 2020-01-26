@@ -33,10 +33,14 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             .map(|p| p.path(own_path) )
             .collect()
     }*/
+
+    fn erase(&self) -> &E::DynWidget;
+    fn erase_mut(&mut self) -> &mut E::DynWidget;
+
     #[inline]
     fn resolve_mut<'a>(&'a mut self, i: EWPSlice<E>) -> Result<WidgetRefMut<'a,E>,()> {
         if i.is_empty() {
-            return Ok(Box::new(packe_mut(self)))
+            return Ok(Box::new(self.erase_mut()))
         }
         for c in self._childs_mut() {
             if c.is_subpath(&i[0]) {
@@ -48,7 +52,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     #[inline]
     fn resolve<'a>(&'a self, i: EWPSlice<E>) -> Result<Resolvable<'a,E>,()> {
         if i.is_empty() {
-            return Ok(Resolvable::Widget(packe(self)))
+            return Ok(Resolvable::Widget(Rc::new(self.erase())))
         }
         for c in self.childs() {
             if c.is_subpath(&i[0]) {
