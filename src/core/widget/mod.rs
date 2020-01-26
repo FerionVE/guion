@@ -26,7 +26,8 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn has_childs(&self) -> bool;
 
     fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>>;
-    fn _childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>>;
+    fn _childs<'a>(&'a mut self) -> Vec<&'a dyn ResolveRaw<E>>;
+    fn _childs_mut<'a>(&'a mut self) -> Vec<&'a mut dyn ResolveRaw<E>>;
 
     fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath>;/* {
         self.childs().iter()
@@ -34,8 +35,12 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             .collect()
     }*/
 
-    fn erase(&self) -> &E::DynWidget;
-    fn erase_mut(&mut self) -> &mut E::DynWidget;
+    fn erase(&self) -> &E::DynWidget {
+        WidgetAsAny::_erase(self)
+    }
+    fn erase_mut(&mut self) -> &mut E::DynWidget {
+        WidgetAsAny::_erase_mut(self)
+    }
 
     #[inline]
     fn resolve_mut<'a>(&'a mut self, i: EWPSlice<E>) -> Result<WidgetRefMut<'a,E>,()> {

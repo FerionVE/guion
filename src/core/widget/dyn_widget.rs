@@ -44,6 +44,8 @@ impl<E> DynWidget<E> for dyn Widget<E> where E: Env + 'static {
 pub trait WidgetAsAny<E>: 'static where E: Env {
     fn _as_any(&self) -> &dyn Any;
     fn _as_any_mut(&mut self) -> &mut dyn Any;
+    fn _erase(&self) -> &E::DynWidget;
+    fn _erase_mut(&mut self) -> &mut E::DynWidget;
 }
 
 impl<T,E> WidgetAsAny<E> for T where T: Widget<E>, E: Env {
@@ -51,4 +53,12 @@ impl<T,E> WidgetAsAny<E> for T where T: Widget<E>, E: Env {
     fn _as_any(&self) -> &dyn Any {self}
     #[inline]
     fn _as_any_mut(&mut self) -> &mut dyn Any {self}
+    #[inline]
+    fn _erase(&self) -> &E::DynWidget {
+        DynWidget::erase(self)
+    }
+    #[inline]
+    fn _erase_mut(&mut self) -> &mut E::DynWidget {
+        DynWidget::erase_mut(self)
+    }
 }
