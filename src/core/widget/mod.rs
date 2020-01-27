@@ -61,7 +61,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         }
         for c in self._childs_mut() {
             if c.widget().is_subpath(&i[0]) {
-                return c.resolve_mut(&i[1..]);
+                return c.resolve_mut_box(&i[1..]);
             }
         }
         Err(())
@@ -73,7 +73,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         }
         for c in self._childs() {
             if c.widget().is_subpath(&i[0]) {
-                return c.resolve(&i[1..]);
+                return c.resolve_box(&i[1..]);
             }
         }
         Err(())

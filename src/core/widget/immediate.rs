@@ -4,16 +4,25 @@ use super::*;
 
 pub trait WidgetImmediate<'d,E> where E: Env {
     fn resolve(self, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()>;
-    fn resolve_boxed(self: Box<Self>, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()> {
-        (*self).resolve(s)
+    fn resolve_box(self: Box<Self>, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()> {
+        unimplemented!()
+        //(*self).resolve(s)
     }
+    fn resolve_ref(&self, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()>;
     fn widget(&self) -> &E::DynWidget;
 }
-pub trait WidgetImmediateMut<'d,E>: WidgetImmediate<'d,E> where E: Env {
-    fn resolve_mut(self, s: EWPSlice<E>) -> Result<WidgetRefMut<'d,E>,()>;
-    fn resolve_mut_boxed(self: Box<Self>, s: EWPSlice<E>) -> Result<WidgetRefMut<'d,E>,()> {
-        (*self).resolve_mut(s)
+pub trait WidgetImmediateMut<'d,E> where E: Env {
+    fn resolve(self, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()>;
+    fn resolve_box(self: Box<Self>, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()> {
+        unimplemented!()
+        //(*self).resolve(s)
     }
+    fn resolve_mut(self, s: EWPSlice<E>) -> Result<WidgetRefMut<'d,E>,()>;
+    fn resolve_mut_box(self: Box<Self>, s: EWPSlice<E>) -> Result<WidgetRefMut<'d,E>,()> {
+        unimplemented!()
+        //(*self).resolve_mut(s)
+    }
+    fn widget(&self) -> &E::DynWidget;
     fn widget_mut(&mut self) -> &mut E::DynWidget;
 }
 
@@ -21,21 +30,22 @@ impl<'d,T,E> WidgetImmediate<'d,E> for &'d T where T: Widget<E>, E: Env {
     fn resolve(self, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()> {
         <T as Widget<E>>::resolve(self,s)
     }
-    fn widget(&self) -> &E::DynWidget {
-        self.erase()
-    }
-}
-impl<'d,T,E> WidgetImmediate<'d,E> for &'d mut T where T: Widget<E>, E: Env {
-    fn resolve(self, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()> {
-        <T as Widget<E>>::resolve(self,s)
+    fn resolve_ref(&self, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()> {
+        <T as Widget<E>>::resolve(*self,s)
     }
     fn widget(&self) -> &E::DynWidget {
         self.erase()
     }
 }
 impl<'d,T,E> WidgetImmediateMut<'d,E> for &'d mut T where T: Widget<E>, E: Env {
+    fn resolve(self, s: EWPSlice<E>) -> Result<Resolvable<'d,E>,()> {
+        <T as Widget<E>>::resolve(self,s)
+    }
     fn resolve_mut(self, s: EWPSlice<E>) -> Result<WidgetRefMut<'d,E>,()> {
         <T as Widget<E>>::resolve_mut(self,s)
+    }
+    fn widget(&self) -> &E::DynWidget {
+        self.erase()
     }
     fn widget_mut(&mut self) -> &mut E::DynWidget {
         self.erase_mut()

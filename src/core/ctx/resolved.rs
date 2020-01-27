@@ -75,3 +75,17 @@ impl<'a,E> Clone for Resolved<'a,E> where E: Env {
         self.stor.widget(self.path.slice()).unwrap()
     }
 }
+
+pub fn short_resolved<'l: 's,'s,E: Env>(i: Resolved<'l,E>) -> Resolved<'s,E> {
+    Resolved{
+        wref: short_wref(i.wref),
+        path: i.path,
+        stor: i.stor,
+    }
+}
+
+pub fn short_wref<'l: 's,'s,E: Env>(i: Rc<WidgetRef<'l,E>>) -> Rc<WidgetRef<'s,E>> {
+    unsafe{
+        std::mem::transmute::<Rc<WidgetRef<'l,E>>,Rc<WidgetRef<'s,E>>>(i) //roast me
+    }
+}

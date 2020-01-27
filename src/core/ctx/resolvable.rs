@@ -10,7 +10,7 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
     #[inline]
     pub fn resolve(self, i: EWPSlice<E>) -> Result<Resolvable<'a,E>,()> {
         match self {
-            Resolvable::Widget(w) => w.resolve(i),
+            Resolvable::Widget(w) => w.resolve_ref(i),
             Resolvable::Path(p) => Ok(Resolvable::Path(p)),
         }
     }
