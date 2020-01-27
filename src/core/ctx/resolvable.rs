@@ -1,7 +1,8 @@
+use std::rc::Rc;
 use super::*;
 
 pub enum Resolvable<'a,E> where E: Env {
-    Widget(WidgetRef<'a,E>),
+    Widget(Rc<WidgetRef<'a,E>>),
     Path(EWPRc<E>),
 }
 
@@ -14,7 +15,7 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
         }
     }
     #[inline]
-    pub fn resolve_widget(self, stor: &'a E::Storage) -> Result<WidgetRef<'a,E>,()> {
+    pub fn resolve_widget(self, stor: &'a E::Storage) -> Result<Rc<WidgetRef<'a,E>>,()> {
         match self {
             Resolvable::Widget(w) => Ok(w),
             Resolvable::Path(p) => Ok(stor.widget(p.slice())?.wref),
@@ -29,7 +30,7 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
     #[inline]
     pub fn is_subpath(&self, p: &EWPSub<E>) -> bool {
         match self {
-            Resolvable::Widget(w) => w.is_subpath(p),
+            Resolvable::Widget(w) => w.widget().is_subpath(p),
             Resolvable::Path(w) => w.tip() == p,
         }
     }

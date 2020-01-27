@@ -46,6 +46,8 @@ pub trait WidgetAsAny<E>: 'static where E: Env {
     fn _as_any_mut(&mut self) -> &mut dyn Any;
     fn _erase(&self) -> &E::DynWidget;
     fn _erase_mut(&mut self) -> &mut E::DynWidget;
+    fn _as_immediate(&self) -> WidgetRef<E>;
+    fn _as_immediate_mut(&mut self) -> WidgetRefMut<E>;
 }
 
 impl<T,E> WidgetAsAny<E> for T where T: Widget<E>, E: Env {
@@ -60,5 +62,13 @@ impl<T,E> WidgetAsAny<E> for T where T: Widget<E>, E: Env {
     #[inline]
     fn _erase_mut(&mut self) -> &mut E::DynWidget {
         DynWidget::erase_mut(self)
+    }
+    #[inline]
+    fn _as_immediate<'a>(&'a self) -> WidgetRef<'a,E> {
+        Box::new(self)
+    }
+    #[inline]
+    fn _as_immediate_mut<'a>(&'a mut self) -> WidgetRefMut<'a,E> {
+        Box::new(self)
     }
 }

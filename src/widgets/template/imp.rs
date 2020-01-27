@@ -45,7 +45,7 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::set_parent(self,v)
         }
         #[inline]
-        fn childs(&self) -> Vec<$crate::macro_prelude::Resolvable<$c>> {
+        fn _childs(&self) -> Vec<$crate::macro_prelude::WidgetRef<$c>> {
             std::vec![]
         }
         #[inline]

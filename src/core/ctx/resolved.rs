@@ -1,8 +1,9 @@
+use std::rc::Rc;
 use std::ops::{Deref,DerefMut};
 use super::*;
 
 pub struct Resolved<'a,E> where E: Env {
-    pub wref: WidgetRef<'a,E>,
+    pub wref: Rc<WidgetRef<'a,E>>,
     pub path: EWPRc<E>,
     pub stor: &'a E::Storage,
 }
@@ -53,19 +54,19 @@ impl<'a,E> Deref for Resolved<'a,E> where E: Env {
     type Target = E::DynWidget;
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &**self.wref
+        self.wref.widget().erase()
     }
 }
 impl<'a,E> Deref for ResolvedMut<'a,E> where E: Env {
     type Target = E::DynWidget;
     #[inline]
     fn deref(&self) -> &Self::Target {
-        &**self.wref
+        self.wref.widget().erase()
     }
 }
 impl<'a,E> DerefMut for ResolvedMut<'a,E> where E: Env {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut **self.wref
+        self.wref.widget_mut().erase_mut()
     }
 }
 

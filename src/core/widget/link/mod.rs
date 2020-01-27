@@ -47,17 +47,17 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn _render(&mut self, r: (&mut ERenderer<E>,&Bounds)) {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.wref.render(w,r)
+        self.widget.wref.widget().render(w,r)
     }
     #[inline]
     pub fn _event(&mut self, e: (EEvent<E>,&Bounds)) {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.wref.event(w,e)
+        self.widget.wref.widget().event(w,e)
     }
     #[inline]
     pub fn _size(&mut self) -> ESize<E> {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.wref.size(w)
+        self.widget.wref.widget().size(w)
     }
 
     #[inline]

@@ -25,9 +25,14 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
 
     fn has_childs(&self) -> bool;
 
-    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>>;
-    fn _childs<'a>(&'a mut self) -> Vec<&'a dyn ResolveRaw<E>>;
-    fn _childs_mut<'a>(&'a mut self) -> Vec<&'a mut dyn ResolveRaw<E>>;
+    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
+        self._childs()
+            .into_iter()
+            .map(|c| Resolvable::Widget(Rc::new(c)) )
+            .collect()
+    }
+    fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>>;
+    fn _childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>>;
 
     fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath>;/* {
         self.childs().iter()
@@ -42,13 +47,20 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         WidgetAsAny::_erase_mut(self)
     }
 
+    fn as_immediate(&self) -> WidgetRef<E> {
+        WidgetAsAny::_as_immediate(self)
+    }
+    fn as_immediate_mut(&mut self) -> WidgetRefMut<E> {
+        WidgetAsAny::_as_immediate_mut(self)
+    }
+
     #[inline]
     fn resolve_mut<'a>(&'a mut self, i: EWPSlice<E>) -> Result<WidgetRefMut<'a,E>,()> {
         if i.is_empty() {
-            return Ok(Box::new(self.erase_mut()))
+            return Ok(self.as_immediate_mut())
         }
         for c in self._childs_mut() {
-            if c.is_subpath(&i[0]) {
+            if c.widget().is_subpath(&i[0]) {
                 return c.resolve_mut(&i[1..]);
             }
         }
@@ -57,10 +69,10 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     #[inline]
     fn resolve<'a>(&'a self, i: EWPSlice<E>) -> Result<Resolvable<'a,E>,()> {
         if i.is_empty() {
-            return Ok(Resolvable::Widget(Rc::new(self.erase())))
+            return Ok(Resolvable::Widget(Rc::new(self.as_immediate())))
         }
-        for c in self.childs() {
-            if c.is_subpath(&i[0]) {
+        for c in self._childs() {
+            if c.widget().is_subpath(&i[0]) {
                 return c.resolve(&i[1..]);
             }
         }
