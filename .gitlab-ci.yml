@@ -1,0 +1,41 @@
+stages:
+  - build
+  - test
+
+build-1.38:
+  stage: build
+  image: rust:1.38.0
+  script:
+    - cargo build --verbose
+
+build-latest:
+  stage: build
+  image: rust:latest
+  script:
+    - cargo build --verbose
+
+build-nightly:
+  stage: build
+  image: rustlang/rust:nightly
+  script:
+    - cargo build --verbose
+  allow_failure: true
+
+test-1.38:
+  stage: test
+  image: rust:1.38.0
+  script:
+    - cargo test --verbose
+
+test-latest:
+  stage: test
+  image: rust:latest
+  script:
+    - cargo test --verbose
+
+test-nightly:
+  stage: test
+  image: rustlang/rust:nightly
+  script:
+    - cargo test --verbose
+  allow_failure: true
