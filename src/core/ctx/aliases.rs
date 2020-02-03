@@ -1,3 +1,4 @@
+//! Aliases resolving to deep/nested types inside Env
 use super::*;
 
 pub type ERenderer<E: Env> = <E::Backend as Backend<E>>::Renderer;

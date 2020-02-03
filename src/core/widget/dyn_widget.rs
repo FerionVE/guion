@@ -2,6 +2,7 @@ use std::ops::DerefMut;
 use std::ops::Deref;
 use super::*;
 
+/// type erased widget, reference and owned.
 pub trait DynWidget<E>: Widget<E> where E: Env + 'static {
     type Owned: Deref<Target=Self> + DerefMut<Target=Self>;
     //type Ref: Widget<E>;

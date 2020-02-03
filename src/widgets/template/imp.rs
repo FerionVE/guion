@@ -84,13 +84,13 @@ macro_rules! impl_template_inner {
 }
 
 pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
-    unimplemented!()
+    todo!()
 }
 
 pub fn _event<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
-    unimplemented!()
+    todo!()
 }
 
 pub fn _size<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> ESize<E> {
-    unimplemented!()
+    todo!()
 }

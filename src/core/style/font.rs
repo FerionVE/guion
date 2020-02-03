@@ -4,6 +4,7 @@ pub trait Font<S,E>: Sized where S: Style<E,Font=Self>, E: Env, E::Backend: Back
     
 }
 
+/// Text in a optimized form for faster frequent rendering and iterating
 pub trait PreprocessedText<S,E>: Sized where S: Style<E,PreprocessedText=Self>, E: Env, E::Backend: Backend<E,Style=S> {
     fn size(&self) -> Dims;
     fn style(&self) -> &S; //TODO TextCache validates invalidate state and compares style

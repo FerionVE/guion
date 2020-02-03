@@ -2,11 +2,13 @@ use std::rc::Rc;
 use std::ops::{Deref,DerefMut};
 use super::*;
 
+/// A reference to a resolved Widget
 pub struct Resolved<'a,E> where E: Env {
     pub wref: Rc<WidgetRef<'a,E>>,
     pub path: EWPRc<E>,
     pub stor: &'a E::Storage,
 }
+/// A mutable reference to a resolved Widget
 pub struct ResolvedMut<'a,E> where E: Env {
     pub wref: WidgetRefMut<'a,E>,
     pub path: EWPRc<E>,
@@ -75,7 +77,7 @@ impl<'a,E> Clone for Resolved<'a,E> where E: Env {
         self.stor.widget(self.path.slice()).unwrap()
     }
 }
-
+/// shrink the lifetime
 pub fn short_resolved<'l: 's,'s,E: Env>(i: Resolved<'l,E>) -> Resolved<'s,E> {
     Resolved{
         wref: short_wref(i.wref),
@@ -83,7 +85,7 @@ pub fn short_resolved<'l: 's,'s,E: Env>(i: Resolved<'l,E>) -> Resolved<'s,E> {
         stor: i.stor,
     }
 }
-
+/// shrink the lifetime
 pub fn short_wref<'l: 's,'s,E: Env>(i: Rc<WidgetRef<'l,E>>) -> Rc<WidgetRef<'s,E>> {
     unsafe{
         std::mem::transmute::<Rc<WidgetRef<'l,E>>,Rc<WidgetRef<'s,E>>>(i) //roast me

@@ -29,7 +29,7 @@ impl<E> super::Pane<E> for Pane<E> where E: Env + 'static {
     }
     
     fn size(&self) -> Size {
-        unimplemented!()
+        todo!()
     }
 
     fn parent(&self) -> Option<&E::WidgetID> {

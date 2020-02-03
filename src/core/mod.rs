@@ -5,10 +5,15 @@ pub mod event;
 pub mod ctx;
 pub mod style;
 pub mod util;
+// traits for standard states
 pub mod state;
+// env type compound
 pub mod env;
+// backend type compound
 pub mod backend;
+// widget id
 pub mod id;
+// path to resolve widgets
 pub mod path;
 
 pub(crate) use env::*;

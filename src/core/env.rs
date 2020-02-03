@@ -1,6 +1,7 @@
 use crate::core::ctx::widgets::Widgets;
 use super::*;
 
+/// Type compound
 pub trait Env: Sized + 'static {
     type Backend: Backend<Self>;
     type Context: Context<Self>;

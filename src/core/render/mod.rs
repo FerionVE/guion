@@ -26,12 +26,12 @@ pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
     }
     /// if widgets should be rendered even if the don't require to
     #[inline]
-    fn force(&mut self, b: &Bounds) -> bool {
+    fn force(&mut self, _b: &Bounds) -> bool {
         false
     }
     /// return false if rendered widgets should not be set rendered
     #[inline]
-    fn validate_widgets(&mut self, b: &Bounds) -> bool {
+    fn validate_widgets(&mut self, _b: &Bounds) -> bool {
         true
     }
 }

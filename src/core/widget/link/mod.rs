@@ -6,19 +6,22 @@ use super::*;
 pub mod imp;
 use imp::*;
 
+/// holds a immutable reference to the current widget and the widget tree, also a mutable reference to the context
 pub struct Link<'c,E> where E: Env {
     pub ctx: &'c mut E::Context,
     pub widget: Resolved<'c,E>,
 }
 
 impl<'c,E> Link<'c,E> where E: Env {
+    /// enqueue mutable access to this widget
     #[inline] 
     pub fn mutate<S: Widget<E> + 'static>(&mut self, l: impl FnOnce(&mut E::DynWidget)) {
-        unimplemented!()
+        todo!()
     }
+    /// enqueue immutable access to this widget
     #[inline] 
     pub fn later<S: Widget<E> + 'static>(&mut self, l: impl FnOnce(&E::DynWidget)) {
-        unimplemented!()
+        todo!()
     }
 
     #[inline]
@@ -43,17 +46,19 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn size(&mut self) -> ESize<E> {
         self.ctx.size(self.widget())
     }
-
+    /// bypasses Context and Handler(s)
     #[inline]
     pub fn _render(&mut self, r: (&mut ERenderer<E>,&Bounds)) {
         let w = self.ctx.link(self.widget.clone());
         self.widget.wref.widget().render(w,r)
     }
+    /// bypasses Context and Handler(s)
     #[inline]
     pub fn _event(&mut self, e: (EEvent<E>,&Bounds)) {
         let w = self.ctx.link(self.widget.clone());
         self.widget.wref.widget().event(w,e)
     }
+    /// bypasses Context and Handler(s)
     #[inline]
     pub fn _size(&mut self) -> ESize<E> {
         let w = self.ctx.link(self.widget.clone());

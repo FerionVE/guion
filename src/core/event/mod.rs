@@ -8,7 +8,7 @@ pub mod key;
 pub mod imp;
 pub mod dyn_evt;
 
-/// Use is() for querying as a specific variant
+/// an Event holds one of the support Variant and can be downcasted to a specific Variant
 pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self> {
     type Dest: Destination;
     type Key: Key;

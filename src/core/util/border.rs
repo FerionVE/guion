@@ -22,6 +22,7 @@ impl Border {
     pub const fn empty() -> Self {
         Self::new(0,0,0,0)
     }
+    /// get the offset of the inner relative to the outer
     #[inline]
     pub const fn inner(&self) -> Offset {
         Offset{

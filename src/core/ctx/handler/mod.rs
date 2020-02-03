@@ -3,14 +3,11 @@ use super::*;
 pub mod access;
 pub use access::*;
 
+/// Handlers are stacked inside a Container and any render/event/size action goes through the handler stack
 pub trait Handler<E>: Sized + 'static where E: Env {
-    /// PANICKS if widget doesn't exists
     fn _render(l: Link<E>, r: (&mut ERenderer<E>,&Bounds));
-    /// PANICKS if widget doesn't exists
     fn _event(l: Link<E>, e: (EEvent<E>,&Bounds));
-    /// PANICKS if widget doesn't exists
     fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds));
-    /// PANICKS if widget doesn't exists
     fn _size(l: Link<E>) -> ESize<E>;
 }
 

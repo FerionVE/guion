@@ -31,7 +31,6 @@ pub trait Style<E>: Clone + PartialEq where E: Env, E::Backend: Backend<E,Style=
     fn cursor(&self) -> Self::Cursor;
 
     fn default() -> &'static Self;
-    #[inline]
     fn default_border() -> &'static Border;
     
     fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::PreprocessedText;

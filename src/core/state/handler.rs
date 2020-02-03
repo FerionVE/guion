@@ -6,7 +6,6 @@ pub trait AsHandlerStateful<E>: Handler<E> + Sized where E: Env, E::Context: Con
     fn stateful_mut(e: &mut E::Context) -> &mut Self::T;
     fn stateful(e: &E::Context) -> &Self::T;
 } 
-
 pub trait HandlerStateful<E>: Handler<E> + 'static where E: Env {
     type K: PressedKey<E>;
     
@@ -25,17 +24,17 @@ pub trait HandlerStateful<E>: Handler<E> + 'static where E: Env {
     /*fn pressed(&self) -> &[Self::K];
     ///ordered: combo only pressed if the last N pressed keys (timestamp) are the one passed in k in exact order
     fn is_pressed(&self, k: &[ComboPart]) -> bool {
-        unimplemented!()
+        todo!()
     }*/
 
     fn pressed(&self) -> &[Self::K];
     #[inline]
     fn is_pressed(&self, c: &[EEKey<E>]) -> Option<&Self::K> {
-        unimplemented!()
+        todo!()
     }
     #[inline]
     fn is_pressed_and_id(&self, c: &[EEKey<E>], id: &E::WidgetID) -> bool {
-        unimplemented!()
+        todo!()
     }
 }
 

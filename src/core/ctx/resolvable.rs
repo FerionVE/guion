@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use super::*;
 
+/// This enum is returned by widget's resolve function
 pub enum Resolvable<'a,E> where E: Env {
     Widget(Rc<WidgetRef<'a,E>>),
     Path(EWPRc<E>),

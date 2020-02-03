@@ -15,7 +15,7 @@ pub struct AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ITemplate<E>,
     _e: PhantomData<E>,
     _t: PhantomData<T>,
 }
-
+#[allow(dead_code)]
 impl<T,E,C> AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>, T: ITemplate<E>, E: Env + 'static {
     #[inline]
     pub fn new(inner: C) -> Self {

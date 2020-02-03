@@ -22,6 +22,8 @@ pub use resolved::*;
 pub mod resolvable;
 pub use resolvable::*;
 
+/// The Context contains the Handlers, the queue and other side data and is also the entry point for most actions.
+/// A Context is regularly referenced in parallel with the widget tree
 pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     type Handler: Handler<E>;
     type Queue: Queue<E>;

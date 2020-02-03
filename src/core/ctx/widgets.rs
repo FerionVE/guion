@@ -1,5 +1,5 @@
 use super::*;
-
+/// Implemented on the root of the widget tree
 pub trait Widgets<E>: Sized + 'static where E: Env {
     fn widget<'a>(&'a self, i: WPSlice<E>) -> Result<Resolved<'a,E>,()>;
     fn widget_mut<'a>(&'a mut self, i: WPSlice<E>) -> Result<Resolved<'a,E>,()>;
@@ -19,9 +19,9 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
 }
 
 pub fn resolve_in_root<'a,E: Env>(w: &'a E::DynWidget, p: WPSlice<E>) -> Option<&'a E::DynWidget> {
-    unimplemented!()
+    todo!()
 }
 
 pub fn resolve_in_root_mut<'a,E: Env>(w: &'a mut E::DynWidget, p: WPSlice<E>) -> Option<&'a mut E::DynWidget> {
-    unimplemented!()
+    todo!()
 }

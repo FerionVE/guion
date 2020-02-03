@@ -45,13 +45,15 @@ impl Bounds {
     #[inline] pub fn x1(&self) -> i32 { self.off.x + (self.size.w as i32) }
     #[inline] pub fn y1(&self) -> i32 { self.off.y + (self.size.h as i32) }
 
+    /// get the bounds inside this bound (subtract border)
     pub fn inside(&self, b: &Border) -> Self {
         let mut s = self.clone();
         s.off += b.inner();
         s.size -= b.border_effective();
         s
     }
-
+    /// b is the inner and relative to self
+    /// get the part of the inner which also is inside this bound
     pub fn slice(&self, b: &Bounds) -> Self {
         Self{
             off: &self.off + &b.off,
@@ -70,7 +72,7 @@ impl Bounds {
         senf.size.h = (senf.size.h as i32 - step*2).max(0) as u32;
         senf
     }
-
+    /// get bound with size s and centered relative to self
     pub fn inner_centered(&self, s: Dims) -> Self {
         let nx = (self.size.w as i32 - s.w as i32)/2;
         let ny = (self.size.h as i32 - s.h as i32)/2;
@@ -85,6 +87,7 @@ impl Bounds {
 }
 
 impl Offset {
+    /// if the offset is inside the bound b
     pub fn is_inside(&self, b: &Bounds) -> bool {
         self.x >= b.x() && self.x < b.x1() &&
         self.y >= b.y() && self.y < b.y1()

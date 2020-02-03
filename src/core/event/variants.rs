@@ -1,3 +1,4 @@
+//! standard variants
 use crate::core::event::key::Key;
 use super::*;
 

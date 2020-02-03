@@ -1,6 +1,8 @@
 use std::iter::once;
 use std::iter::Once;
-/// verbs enable/disable specific parts of styles
+/// verbs enable/disable specific parts of styles.  
+/// Style implementations may ignore verbs.  
+#[non_exhaustive]
 pub enum StyleVerb {
     ObjDefault(),
     ObjBorder(),

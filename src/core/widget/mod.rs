@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use super::*;
 use std::any::Any;
 use std::rc::Rc;
@@ -31,6 +30,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             .map(|c| Resolvable::Widget(Rc::new(c)) )
             .collect()
     }
+    //TODO immutable childs access excluding paths is useless
     fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>>;
     fn _childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>>;
 
