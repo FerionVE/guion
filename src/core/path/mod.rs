@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{slice::SliceIndex, ops::Deref};
 use super::ctx::widgets::Widgets;
 use qwutils::*;
 use super::*;
@@ -65,6 +65,7 @@ pub trait WidgetPath<E>: AsWPSlice<E> + Clone + PartialEq + Sized + Send + Sync 
     }
 }
 
+#[repr(transparent)]
 pub struct WPSlice<'a,E> where E: Env {
     pub slice: EWPSlice<'a,E>,
 }
@@ -120,6 +121,15 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
     #[inline]
     pub fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> WPSlice<'a,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F> {
         WPSlice{slice: self.slice}
+    }
+
+    #[inline]
+    pub fn slice<S: SliceIndex<[EWPSub<E>],Output=[EWPSub<E>]>>(&self, s: S) -> WPSlice<'a,E> {
+        WPSlice{slice: &self.slice[s]}
+    }
+    #[inline]
+    pub fn index<S: SliceIndex<[EWPSub<E>],Output=EWPSub<E>>>(&self, s: S) -> &'a EWPSub<E> {
+        &self.slice[s]
     }
 }
 
