@@ -7,7 +7,7 @@ pub mod widgets;
 pub mod standard;
 
 #[doc(hidden)]
-pub mod macro_prelude {
+pub(crate) mod macro_prelude {
     pub(crate) use crate::widgets::template::ITemplate;
     pub use crate::widgets::null::INull;
     //pub use crate::widgets::*;

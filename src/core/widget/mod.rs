@@ -55,25 +55,25 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     }
 
     #[inline]
-    fn resolve_mut<'a>(&'a mut self, i: EWPSlice<E>) -> Result<WidgetRefMut<'a,E>,()> {
-        if i.is_empty() {
+    fn resolve_mut<'a>(&'a mut self, i: WPSlice<E>) -> Result<WidgetRefMut<'a,E>,()> {
+        if i.slice.is_empty() {
             return Ok(self.as_immediate_mut())
         }
         for c in self._childs_mut() {
-            if c.widget().is_subpath(&i[0]) {
-                return c.resolve_mut_box(&i[1..]);
+            if c.widget().is_subpath(i.index(0)) {
+                return c.resolve_mut_box(i.slice(1..));
             }
         }
         Err(())
     }
     #[inline]
-    fn resolve<'a>(&'a self, i: EWPSlice<E>) -> Result<Resolvable<'a,E>,()> {
-        if i.is_empty() {
+    fn resolve<'a>(&'a self, i: WPSlice<E>) -> Result<Resolvable<'a,E>,()> {
+        if i.slice.is_empty() {
             return Ok(Resolvable::Widget(Rc::new(self.as_immediate())))
         }
         for c in self._childs() {
-            if c.widget().is_subpath(&i[0]) {
-                return c.resolve_box(&i[1..]);
+            if c.widget().is_subpath(i.index(0)) {
+                return c.resolve_box(i.slice(1..));
             }
         }
         Err(())

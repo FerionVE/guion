@@ -3,7 +3,7 @@ use std::rc::Rc;
 /// Implemented on the root of the widget tree
 pub trait Widgets<E>: Sized + 'static where E: Env {
     fn widget<'a>(&'a self, i: WPSlice<E>) -> Result<Resolved<'a,E>,()>;
-    fn widget_mut<'a>(&'a mut self, i: WPSlice<E>) -> Result<Resolved<'a,E>,()>;
+    fn widget_mut<'a>(&'a mut self, i: WPSlice<E>) -> Result<ResolvedMut<'a,E>,()>;
 
     #[inline]
     fn has_widget(&self, i: WPSlice<E>) -> bool {
