@@ -16,12 +16,12 @@ impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
     pub fn mutate<S: Widget<E> + 'static>(&mut self, l: impl FnOnce(&mut E::DynWidget)) {
-        todo!()
+        self.ctx.queue_mut().enqueue_widget_mut(self.widget.path.slice(),Box::new(l))
     }
     /// enqueue immutable access to this widget
     #[inline] 
     pub fn later<S: Widget<E> + 'static>(&mut self, l: impl FnOnce(&E::DynWidget)) {
-        todo!()
+        self.ctx.queue_mut().enqueue_widget(self.widget.path.slice(),Box::new(l))
     }
 
     #[inline]

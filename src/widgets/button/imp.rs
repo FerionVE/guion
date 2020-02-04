@@ -95,5 +95,5 @@ pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEv
 }
 
 pub fn _size<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
-    todo!()
+    todo!() //text + border (| manual size)
 }

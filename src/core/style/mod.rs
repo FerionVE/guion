@@ -13,7 +13,7 @@ pub trait Style<E>: Clone + PartialEq where E: Env, E::Backend: Backend<E,Style=
     type Font;
     type Cursor;
     type Color: Color;
-    type PreprocessedText: PreprocessedText<Self,E>;
+    type PreprocessedText: PreprocessedText<E>;
     type PreprocessedChar: PreprocessedChar;
 
     #[inline]
