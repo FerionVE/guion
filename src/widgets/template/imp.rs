@@ -65,8 +65,8 @@ macro_rules! impl_template_inner {
             false
         }
         #[inline]
-        fn style(&self) -> &$crate::macro_prelude::EStyle<$c> {
-            $crate::macro_prelude::ITemplate::style(self)
+        fn style(&self, s: &mut $crate::macro_prelude::EStyle<$c>) {
+            $crate::macro_prelude::ITemplate::style(self,s)
         }
         #[inline]
         fn render(&self, l: $crate::macro_prelude::Link<$c>, r: (&mut $crate::macro_prelude::ERenderer<$c>,&$crate::macro_prelude::Bounds)) {

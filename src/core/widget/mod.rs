@@ -89,14 +89,14 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
 
     /// should the widget be focusable, regularly true for interactive widgets, false for layouts
     fn selectable(&self) -> bool;
-
+    /// attach widget's style
     #[inline]
-    fn style(&self) -> &EStyle<E> {
-        e_default_style::<E>()
+    fn style(&self, s: &mut EStyle<E>) {
+        
     }
     #[inline]
-    fn border(&self) -> &Border {
-        e_default_border::<E>()
+    fn border(&self, b: &mut Border) {
+        
     }
     /// returns this widget as Any
     #[inline]

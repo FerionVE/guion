@@ -5,11 +5,11 @@ use ctx::*;
 pub struct Null<E> where E: Env {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
-    style: EStyle<E>,
+    style: Vec<StyleVerb>,
 }
 
 impl<E> Null<E> where E: Env {
-    pub fn new(id: E::WidgetID, parent: Option<E::WidgetID>, style: EStyle<E>) -> Self {
+    pub fn new(id: E::WidgetID, parent: Option<E::WidgetID>, style: Vec<StyleVerb>) -> Self {
         Self{
             id,
             parent,
@@ -22,8 +22,8 @@ impl<E> super::INull<E> for Null<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn style(&self) -> &EStyle<E> {
-        &self.style
+    fn style(&self, s: &mut EStyle<E>) {
+        s.attach(&self.style[..])
     }
 
     fn invalid(&self) -> bool {

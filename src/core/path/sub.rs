@@ -8,7 +8,7 @@ pub trait SubPath<E>: Clone + PartialEq + Sized where E: Env {
     fn is<T: Any>(&self) -> bool;
     fn downcast_ref<T: Any>(&self) -> Option<&T>;
     fn downcast_mut<T: Any>(&mut self) -> Option<&mut T>;
-    fn downcast_into<T: Any>(self) -> Result<T,Self> where Self: Sized;
+    fn downcast_into<T: Any>(self) -> Result<T,Self> where Self: Sized + 'static;
     #[inline]
     fn eq<I: SubPath<F> + 'static, F: Env>(&self, o: &I) -> bool where Self: 'static {
         Any::downcast_ref::<Self>(o)

@@ -67,4 +67,7 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     #[inline] fn state(&self) -> &ECStateful<E> where Self::Handler: AsHandlerStateful<E> {
         Self::Handler::stateful(self)
     }
+
+    fn default_style(&self) -> &EStyle<E>;
+    fn default_border(&self) -> &Border;
 }

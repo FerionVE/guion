@@ -6,15 +6,15 @@ pub struct Template<E> where E: Env {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
     invalid: bool,
-    style: EStyle<E>,
+    style: Vec<StyleVerb>,
 }
 
 impl<E> super::ITemplate<E> for Template<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn style(&self) -> &EStyle<E> {
-        &self.style
+    fn style(&self, s: &mut EStyle<E>) {
+        s.attach(&self.style[..])
     }
 
     fn invalid(&self) -> bool {

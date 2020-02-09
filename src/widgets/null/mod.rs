@@ -26,7 +26,7 @@ pub use as_null::*;
 pub trait INull<E>: Widget<E> where E: Env {
     fn id(&self) -> E::WidgetID;
 
-    fn style(&self) -> &EStyle<E>;
+    fn style(&self, s: &mut EStyle<E>);
     
     fn invalid(&self) -> bool;
     fn set_invalid(&mut self, v: bool);

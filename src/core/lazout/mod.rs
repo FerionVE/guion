@@ -16,6 +16,7 @@ pub enum Orientation {
     Vertical(),
 }
 
+//TODO move to trait submodule
 pub trait ISize: From<Size> {
     #[inline]
     fn add(&mut self, o: &Self, dir: Orientation) {
@@ -26,4 +27,13 @@ pub trait ISize: From<Size> {
     }
     fn add_x(&mut self, o: &Self);
     fn add_y(&mut self, o: &Self);
+}
+
+impl ISize for Size {
+    fn add_x(&mut self, o: &Self) {
+        Size::add_x(self,o)
+    }
+    fn add_y(&mut self, o: &Self) {
+        Size::add_y(self,o)
+    }
 }

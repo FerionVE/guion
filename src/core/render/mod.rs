@@ -16,7 +16,8 @@ pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
                 let ww = c.0.widget(w).expect("Lost Widget");
                 render |= self.requires_render(b,&ww);
                 if render {
-                    let border = ww.border().clone();
+                    let mut border = c.1.default_border().clone();
+                    ww.border(&mut border);
                     let sliced = b.inside(&border);
                     ww.render(c.1,(self,&sliced));
                 }

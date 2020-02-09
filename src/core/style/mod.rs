@@ -8,6 +8,7 @@ pub use variant::*;
 
 pub mod color;
 pub use color::*;
+use std::ops::Deref;
 
 pub trait Style<E>: Clone + PartialEq where E: Env, E::Backend: Backend<E,Style=Self> {
     type Font;
@@ -17,21 +18,22 @@ pub trait Style<E>: Clone + PartialEq where E: Env, E::Backend: Backend<E,Style=
     type PreprocessedChar: PreprocessedChar;
 
     #[inline]
-    fn with(&self, verbs: impl IntoIterator<Item=StyleVerb>) -> Self {
+    fn with(&self, verbs: impl IntoIterator<Item=impl Deref<Target=StyleVerb>>) -> Self {
         let mut s = self.clone();
-        for v in verbs {
-            s._with(v);
-        }
+        s.attach(verbs);
         s
+    }
+    #[inline]
+    fn attach(&mut self, verbs: impl IntoIterator<Item=impl Deref<Target=StyleVerb>>) {
+        for v in verbs {
+            self._with(*v.deref());
+        }
     }
     #[doc(hidden)]
     fn _with(&mut self, v: StyleVerb);
 
     fn font(&self) -> Option<&Self::Font>;
     fn cursor(&self) -> Self::Cursor;
-
-    fn default() -> &'static Self;
-    fn default_border() -> &'static Border;
     
     fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::PreprocessedText;
     #[inline]

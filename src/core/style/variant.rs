@@ -3,6 +3,7 @@ use std::iter::Once;
 /// verbs enable/disable specific parts of styles.  
 /// Style implementations may ignore verbs.  
 #[non_exhaustive]
+#[derive(Copy,Clone)]
 pub enum StyleVerb {
     ObjDefault(),
     ObjBorder(),

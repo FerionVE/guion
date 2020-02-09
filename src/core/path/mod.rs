@@ -14,7 +14,7 @@ pub trait WidgetPath<E>: AsWPSlice<E> + Clone + PartialEq + Sized + Send + Sync 
     fn attach(&mut self, sub: Self::SubPath);
     fn attached(self, sub: Self::SubPath) -> Self;
 
-    fn id(&self) -> &E::WidgetID;
+    fn id(&self) -> &E::WidgetID; //TODO no ref id
     fn tip(&self) -> &Self::SubPath;
 
     fn parent(&self) -> Option<WPSlice<E>>;

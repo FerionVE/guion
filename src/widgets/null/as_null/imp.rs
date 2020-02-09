@@ -25,8 +25,8 @@ impl<T,E,C> INull<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'stat
         <T as INull<E>>::set_parent(self,v)
     }
     #[inline]
-    fn style(&self) -> &EStyle<E> {
-        <T as INull<E>>::style(self)
+    fn style(&self, s: &mut EStyle<E>) {
+        <T as INull<E>>::style(self,s)
     }
 }
 #[doc(hidden)]
