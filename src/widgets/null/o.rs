@@ -18,12 +18,13 @@ impl<E> Null<E> where E: Env {
     }
 }
 
-impl<E> super::INull<E> for Null<E> where E: Env + 'static {
+impl<E> super::INull<E> for Null<E> where E: Env + 'static, ERenderer<E>: RenderStdWidgets<E> {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn style(&self, s: &mut EStyle<E>) {
-        s.attach(&self.style[..])
+        s.attach(&[StyleVerb::ObjBackground(),StyleVerb::Accent(0)]);
+        s.attach(&self.style[..]);
     }
 
     fn invalid(&self) -> bool {

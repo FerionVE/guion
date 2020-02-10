@@ -6,6 +6,7 @@ use std::iter::Once;
 #[derive(Copy,Clone)]
 pub enum StyleVerb {
     ObjDefault(),
+    ObjBackground(),
     ObjBorder(),
     ObjButton(),
     ObjList(),

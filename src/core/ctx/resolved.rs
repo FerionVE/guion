@@ -16,7 +16,7 @@ pub struct ResolvedMut<'a,E> where E: Env {
 
 impl<'a,E> Resolved<'a,E> where E: Env {
     #[inline]
-    pub fn render(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds)) {
+    pub fn render(&self, c: &mut E::Context, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
         (**self).render(c.link(self.clone()),r)
     }
     #[inline]

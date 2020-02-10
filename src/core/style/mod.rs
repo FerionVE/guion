@@ -41,6 +41,8 @@ pub trait Style<E>: Clone + PartialEq where E: Env, E::Backend: Backend<E,Style=
         s.style() == self
     }
 
+    fn color(&self) -> Self::Color;
+
     //fn xx_color(&self) -> Color;
     //fn set_xx_color(&mut self) -> Color;
 }

@@ -5,7 +5,7 @@ use super::*;
 
 impl<S,E> Handler<E> for StandardCtx<S,E> where S: Handler<E>, E: Env, ECHandler<E>: AsHandler<Self,E> + 'static {
     #[inline] 
-    fn _render(l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
+    fn _render(l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
         S::_render(l,r);
         todo!()
     }

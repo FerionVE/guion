@@ -83,7 +83,7 @@ macro_rules! impl_template_inner {
     };
 }
 
-pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
+pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
     todo!()
 }
 

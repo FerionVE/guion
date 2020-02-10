@@ -75,7 +75,7 @@ macro_rules! impl_button_inner {
     };
 }
 
-pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds)) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
+pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
     let senf = l.me::<W>();
     let down = 
         l.is_hovered() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::MOUSE_LEFT], l.id()) ||

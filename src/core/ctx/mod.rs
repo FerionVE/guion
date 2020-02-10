@@ -45,7 +45,7 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     fn _handler(&self) -> &Self::Handler;
 
     #[inline] 
-    fn render(&mut self, w: Resolved<E>, r: (&mut ERenderer<E>,&Bounds)) {
+    fn render(&mut self, w: Resolved<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
         Self::Handler::_render(self.link(w),r)
     }
     #[inline] 

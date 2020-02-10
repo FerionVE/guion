@@ -9,7 +9,7 @@ pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
         w.invalid() || self.force(b)
     }
     #[inline] 
-    fn render_widgets<'a>(&mut self, b: &Bounds, i: impl Iterator<Item=WPSlice<'a,E>>+'a, c: CtxRef<E>, overlap: bool) {
+    fn render_widgets<'a>(&mut self, b: &Bounds, s: &EStyle<E>, i: impl Iterator<Item=WPSlice<'a,E>>+'a, c: CtxRef<E>, overlap: bool) {
         if overlap {
             let mut render = false;
             for w in i {
@@ -19,7 +19,11 @@ pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
                     let mut border = c.1.default_border().clone();
                     ww.border(&mut border);
                     let sliced = b.inside(&border);
-                    ww.render(c.1,(self,&sliced));
+
+                    let mut style = s.clone();
+                    ww.style(&mut style);
+
+                    ww.render(c.1,(self,&sliced,&style));
                 }
                 render &= overlap;
             }

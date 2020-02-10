@@ -12,7 +12,7 @@ use super::*;
 macro_rules! impl_null {
     ($t:ty) => {
         #[doc(hidden)]
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::INull<E>, E: $crate::macro_prelude::Env + 'static {
+        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::INull<E>, E: $crate::macro_prelude::Env + 'static, $crate::macro_prelude::ERenderer<E>: $crate::macro_prelude::RenderStdWidgets<E> {
             $crate::impl_null_inner!($t,E);
         }
     };
@@ -83,8 +83,8 @@ macro_rules! impl_null_inner {
     };
 }
 
-pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds)) {
-    
+pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) where ERenderer<E>: RenderStdWidgets<E> {
+    r.0.fill_rect(r.1,c.color());
 }
 
 pub fn _event<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {

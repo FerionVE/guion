@@ -72,7 +72,7 @@ macro_rules! impl_pane_inner {
     };
 }
 
-pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds)) {
+pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
     let senf = l.me::<W>();
     let o = senf.orientation();
     
