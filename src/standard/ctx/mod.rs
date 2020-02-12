@@ -9,3 +9,12 @@ pub struct StandardCtx<S,E> where S: Handler<E>, E: Env, ECHandler<E>: AsHandler
     //pub selected: Option<S>,
     _c: PhantomData<E>,
 }
+
+impl<S,E> StandardCtx<S,E> where S: Handler<E>, E: Env, ECHandler<E>: AsHandler<Self,E> {
+    pub fn new(sup: S) -> Self {
+        Self{
+            sup,
+            _c: PhantomData,
+        }
+    }
+}

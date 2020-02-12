@@ -69,7 +69,7 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::style(self,s)
         }
         #[inline]
-        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: (&mut $crate::macro_prelude::ERenderer<$c>,&$crate::macro_prelude::Bounds)) {
+        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: (&mut $crate::macro_prelude::ERenderer<$c>,&$crate::macro_prelude::Bounds,&crate::macro_prelude::EStyle<$c>)) {
             $crate::widgets::template::_render::<Self,$c>(l,r)
         }
         #[inline]

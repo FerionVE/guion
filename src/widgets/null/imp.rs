@@ -12,7 +12,11 @@ use super::*;
 macro_rules! impl_null {
     ($t:ty) => {
         #[doc(hidden)]
-        impl<E> $crate::macro_prelude::Widget<E> for $t where $t: $crate::macro_prelude::INull<E>, E: $crate::macro_prelude::Env + 'static, $crate::macro_prelude::ERenderer<E>: $crate::macro_prelude::RenderStdWidgets<E> {
+        impl<E> $crate::macro_prelude::Widget<E> for $t where
+            $t: $crate::macro_prelude::INull<E>,
+            E: $crate::macro_prelude::Env + 'static,
+            $crate::macro_prelude::ERenderer<E>: $crate::macro_prelude::RenderStdWidgets<E>
+        {
             $crate::impl_null_inner!($t,E);
         }
     };
@@ -69,7 +73,7 @@ macro_rules! impl_null_inner {
             $crate::macro_prelude::INull::style(self,s)
         }
         #[inline]
-        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: (&mut $crate::macro_prelude::ERenderer<$c>,&$crate::macro_prelude::Bounds)) {
+        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: (&mut $crate::macro_prelude::ERenderer<$c>,&$crate::macro_prelude::Bounds,&crate::macro_prelude::EStyle<$c>)) {
             $crate::widgets::null::_render::<Self,$c>(l,r)
         }
         #[inline]
@@ -84,7 +88,7 @@ macro_rules! impl_null_inner {
 }
 
 pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) where ERenderer<E>: RenderStdWidgets<E> {
-    r.0.fill_rect(r.1,c.color());
+    r.0.fill_rect(r.1,r.2.color());
 }
 
 pub fn _event<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {

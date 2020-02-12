@@ -1,7 +1,7 @@
 use std::any::Any;
 use super::*;
 
-impl<T,E,C> INull<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: INull<E>, E: Env + 'static {
+impl<T,E,C> INull<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: INull<E>, E: Env + 'static, ERenderer<E>: RenderStdWidgets<E> {
     #[inline]
     fn id(&self) -> E::WidgetID {
         <T as INull<E>>::id(self)
@@ -30,7 +30,7 @@ impl<T,E,C> INull<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'stat
     }
 }
 #[doc(hidden)]
-impl<T,E,C> Widget<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: INull<E>, E: Env + 'static {
+impl<T,E,C> Widget<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: INull<E>, E: Env + 'static, ERenderer<E>: RenderStdWidgets<E> {
     crate::impl_null_inner!(AsNull<T,E,C>,E);
     #[inline]
     fn as_any_inner(&self) -> &dyn Any {
