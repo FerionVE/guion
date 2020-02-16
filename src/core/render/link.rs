@@ -26,11 +26,11 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         )
     }
     #[inline]
-    pub fn force(&self) -> bool {
+    pub fn force(&mut self) -> bool {
         self.force || self.r.force(&self.b)
     }
     #[inline]
-    pub fn requires_render(&self, w: &E::DynWidget) -> bool {
+    pub fn requires_render(&mut self, w: &E::DynWidget) -> bool {
         (w.invalid() || self.force) || self.r.requires_render(&self.b,w)
     }
     #[inline]
@@ -74,11 +74,11 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     #[inline]
     pub fn with<'s,V>(&'s mut self, verbs: impl IntoIterator<Item=impl Deref<Target=V>>) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Copy, 'a: 's {
         RenderLink{
+            force: self.force(),
             r: self.r,
             b: self.b.clone(),
             v: self.v.with(verbs),
             s: self.s.clone(),
-            force: self.force(),
         }
     }
     /// get the current color defined by the style variant
@@ -117,7 +117,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
                 force: self.force,
             };
 
-            w.render(&mut fork)
+            w.render(&mut fork) //TODO let render return valid state and enqueue from
         }
     }
 

@@ -13,8 +13,8 @@ pub trait WidgetImmediate<'d,E> where E: Env {
 pub trait WidgetImmediateMut<'d,E> where E: Env {
     fn resolve(self, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()> where Self: Sized;
     fn resolve_box(self: Box<Self>, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()>;
-    fn resolve_mut(self, s: WPSlice<E>) -> Result<WidgetRefMut<'d,E>,()> where Self: Sized;
-    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>) -> Result<WidgetRefMut<'d,E>,()>;
+    fn resolve_mut(self, s: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'d,E>,()> where Self: Sized;
+    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'d,E>,()>;
     fn widget(&self) -> &E::DynWidget;
     fn widget_mut(&mut self) -> &mut E::DynWidget;
     fn cloned(&mut self) -> WidgetRefMut<E>;
@@ -44,11 +44,11 @@ impl<'d,T,E> WidgetImmediateMut<'d,E> for &'d mut T where T: Widget<E>, E: Env {
     fn resolve_box(self: Box<Self>, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()> {
         <T as Widget<E>>::resolve(*self,s)
     }
-    fn resolve_mut(self, s: WPSlice<E>, invaldiate: bool) -> Result<WidgetRefMut<'d,E>,()> {
-        <T as Widget<E>>::resolve_mut(self,s)
+    fn resolve_mut(self, s: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'d,E>,()> {
+        <T as Widget<E>>::resolve_mut(self,s,invalidate)
     }
-    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>, invaldiate: bool) -> Result<WidgetRefMut<'d,E>,()> {
-        <T as Widget<E>>::resolve_mut(*self,s)
+    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'d,E>,()> {
+        <T as Widget<E>>::resolve_mut(*self,s,invalidate)
     }
     fn widget(&self) -> &E::DynWidget {
         self.erase()

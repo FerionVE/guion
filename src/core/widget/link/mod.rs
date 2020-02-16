@@ -15,13 +15,39 @@ pub struct Link<'c,E> where E: Env {
 impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate<S: Widget<E> + 'static>(&mut self, l: impl FnOnce(&mut E::DynWidget)) {
-        self.ctx.queue_mut().enqueue_widget_mut(self.widget.path.slice(),Box::new(l))
+    pub fn mutate(&mut self, f: fn(&mut E::DynWidget), invalidate: bool) {
+        self.ctx.queue_mut().enqueue_widget_mut(self.widget.path.slice(),f,invalidate)
+    }
+    /// enqueue mutable access to this widget
+    #[inline] 
+    pub fn mutate_closure(&mut self, f: impl FnOnce(&mut E::DynWidget), invalidate: bool) {
+        self.ctx.queue_mut().enqueue_widget_mut_closure(self.widget.path.slice(),Box::new(f),invalidate)
     }
     /// enqueue immutable access to this widget
     #[inline] 
-    pub fn later<S: Widget<E> + 'static>(&mut self, l: impl FnOnce(&E::DynWidget)) {
-        self.ctx.queue_mut().enqueue_widget(self.widget.path.slice(),Box::new(l))
+    pub fn later(&mut self, f: fn(&E::DynWidget)) {
+        self.ctx.queue_mut().enqueue_widget(self.widget.path.slice(),f)
+    }
+    /// enqueue immutable access to this widget
+    #[inline] 
+    pub fn later_closure(&mut self, f: impl FnOnce(&E::DynWidget)) {
+        self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.slice(),Box::new(f))
+    }
+    /// mark the current widget as validated
+    /// this should and should only be called from widget's render fn
+    #[inline]
+    pub fn euqueue_set_validated(&mut self) {
+        self.enqueue_set_invalid(false)
+    }
+    #[inline]
+    pub fn enqueue_set_invalid(&mut self, v: bool) {
+        fn set_true<E: Env>(w: &mut E::DynWidget) {
+            w.set_invalid(true)
+        }
+        fn set_false<E: Env>(w: &mut E::DynWidget) {
+            w.set_invalid(true)
+        }
+        self.mutate(if v {set_true::<E>} else {set_false::<E>},false);
     }
 
     #[inline]
@@ -139,4 +165,3 @@ impl<'a,E> DerefMut for Link<'a,E> where E: Env {
         &mut self.ctx
     }
 }
-
