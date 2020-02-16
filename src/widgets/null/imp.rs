@@ -61,11 +61,11 @@ macro_rules! impl_null_inner {
             false
         }
         #[inline]
-        fn style(&self, s: &mut $crate::macro_prelude::EStyle<$c>) {
+        fn style(&self, s: &mut $crate::macro_prelude::ESVariant<$c>) {
             $crate::macro_prelude::INull::style(self,s)
         }
         #[inline]
-        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: (&mut $crate::macro_prelude::ERenderer<$c>,&$crate::macro_prelude::Bounds,&crate::macro_prelude::EStyle<$c>)) {
+        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: &mut $crate::macro_prelude::RenderLink<$c>) {
             $crate::widgets::null::_render::<Self,$c>(l,r)
         }
         #[inline]
@@ -79,8 +79,8 @@ macro_rules! impl_null_inner {
     };
 }
 
-pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) where ERenderer<E>: RenderStdWidgets<E> {
-    r.0.fill_rect(r.1,r.2.color());
+pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) where ERenderer<E>: RenderStdWidgets<E> {
+    r.fill_rect();
 }
 
 pub fn _event<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {

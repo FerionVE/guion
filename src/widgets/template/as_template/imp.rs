@@ -17,7 +17,7 @@ impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>
     }
     
     #[inline]
-    fn style(&self, s: &mut EStyle<E>) {
+    fn style(&self, s: &mut ESVariant<E>) {
         <T as ITemplate<E>>::style(self,s)
     }
 }

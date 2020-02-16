@@ -35,7 +35,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn render(&mut self, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
+    pub fn render(&mut self, r: &mut RenderLink<E>) {
         self.ctx.render(self.widget(),r)
     }
     #[inline]
@@ -48,7 +48,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// bypasses Context and Handler(s)
     #[inline]
-    pub fn _render(&mut self, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
+    pub fn _render(&mut self, r: &mut RenderLink<E>) {
         let w = self.ctx.link(self.widget.clone());
         self.widget.wref.widget().render(w,r)
     }

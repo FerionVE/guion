@@ -13,6 +13,7 @@ pub type ESPPChar<E: Env> = <EStyle<E> as Style<E>>::PreprocessedChar;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;
+pub type ESVariant<E: Env> = <EStyle<E> as Style<E>>::Variant;
 pub type ECHandler<E: Env> = <E::Context as Context<E>>::Handler;
 pub type ECQueue<E: Env> = <E::Context as Context<E>>::Queue;
 

@@ -31,6 +31,7 @@ pub(crate) use event::{Event,Variant,VariantSupport,imp::*};
 pub(crate) use lazout::*;
 pub(crate) use render::*;
 pub(crate) use render::widgets::*;
+pub(crate) use render::link::*;
 pub(crate) use util::*;
 pub(crate) use util::border::*;
 pub(crate) use util::bounded_widget::*;

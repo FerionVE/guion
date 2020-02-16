@@ -43,7 +43,7 @@ pub trait WidgetPath<E>: AsWPSlice<E> + Clone + PartialEq + Sized + Send + Sync 
     }
 
     #[inline]
-    fn render_of_slice(s: WPSlice<E>, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) -> Result<(),()> {
+    fn render_of_slice(s: WPSlice<E>, c: CtxRef<E>, r: &mut RenderLink<E>) -> Result<(),()> {
         Ok( c.1.render(c.0.widget(s)?,r) )
     }
     #[inline]
@@ -106,7 +106,7 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
     }
     
     #[inline]
-    pub fn render(&self, c: CtxRef<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) -> Result<(),()> {
+    pub fn render(&self, c: CtxRef<E>, r: &mut RenderLink<E>) -> Result<(),()> {
         E::WidgetPath::render_of_slice(*self,c,r)
     }
     #[inline]

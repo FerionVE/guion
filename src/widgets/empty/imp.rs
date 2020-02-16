@@ -68,7 +68,7 @@ macro_rules! impl_empty_inner {
     };
 }
 
-pub fn _render<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
+pub fn _render<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: RenderLink<E>) {
     
 }
 

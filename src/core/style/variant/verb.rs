@@ -4,7 +4,7 @@ use std::iter::Once;
 /// Style implementations may ignore verbs.  
 #[non_exhaustive]
 #[derive(Copy,Clone)]
-pub enum StyleVerb {
+pub enum StdVerb {
     ObjDefault(),
     ObjBackground(),
     ObjBorder(),
@@ -45,9 +45,9 @@ pub enum StyleVerb {
     CursorHand(),
 }
 
-impl IntoIterator for StyleVerb {
-    type Item = StyleVerb;
-    type IntoIter = Once<StyleVerb>;
+impl IntoIterator for StdVerb {
+    type Item = StdVerb;
+    type IntoIter = Once<StdVerb>;
 
     fn into_iter(self) -> Self::IntoIter {
         once(self)

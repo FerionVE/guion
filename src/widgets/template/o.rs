@@ -6,14 +6,14 @@ pub struct Template<E> where E: Env {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
     invalid: Option<u32>,
-    style: Vec<StyleVerb>,
+    style: Vec<StdVerb>,
 }
 
-impl<E> super::ITemplate<E> for Template<E> where E: Env + 'static {
+impl<E> super::ITemplate<E> for Template<E> where E: Env + 'static, ESVariant<E>: StyleVariantSupport<StdVerb> { //TODO trait bounds also on struct and other impls (fix this on all widgets)
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn style(&self, s: &mut EStyle<E>) {
+    fn style(&self, s: &mut ESVariant<E>) {
         s.attach(&self.style[..])
     }
 

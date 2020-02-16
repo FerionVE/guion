@@ -73,7 +73,7 @@ macro_rules! impl_label_inner {
     };
 }
 
-pub fn _render<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
+pub fn _render<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) {
     todo!()
 }
 

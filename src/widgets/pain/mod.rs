@@ -39,7 +39,7 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: Widget<E>, E: Env, Sel
     fn id(&self) -> E::WidgetID {
         todo!()
     }
-    fn render(&self, l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         todo!()
     }
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
@@ -81,7 +81,7 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
     fn id(&self) -> E::WidgetID {
         todo!()
     }
-    fn render(&self, l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         todo!()
     }
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
@@ -119,7 +119,7 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
     fn id(&self) -> E::WidgetID {
         todo!()
     }
-    fn render(&self, l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         todo!()
     }
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
@@ -166,7 +166,7 @@ impl<'c,T,E> WidgetImmediate<'c,E> for Pane<'c,T,E,TRef> where T: WidgetImmediat
     fn widget(&self) -> &E::DynWidget {
         todo!()
     }
-    fn cloned(&self) -> WidgetRef<'c,E> {
+    fn cloned(&self) -> WidgetRef<E> {
         todo!()
     }
 }
@@ -190,7 +190,7 @@ impl<'c,T,E> WidgetImmediateMut<'c,E> for Pane<'c,T,E,TMut> where T: WidgetImmed
     fn widget_mut(&mut self) -> &mut E::DynWidget {
         todo!()
     }
-    fn cloned(&mut self) -> WidgetRefMut<'c,E> {
+    fn cloned(&mut self) -> WidgetRefMut<E> {
         todo!()
     }
 }

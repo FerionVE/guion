@@ -57,11 +57,11 @@ macro_rules! impl_template_inner {
             false
         }
         #[inline]
-        fn style(&self, s: &mut $crate::macro_prelude::EStyle<$c>) {
+        fn style(&self, s: &mut $crate::macro_prelude::ESVariant<$c>) {
             $crate::macro_prelude::ITemplate::style(self,s)
         }
         #[inline]
-        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: (&mut $crate::macro_prelude::ERenderer<$c>,&$crate::macro_prelude::Bounds,&crate::macro_prelude::EStyle<$c>)) {
+        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: &mut $crate::macro_prelude::RenderLink<$c>) {
             $crate::widgets::template::_render::<Self,$c>(l,r)
         }
         #[inline]
@@ -75,7 +75,7 @@ macro_rules! impl_template_inner {
     };
 }
 
-pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>)) {
+pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) {
     todo!()
 }
 

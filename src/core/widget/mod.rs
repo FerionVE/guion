@@ -11,7 +11,7 @@ pub mod immediate;
 pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
-    fn render(&self, l: Link<E>, r: (&mut ERenderer<E>,&Bounds,&EStyle<E>));
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>);
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds));
     fn size(&self, l: Link<E>) -> ESize<E>;
 
@@ -88,7 +88,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn selectable(&self) -> bool;
     /// attach widget's style
     #[inline]
-    fn style(&self, s: &mut EStyle<E>) {
+    fn style(&self, s: &mut ESVariant<E>) {
         
     }
     #[inline]

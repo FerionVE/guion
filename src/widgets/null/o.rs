@@ -4,11 +4,11 @@ use ctx::*;
 
 pub struct Null<E> where E: Env {
     id: E::WidgetID,
-    style: Vec<StyleVerb>,
+    style: Vec<StdVerb>,
 }
 
 impl<E> Null<E> where E: Env {
-    pub fn new(id: E::WidgetID, style: Vec<StyleVerb>) -> Self {
+    pub fn new(id: E::WidgetID, style: Vec<StdVerb>) -> Self {
         Self{
             id,
             style
@@ -16,12 +16,12 @@ impl<E> Null<E> where E: Env {
     }
 }
 
-impl<E> super::INull<E> for Null<E> where E: Env + 'static, ERenderer<E>: RenderStdWidgets<E> {
+impl<E> super::INull<E> for Null<E> where E: Env + 'static, ERenderer<E>: RenderStdWidgets<E>, ESVariant<E>: StyleVariantSupport<StdVerb> {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn style(&self, s: &mut EStyle<E>) {
-        s.attach(&[StyleVerb::ObjBackground(),StyleVerb::Accent(0)]);
+    fn style(&self, s: &mut ESVariant<E>) {
+        s.attach(&[StdVerb::ObjBackground(),StdVerb::Accent(0)]);
         s.attach(&self.style[..]);
     }
 
