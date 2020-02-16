@@ -16,10 +16,14 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
-    fn invalid(&self) -> Option<u32>;
-    fn set_invalid(&mut self, v: Option<u32>);
+    fn invalid(&self) -> bool {
+        true
+    }
+    fn set_invalid(&mut self, v: bool) {
 
-    fn has_childs(&self) -> bool;
+    }
+
+    fn has_childs(&self) -> bool; //TODO eventually trash this
 
     fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
         self._childs()
@@ -52,7 +56,8 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     }
 
     #[inline]
-    fn resolve_mut<'a>(&'a mut self, i: WPSlice<E>) -> Result<WidgetRefMut<'a,E>,()> {
+    fn resolve_mut<'a>(&'a mut self, i: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'a,E>,()> {
+        if invalidate {self.set_invalid(true);}
         if i.slice.is_empty() {
             return Ok(self.as_immediate_mut())
         }

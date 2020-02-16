@@ -8,11 +8,11 @@ impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>
     }
     
     #[inline]
-    fn invalid(&self) -> Option<u32> {
+    fn invalid(&self) -> bool {
         <T as ITemplate<E>>::invalid(self)
     }
     #[inline]
-    fn set_invalid(&mut self, v: Option<u32>) {
+    fn set_invalid(&mut self, v: bool) {
         <T as ITemplate<E>>::set_invalid(self,v)
     }
     

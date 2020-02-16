@@ -36,14 +36,14 @@ pub fn resolve_in_root<'a,E: Env>(w: &'a E::DynWidget, p: WPSlice<E>) -> Option<
     }
 }
 
-pub fn resolve_in_root_mut<'a,E: Env>(w: &'a mut E::DynWidget, p: WPSlice<E>) -> Option<(WidgetRefMut<'a,E>,EWPRc<E>)> {
+pub fn resolve_in_root_mut<'a,E: Env>(w: &'a mut E::DynWidget, p: WPSlice<E>, invalidate: bool) -> Option<(WidgetRefMut<'a,E>,EWPRc<E>)> {
     let path = resolve_in_root(w,p).map(|e| e.1 );
 
     if path.is_none() {return None;}
     let path = path.unwrap();
 
     Some((
-        w.resolve_mut(path.slice()).unwrap(),
+        w.resolve_mut(path.slice(),invalidate).unwrap(),
         path
     ))
 }

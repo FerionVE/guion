@@ -25,10 +25,10 @@ impl<E> super::INull<E> for Null<E> where E: Env + 'static, ERenderer<E>: Render
         s.attach(&self.style[..]);
     }
 
-    fn invalid(&self) -> Option<u32> {
-        None
+    fn invalid(&self) -> bool {
+        true
     }
-    fn set_invalid(&mut self, v: Option<u32>) {
+    fn set_invalid(&mut self, v: bool) {
         
     }
 }

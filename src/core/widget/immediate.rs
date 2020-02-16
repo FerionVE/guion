@@ -44,10 +44,10 @@ impl<'d,T,E> WidgetImmediateMut<'d,E> for &'d mut T where T: Widget<E>, E: Env {
     fn resolve_box(self: Box<Self>, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()> {
         <T as Widget<E>>::resolve(*self,s)
     }
-    fn resolve_mut(self, s: WPSlice<E>) -> Result<WidgetRefMut<'d,E>,()> {
+    fn resolve_mut(self, s: WPSlice<E>, invaldiate: bool) -> Result<WidgetRefMut<'d,E>,()> {
         <T as Widget<E>>::resolve_mut(self,s)
     }
-    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>) -> Result<WidgetRefMut<'d,E>,()> {
+    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>, invaldiate: bool) -> Result<WidgetRefMut<'d,E>,()> {
         <T as Widget<E>>::resolve_mut(*self,s)
     }
     fn widget(&self) -> &E::DynWidget {

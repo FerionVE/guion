@@ -48,10 +48,10 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: Widget<E>, E: Env, Sel
     fn size(&self, l: Link<E>) -> ESize<E> {
         todo!()
     }
-    fn invalid(&self) -> Option<u32> {
+    fn invalid(&self) -> bool {
         todo!()
     }
-    fn set_invalid(&mut self, v: Option<u32>) {
+    fn set_invalid(&mut self, v: bool) {
         todo!()
     }
     fn has_childs(&self) -> bool {
@@ -90,10 +90,10 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
     fn size(&self, l: Link<E>) -> ESize<E> {
         todo!()
     }
-    fn invalid(&self) -> Option<u32> {
+    fn invalid(&self) -> bool {
         todo!()
     }
-    fn set_invalid(&mut self, v: Option<u32>) {
+    fn set_invalid(&mut self, v: bool) {
         todo!()
     }
     fn has_childs(&self) -> bool {
@@ -128,10 +128,10 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
     fn size(&self, l: Link<E>) -> ESize<E> {
         todo!()
     }
-    fn invalid(&self) -> Option<u32> {
+    fn invalid(&self) -> bool {
         todo!()
     }
-    fn set_invalid(&mut self, v: Option<u32>) {
+    fn set_invalid(&mut self, v: bool) {
         todo!()
     }
     fn has_childs(&self) -> bool {

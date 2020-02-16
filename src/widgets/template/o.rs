@@ -5,7 +5,7 @@ use ctx::*;
 pub struct Template<E> where E: Env {
     id: E::WidgetID,
     parent: Option<E::WidgetID>,
-    invalid: Option<u32>,
+    invalid: bool,
     style: Vec<StdVerb>,
 }
 
@@ -17,10 +17,10 @@ impl<E> super::ITemplate<E> for Template<E> where E: Env + 'static, ESVariant<E>
         s.attach(&self.style[..])
     }
 
-    fn invalid(&self) -> Option<u32> {
+    fn invalid(&self) -> bool {
         self.invalid //return true if no invalid field is stored
     }
-    fn set_invalid(&mut self, v: Option<u32>) {
+    fn set_invalid(&mut self, v: bool) {
         self.invalid = v;
     }
 }

@@ -8,11 +8,11 @@ impl<T,E,C> INull<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'stat
     }
     
     #[inline]
-    fn invalid(&self) -> Option<u32> {
+    fn invalid(&self) -> bool {
         <T as INull<E>>::invalid(self)
     }
     #[inline]
-    fn set_invalid(&mut self, v: Option<u32>) {
+    fn set_invalid(&mut self, v: bool) {
         <T as INull<E>>::set_invalid(self,v)
     }
     

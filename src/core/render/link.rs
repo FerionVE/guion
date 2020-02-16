@@ -7,9 +7,47 @@ pub struct RenderLink<'a,E> where E: Env {
     pub b: Bounds,
     pub v: ESVariant<E>,
     pub s: EStyle<E>,
+    pub force: bool,
 }
 
 impl<'a,E> RenderLink<'a,E> where E: Env {
+    pub fn new(r: &'a mut ERenderer<E>, b: Bounds, v: ESVariant<E>, s: EStyle<E>, force: bool) -> Self {
+        Self{
+            r,b,v,s,force,
+        }
+    }
+    pub fn simple(r: &'a mut ERenderer<E>, dim: (u32,u32), c: &E::Context) -> Self {
+        Self::new(
+            r,
+            Bounds::from_xywh(0,0,dim.0,dim.1),
+            ESVariant::<E>::default(),
+            c.default_style().clone(),
+            false,
+        )
+    }
+    #[inline]
+    pub fn force(&self) -> bool {
+        self.force || self.r.force(&self.b)
+    }
+    #[inline]
+    pub fn requires_render(&self, w: &E::DynWidget) -> bool {
+        (w.invalid() || self.force) || self.r.requires_render(&self.b,w)
+    }
+    #[inline]
+    pub fn with_force<'s>(&'s mut self, force: bool) -> RenderLink<'s,E> where 'a: 's {
+        RenderLink{
+            r: self.r,
+            b: self.b.clone(),
+            v: self.v.clone(),
+            s: self.s.clone(),
+            force,
+        }
+    }
+    #[inline]
+    pub fn enforced<'s>(&'s mut self) -> RenderLink<'s,E> where 'a: 's {
+        self.with_force(true)
+    }
+
     /// fork with area inside the border
     #[inline]
     pub fn inside<'s>(&'s mut self, s: &'s Border) -> RenderLink<'s,E> where 'a: 's {
@@ -18,6 +56,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             b: self.b.inside(s),
             v: self.v.clone(),
             s: self.s.clone(),
+            force: self.force,
         }
     }
     /// fork with area inside the bounds
@@ -28,9 +67,10 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             b: self.b.slice(s),
             v: self.v.clone(),
             s: self.s.clone(),
+            force: self.force,
         }
     }
-    // fork with attached style variant verbs
+    /// fork with attached style variant verbs
     #[inline]
     pub fn with<'s,V>(&'s mut self, verbs: impl IntoIterator<Item=impl Deref<Target=V>>) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Copy, 'a: 's {
         RenderLink{
@@ -38,63 +78,101 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             b: self.b.clone(),
             v: self.v.with(verbs),
             s: self.s.clone(),
+            force: self.force(),
+        }
+    }
+    /// get the current color defined by the style variant
+    #[inline]
+    pub fn color(&self) -> ESColor<E> {
+        self.s.color(&self.v)
+    }
+
+    /*#[inline]
+    pub fn for_widget<'s,W>(&'s mut self, w: &W, mut border: Border) -> RenderLink<'s,E> where W: Widget<E>, 'a: 's {
+        let mut b = self.v.clone();
+        let mut v = self.v.clone();
+        w.border(&mut b);
+        w.style(&mut v);
+        
+    }*/
+
+    #[inline]
+    pub fn render_widget(&mut self, mut w: Link<E>) {
+        if self.r.requires_render(&self.b,&*w.widget()) {
+            if self.force() {
+                todo!("clear_rect")
+            }
+
+            let mut border = w.default_border().clone();
+            w.widget().border(&mut border);
+
+            let mut style = self.v.clone();
+            w.widget().style(&mut style);
+
+            let mut fork = RenderLink{
+                r: self.r,
+                b: self.b.inside(&border),
+                v: style,
+                s: self.s.clone(),
+                force: self.force,
+            };
+
+            w.render(&mut fork)
         }
     }
 
     #[inline] 
     pub fn render_widgets<'b>(&mut self, i: impl Iterator<Item=WPSlice<'b,E>>+'b, c: CtxRef<E>, overlap: bool) {
-        todo!()
-        /*
-        if overlap {
+        /*if overlap {
             let mut render = false;
             for w in i {
                 let ww = c.0.widget(w).expect("Lost Widget");
-                render |= self.requires_render(b,&ww);
+                render |= self.r.requires_render(b,&ww);
                 if render {
                     let mut border = c.1.default_border().clone();
                     ww.border(&mut border);
-                    let sliced = b.inside(&border);
 
                     let mut style = s.clone();
                     ww.style(&mut style);
 
-                    ww.render(c.1,(self,&sliced,&style));
+                    ww.render(c.1,senf);
                 }
                 render &= overlap;
             }
-        }
-        */
+        }*/
+        todo!()
     }
 }
 
 impl<'a,E> RenderLink<'a,E> where E: Env, ERenderer<E>: RenderStdWidgets<E> {
     #[inline]
     pub fn fill_rect(&mut self) {
-        todo!()
+        self.r.fill_rect(&self.b,self.color())
     }
     #[inline]
     pub fn border_rect(&mut self, thickness: u32) {
-        todo!()
+        self.r.border_rect(&self.b,self.color(),thickness)
     }
     #[deprecated = "avoid this because stuff is not cached"]
+    #[allow(deprecated)]
     #[inline]
     pub fn render_text(&mut self, text: &str, c: &mut E::Context) {
-        todo!()
+        self.r.render_text(&self.b,text,&self.s,&self.v,c)
     }
     #[inline]
-    pub fn render_preprocessed_text(&mut self, text: &ESPPText<E>) {
-        todo!()
+    pub fn render_preprocessed_text(&mut self, text: &ESPPText<E>, c: &mut E::Context) {
+        self.r.render_preprocessed_text(&self.b,text,&self.s,&self.v,c) //TODO we should no always give ctx through the render, for example the text/font can be inside the render head
     }
     #[inline]
     pub fn set_cursor(&mut self, cursor: ESCursor<E>) {
-        todo!()
+        self.r.set_cursor(&self.b,cursor)
     }
     #[inline]
     pub fn draw_text_button(&mut self, pressed: bool, caption: &str) {
-        todo!()
+        self.r.draw_text_button(&self.b,pressed,caption,&self.s,&self.v)
     }
     #[inline]
     pub fn draw_selected(&mut self, s: &EStyle<E>) {
-        todo!()
+        self.r.draw_selected(&self.b,&self.s,&self.v)
     }
 }

@@ -28,6 +28,6 @@ pub trait INull<E>: Widget<E> where E: Env {
 
     fn style(&self, s: &mut ESVariant<E>);
     
-    fn invalid(&self) -> Option<u32>;
-    fn set_invalid(&mut self, v: Option<u32>);
+    fn invalid(&self) -> bool;
+    fn set_invalid(&mut self, v: bool);
 }

@@ -29,11 +29,11 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::id(self)
         }
         #[inline]
-        fn invalid(&self) -> Option<u32> {
+        fn invalid(&self) -> bool {
             $crate::macro_prelude::ITemplate::invalid(self)
         }
         #[inline]
-        fn set_invalid(&mut self, v: Option<u32>) {
+        fn set_invalid(&mut self, v: bool) {
             $crate::macro_prelude::ITemplate::set_invalid(self,v)
         }
         #[inline]
