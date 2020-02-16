@@ -131,6 +131,10 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
     pub fn index<S: SliceIndex<[EWPSub<E>],Output=EWPSub<E>>>(&self, s: S) -> &'a EWPSub<E> {
         &self.slice[s]
     }
+    #[inline]
+    pub fn attached(&self, s: EWPSub<E>) -> E::WidgetPath {
+        self.unslice().attached(s)
+    }
 }
 
 impl<'a,E> PartialEq for WPSlice<'a,E> where E: Env {

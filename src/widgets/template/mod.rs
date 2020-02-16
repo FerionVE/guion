@@ -28,9 +28,6 @@ pub trait ITemplate<E>: Widget<E> where E: Env {
 
     fn style(&self, s: &mut EStyle<E>);
     
-    fn invalid(&self) -> bool;
-    fn set_invalid(&mut self, v: bool);
-
-    fn parent(&self) -> Option<E::WidgetID>;
-    fn set_parent(&mut self, v: Option<E::WidgetID>);
+    fn invalid(&self) -> Option<u32>;
+    fn set_invalid(&mut self, v: Option<u32>);
 }

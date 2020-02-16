@@ -6,7 +6,7 @@ pub mod widgets;
 pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
     #[inline]
     fn requires_render(&mut self, b: &Bounds, w: &E::DynWidget) -> bool {
-        w.invalid() || self.force(b)
+        unimplemented!() || self.force(b)
     }
     #[inline] 
     fn render_widgets<'a>(&mut self, b: &Bounds, s: &EStyle<E>, i: impl Iterator<Item=WPSlice<'a,E>>+'a, c: CtxRef<E>, overlap: bool) {

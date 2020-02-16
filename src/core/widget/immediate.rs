@@ -8,6 +8,7 @@ pub trait WidgetImmediate<'d,E> where E: Env {
     fn resolve_box(self: Box<Self>, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()>;
     fn resolve_ref(&self, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()>;
     fn widget(&self) -> &E::DynWidget;
+    fn cloned(&self) -> WidgetRef<'d,E>;
 }
 pub trait WidgetImmediateMut<'d,E> where E: Env {
     fn resolve(self, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()> where Self: Sized;
@@ -16,6 +17,7 @@ pub trait WidgetImmediateMut<'d,E> where E: Env {
     fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>) -> Result<WidgetRefMut<'d,E>,()>;
     fn widget(&self) -> &E::DynWidget;
     fn widget_mut(&mut self) -> &mut E::DynWidget;
+    fn cloned(&mut self) -> WidgetRefMut<'d,E>;
 }
 
 impl<'d,T,E> WidgetImmediate<'d,E> for &'d T where T: Widget<E>, E: Env {
@@ -30,6 +32,9 @@ impl<'d,T,E> WidgetImmediate<'d,E> for &'d T where T: Widget<E>, E: Env {
     }
     fn widget(&self) -> &E::DynWidget {
         self.erase()
+    }
+    fn cloned(&self) -> WidgetRef<'d,E> {
+        Box::new(*self)
     }
 }
 impl<'d,T,E> WidgetImmediateMut<'d,E> for &'d mut T where T: Widget<E>, E: Env {
@@ -51,7 +56,32 @@ impl<'d,T,E> WidgetImmediateMut<'d,E> for &'d mut T where T: Widget<E>, E: Env {
     fn widget_mut(&mut self) -> &mut E::DynWidget {
         self.erase_mut()
     }
+    fn cloned(&mut self) -> WidgetRefMut<'d,E> {
+        Box::new(*self)
+    }
 }
+
+/*pub trait AsDynWidgetRef<E> where E: Env {
+    fn widget(&self) -> &E::DynWidget;
+}
+pub trait AsDynWidgetRefMut<E> where E: Env {
+    fn widget(&self) -> &E::DynWidget;
+    fn widget_mut(&mut self) -> &mut E::DynWidget;
+}
+
+impl<E,T> AsDynWidgetRef<E> for T where T: Widget<E>, E: Env {
+    fn widget(&self) -> &E::DynWidget {
+        self.erase()
+    }
+}
+impl<E,T> AsDynWidgetRefMut<E> for T where T: Widget<E>, E: Env {
+    fn widget(&self) -> &E::DynWidget {
+        self.erase()
+    }
+    fn widget_mut(&mut self) -> &mut E::DynWidget {
+        self.erase_mut()
+    }
+}*/
 
 #[allow(type_alias_bounds)]
 pub type WidgetRef<'a,E: Env> = Box<dyn WidgetImmediate<'a,E>+'a>;

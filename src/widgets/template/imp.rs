@@ -29,20 +29,12 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::id(self)
         }
         #[inline]
-        fn invalid(&self) -> bool {
+        fn invalid(&self) -> Option<u32> {
             $crate::macro_prelude::ITemplate::invalid(self)
         }
         #[inline]
-        fn set_invalid(&mut self, v: bool) {
+        fn set_invalid(&mut self, v: Option<u32>) {
             $crate::macro_prelude::ITemplate::set_invalid(self,v)
-        }
-        #[inline]
-        fn parent(&self) -> Option<<$c>::WidgetID> {
-            $crate::macro_prelude::ITemplate::parent(self)
-        }
-        #[inline]
-        fn set_parent(&mut self, v: Option<<$c>::WidgetID>) {
-            $crate::macro_prelude::ITemplate::set_parent(self,v)
         }
         #[inline]
         fn _childs(&self) -> Vec<$crate::macro_prelude::WidgetRef<$c>> {

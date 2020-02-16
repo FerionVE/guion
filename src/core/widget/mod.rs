@@ -16,11 +16,8 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
-    fn invalid(&self) -> bool;
-    fn set_invalid(&mut self, v: bool);
-
-    fn parent(&self) -> Option<E::WidgetID>;
-    fn set_parent(&mut self, v: Option<E::WidgetID>);
+    fn invalid(&self) -> Option<u32>;
+    fn set_invalid(&mut self, v: Option<u32>);
 
     fn has_childs(&self) -> bool;
 
@@ -80,7 +77,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     }
     #[inline]
     fn self_in_parent(&self, parent: WPSlice<E>) -> E::WidgetPath {
-        parent.unslice().attached(SubPath::from_id(self.id()))
+        parent.attached(SubPath::from_id(self.id()))
     }
     #[inline]
     fn is_subpath(&self, p: &EWPSub<E>) -> bool {

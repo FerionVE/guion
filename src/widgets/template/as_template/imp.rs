@@ -8,22 +8,14 @@ impl<T,E,C> ITemplate<E> for AsTemplate<T,E,C> where C: Borrow<T> + BorrowMut<T>
     }
     
     #[inline]
-    fn invalid(&self) -> bool {
+    fn invalid(&self) -> Option<u32> {
         <T as ITemplate<E>>::invalid(self)
     }
     #[inline]
-    fn set_invalid(&mut self, v: bool) {
+    fn set_invalid(&mut self, v: Option<u32>) {
         <T as ITemplate<E>>::set_invalid(self,v)
     }
     
-    #[inline]
-    fn parent(&self) -> Option<E::WidgetID> {
-        <T as ITemplate<E>>::parent(self)
-    }
-    #[inline]
-    fn set_parent(&mut self, v: Option<E::WidgetID>) {
-        <T as ITemplate<E>>::set_parent(self,v)
-    }
     #[inline]
     fn style(&self, s: &mut EStyle<E>) {
         <T as ITemplate<E>>::style(self,s)

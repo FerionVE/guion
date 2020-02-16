@@ -8,22 +8,14 @@ impl<T,E,C> INull<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'stat
     }
     
     #[inline]
-    fn invalid(&self) -> bool {
+    fn invalid(&self) -> Option<u32> {
         <T as INull<E>>::invalid(self)
     }
     #[inline]
-    fn set_invalid(&mut self, v: bool) {
+    fn set_invalid(&mut self, v: Option<u32>) {
         <T as INull<E>>::set_invalid(self,v)
     }
     
-    #[inline]
-    fn parent(&self) -> Option<E::WidgetID> {
-        <T as INull<E>>::parent(self)
-    }
-    #[inline]
-    fn set_parent(&mut self, v: Option<E::WidgetID>) {
-        <T as INull<E>>::set_parent(self,v)
-    }
     #[inline]
     fn style(&self, s: &mut EStyle<E>) {
         <T as INull<E>>::style(self,s)
