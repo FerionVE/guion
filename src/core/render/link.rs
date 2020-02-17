@@ -3,17 +3,27 @@ use std::ops::Deref;
 
 /// reference-compound of renderer, current bounds and style
 pub struct RenderLink<'a,E> where E: Env {
+    /// the underlying renderer
     pub r: &'a mut ERenderer<E>,
+    /// current slice
     pub b: Bounds,
+    /// current slice, but including last border
+    pub br: Bounds,
     pub v: ESVariant<E>,
     pub s: EStyle<E>,
+    /// whether rendering is enforced (e.g. if invalidation from outside occured)
     pub force: bool,
 }
 
 impl<'a,E> RenderLink<'a,E> where E: Env {
     pub fn new(r: &'a mut ERenderer<E>, b: Bounds, v: ESVariant<E>, s: EStyle<E>, force: bool) -> Self {
         Self{
-            r,b,v,s,force,
+            r,
+            br: b.clone(),
+            b,
+            v,
+            s,
+            force,
         }
     }
     pub fn simple(r: &'a mut ERenderer<E>, dim: (u32,u32), c: &E::Context) -> Self {
@@ -33,16 +43,19 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     pub fn requires_render(&mut self, w: &E::DynWidget) -> bool {
         (w.invalid() || self.force) || self.r.requires_render(&self.b,w)
     }
+    /// fork with force set
     #[inline]
     pub fn with_force<'s>(&'s mut self, force: bool) -> RenderLink<'s,E> where 'a: 's {
         RenderLink{
             r: self.r,
             b: self.b.clone(),
+            br: self.br.clone(),
             v: self.v.clone(),
             s: self.s.clone(),
             force,
         }
     }
+    /// fork with force set to true
     #[inline]
     pub fn enforced<'s>(&'s mut self) -> RenderLink<'s,E> where 'a: 's {
         self.with_force(true)
@@ -54,6 +67,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.inside(s),
+            br: self.b.clone(),
             v: self.v.clone(),
             s: self.s.clone(),
             force: self.force,
@@ -65,6 +79,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.slice(s),
+            br: self.b.slice(s),
             v: self.v.clone(),
             s: self.s.clone(),
             force: self.force,
@@ -77,7 +92,20 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             force: self.force(),
             r: self.r,
             b: self.b.clone(),
+            br: self.br.clone(),
             v: self.v.with(verbs),
+            s: self.s.clone(),
+        }
+    }
+    #[deprecated="Unstable"]
+    #[inline]
+    pub fn inter_border<'s,V>(&'s mut self) -> RenderLink<'s,E> where 'a: 's {
+        RenderLink{
+            force: self.force(),
+            r: self.r,
+            b: self.br.clone(),
+            br: self.br.clone(),
+            v: self.v.clone(),
             s: self.s.clone(),
         }
     }
@@ -112,6 +140,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             let mut fork = RenderLink{
                 r: self.r,
                 b: self.b.inside(&border),
+                br: self.b.clone(),
                 v: style,
                 s: self.s.clone(),
                 force: self.force,
