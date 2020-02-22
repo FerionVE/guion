@@ -4,13 +4,13 @@ use ctx::Handler;
 
 pub mod imp;
 
-pub struct StandardCtx<S,E> where S: Handler<E>, E: Env, ECHandler<E>: AsHandler<Self,E> {
+pub struct StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self> {
     pub sup: S,
     //pub selected: Option<S>,
     _c: PhantomData<E>,
 }
 
-impl<S,E> StandardCtx<S,E> where S: Handler<E>, E: Env, ECHandler<E>: AsHandler<Self,E> {
+impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self> {
     pub fn new(sup: S) -> Self {
         Self{
             sup,

@@ -28,4 +28,6 @@ pub trait Style<E>: Clone where E: Env, E::Backend: Backend<E,Style=Self> {
     fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::PreprocessedText;
     //TODO fix partial eq impl
     fn is_cached_valid(&self, s: &Self::PreprocessedText, _c: &mut E::Context) -> bool;
+
+    fn static_default() -> Self;
 }

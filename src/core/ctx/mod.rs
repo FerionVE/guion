@@ -30,12 +30,12 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     //type Meta: ContextMeta;
 
     #[inline] 
-    fn handler_mut<H: Handler<E>>(&mut self) -> &mut H where Self::Handler: AsHandler<H,E> {
-        Self::Handler::as_mut(self)
+    fn handler_mut<H: Handler<E>>(&mut self) -> &mut H where Self: AsRefMut<H> {
+        Self::as_mut(self)
     }
     #[inline] 
-    fn handler<H: Handler<E>>(&self) -> &H where Self::Handler: AsHandler<H,E> {
-        Self::Handler::as_ref(self)
+    fn handler<H: Handler<E>>(&self) -> &H where Self: AsRefMut<H> {
+        Self::as_ref(self)
     }
 
     fn queue_mut(&mut self) -> &mut Self::Queue;

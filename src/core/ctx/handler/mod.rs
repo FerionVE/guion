@@ -1,8 +1,5 @@
 use super::*;
 
-pub mod access;
-pub use access::*;
-
 /// Handlers are stacked inside a Container and any render/event/size action goes through the handler stack
 pub trait Handler<E>: Sized + 'static where E: Env {
     fn _render(l: Link<E>, r: &mut RenderLink<E>);
