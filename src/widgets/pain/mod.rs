@@ -8,12 +8,12 @@ use toggle::*;
 pub struct Pane<'c,T,E,M> where E: Env, M: Toggle {
     id: E::WidgetID,
     childs: Vec<T>,
-    orientation: bool,
+    orientation: Orientation,
     p: PhantomData<&'c mut (E,M)>,
 }
 
 impl<'c,T,E> Pane<'c,T,E,TOwned> where E: Env {
-    pub fn new(id: E::WidgetID, childs: Vec<T>, orientation: bool) -> Pane<'static,T,E,TOwned> where T: Widget<E> {
+    pub fn new(id: E::WidgetID, childs: Vec<T>, orientation: Orientation) -> Pane<'static,T,E,TOwned> where T: Widget<E> {
         Pane{
             id,
             childs,
@@ -21,7 +21,7 @@ impl<'c,T,E> Pane<'c,T,E,TOwned> where E: Env {
             p: PhantomData,
         }
     }
-    pub fn immediate(id: E::WidgetID, childs: Vec<T>, orientation: bool) -> Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E> {
+    pub fn immediate(id: E::WidgetID, childs: Vec<T>, orientation: Orientation) -> Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E> {
         Pane{
             id,
             childs,
@@ -29,7 +29,7 @@ impl<'c,T,E> Pane<'c,T,E,TOwned> where E: Env {
             p: PhantomData,
         }
     }
-    pub fn immediate_mut(id: E::WidgetID, childs: Vec<T>, orientation: bool) -> Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E> {
+    pub fn immediate_mut(id: E::WidgetID, childs: Vec<T>, orientation: Orientation) -> Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E> {
         Pane{
             id,
             childs,
@@ -43,7 +43,7 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: Widget<E>, E: Env, Sel
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         todo!()
         //return validation instead of manual enqueue
         //l.mutate(|s| s.downcast_mut::<Self>().unwrap().invalid = false);
@@ -51,19 +51,21 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: Widget<E>, E: Env, Sel
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
         todo!()
     }
-    fn size(&self, l: Link<E>) -> ESize<E> {
-        todo!()
+    fn size(&self, mut l: Link<E>) -> ESize<E> {
+        let mut s = ESize::<E>::empty();
+        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(),self.orientation) ).expect("Dead Path inside Pane");
+        s
     }
     fn invalid(&self) -> bool {
-        todo!()
+        true
         //self.invalid
     }
     fn set_invalid(&mut self, v: bool) {
-        todo!()
+        let _ = v;
         //self.invalid = true
     }
     fn has_childs(&self) -> bool {
-        todo!()
+        true
     }
     fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>> {
         self.childs.iter()
@@ -81,15 +83,15 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: Widget<E>, E: Env, Sel
             .collect::<Vec<_>>()
     }
     fn selectable(&self) -> bool {
-        todo!()
+        false
     }
 }
 
 impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: Env, Self: 'static {
     fn id(&self) -> E::WidgetID {
-        todo!()
+        self.id.clone()
     }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         todo!()
     }
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
@@ -99,13 +101,13 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
         todo!()
     }
     fn invalid(&self) -> bool {
-        todo!()
+        true
     }
     fn set_invalid(&mut self, v: bool) {
-        todo!()
+        let _ = v;
     }
     fn has_childs(&self) -> bool {
-        todo!()
+        true
     }
     fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>> {
         panic!()
@@ -119,15 +121,15 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
             .collect::<Vec<_>>()
     }
     fn selectable(&self) -> bool {
-        todo!()
+        false
     }
 }
 
 impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, E: Env, Self: 'static {
     fn id(&self) -> E::WidgetID {
-        todo!()
+        self.id.clone()
     }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         todo!()
     }
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
@@ -137,13 +139,13 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
         todo!()
     }
     fn invalid(&self) -> bool {
-        todo!()
+        true
     }
     fn set_invalid(&mut self, v: bool) {
-        todo!()
+        let _ = v;
     }
     fn has_childs(&self) -> bool {
-        todo!()
+        true
     }
     fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>> {
         panic!()
@@ -157,7 +159,7 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
             .collect::<Vec<_>>()
     }
     fn selectable(&self) -> bool {
-        todo!()
+        false
     }
 }
 
@@ -201,4 +203,23 @@ impl<'c,T,E> WidgetImmediateMut<'c,E> for Pane<'c,T,E,TMut> where T: WidgetImmed
     fn cloned(&mut self) -> WidgetRefMut<E> {
         todo!()
     }
+}
+
+pub fn _render<T,E,M>(mut l: Link<E>, r: &mut RenderLink<E>) -> bool where
+    E: Env,
+    ERenderer<E>: RenderStdWidgets<E>,
+{
+    todo!()    
+}
+
+pub fn _event<T,E,M>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) where
+    E: Env,
+{
+    todo!()    
+}
+
+pub fn _size<T,E,M>(mut l: Link<E>) -> ESize<E> where
+    E: Env,
+{
+    todo!()
 }

@@ -5,8 +5,8 @@ use super::*;
 
 impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self> + 'static {
     #[inline] 
-    fn _render(l: Link<E>, r: &mut RenderLink<E>) {
-        S::_render(l,r);
+    fn _render(l: Link<E>, r: &mut RenderLink<E>) -> bool {
+        S::_render(l,r)
         //todo!()
     }
     #[inline] 

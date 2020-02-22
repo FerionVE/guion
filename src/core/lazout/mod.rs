@@ -19,6 +19,10 @@ pub enum Orientation {
 //TODO move to trait submodule
 pub trait ISize: From<Size> {
     #[inline]
+    fn empty() -> Self where Self: Sized {
+        Size::empty().into()
+    }
+    #[inline]
     fn add(&mut self, o: &Self, dir: Orientation) {
         match dir {
             Orientation::Horizontal() => self.add_x(o),

@@ -65,7 +65,7 @@ macro_rules! impl_null_inner {
             $crate::macro_prelude::INull::style(self,s)
         }
         #[inline]
-        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: &mut $crate::macro_prelude::RenderLink<$c>) {
+        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: &mut $crate::macro_prelude::RenderLink<$c>) -> bool {
             $crate::widgets::null::_render::<Self,$c>(l,r)
         }
         #[inline]
@@ -79,8 +79,9 @@ macro_rules! impl_null_inner {
     };
 }
 
-pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) where ERenderer<E>: RenderStdWidgets<E> {
+pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) -> bool where ERenderer<E>: RenderStdWidgets<E> {
     r.fill_rect();
+    true
 }
 
 pub fn _event<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {

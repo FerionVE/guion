@@ -33,21 +33,21 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn later_closure(&mut self, f: impl FnOnce(&E::DynWidget)) {
         self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.slice(),Box::new(f))
     }
+    #[inline]
+    pub fn enqueue_invalidate(&mut self) {
+        let s = self.widget.path.slice();
+        self.ctx.queue_mut().enqueue_widget_invalidate(s)
+    }
     /// mark the current widget as validated
     /// this should and should only be called from widget's render fn
     #[inline]
-    pub fn euqueue_set_validated(&mut self) {
-        self.enqueue_set_invalid(false)
+    pub fn enqueue_validate(&mut self) {
+        let s = self.widget.path.slice();
+        self.ctx.queue_mut().enqueue_widget_validate(s)
     }
     #[inline]
-    pub fn enqueue_set_invalid(&mut self, v: bool) {
-        fn set_true<E: Env>(w: &mut E::DynWidget) {
-            w.set_invalid(true)
-        }
-        fn set_false<E: Env>(w: &mut E::DynWidget) {
-            w.set_invalid(true)
-        }
-        self.mutate(if v {set_true::<E>} else {set_false::<E>},false);
+    pub fn w(&self) -> &E::DynWidget {
+        &self.widget
     }
 
     #[inline]
@@ -60,8 +60,13 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.widget.id()
     }
 
+    /*#[inline]
+    pub fn for_child<'s>(&'s self, child: &'s E::DynWidget) -> Link<'s> where 'c: 's {
+        
+    }*/
+
     #[inline]
-    pub fn render(&mut self, r: &mut RenderLink<E>) {
+    pub fn render(&mut self, r: &mut RenderLink<E>) -> bool {
         self.ctx.render(self.widget(),r)
     }
     #[inline]
@@ -74,7 +79,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// bypasses Context and Handler(s)
     #[inline]
-    pub fn _render(&mut self, r: &mut RenderLink<E>) {
+    pub fn _render(&mut self, r: &mut RenderLink<E>) -> bool {
         let w = self.ctx.link(self.widget.clone());
         self.widget.wref.widget().render(w,r)
     }
@@ -105,8 +110,33 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.widget.child_paths()
     }
 
+    //THIS IS AN ULTRA HACK
+    //(as shortening teh lifetime even more aggresse we MAY can put an iterator on it)
+    #[inline]
+    pub fn for_childs<'s>(&'s mut self, f: &'s mut impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
+        let wref = self.widget.wref.refc();
+        let path = self.widget.path.refc();
+        let ch = self.widget.childs();
+        let stor = self.widget.stor;
+        for c in ch {
+            let w = c.resolve_widget(stor)?;
+            let w = Resolved{
+                wref: w,
+                path: wref.widget().self_in_parent(path.slice()).into(),
+                stor,
+            };
+            let l = Link{
+                widget: short_resolved(w),
+                ctx: self.ctx,
+            };
+            f(l);
+        }
+        Ok(())
+    }
+
+    /*
     /// iterate over childs
-    /*#[inline]
+    #[inline]
     pub fn childs(&'c self, predicate: impl Fn(WPSlice<'c,E>)->bool + 'c ) -> impl Iterator<Item=&'c E::DynWidget> + 'c {
         self.ctx.widget(self.path).unwrap()
             .child_paths(self.path)

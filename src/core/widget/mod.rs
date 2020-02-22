@@ -11,7 +11,7 @@ pub mod immediate;
 pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>);
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds));
     fn size(&self, l: Link<E>) -> ESize<E>;
 

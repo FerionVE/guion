@@ -61,7 +61,7 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::style(self,s)
         }
         #[inline]
-        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: &mut $crate::macro_prelude::RenderLink<$c>) {
+        fn render(&self, l: $crate::macro_prelude::Link<$c>, r: &mut $crate::macro_prelude::RenderLink<$c>) -> bool {
             $crate::widgets::template::_render::<Self,$c>(l,r)
         }
         #[inline]
@@ -75,8 +75,9 @@ macro_rules! impl_template_inner {
     };
 }
 
-pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) {
-    todo!()
+pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    todo!();
+    true
 }
 
 pub fn _event<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
