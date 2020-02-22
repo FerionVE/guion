@@ -13,7 +13,7 @@ use std::ops::Deref;
 pub mod standard;
 pub mod cursor;
 
-pub trait Style<E>: Clone + PartialEq where E: Env, E::Backend: Backend<E,Style=Self> {
+pub trait Style<E>: Clone where E: Env, E::Backend: Backend<E,Style=Self> {
     type Font;
     type Cursor;
     type Color: Color;
@@ -21,20 +21,11 @@ pub trait Style<E>: Clone + PartialEq where E: Env, E::Backend: Backend<E,Style=
     type PreprocessedChar: PreprocessedChar;
     type Variant: StyleVariant;
 
-    
-
     fn font(&self, v: &Self::Variant) -> Option<&Self::Font>;
     fn cursor(&self, v: &Self::Variant) -> Self::Cursor;
     fn color(&self, v: &Self::Variant) -> Self::Color;
     
     fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::PreprocessedText;
-    #[inline]
-    fn is_cached_valid(&self, s: &Self::PreprocessedText, _c: &mut E::Context) -> bool {
-        s.style() == self
-    }
-
-    
-
-    //fn xx_color(&self) -> Color;
-    //fn set_xx_color(&mut self) -> Color;
+    //TODO fix partial eq impl
+    fn is_cached_valid(&self, s: &Self::PreprocessedText, _c: &mut E::Context) -> bool;
 }

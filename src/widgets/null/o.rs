@@ -21,7 +21,7 @@ impl<E> super::INull<E> for Null<E> where E: Env + 'static, ERenderer<E>: Render
         self.id.clone()
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjBackground(),StdVerb::Accent(0)]);
+        s.attach(&[StdVerb::ObjBackground,StdVerb::Accent(0)]);
         s.attach(&self.style[..]);
     }
 

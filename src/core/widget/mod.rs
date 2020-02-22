@@ -20,7 +20,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         true
     }
     fn set_invalid(&mut self, v: bool) {
-
+        let _ = v;
     }
 
     fn has_childs(&self) -> bool; //TODO eventually trash this
@@ -94,11 +94,11 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     /// attach widget's style
     #[inline]
     fn style(&self, s: &mut ESVariant<E>) {
-        
+        let _ = s;
     }
     #[inline]
     fn border(&self, b: &mut Border) {
-        
+        let _ = b;
     }
     /// returns this widget as Any
     #[inline]

@@ -2,6 +2,7 @@ use super::*;
 
 pub mod verb;
 pub use verb::*;
+use cursor::StdCursor;
 
 pub trait StyleVariant: Clone + Default {
     
@@ -23,3 +24,7 @@ pub trait StyleVariantSupport<V>: StyleVariant where V: Copy {
     #[doc(hidden)]
     fn _with(&mut self, v: V);
 }
+
+pub trait StyleVariantGetStdCursor: StyleVariant {
+    fn cursor(&self) -> StdCursor;
+} 

@@ -150,6 +150,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         }
     }
 
+    #[deprecated]
     #[inline] 
     pub fn render_widgets<'b>(&mut self, i: impl Iterator<Item=WPSlice<'b,E>>+'b, c: CtxRef<E>, overlap: bool) {
         /*if overlap {
@@ -201,7 +202,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env, ERenderer<E>: RenderStdWidgets<E> {
         self.r.draw_text_button(&self.b,pressed,caption,&self.s,&self.v)
     }
     #[inline]
-    pub fn draw_selected(&mut self, s: &EStyle<E>) {
+    pub fn draw_selected(&mut self) {
         self.r.draw_selected(&self.b,&self.s,&self.v)
     }
 }

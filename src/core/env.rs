@@ -14,6 +14,14 @@ pub trait Env: Sized + 'static {
     //type Commit: Eq + Ord;
 }
 
+pub trait EnvFlexStyleVariant: Env {
+    type StyleVariant: StyleVariant;
+}
+pub trait EnvFlexCtxHandler: Env {
+    type CtxHandler: Handler<Self>;
+}
+
+
 pub trait ValidState {
     fn valid() -> Self;
     fn rerender(&self) -> bool;

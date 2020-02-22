@@ -49,7 +49,7 @@ macro_rules! impl_null_inner {
             std::vec![]
         }
         #[inline]
-        fn child_paths(&self, own_path: $crate::macro_prelude::WPSlice<$c>) -> Vec<<$c>::WidgetPath> {
+        fn child_paths(&self, _own_path: $crate::macro_prelude::WPSlice<$c>) -> Vec<<$c>::WidgetPath> {
             std::vec![]
         }
         #[inline]

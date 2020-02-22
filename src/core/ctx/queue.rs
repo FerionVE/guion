@@ -20,17 +20,14 @@ pub trait Enqueue<E,I>: Queue<E> + Sync where E: Env, E::Context: Context<E,Queu
     fn enqueue(&self, i: I);
 }
 
-#[allow(type_alias_bounds)]
-type DynWidgetMut<E: Env> = Box<dyn FnOnce(&mut E::DynWidget)>;
-
 /// to be executed by the queue impl, always DIRECTLY before rendering
 pub fn invalidate<E: Env>(stor: &mut E::Storage, i: WPSlice<E>) -> Result<(),()> {
-    stor.widget_mut(i,true)?;
+    stor._widget_mut(i,true)?;
     Ok(())
 }
 /// to be executed by the queue impl, always DIRECTLY after rendering
 pub fn validate<E: Env>(stor: &mut E::Storage, i: WPSlice<E>) -> Result<(),()> {
-    let mut w = stor.widget_mut(i,false)?;
+    let mut w = stor._widget_mut(i,false)?;
     w.set_invalid(false);
     Ok(())
 }

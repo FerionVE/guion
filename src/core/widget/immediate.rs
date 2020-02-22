@@ -1,5 +1,3 @@
-use std::rc::Rc;
-use std::ops::DerefMut;
 use super::*;
 
 /// a Widget implementor which references to the widget tree
