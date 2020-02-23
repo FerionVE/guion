@@ -6,6 +6,7 @@ pub mod link;
 pub mod dyn_widget;
 pub mod fns;
 pub mod immediate;
+pub mod as_widget;
 //mod imp;
 
 pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {

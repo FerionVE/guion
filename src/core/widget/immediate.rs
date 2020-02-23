@@ -6,7 +6,7 @@ pub trait WidgetImmediate<'d,E> where E: Env {
     fn resolve_box(self: Box<Self>, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()>;
     fn resolve_ref(&self, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()>;
     fn widget(&self) -> &E::DynWidget;
-    fn cloned(&self) -> WidgetRef<E>;
+    fn cloned<'s>(&'s self) -> WidgetRef<'s,E> where 'd: 's;
 }
 pub trait WidgetImmediateMut<'d,E> where E: Env {
     fn resolve(self, s: WPSlice<E>) -> Result<Resolvable<'d,E>,()> where Self: Sized;
@@ -15,7 +15,7 @@ pub trait WidgetImmediateMut<'d,E> where E: Env {
     fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'d,E>,()>;
     fn widget(&self) -> &E::DynWidget;
     fn widget_mut(&mut self) -> &mut E::DynWidget;
-    fn cloned(&mut self) -> WidgetRefMut<E>;
+    fn cloned_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> where 'd: 's;
 }
 
 impl<'d,T,E> WidgetImmediate<'d,E> for &'d T where T: Widget<E>, E: Env {
@@ -31,7 +31,7 @@ impl<'d,T,E> WidgetImmediate<'d,E> for &'d T where T: Widget<E>, E: Env {
     fn widget(&self) -> &E::DynWidget {
         self.erase()
     }
-    fn cloned(&self) -> WidgetRef<E> {
+    fn cloned<'s>(&'s self) -> WidgetRef<'s,E> where 'd: 's {
         Box::new(*self)
     }
 }
@@ -54,7 +54,7 @@ impl<'d,T,E> WidgetImmediateMut<'d,E> for &'d mut T where T: Widget<E>, E: Env {
     fn widget_mut(&mut self) -> &mut E::DynWidget {
         self.erase_mut()
     }
-    fn cloned(&mut self) -> WidgetRefMut<E> {
+    fn cloned_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> where 'd: 's {
         Box::new(&mut **self)
     }
 }

@@ -177,7 +177,7 @@ impl<'c,T,E> WidgetImmediate<'c,E> for Pane<'c,T,E,TRef> where T: WidgetImmediat
     fn widget(&self) -> &E::DynWidget {
         todo!()
     }
-    fn cloned(&self) -> WidgetRef<E> {
+    fn cloned<'s>(&'s self) -> WidgetRef<'s,E> where 'c: 's {
         todo!()
     }
 }
@@ -201,7 +201,7 @@ impl<'c,T,E> WidgetImmediateMut<'c,E> for Pane<'c,T,E,TMut> where T: WidgetImmed
     fn widget_mut(&mut self) -> &mut E::DynWidget {
         todo!()
     }
-    fn cloned(&mut self) -> WidgetRefMut<E> {
+    fn cloned_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> where 'c: 's {
         todo!()
     }
 }
