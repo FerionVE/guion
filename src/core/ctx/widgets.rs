@@ -47,7 +47,33 @@ pub fn resolve_in_root_mut<'a,E: Env>(w: &'a mut E::DynWidget, p: WPSlice<E>, in
     let path = path.unwrap();
 
     Some((
-        w.resolve_mut(path.slice(),invalidate).unwrap(),
+        w.resolve_mut(path.slice(),invalidate)
+            .unwrap()
+            .as_widget()
+            .unwrap_nodebug(),
         path
     ))
 }
+
+/*pub fn resolve_in_root_mutt<'a,E: Env>(w: &'a mut E::DynWidget, p: WPSlice<E>, invalidate: bool) -> Option<(WidgetRefMut<'a,E>,EWPRc<E>)> {
+    fn dummy<'b,E: Env>(w: &'b mut E::DynWidget, p: WPSlice<E>) -> ResolvableMut<'b,E> {
+        todo!()
+    }
+
+    /*match dummy(w,p) {
+        ResolvableMut::Widget(w) => return Some((w,p.unslice().into())),
+        ResolvableMut::Path(p) => resolve_in_root_mutt(w,p.slice(),invalidate),
+    }*/
+
+    let path = {
+        match dummy(w,p) {
+            ResolvableMut::Widget(w) => None,
+            ResolvableMut::Path(p) => Some(p),
+        }
+    };
+    let path = path
+        .as_ref()
+        .map(|path| path.slice() )
+        .unwrap_or(p);
+    resolve_in_root_mutt(w,path,invalidate)
+}*/

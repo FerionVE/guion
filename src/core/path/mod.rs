@@ -5,10 +5,9 @@ use super::*;
 
 pub mod sub;
 pub use sub::*;
-use as_widget::AsWidget; //TODO move import
 
 /// A WidgetPath contains information to resolve to a specific Widget in a widget tree
-pub trait WidgetPath<E>: AsWPSlice<E> + AsWidget<E> + Clone + PartialEq + Sized + Send + Sync + 'static where E: Env<WidgetPath=Self> {
+pub trait WidgetPath<E>: AsWPSlice<E> + AsWidget<E> + AsWidgetImmediate<'static,E> + AsWidgetImmediateMut<'static,E> + Clone + PartialEq + Sized + Send + Sync + 'static where E: Env<WidgetPath=Self> {
     type SubPath: SubPath<E>;
     type RcPath: RefClonable + From<Self> + Into<Self> + Deref<Target=Self>;
     

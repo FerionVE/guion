@@ -37,15 +37,11 @@ macro_rules! impl_template_inner {
             $crate::macro_prelude::ITemplate::set_invalid(self,v)
         }
         #[inline]
-        fn _childs(&self) -> Vec<$crate::macro_prelude::WidgetRef<$c>> {
+        fn childs(&self) -> Vec<$crate::macro_prelude::Resolvable<$c>> {
             std::vec![]
         }
         #[inline]
-        fn _childs_mut(&mut self) -> Vec<$crate::macro_prelude::WidgetRefMut<$c>> {
-            std::vec![]
-        }
-        #[inline]
-        fn child_paths(&self, own_path: $crate::macro_prelude::WPSlice<$c>) -> Vec<<$c>::WidgetPath> {
+        fn childs_mut(&mut self) -> Vec<$crate::macro_prelude::ResolvableMut<$c>> {
             std::vec![]
         }
         #[inline]

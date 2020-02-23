@@ -26,21 +26,14 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
 
     fn has_childs(&self) -> bool; //TODO eventually trash this
 
-    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
-        self._childs()
-            .into_iter()
-            .map(|c| Resolvable::Widget(Rc::new(c)) )
-            .collect()
-    }
-    //TODO immutable childs access excluding paths is useless
-    fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>>;
-    fn _childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>>;
+    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>>;
+    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>>;
 
-    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath>;/* {
-        self.childs().iter()
-            .map(|p| p.path(own_path) )
-            .collect()
-    }*/
+    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath> {
+        self.childs().into_iter()
+            .map(|c| c.self_in_parent(own_path) )
+            .collect::<Vec<_>>()
+    }
 
     fn erase(&self) -> &E::DynWidget {
         WidgetAsAny::_erase(self)
@@ -57,14 +50,14 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     }
 
     #[inline]
-    fn resolve_mut<'a>(&'a mut self, i: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'a,E>,()> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+    fn resolve_mut<'a>(&'a mut self, i: WPSlice<E>, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if invalidate {self.set_invalid(true);}
         if i.slice.is_empty() {
-            return Ok(self.as_immediate_mut())
+            return Ok(ResolvableMut::Widget(self.as_immediate_mut()))
         }
-        for c in self._childs_mut() {
-            if c.widget().is_subpath(i.index(0)) {
-                return c.resolve_mut_box(i.slice(1..),invalidate);
+        for c in self.childs_mut() {
+            if c.is_subpath(i.index(0)) {
+                return c.resolve_mut(i.slice(1..),invalidate);
             }
         }
         Err(())
@@ -74,9 +67,9 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         if i.slice.is_empty() {
             return Ok(Resolvable::Widget(Rc::new(self.as_immediate())))
         }
-        for c in self._childs() {
-            if c.widget().is_subpath(i.index(0)) {
-                return c.resolve_box(i.slice(1..));
+        for c in self.childs() {
+            if c.is_subpath(i.index(0)) {
+                return c.resolve(i.slice(1..));
             }
         }
         Err(())

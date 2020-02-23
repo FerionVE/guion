@@ -42,6 +42,7 @@ pub(crate) use widget::dyn_widget::*;
 pub(crate) use widget::fns::*;
 pub(crate) use widget::link::*;
 pub(crate) use widget::immediate::*;
+pub(crate) use widget::as_widget::*;
 pub(crate) use id::*;
 pub(crate) use path::*;
 pub(crate) use std::any::Any;

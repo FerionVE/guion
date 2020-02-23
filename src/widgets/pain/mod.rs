@@ -40,7 +40,7 @@ impl<'c,T,E> Pane<'c,T,E,TOwned> where E: Env {
     }
 }
 
-impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: Widget<E>, E: Env, Self: 'static {
+impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: AsWidget<E>, E: Env, Self: 'static {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -64,19 +64,14 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: Widget<E>, E: Env, Sel
     fn has_childs(&self) -> bool {
         true
     }
-    fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>> {
+    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
         self.childs.iter()
-            .map(|c| c.as_immediate() )
+            .map(|c| c.as_ref() )
             .collect::<Vec<_>>()
     }
-    fn _childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>> {
+    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
         self.childs.iter_mut()
-            .map(|c| c.as_immediate_mut() )
-            .collect::<Vec<_>>()
-    }
-    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath> {
-        self.childs.iter()
-            .map(|c| c.self_in_parent(own_path) )
+            .map(|c| c.as_mut() )
             .collect::<Vec<_>>()
     }
     fn selectable(&self) -> bool {
@@ -106,16 +101,11 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
     fn has_childs(&self) -> bool {
         true
     }
-    fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>> {
+    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
         panic!()
     }
-    fn _childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>> {
+    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
         panic!()
-    }
-    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath> {
-        self.childs.iter()
-            .map(|c| c.widget().self_in_parent(own_path) )
-            .collect::<Vec<_>>()
     }
     fn selectable(&self) -> bool {
         false
@@ -144,16 +134,11 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
     fn has_childs(&self) -> bool {
         true
     }
-    fn _childs<'a>(&'a self) -> Vec<WidgetRef<'a,E>> {
+    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
         panic!()
     }
-    fn _childs_mut<'a>(&'a mut self) -> Vec<WidgetRefMut<'a,E>> {
+    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
         panic!()
-    }
-    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath> {
-        self.childs.iter()
-            .map(|c| c.widget().self_in_parent(own_path) )
-            .collect::<Vec<_>>()
     }
     fn selectable(&self) -> bool {
         false
@@ -186,13 +171,13 @@ impl<'c,T,E> WidgetImmediateMut<'c,E> for Pane<'c,T,E,TMut> where T: WidgetImmed
     fn resolve(self, s: WPSlice<E>) -> Result<Resolvable<'c,E>,()> where Self: Sized {
         todo!()
     }
-    fn resolve_box(self: Box<Self>, s: WPSlice<E>) -> Result<Resolvable<'c,E>,()> {
+    fn resolve_box(self: Box<Self>, s: WPSlice<E>, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> {
         todo!()
     }
-    fn resolve_mut(self, s: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'c,E>,()> where Self: Sized {
+    fn resolve_mut(self, s: WPSlice<E>, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> where Self: Sized {
         todo!()
     }
-    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>, invalidate: bool) -> Result<WidgetRefMut<'c,E>,()> {
+    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> {
         todo!()
     }
     fn widget(&self) -> &E::DynWidget {
