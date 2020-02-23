@@ -9,8 +9,8 @@ impl Index<Orientation> for Size {
     #[inline]
     fn index(&self, i: Orientation) -> &Self::Output {
         match i {
-            Orientation::Horizontal() => &self.x,
-            Orientation::Vertical() => &self.y,
+            Orientation::Horizontal => &self.x,
+            Orientation::Vertical => &self.y,
         }
     }
 }
@@ -20,8 +20,8 @@ impl Index<Orientation> for Weight {
     #[inline]
     fn index(&self, i: Orientation) -> &Self::Output {
         match i {
-            Orientation::Horizontal() => &self.x,
-            Orientation::Vertical() => &self.y,
+            Orientation::Horizontal => &self.x,
+            Orientation::Vertical => &self.y,
         }
     }
 }

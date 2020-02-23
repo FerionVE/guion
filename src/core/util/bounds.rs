@@ -54,7 +54,8 @@ impl Bounds {
     }
     /// b is the inner and relative to self
     /// get the part of the inner which also is inside this bound
-    pub fn slice(&self, b: &Bounds) -> Self {
+    pub fn slice(&self, inner_relative: &Bounds) -> Self {
+        let b = inner_relative;
         Self{
             off: &self.off + &b.off,
             size: Dims{

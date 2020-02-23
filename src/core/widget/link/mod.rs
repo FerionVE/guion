@@ -113,7 +113,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     //THIS IS AN ULTRA HACK
     //(as shortening teh lifetime even more aggresse we MAY can put an iterator on it)
     #[inline]
-    pub fn for_childs<'s>(&'s mut self, f: &'s mut impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
+    pub fn for_childs<'s>(&'s mut self, mut f: impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
         let wref = self.widget.wref.refc();
         let path = self.widget.path.refc();
         let ch = self.widget.childs();
@@ -121,17 +121,27 @@ impl<'c,E> Link<'c,E> where E: Env {
         for c in ch {
             let w = c.resolve_widget(stor)?;
             let w = Resolved{
+                path: w.widget().self_in_parent(path.slice()).into(),
                 wref: w,
-                path: wref.widget().self_in_parent(path.slice()).into(),
                 stor,
             };
-            let l = Link{
-                widget: short_resolved(w),
-                ctx: self.ctx,
-            };
-            f(l);
+            Self::_with_link(self.ctx,w,&mut f);
         }
         Ok(())
+    }
+    #[inline]
+    pub fn _with_link<'s>(ctx: &mut E::Context, w: Resolved<'s,E>, f: impl FnOnce(Link<E>)) where 'c: 's {
+        let l = Link{
+            widget: short_resolved(w),
+            ctx,
+        };
+        f(l);
+    }
+
+    pub fn child_sizes(&mut self) -> Result<Vec<ESize<E>>,()> {
+        let mut dest = Vec::new();
+        self.for_childs(#[inline] |mut w| dest.push(w.size()) )?;
+        Ok(dest)
     }
 
     /*

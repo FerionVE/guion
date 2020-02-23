@@ -12,8 +12,8 @@ pub use weight::*;
 
 #[derive(Clone,Copy)]
 pub enum Orientation {
-    Horizontal(),
-    Vertical(),
+    Horizontal,
+    Vertical,
 }
 
 //TODO move to trait submodule
@@ -25,8 +25,8 @@ pub trait ISize: From<Size> {
     #[inline]
     fn add(&mut self, o: &Self, dir: Orientation) {
         match dir {
-            Orientation::Horizontal() => self.add_x(o),
-            Orientation::Vertical() => self.add_y(o),
+            Orientation::Horizontal => self.add_x(o),
+            Orientation::Vertical => self.add_y(o),
         }
     }
     fn add_x(&mut self, o: &Self);
