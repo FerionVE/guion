@@ -42,4 +42,12 @@ impl<E> MouseState<E> where E: Env {
     pub fn get_mut(&mut self, key: u32) -> Option<&mut MousePressedKey<E>> {
         self.pressed.iter_mut().find(#[inline] |i| i.key == key )
     }
+
+    pub fn new() -> Self {
+        Self{
+            pressed: Vec::new(),
+            drag: None,
+            pos: None,
+        }
+    }
 }

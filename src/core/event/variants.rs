@@ -2,6 +2,18 @@
 use crate::core::event::key::Key;
 use super::*;
 
+pub enum StdVariant<E> where E: Env {
+    KbdDown{key: EEKey<E>}, //TODO PressedKey, fix AsHandlerStateful
+    KbdUp{key: EEKey<E>},
+    MouseDown{key: EEKey<E>, pos: Offset},
+    MouseUp{key: EEKey<E>, pos: Offset},
+    MouseMove{dest: Offset},
+    MouseEnter{dest: Offset},
+    MouseLeave{dest: Offset},
+    WindowMove{pos: Offset},
+    WindowResize{size: Size},
+}
+
 #[derive(Clone)]
 pub struct KbdDown<K> where K: Key {
     pub key: K,

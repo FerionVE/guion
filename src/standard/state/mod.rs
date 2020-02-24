@@ -6,7 +6,13 @@ pub mod kbd;
 pub mod mouse;
 pub mod text_box;
 
-pub struct State<E> where E: Env {
+pub struct StdState<E> where E: Env {
     pub kbd: KbdState<E>,
     pub mouse: MouseState<E>,
+}
+
+impl<E> StdState<E> where E: Env {
+    pub fn new() -> Self {
+        todo!()
+    }
 }

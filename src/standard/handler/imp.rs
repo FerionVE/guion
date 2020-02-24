@@ -18,6 +18,9 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
     fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds)) {
         Self::_event(l,e);
         //todo!()
+        if let Some(e) = e.is::<MouseMove>() {
+
+        }
     }
     #[inline] 
     fn _size(l: Link<E>) -> ESize<E> {
