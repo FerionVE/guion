@@ -3,8 +3,8 @@ use super::*;
 /// Handlers are stacked inside a Container and any render/event/size action goes through the handler stack
 pub trait Handler<E>: Sized + 'static where E: Env {
     fn _render(l: Link<E>, r: &mut RenderLink<E>) -> bool;
-    fn _event(l: Link<E>, e: (EEvent<E>,&Bounds));
-    fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds));
+    fn _event(l: Link<E>, e: EEvent<E>);
+    fn _event_root(l: Link<E>, e: EEvent<E>);
     fn _size(l: Link<E>) -> ESize<E>;
 }
 
@@ -14,12 +14,14 @@ impl<E> Handler<E> for () where E: Env {
         l._render(r)
     }
     #[inline] 
-    fn _event(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
+    fn _event(mut l: Link<E>, e: EEvent<E>) {
         l._event(e)
     }
     #[inline] 
-    fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds)) {
-        l.ctx.event(l.widget,e)
+    fn _event_root(l: Link<E>, e: EEvent<E>) {
+        if !e._root_only() {//TODO warn eprint??
+            l.ctx.event(l.widget,e)
+        }
     }
     #[inline] 
     fn _size(mut l: Link<E>) -> ESize<E> {

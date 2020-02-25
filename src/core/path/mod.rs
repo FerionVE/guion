@@ -47,7 +47,7 @@ pub trait WidgetPath<E>: AsWPSlice<E> + AsWidget<E> + AsWidgetImmediate<'static,
         Ok( c.1.render(c.0.widget(s)?,r) )
     }
     #[inline]
-    fn event_of_slice(s: WPSlice<E>, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
+    fn event_of_slice(s: WPSlice<E>, c: CtxRef<E>, e: EEvent<E>) -> Result<(),()> {
         Ok( c.1.event(c.0.widget(s)?,e) )
     }
     #[inline]
@@ -110,7 +110,7 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
         E::WidgetPath::render_of_slice(*self,c,r)
     }
     #[inline]
-    pub fn event(&self, c: CtxRef<E>, e: (EEvent<E>,&Bounds)) -> Result<(),()> {
+    pub fn event(&self, c: CtxRef<E>, e: EEvent<E>) -> Result<(),()> {
         E::WidgetPath::event_of_slice(*self,c,e)
     }
     #[inline]

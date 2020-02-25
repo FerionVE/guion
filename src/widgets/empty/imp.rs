@@ -54,7 +54,7 @@ macro_rules! impl_empty_inner {
             std::vec![]
         }
         #[inline]
-        fn selectable(&self) -> bool {
+        fn focusable(&self) -> bool {
             false
         }
         #[inline]
@@ -72,7 +72,7 @@ pub fn _render<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: 
     
 }
 
-pub fn _event<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
+pub fn _event<W: IEmpty<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
     
 }
 

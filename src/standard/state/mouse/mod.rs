@@ -8,6 +8,7 @@ pub struct MouseState<E> where E: Env {
     pub pressed: Vec<MousePressedKey<E>>,
     pub drag: Option<DragItem<E>>,
     pub pos: Option<Offset>,
+    pub hovered: Option<E::WidgetPath>,
 }
 
 pub struct MousePressedKey<E> where E: Env {
@@ -48,6 +49,7 @@ impl<E> MouseState<E> where E: Env {
             pressed: Vec::new(),
             drag: None,
             pos: None,
+            hovered: None,
         }
     }
 }

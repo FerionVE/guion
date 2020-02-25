@@ -70,12 +70,16 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.render(self.widget(),r)
     }
     #[inline]
-    pub fn event(&mut self, e: (EEvent<E>,&Bounds)) {
-        self.ctx.event(self.widget(),e)
+    pub fn event<T>(&mut self, e: T) where T: Into<EEvent<E>> {
+        self.ctx.event(self.widget(),e.into())
     }
     #[inline]
     pub fn size(&mut self) -> ESize<E> {
         self.ctx.size(self.widget())
+    }
+    #[inline]
+    pub fn _event_root<T>(&mut self, e: T) where T: Into<EEvent<E>> {
+        self.ctx._event_root(self.widget(),e.into())
     }
     /// bypasses Context and Handler(s)
     #[inline]
@@ -85,9 +89,9 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// bypasses Context and Handler(s)
     #[inline]
-    pub fn _event(&mut self, e: (EEvent<E>,&Bounds)) {
+    pub fn _event<T>(&mut self, e: T) where T: Into<EEvent<E>> {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.wref.widget().event(w,e)
+        self.widget.wref.widget().event(w,e.into())
     }
     /// bypasses Context and Handler(s)
     #[inline]
@@ -97,12 +101,12 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn is_hovered(&self) -> bool where ECHandler<E>: AsHandlerStateful<E> {
+    pub fn is_hovered(&self) -> bool where E::Context: AsHandlerStateful<E> {
         self.ctx.state().is_hovered(&self.id())
     }
     #[inline]
-    pub fn is_selected(&self) -> bool where ECHandler<E>: AsHandlerStateful<E> {
-        self.ctx.state().is_selected(&self.id())
+    pub fn is_focused(&self) -> bool where E::Context: AsHandlerStateful<E> {
+        self.ctx.state().is_focused(&self.id())
     }
 
     #[inline]
@@ -142,6 +146,22 @@ impl<'c,E> Link<'c,E> where E: Env {
         let mut dest = Vec::new();
         self.for_childs(#[inline] |mut w| dest.push(w.size()) )?;
         Ok(dest)
+    }
+
+    pub fn with_widget<'s>(&'s mut self, p: WPSlice<'s,E>) -> Result<Link<'s,E>,()> where 'c: 's {
+        Ok(
+            Link{
+                widget: self.widget.stor.widget(p)?,
+                ctx: self.ctx
+            }
+        )
+    }
+
+    pub fn reference<'s>(&'s mut self) -> Link<'s,E> where 'c: 's {
+        Link{
+            widget: short_resolved(self.widget.clone()),
+            ctx: self.ctx
+        }
     }
 
     /*

@@ -20,7 +20,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         (**self).render(c.link(self.clone()),r)
     }
     #[inline]
-    pub fn event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds)) {
+    pub fn event(&self, c: &mut E::Context, e: EEvent<E>) {
         (**self).event(c.link(self.clone()),e)
     }
     #[inline]

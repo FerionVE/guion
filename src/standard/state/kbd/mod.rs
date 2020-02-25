@@ -5,19 +5,20 @@ pub mod tabulate;
 
 pub struct KbdState<E> where E: Env {
     pub pressed: Vec<KbdPressedKey<E>>,
+    pub focused: Option<E::WidgetPath>,
 }
 
 pub struct KbdPressedKey<E> where E: Env {
     pub key: EEKey<E>,
     ///the widget which was selected (focused) where the key press started
-    pub id: E::WidgetID,
+    pub id: E::WidgetPath,
     ///the time the key press started
     pub ts: u64,
 }
 
 impl<E> KbdState<E> where E: Env {
     #[inline]
-    pub fn down(&mut self, key: EEKey<E>, id: E::WidgetID, ts: u64) {
+    pub fn down(&mut self, key: EEKey<E>, id: E::WidgetPath, ts: u64) {
         self.up(key.clone());
         self.pressed.push(
             KbdPressedKey{

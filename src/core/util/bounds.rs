@@ -2,17 +2,17 @@
 use super::*;
 use std::ops::BitAnd;
 
-#[derive(Clone)]
+#[derive(Clone,Copy)]
 pub struct Offset {
     pub x: i32,
     pub y: i32,
 }
-#[derive(Clone)]
+#[derive(Clone,Copy)]
 pub struct Dims {
     pub w: u32,
     pub h: u32,
 }
-#[derive(Clone)]
+#[derive(Clone,Copy)]
 pub struct Bounds {
     pub off: Offset,
     pub size: Dims,
@@ -47,7 +47,7 @@ impl Bounds {
 
     /// get the bounds inside this bound (subtract border)
     pub fn inside(&self, b: &Border) -> Self {
-        let mut s = self.clone();
+        let mut s = *self;
         s.off += b.inner();
         s.size -= b.border_effective();
         s
@@ -66,7 +66,7 @@ impl Bounds {
     }
     ///TODO doc
     pub fn step(&self, step: i32) -> Self {
-        let mut senf = self.clone();
+        let mut senf = *self;
         senf.off.x += step;
         senf.off.y += step;
         senf.size.w = (senf.size.w as i32 - step*2).max(0) as u32;
@@ -132,7 +132,22 @@ qwutils::opion!(sub(Bounds,Border) |s,r| {
     s.off.y -= r.height();
 });*/
 
-impl<'a,'b> BitAnd<&'b Bounds> for &'a Bounds {
+qwutils::opion!(bitand(Bounds,Bounds) |s,r| {
+    let nx = s.off.x.max(r.off.x);
+    let ny = s.off.y.max(r.off.y);
+    *s = Bounds{
+        off: Offset{
+            x: nx,
+            y: ny,
+        },
+        size: Dims{
+            w: (s.x1().min(r.x1()) - nx).max(0) as u32,
+            h: (s.y1().min(r.y1()) - ny).max(0) as u32,
+        }
+    }
+});
+
+/*impl<'a,'b> BitAnd<&'b Bounds> for &'a Bounds {
     type Output = Bounds;
 
     fn bitand(self, o: &Bounds) -> Self::Output {
@@ -149,4 +164,4 @@ impl<'a,'b> BitAnd<&'b Bounds> for &'a Bounds {
             }
         }
     }
-}
+}*/

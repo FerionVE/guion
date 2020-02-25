@@ -33,7 +33,7 @@ impl<E> Clone for BoundedWidget<E> where E: Env {
     #[inline]
     fn clone(&self) -> Self {
         Self{
-            bounds: self.bounds.clone(),
+            bounds: self.bounds,
             id: self.id.clone(),
         }
     }

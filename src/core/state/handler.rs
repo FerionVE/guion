@@ -1,6 +1,6 @@
 use super::*;
 
-pub trait AsHandlerStateful<E>: Handler<E> + Sized where E: Env, E::Context: Context<E,Handler=Self> {
+pub trait AsHandlerStateful<E>: Context<E> + Sized where E: Env<Context=Self> {
     type T: HandlerStateful<E>;
     
     fn stateful_mut(e: &mut E::Context) -> &mut Self::T;
@@ -17,7 +17,7 @@ pub trait HandlerStateful<E>: Handler<E> + 'static where E: Env {
         self.hovered().map_or(false, |w| w == *i )
     }
     #[inline]
-    fn is_selected(&self, i: &E::WidgetID) -> bool {
+    fn is_focused(&self, i: &E::WidgetID) -> bool {
         self.selected().map_or(false, |w| w == *i )
     }
 

@@ -61,7 +61,7 @@ macro_rules! impl_button_inner {
             std::vec![]
         }
         #[inline]
-        fn selectable(&self) -> bool {
+        fn focusable(&self) -> bool {
             true
         }
         #[inline]
@@ -79,12 +79,12 @@ pub fn _render<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r:
     let senf = l.me::<W>();
     let down = 
         l.is_hovered() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::MOUSE_LEFT], l.id()) ||
-        l.is_selected() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::ENTER], l.id());
+        l.is_focused() && l.state().is_pressed_and_id(&[<EEKey<E> as Key>::ENTER], l.id());
         
     r.0.draw_text_button(r.1,down,senf.caption(),IButton::style(senf));
 }
 
-pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
+pub fn _event<W: IButton<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) where ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
     let senf = l.me::<W>();
     
     if let Some(e) = e.0.is::<KbdDown<_>>() {

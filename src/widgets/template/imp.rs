@@ -45,7 +45,7 @@ macro_rules! impl_template_inner {
             std::vec![]
         }
         #[inline]
-        fn selectable(&self) -> bool {
+        fn focusable(&self) -> bool {
             false
         }
         #[inline]
@@ -61,7 +61,7 @@ macro_rules! impl_template_inner {
             $crate::widgets::template::_render::<Self,$c>(l,r)
         }
         #[inline]
-        fn event(&self, l: $crate::macro_prelude::Link<$c>, e: ($crate::macro_prelude::EEvent<$c>,&$crate::macro_prelude::Bounds)) {
+        fn event(&self, l: $crate::macro_prelude::Link<$c>, e: $crate::macro_prelude::EEvent<$c>) {
             $crate::widgets::template::_event::<Self,$c>(l,e)
         }
         #[inline]
@@ -76,7 +76,7 @@ pub fn _render<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &
     true
 }
 
-pub fn _event<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
+pub fn _event<W: ITemplate<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
     todo!()
 }
 

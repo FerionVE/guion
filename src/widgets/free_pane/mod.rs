@@ -78,7 +78,7 @@ fn render<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, mut r: ERender
     }
 }
 
-fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds)) {
+fn event<W: Pane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
     //TODO special focus/hover enter/leave handling
     for c in childs::<W,_>(&l).into_iter().rev() {
         if let Some(e) = e.filter_cloned(&c.bounds) {

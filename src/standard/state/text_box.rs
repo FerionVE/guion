@@ -2,7 +2,7 @@
 
 use crate::core::*;
 
-pub struct TextBoxState<E> where E: Env, ECHandler<E>: AsHandlerStateful<E> {
+pub struct TextBoxState<E> where E: Env, E::Context: AsHandlerStateful<E> {
     pp: ESPPText<E>,
     id: E::WidgetID,
 }

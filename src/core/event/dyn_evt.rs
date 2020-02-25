@@ -22,8 +22,9 @@ impl<E,K,D> Event<E> for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Eve
     type Key = K;
 
     #[inline]
-    fn filter(self, subbounds: &Bounds) -> Option<Self> {
-        if self.event.filter(subbounds) {
+    fn filter(mut self, bounds: &Bounds) -> Option<Self> {
+        if self.event.filter(bounds) {
+            self.event._slice(bounds);
             Some(self)
         }else{
             None
@@ -41,6 +42,10 @@ impl<E,K,D> Event<E> for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Eve
     fn position(&self) -> Option<Offset> {
         self.event.position()
     }
+    #[inline]
+    fn _root_only(&self) -> bool {
+        self.event._root_only()
+    }
 }
 
 impl<V,E,K,D> VariantSupport<V,E> for DynEvent<E,K,D> where V: Variant<E>, E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {
@@ -54,6 +59,6 @@ impl<V,E,K,D> VariantSupport<V,E> for DynEvent<E,K,D> where V: Variant<E>, E: En
     #[inline]
     fn to_variant(&self) -> Option<V> {
         Any::downcast_ref(self.event._as_any())
-            .map(|e: &V| e.clone() )
+            .map(|e: &V| e.clon() )
     }
 }

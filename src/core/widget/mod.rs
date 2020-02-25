@@ -13,7 +13,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
-    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds));
+    fn event(&self, l: Link<E>, e: EEvent<E>);
     fn size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
@@ -84,7 +84,17 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     }
 
     /// should the widget be focusable, regularly true for interactive widgets, false for layouts
-    fn selectable(&self) -> bool;
+    fn focusable(&self) -> bool;
+    #[inline]
+    fn _focus_on_mouse_down(&self) -> bool {
+        self.focusable()
+    }
+    //if tab/shift-tab should tabulate away from this widget
+    #[inline]
+    fn _tabulate_by_tab(&self) -> bool {
+        true
+    }
+
     /// attach widget's style
     #[inline]
     fn style(&self, s: &mut ESVariant<E>) {

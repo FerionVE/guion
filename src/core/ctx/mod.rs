@@ -49,12 +49,16 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         Self::Handler::_render(self.link(w),r)
     }
     #[inline] 
-    fn event(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds)) {
+    fn event(&mut self, w: Resolved<E>, e: EEvent<E>) {
         Self::Handler::_event(self.link(w),e)
     }
     #[inline] 
     fn size(&mut self, w: Resolved<E>) -> ESize<E> {
         Self::Handler::_size(self.link(w))
+    }
+    #[inline] 
+    fn _event_root(&mut self, w: Resolved<E>, e: EEvent<E>) {
+        Self::Handler::_event_root(self.link(w),e)
     }
 
     #[inline] fn link<'l: 's,'s>(&'s mut self, w: Resolved<'l,E>) -> Link<'s,E> {
@@ -64,8 +68,8 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         }
     }
 
-    #[inline] fn state(&self) -> &ECStateful<E> where Self::Handler: AsHandlerStateful<E> {
-        Self::Handler::stateful(self)
+    #[inline] fn state(&self) -> &ECStateful<E> where Self: AsHandlerStateful<E> {
+        Self::stateful(self)
     }
 
     fn default_style(&self) -> &EStyle<E>;

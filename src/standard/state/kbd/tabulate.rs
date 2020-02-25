@@ -51,7 +51,7 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
             }
         }
 
-        if !s.widget(current.slice()).expect("Lost Widget").selectable() {
+        if !s.widget(current.slice()).expect("Lost Widget").focusable() {
             repeat = true;
         }
 

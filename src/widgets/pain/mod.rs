@@ -47,7 +47,7 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: AsWidget<E>, E: Env, S
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         _render(l,r,self.orientation)
     }
-    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
+    fn event(&self, l: Link<E>, e: EEvent<E>) {
         _event(l,e,self.orientation)
     }
     fn size(&self, l: Link<E>) -> ESize<E> {
@@ -74,7 +74,7 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: AsWidget<E>, E: Env, S
             .map(|c| c.as_mut() )
             .collect::<Vec<_>>()
     }
-    fn selectable(&self) -> bool {
+    fn focusable(&self) -> bool {
         false
     }
 }
@@ -86,7 +86,7 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         _render(l,r,self.orientation)
     }
-    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
+    fn event(&self, l: Link<E>, e: EEvent<E>) {
         _event(l,e,self.orientation)
     }
     fn size(&self, l: Link<E>) -> ESize<E> {
@@ -107,7 +107,7 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
     fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
         panic!()
     }
-    fn selectable(&self) -> bool {
+    fn focusable(&self) -> bool {
         false
     }
 }
@@ -119,7 +119,7 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         _render(l,r,self.orientation)
     }
-    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds)) {
+    fn event(&self, l: Link<E>, e: EEvent<E>) {
         _event(l,e,self.orientation)
     }
     fn size(&self, l: Link<E>) -> ESize<E> {
@@ -140,7 +140,7 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
     fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
         panic!()
     }
-    fn selectable(&self) -> bool {
+    fn focusable(&self) -> bool {
         false
     }
     #[inline]
@@ -209,7 +209,7 @@ pub fn _render<E>(mut l: Link<E>, r: &mut RenderLink<E>, o: Orientation) -> bool
     false
 }
 
-pub fn _event<E>(mut l: Link<E>, e: (EEvent<E>,&Bounds), o: Orientation) where
+pub fn _event<E>(mut l: Link<E>, e: EEvent<E>, o: Orientation) where
     E: Env,
 {
     let sizes = l.child_sizes().expect("Dead Path Inside Pane");
@@ -219,8 +219,8 @@ pub fn _event<E>(mut l: Link<E>, e: (EEvent<E>,&Bounds), o: Orientation) where
 
     l.for_childs(|mut c| {
         let sliced = e.1.slice(&bounds[i]);
-        if let Some(e) = e.0.filter_cloned(&sliced) {
-            c.event((e,&sliced));
+        if let Some(ee) = e.0.filter_cloned(&sliced) {
+            c.event((ee,&sliced,e.2));
         }
         i+=1;
     }).expect("Dead Path inside Pane");
