@@ -14,6 +14,8 @@ pub trait WidgetPath<E>: AsWPSlice<E> + AsWidget<E> + AsWidgetImmediate<'static,
     fn attach(&mut self, sub: Self::SubPath);
     fn attached(self, sub: Self::SubPath) -> Self;
 
+    fn concatenated_slice(a: WPSlice<E>, b: WPSlice<E>) -> Self;
+
     fn id(&self) -> &E::WidgetID; //TODO no ref id
     fn tip(&self) -> &Self::SubPath;
 

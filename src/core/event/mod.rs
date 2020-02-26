@@ -13,7 +13,7 @@ pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self
     type Dest: Destination;
     type Key: Key;
 
-    fn filter(self, subbounds: &Bounds) -> Option<Self>;
+    fn filter(self, bounds: &Bounds) -> Option<Self>;
     #[inline]
     fn filter_cloned(&self, bounds: &Bounds) -> Option<Self> {
         self.clone().filter(bounds)

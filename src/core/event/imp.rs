@@ -40,6 +40,8 @@ pub trait StdVarSup<E>:
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E> +
+    VariantSupport<GainedFocus,E> +
+    VariantSupport<LostFocus,E> +
     VariantSupport<RootEvent<E>,E>
 where E: Env, E::Backend: Backend<E,Event=Self> {
     fn is_kbd_down(&self) -> Option<KbdDown<E>> {
@@ -63,6 +65,12 @@ where E: Env, E::Backend: Backend<E,Event=Self> {
     fn is_mouse_leave(&self) -> Option<MouseLeave> {
         self.is::<MouseLeave>()
     }
+    fn is_gained_focus(&self) -> Option<GainedFocus> {
+        self.is::<GainedFocus>()
+    }
+    fn is_lost_focus(&self) -> Option<LostFocus> {
+        self.is::<LostFocus>()
+    }
     /*fn _is_root_event(&self) -> Option<RootEvent<E>> {
         self.is::<RootEvent<E>>()
     }*/
@@ -76,6 +84,8 @@ impl<E,T> StdVarSup<E> for T where T:
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E> +
+    VariantSupport<GainedFocus,E> +
+    VariantSupport<LostFocus,E> +
     VariantSupport<RootEvent<E>,E>
 , E: Env, E::Backend: Backend<E,Event=T> {
 

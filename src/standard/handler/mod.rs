@@ -25,9 +25,9 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self
         if let Some(p) = l.as_mut().s.kbd.focused.take() {
             l.with_widget(p.slice())
                 .expect("TODO")
-                ._event_root(LostFocus{ts});
+                ._event_root(Event::from(LostFocus{ts}));
             }
         l.as_mut().s.kbd.focused = Some(l.widget.path.clone());
-        l._event_root(GainedFocus{ts});
+        l._event_root(Event::from(GainedFocus{ts}));
     }
 }

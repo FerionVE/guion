@@ -35,6 +35,8 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
             .collect::<Vec<_>>()
     }
 
+    fn _child_bounds(&self, l: Link<E>, own: &Bounds, force: bool) -> Vec<Bounds>;
+
     fn erase(&self) -> &E::DynWidget {
         WidgetAsAny::_erase(self)
     }
@@ -72,6 +74,17 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
                 return c.resolve(i.slice(1..));
             }
         }
+        Err(())
+    }
+    fn trace_bounds(&self, l: Link<E>, i: WPSlice<E>, b: &Bounds, force: bool) -> Result<Bounds,()> {
+        if i.slice.is_empty() {
+            return Ok(*b)
+        }
+        let b = self._child_bounds(l,b,force);
+        let mut i = 0;
+
+        
+
         Err(())
     }
     #[inline]
