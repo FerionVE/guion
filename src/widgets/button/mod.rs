@@ -18,7 +18,7 @@ pub use imp::*;
 #[doc(inline)]
 pub use o::*;
 
-pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHandler<E>: AsHandlerStateful<E>, ERenderer<E>: RenderStdWidgets<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
+pub trait IButton<E>: Widget<E> + Sized where E: Env, ECHandler<E>: AsHandlerStateful<E>, ERenderer<E>: RenderStdWidgets<E>, (EEvent<E>,&Bounds,u64): VariantSupport<KbdDown<EEKey<E>>,E> {
     fn id(&self) -> E::WidgetID;
     
     #[inline]

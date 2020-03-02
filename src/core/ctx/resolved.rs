@@ -20,7 +20,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         (**self).render(c.link(self.clone()),r)
     }
     #[inline]
-    pub fn event(&self, c: &mut E::Context, e: EEvent<E>) {
+    pub fn event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64)) {
         (**self).event(c.link(self.clone()),e)
     }
     #[inline]
@@ -40,6 +40,8 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     pub fn childs_mut(&self) -> Vec<Resolved<E>> {
         (**self)._childs_mut(self.path)
     }*/
+    #[deprecated]
+    #[allow(deprecated)]
     #[inline]
     pub fn child_paths(&self) -> Vec<E::WidgetPath> {
         (**self).child_paths(self.path.slice())

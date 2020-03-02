@@ -70,7 +70,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.render(self.widget(),r)
     }
     #[inline]
-    pub fn event(&mut self, e: EEvent<E>) {
+    pub fn event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
         self.ctx.event(self.widget(),e)
     }
     #[inline]
@@ -78,7 +78,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.size(self.widget())
     }
     #[inline]
-    pub fn _event_root(&mut self, e: EEvent<E>) {
+    pub fn _event_root(&mut self, e: (EEvent<E>,&Bounds,u64)) {
         self.ctx._event_root(self.widget(),e)
     }
     /// bypasses Context and Handler(s)
@@ -89,7 +89,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// bypasses Context and Handler(s)
     #[inline]
-    pub fn _event(&mut self, e: EEvent<E>) {
+    pub fn _event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
         let w = self.ctx.link(self.widget.clone());
         self.widget.wref.widget().event(w,e)
     }
@@ -98,6 +98,10 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn _size(&mut self) -> ESize<E> {
         let w = self.ctx.link(self.widget.clone());
         self.widget.wref.widget().size(w)
+    }
+
+    pub fn trace_bounds(&mut self, root_bounds: &Bounds, force: bool) -> Bounds {
+        self.widget.stor.trace_bounds(self.ctx,self.widget.path.slice(),root_bounds,force).unwrap()
     }
 
     #[inline]
@@ -120,7 +124,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn for_childs<'s>(&'s mut self, mut f: impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
         let wref = self.widget.wref.refc();
         let path = self.widget.path.refc();
-        let ch = self.widget.childs();
+        let ch = self.widget.childs_ref();
         let stor = self.widget.stor;
         for c in ch {
             let w = c.resolve_widget(stor)?;

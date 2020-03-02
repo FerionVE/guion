@@ -47,11 +47,14 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: AsWidget<E>, E: Env, S
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         _render(l,r,self.orientation)
     }
-    fn event(&self, l: Link<E>, e: EEvent<E>) {
+    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         _event(l,e,self.orientation)
     }
     fn size(&self, l: Link<E>) -> ESize<E> {
         _size(l,self.orientation)
+    }
+    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
+        _trace_bounds(l,i,b,force,self.orientation)
     }
     fn invalid(&self) -> bool {
         true
@@ -61,10 +64,10 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: AsWidget<E>, E: Env, S
         let _ = v;
         //self.invalid = true
     }
-    fn has_childs(&self) -> bool {
-        true
+    fn childs(&self) -> usize {
+        self.childs.len()
     }
-    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
+    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
         self.childs.iter()
             .map(|c| c.as_ref() )
             .collect::<Vec<_>>()
@@ -86,11 +89,14 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         _render(l,r,self.orientation)
     }
-    fn event(&self, l: Link<E>, e: EEvent<E>) {
+    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         _event(l,e,self.orientation)
     }
     fn size(&self, l: Link<E>) -> ESize<E> {
         _size(l,self.orientation)
+    }
+    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
+        _trace_bounds(l,i,b,force,self.orientation)
     }
     fn invalid(&self) -> bool {
         true
@@ -98,10 +104,10 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: 
     fn set_invalid(&mut self, v: bool) {
         let _ = v;
     }
-    fn has_childs(&self) -> bool {
-        true
+    fn childs(&self) -> usize {
+        self.childs.len()
     }
-    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
+    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
         panic!()
     }
     fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
@@ -119,11 +125,14 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         _render(l,r,self.orientation)
     }
-    fn event(&self, l: Link<E>, e: EEvent<E>) {
+    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         _event(l,e,self.orientation)
     }
     fn size(&self, l: Link<E>) -> ESize<E> {
         _size(l,self.orientation)
+    }
+    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
+        _trace_bounds(l,i,b,force,self.orientation)
     }
     fn invalid(&self) -> bool {
         true
@@ -131,10 +140,10 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
     fn set_invalid(&mut self, v: bool) {
         let _ = v;
     }
-    fn has_childs(&self) -> bool {
-        true
+    fn childs(&self) -> usize {
+        self.childs.len()
     }
-    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
+    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
         panic!()
     }
     fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
@@ -209,7 +218,7 @@ pub fn _render<E>(mut l: Link<E>, r: &mut RenderLink<E>, o: Orientation) -> bool
     false
 }
 
-pub fn _event<E>(mut l: Link<E>, e: EEvent<E>, o: Orientation) where
+pub fn _event<E>(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64), o: Orientation) where
     E: Env,
 {
     let sizes = l.child_sizes().expect("Dead Path Inside Pane");
@@ -232,4 +241,13 @@ pub fn _size<E>(mut l: Link<E>, o: Orientation) -> ESize<E> where
     let mut s = ESize::<E>::empty();
     l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(), o) ).expect("Dead Path inside Pane");
     s
+}
+
+pub fn _trace_bounds<E>(mut l: Link<E>, i: usize, b: &Bounds, force: bool, o: Orientation) -> Result<Bounds,()> where
+    E: Env,
+{
+    let sizes = l.child_sizes().expect("Dead Path Inside Pane");
+    let bounds = calc_bounds(&b.size,&sizes,o); 
+
+    bounds.get(i).map(|w| *w).ok_or(())
 }

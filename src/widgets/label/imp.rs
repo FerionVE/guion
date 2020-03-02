@@ -63,7 +63,7 @@ macro_rules! impl_label_inner {
             false
         }
         #[inline]
-        fn has_childs(&self) -> bool {
+        fn childs(&self) -> usize {
             false
         }
         #[inline]
@@ -77,7 +77,7 @@ pub fn _render<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut
     todo!()
 }
 
-pub fn _event<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
+pub fn _event<W: ILabel<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
     todo!()
 }
 

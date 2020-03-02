@@ -56,7 +56,7 @@ pub trait Variant<E>: VariantDerive<E> where E: Env {
     /// both own_bounds and subbounds are absolute
     #[inline]
     fn _slice(&mut self, bounds: &Bounds) {
-        if let Some(b) = self._bounds_mut() {
+        if let Some(mut b) = self._bounds_mut() {
             b &= bounds;
         }
     }

@@ -13,29 +13,31 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
-    fn event(&self, l: Link<E>, e: EEvent<E>);
+    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64));
     fn size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
     fn invalid(&self) -> bool {
         true
     }
+    //#[allow(unused)]
     fn set_invalid(&mut self, v: bool) {
-        let _ = v;
+        
     }
 
-    fn has_childs(&self) -> bool; //TODO eventually trash this
+    fn childs(&self) -> usize;
+    //fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()>;
+    //fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()>;
 
-    fn childs<'a>(&'a self) -> Vec<Resolvable<'a,E>>;
+    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>>;
     fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>>;
 
+    #[deprecated]
     fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath> {
-        self.childs().into_iter()
+        self.childs_ref().into_iter() //TODO optimize, use direct accessors
             .map(|c| c.self_in_parent(own_path) )
             .collect::<Vec<_>>()
     }
-
-    fn _child_bounds(&self, l: Link<E>, own: &Bounds, force: bool) -> Vec<Bounds>;
 
     fn erase(&self) -> &E::DynWidget {
         WidgetAsAny::_erase(self)
@@ -69,24 +71,31 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         if i.slice.is_empty() {
             return Ok(Resolvable::Widget(Rc::new(self.as_immediate())))
         }
-        for c in self.childs() {
+        for c in self.childs_ref() {
             if c.is_subpath(i.index(0)) {
                 return c.resolve(i.slice(1..));
             }
         }
         Err(())
     }
+    #[inline]
+    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+        for (i,c) in self.childs_ref().iter().enumerate() {
+            if c.is_subpath(p) {
+                return Ok(i);
+            }
+        }
+        Err(())
+    }
+    #[inline]
     fn trace_bounds(&self, l: Link<E>, i: WPSlice<E>, b: &Bounds, force: bool) -> Result<Bounds,()> {
         if i.slice.is_empty() {
             return Ok(*b)
         }
-        let b = self._child_bounds(l,b,force);
-        let mut i = 0;
-
-        
-
-        Err(())
+        self.resolve_child(i.index(0))
+            .and_then(|i| self._trace_bounds(l,i,b,force) )
     }
+    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()>;
     #[inline]
     fn self_in_parent(&self, parent: WPSlice<E>) -> E::WidgetPath {
         parent.attached(SubPath::from_id(self.id()))

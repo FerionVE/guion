@@ -41,7 +41,7 @@ macro_rules! impl_null_inner {
             $crate::macro_prelude::INull::set_invalid(self,v)
         }
         #[inline]
-        fn childs(&self) -> Vec<$crate::macro_prelude::Resolvable<$c>> {
+        fn childs_ref(&self) -> Vec<$crate::macro_prelude::Resolvable<$c>> {
             std::vec![]
         }
         #[inline]
@@ -53,8 +53,8 @@ macro_rules! impl_null_inner {
             false
         }
         #[inline]
-        fn has_childs(&self) -> bool {
-            false
+        fn childs(&self) -> usize {
+            0
         }
         #[inline]
         fn style(&self, s: &mut $crate::macro_prelude::ESVariant<$c>) {
@@ -65,12 +65,16 @@ macro_rules! impl_null_inner {
             $crate::widgets::null::_render::<Self,$c>(l,r)
         }
         #[inline]
-        fn event(&self, l: $crate::macro_prelude::Link<$c>, e: $crate::macro_prelude::EEvent<$c>) {
+        fn event(&self, l: $crate::macro_prelude::Link<$c>, e: ($crate::macro_prelude::EEvent<$c>,&$crate::macro_prelude::Bounds,u64)) {
             $crate::widgets::null::_event::<Self,$c>(l,e)
         }
         #[inline]
         fn size(&self, l: $crate::macro_prelude::Link<$c>) -> $crate::macro_prelude::ESize<$c> {
             $crate::widgets::null::_size::<Self,$c>(l)
+        }
+        #[inline]
+        fn _trace_bounds(&self, l: $crate::macro_prelude::Link<E>, i: usize, b: &$crate::macro_prelude::Bounds, force: bool) -> Result<Bounds,()> {
+            Err(())
         }
     };
 }
@@ -80,7 +84,7 @@ pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut 
     true
 }
 
-pub fn _event<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
+pub fn _event<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
     
 }
 

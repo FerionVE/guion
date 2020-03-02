@@ -62,7 +62,7 @@ macro_rules! impl_pane_inner {
             false
         }
         #[inline]
-        fn has_childs(&self) -> bool {
+        fn childs(&self) -> usize {
             true
         }
         #[inline]
@@ -98,7 +98,7 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<
     
 }
 
-pub fn _event<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: EEvent<E>) {
+pub fn _event<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
     todo!()
 }
 

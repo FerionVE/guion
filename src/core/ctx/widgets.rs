@@ -14,6 +14,8 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
         self.widget(i).is_ok()
     }
 
+    fn trace_bounds(&self, ctx: &mut E::Context, i: WPSlice<E>, b: &Bounds, force: bool) -> Result<Bounds,()>;
+
     #[deprecated] #[inline] fn tune_path(&self, _i: &mut E::WidgetPath) {}
     #[deprecated] #[inline] fn tune_path_mut(&mut self, _i: &mut E::WidgetPath) {}
 

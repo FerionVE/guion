@@ -16,7 +16,7 @@ pub struct Button<E> where E: Env, ERenderer<E>: RenderStdWidgets<E>, ECHandler<
     action: fn(Link<E>),
 }
 
-impl<E> super::IButton<E> for Button<E> where E: Env + 'static, ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, EEvent<E>: VariantSupport<KbdDown<EEKey<E>>,E> {
+impl<E> super::IButton<E> for Button<E> where E: Env + 'static, ERenderer<E>: RenderStdWidgets<E>, ECHandler<E>: AsHandlerStateful<E>, (EEvent<E>,&Bounds,u64): VariantSupport<KbdDown<EEKey<E>>,E> {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

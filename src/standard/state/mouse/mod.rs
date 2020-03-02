@@ -12,16 +12,16 @@ pub struct MouseState<E> where E: Env {
 }
 
 pub struct MousePressedKey<E> where E: Env {
-    pub key: u32,
+    pub key: EEKey<E>,
     pub start: Offset,
-    pub id: E::WidgetID,
+    pub id: E::WidgetPath,
     pub ts: u64,
 }
 
 impl<E> MouseState<E> where E: Env {
     #[inline]
-    pub fn down(&mut self, key: u32, start: Offset, id: E::WidgetID, ts: u64) {
-        self.up(key);
+    pub fn down(&mut self, key: EEKey<E>, start: Offset, id: E::WidgetPath, ts: u64) -> Option<MousePressedKey<E>> {
+        let old = self.up(key.clone());
         self.pressed.push(
             MousePressedKey{
                 key,
@@ -30,17 +30,24 @@ impl<E> MouseState<E> where E: Env {
                 ts,
             }
         );
+        old
     }
     #[inline]
-    pub fn up(&mut self, key: u32) {
-        self.pressed.retain(#[inline] |e| e.key != key );
+    pub fn up(&mut self, key: EEKey<E>) -> Option<MousePressedKey<E>> {
+        //self.pressed.retain(#[inline] |e| e.key != key );
+        for (i,k) in self.pressed.iter().enumerate() {
+            if k.key == key {
+                return Some(self.pressed.remove(i));
+            }
+        }
+        None
     }
     #[inline]
-    pub fn get(&self, key: u32) -> Option<&MousePressedKey<E>> {
+    pub fn get(&self, key: EEKey<E>) -> Option<&MousePressedKey<E>> {
         self.pressed.iter().find(#[inline] |i| i.key == key )
     }
     #[inline]
-    pub fn get_mut(&mut self, key: u32) -> Option<&mut MousePressedKey<E>> {
+    pub fn get_mut(&mut self, key: EEKey<E>) -> Option<&mut MousePressedKey<E>> {
         self.pressed.iter_mut().find(#[inline] |i| i.key == key )
     }
 

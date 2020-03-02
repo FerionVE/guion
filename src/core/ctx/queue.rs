@@ -6,7 +6,7 @@ use super::*;
 pub trait Queue<E>: Sized + Sync where E: Env, E::Context: Context<E,Queue=Self> {
     fn wake(&self);
     fn enqueue_render(&self, force: bool);
-    fn enqueue_event(&self, e: EEvent<E>);
+    fn enqueue_event(&self, e: (EEvent<E>,&Bounds,u64));
     fn enqueue_widget_mut(&self, path: WPSlice<E>, f: fn(&mut E::DynWidget), invalidate: bool);
     fn enqueue_widget(&self, path: WPSlice<E>, f: fn(&E::DynWidget));
     fn enqueue_widget_mut_closure(&self, path: WPSlice<E>, f: impl FnOnce(&mut E::DynWidget), invalidate: bool);

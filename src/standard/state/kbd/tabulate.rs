@@ -19,7 +19,7 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
 
         if !traverse_parents {
             traverse_parents = true;
-            if w.has_childs() {
+            if w.childs() != 0 {
                 if let Some(c) = w.child_paths().into_iter().next() {
                     current = c;
                     //traverse into child, skip parent traverse

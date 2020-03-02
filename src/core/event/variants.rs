@@ -5,21 +5,18 @@ use super::*;
 #[derive(Clone)]
 pub struct KbdDown<E> where E: Env {
     pub key: EEKey<E>,
-    pub widget: E::WidgetPath,
-    pub ts: u64,
+    //pub widget: E::WidgetPath,
 }
 #[derive(Clone)]
 pub struct KbdUp<E> where E: Env {
     pub key: EEKey<E>,
-    pub widget: E::WidgetPath,
-    pub ts: u64,
+    pub down_widget: E::WidgetPath,
     pub down_ts: u64,
 }
 #[derive(Clone)]
 pub struct KbdPress<E> where E: Env {
     pub key: EEKey<E>,
-    pub widget: E::WidgetPath,
-    pub ts: u64,
+    pub down_widget: E::WidgetPath,
     pub down_ts: u64,
 }
 
@@ -27,56 +24,47 @@ pub struct KbdPress<E> where E: Env {
 pub struct MouseDown<E> where E: Env {
     pub key: EEKey<E>,
     pub pos: Offset,
-    pub current_bounds: Bounds,
-    pub ts: u64,
 }
 #[derive(Clone)]
 pub struct MouseUp<E> where E: Env {
     pub key: EEKey<E>,
     pub pos: Offset,
-    pub current_bounds: Bounds,
-    pub ts: u64,
+    pub down_pos: Offset,
+    pub down_widget: E::WidgetPath,
+    pub down_ts: u64,
 }
 
 #[derive(Clone)]
 pub struct MouseMove {
     pub dest: Offset,
-    pub current_bounds: Bounds,
-    pub ts: u64,
 }
 
 #[derive(Clone)]
 pub struct MouseEnter {
     pub dest: Offset,
-    pub ts: u64,
 }
 #[derive(Clone)]
 pub struct MouseLeave {
     pub dest: Offset,
-    pub ts: u64,
 }
 
 #[derive(Clone)]
 pub struct WindowMove {
     pub pos: Offset,
     pub size: Size,
-    pub ts: u64,
 }
 
 #[derive(Clone)]
 pub struct WindowResize {
     pub size: Size,
-    pub ts: u64,
 }
 
 #[derive(Clone)]
 pub struct GainedFocus {
-    pub ts: u64,
 }
 
 #[derive(Clone)]
 pub struct LostFocus {
-    pub ts: u64,
 }
 
 macro_rules! pos {
@@ -145,9 +133,9 @@ impl<E> Variant<E> for KbdDown<E> where E: Env {selected!();}
 impl<E> Variant<E> for KbdPress<E> where E: Env {selected!();}
 impl<E> Variant<E> for KbdUp<E> where E: Env {selected!();}
 
-impl<E> Variant<E> for MouseDown<E> where E: Env {consuming!();hovered!();pos!(pos);bounds!();}
-impl<E> Variant<E> for MouseUp<E> where E: Env {consuming!();hovered!();pos!(pos);bounds!();}
-impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(dest);bounds!();}
+impl<E> Variant<E> for MouseDown<E> where E: Env {consuming!();hovered!();pos!(pos);}
+impl<E> Variant<E> for MouseUp<E> where E: Env {consuming!();hovered!();pos!(pos);}
+impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(dest);}
 impl<E> Variant<E> for MouseEnter where E: Env {consuming!();invalid!();pos!(dest);}
 impl<E> Variant<E> for MouseLeave where E: Env {consuming!();invalid!();pos!(dest);}
 
@@ -163,14 +151,14 @@ impl<E> Variant<E> for LostFocus where E: Env {consuming!();invalid!();}
 #[non_exhaustive]
 #[derive(Clone)]
 pub enum RootEvent<E> where E: Env {
-    KbdDown{key: EEKey<E>, ts: u64},
-    KbdPress{key: EEKey<E>, ts: u64},
-    KbdUp{key: EEKey<E>, ts: u64},
-    MouseDown{key: EEKey<E>, root_bounds: Bounds, ts: u64},
-    MouseUp{key: EEKey<E>, root_bounds: Bounds, ts: u64},
-    MouseMove{dest: Offset, root_bounds: Bounds, ts: u64},
-    WindowMove{pos: Offset, size: Size, ts: u64},
-    WindowResize{size: Size, ts: u64},
+    KbdDown{key: EEKey<E>},
+    KbdPress{key: EEKey<E>},
+    KbdUp{key: EEKey<E>},
+    MouseDown{key: EEKey<E>},
+    MouseUp{key: EEKey<E>},
+    MouseMove{dest: Offset},
+    WindowMove{pos: Offset, size: Size},
+    WindowResize{size: Size},
 }
 
 impl<E> Variant<E> for RootEvent<E> where E: Env {
