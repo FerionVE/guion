@@ -64,4 +64,11 @@ impl<E> KbdState<E> where E: Env {
     pub fn focus(&mut self, l: &mut Link<E>, bounds: &Bounds, ts: u64) {
         
     }*/
+
+    pub fn new() -> Self {
+        Self{
+            pressed: Vec::new(),
+            focused: None,
+        }
+    }
 }

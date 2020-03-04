@@ -82,7 +82,7 @@ pub trait Destination: Clone + Sized {
     /// send the event to the root widget
     const ROOT: Self;
     /// send the widget to the currently focused widget
-    const SELECTED: Self;
+    const FOCUSED: Self;
     /// send the event to the currently hovered widget
     const HOVERED: Self;
     /// distribution of such event is invalid

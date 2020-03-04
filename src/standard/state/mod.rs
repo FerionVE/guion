@@ -13,6 +13,9 @@ pub struct StdState<E> where E: Env {
 
 impl<E> StdState<E> where E: Env {
     pub fn new() -> Self {
-        todo!()
+        Self{
+            kbd: KbdState::new(),
+            mouse: MouseState::new(),
+        }
     }
 }

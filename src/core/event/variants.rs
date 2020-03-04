@@ -93,11 +93,11 @@ macro_rules! consuming {
     };
 }
 
-macro_rules! selected {
+macro_rules! focused {
     () => {
         #[inline]
         fn destination(&self) -> EEDest<E> {
-            Destination::SELECTED
+            Destination::FOCUSED
         }
     };
 }
@@ -129,9 +129,9 @@ macro_rules! invalid {
     };
 }
 
-impl<E> Variant<E> for KbdDown<E> where E: Env {selected!();}
-impl<E> Variant<E> for KbdPress<E> where E: Env {selected!();}
-impl<E> Variant<E> for KbdUp<E> where E: Env {selected!();}
+impl<E> Variant<E> for KbdDown<E> where E: Env {focused!();}
+impl<E> Variant<E> for KbdPress<E> where E: Env {focused!();}
+impl<E> Variant<E> for KbdUp<E> where E: Env {focused!();}
 
 impl<E> Variant<E> for MouseDown<E> where E: Env {consuming!();hovered!();pos!(pos);}
 impl<E> Variant<E> for MouseUp<E> where E: Env {consuming!();hovered!();pos!(pos);}

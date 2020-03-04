@@ -118,6 +118,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                         l._event_root((Event::from(MouseLeave{dest}),&wbounds,e.2));
                     }
                 }
+                _ => {}
             }
         }else{
             S::_event_root(l,e);
