@@ -3,8 +3,8 @@ use super::*;
 pub trait AsHandlerStateful<E>: Context<E> + Sized where E: Env<Context=Self> {
     type T: HandlerStateful<E>;
     
-    fn stateful_mut(e: &mut E::Context) -> &mut Self::T;
-    fn stateful(e: &E::Context) -> &Self::T;
+    fn stateful_mut(&mut self) -> &mut Self::T;
+    fn stateful(&self) -> &Self::T;
 } 
 pub trait HandlerStateful<E>: Handler<E> + 'static where E: Env {
     type K: PressedKey<E>;

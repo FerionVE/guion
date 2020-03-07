@@ -39,6 +39,8 @@ pub trait WidgetPath<E>: AsWPSlice<E> + AsWidget<E> + AsWidgetImmediate<'static,
     fn childs_of_slice_mut<'a>(s: WPSlice<E>, c: CtxRefM<'a,E>) -> Result<Vec<WidgetRefMut<'a,E>>,()> {
         c.0.widget_mut(s).ok_or(()).map(|w| Widget::childs_mut(&mut **w) )
     }*/
+    #[deprecated]
+    #[allow(deprecated)]
     #[inline]
     fn child_paths_of_slice<'a>(s: WPSlice<E>, c: CtxRefR<'a,E>) -> Result<Vec<E::WidgetPath>,()> {
         Ok( c.0.widget(s)?.child_paths() )
@@ -102,6 +104,8 @@ impl<'a,E> WPSlice<'a,E> where E: Env {
         E::WidgetPath::childs_of_slice_mut(*self,c)
     }*/
 
+    #[deprecated]
+    #[allow(deprecated)]
     #[inline]
     pub fn child_paths<'c>(&self, c: CtxRefR<'c,E>) -> Result<Vec<E::WidgetPath>,()> {
         E::WidgetPath::child_paths_of_slice(*self,c)

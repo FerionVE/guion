@@ -101,6 +101,8 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     }
                 }
                 RootEvent::MouseMove{dest} => {
+                    //set pos
+                    l.as_mut().s.mouse.pos = Some(dest);
                     //previous hovered widget
                     let previous = l.as_mut().s.mouse.hovered.take();
                     //hover state will be updated as the event passes through the widget tree

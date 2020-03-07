@@ -156,9 +156,9 @@ pub enum RootEvent<E> where E: Env {
     KbdUp{key: EEKey<E>},
     MouseDown{key: EEKey<E>},
     MouseUp{key: EEKey<E>},
-    MouseMove{dest: Offset},
-    WindowMove{pos: Offset, size: Size},
-    WindowResize{size: Size},
+    MouseMove{dest: Offset}, //TODO which mouse moves??
+    WindowMove{pos: Offset},
+    WindowResize{size: Dims},
 }
 
 impl<E> Variant<E> for RootEvent<E> where E: Env {

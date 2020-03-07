@@ -72,3 +72,15 @@ impl<E> KbdState<E> where E: Env {
         }
     }
 }
+
+impl<E> PressedKey<E> for KbdPressedKey<E> where E: Env {
+    fn key(&self) -> &EEKey<E> {
+        &self.key
+    }
+    fn widget(&self) -> &E::WidgetID {
+        self.id.id()
+    }
+    fn timestamp(&self) -> u64 {
+        self.ts
+    }
+}

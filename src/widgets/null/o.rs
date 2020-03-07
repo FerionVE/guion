@@ -16,7 +16,7 @@ impl<E> Null<E> where E: Env {
     }
 }
 
-impl<E> super::INull<E> for Null<E> where E: Env + 'static, ERenderer<E>: RenderStdWidgets<E>, ESVariant<E>: StyleVariantSupport<StdVerb> {
+impl<E> super::INull<E> for Null<E> where E: Env + 'static, ERenderer<E>: RenderStdWidgets<E>, ESVariant<E>: StyleVariantSupport<StdVerb>, E::Context: AsHandlerStateful<E>, ESVariant<E>: StyleVariantSupport<StdVerb> {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }

@@ -15,7 +15,9 @@ macro_rules! impl_null {
         impl<E> $crate::macro_prelude::Widget<E> for $t where
             $t: $crate::macro_prelude::INull<E>,
             E: $crate::macro_prelude::Env + 'static,
-            $crate::macro_prelude::ERenderer<E>: $crate::macro_prelude::RenderStdWidgets<E>
+            $crate::macro_prelude::ERenderer<E>: $crate::macro_prelude::RenderStdWidgets<E>,
+            E::Context: $crate::macro_prelude::AsHandlerStateful<E>,
+            ESVariant<E>: StyleVariantSupport<StdVerb>
         {
             $crate::impl_null_inner!($t,E);
         }
@@ -79,7 +81,8 @@ macro_rules! impl_null_inner {
     };
 }
 
-pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) -> bool where ERenderer<E>: RenderStdWidgets<E> {
+pub fn _render<W: INull<E> + 'static, E: Env + 'static>(mut l: Link<E>, r: &mut RenderLink<E>) -> bool where ERenderer<E>: RenderStdWidgets<E>, E::Context: AsHandlerStateful<E>, ESVariant<E>: StyleVariantSupport<StdVerb> {
+    let mut r = r.with(&[StdVerb::Hovered(l.is_hovered())]);
     r.fill_rect();
     true
 }
