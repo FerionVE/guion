@@ -159,13 +159,13 @@ impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, 
 }
 
 impl<'c,T,E> WidgetImmediate<'c,E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: Env {
-    fn resolve(self, s: WPSlice<E>) -> Result<Resolvable<'c,E>,()> where Self: Sized {
+    fn resolve(self, s: E::WidgetPath) -> Result<Resolvable<'c,E>,()> where Self: Sized {
         todo!()
     }
-    fn resolve_box(self: Box<Self>, s: WPSlice<E>) -> Result<Resolvable<'c,E>,()> {
+    fn resolve_box(self: Box<Self>, s: E::WidgetPath) -> Result<Resolvable<'c,E>,()> {
         todo!()
     }
-    fn resolve_ref(&self, s: WPSlice<E>) -> Result<Resolvable<'c,E>,()> {
+    fn resolve_ref(&self, s: E::WidgetPath) -> Result<Resolvable<'c,E>,()> {
         todo!()
     }
     fn widget(&self) -> &E::DynWidget {
@@ -177,16 +177,16 @@ impl<'c,T,E> WidgetImmediate<'c,E> for Pane<'c,T,E,TRef> where T: WidgetImmediat
 }
 
 impl<'c,T,E> WidgetImmediateMut<'c,E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, E: Env {
-    fn resolve(self, s: WPSlice<E>) -> Result<Resolvable<'c,E>,()> where Self: Sized {
+    fn resolve(self, s: E::WidgetPath) -> Result<Resolvable<'c,E>,()> where Self: Sized {
         todo!()
     }
-    fn resolve_box(self: Box<Self>, s: WPSlice<E>, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> {
+    fn resolve_box(self: Box<Self>, s: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> {
         todo!()
     }
-    fn resolve_mut(self, s: WPSlice<E>, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> where Self: Sized {
+    fn resolve_mut(self, s: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> where Self: Sized {
         todo!()
     }
-    fn resolve_mut_box(self: Box<Self>, s: WPSlice<E>, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> {
+    fn resolve_mut_box(self: Box<Self>, s: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> {
         todo!()
     }
     fn widget(&self) -> &E::DynWidget {

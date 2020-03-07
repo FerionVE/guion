@@ -166,7 +166,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
 
     #[deprecated]
     #[inline] 
-    pub fn render_widgets<'b>(&mut self, i: impl Iterator<Item=WPSlice<'b,E>>+'b, c: CtxRef<E>, overlap: bool) {
+    pub fn render_widgets<'b>(&mut self, i: impl Iterator<Item=E::WidgetPath>+'b, c: CtxRef<E>, overlap: bool) {
         /*if overlap {
             let mut render = false;
             for w in i {

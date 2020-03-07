@@ -16,33 +16,33 @@ impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
     pub fn mutate(&mut self, f: fn(&mut E::DynWidget), invalidate: bool) {
-        self.ctx.queue_mut().enqueue_widget_mut(self.widget.path.slice(),f,invalidate)
+        self.ctx.queue_mut().enqueue_widget_mut(self.widget.path.refc(),f,invalidate)
     }
     /// enqueue mutable access to this widget
     #[inline] 
     pub fn mutate_closure(&mut self, f: impl FnOnce(&mut E::DynWidget), invalidate: bool) {
-        self.ctx.queue_mut().enqueue_widget_mut_closure(self.widget.path.slice(),Box::new(f),invalidate)
+        self.ctx.queue_mut().enqueue_widget_mut_closure(self.widget.path.refc(),Box::new(f),invalidate)
     }
     /// enqueue immutable access to this widget
     #[inline] 
     pub fn later(&mut self, f: fn(&E::DynWidget)) {
-        self.ctx.queue_mut().enqueue_widget(self.widget.path.slice(),f)
+        self.ctx.queue_mut().enqueue_widget(self.widget.path.refc(),f)
     }
     /// enqueue immutable access to this widget
     #[inline] 
     pub fn later_closure(&mut self, f: impl FnOnce(&E::DynWidget)) {
-        self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.slice(),Box::new(f))
+        self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.refc(),Box::new(f))
     }
     #[inline]
     pub fn enqueue_invalidate(&mut self) {
-        let s = self.widget.path.slice();
+        let s = self.widget.path.refc();
         self.ctx.queue_mut().enqueue_widget_invalidate(s)
     }
     /// mark the current widget as validated
     /// this should and should only be called from widget's render fn
     #[inline]
     pub fn enqueue_validate(&mut self) {
-        let s = self.widget.path.slice();
+        let s = self.widget.path.refc();
         self.ctx.queue_mut().enqueue_widget_validate(s)
     }
     #[inline]
@@ -101,7 +101,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     pub fn trace_bounds(&mut self, root_bounds: &Bounds, force: bool) -> Bounds {
-        self.widget.stor.trace_bounds(self.ctx,self.widget.path.slice(),root_bounds,force).unwrap()
+        self.widget.stor.trace_bounds(self.ctx,self.widget.path.refc(),root_bounds,force).unwrap()
     }
 
     #[inline]
@@ -129,7 +129,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         for c in ch {
             let w = c.resolve_widget(stor)?;
             let w = Resolved{
-                path: w.widget().self_in_parent(path.slice()).into(),
+                path: w.widget().self_in_parent(path.refc()).into(),
                 wref: w,
                 stor,
             };
@@ -152,7 +152,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         Ok(dest)
     }
 
-    pub fn with_widget<'s>(&'s mut self, p: WPSlice<'s,E>) -> Result<Link<'s,E>,()> where 'c: 's {
+    pub fn with_widget<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
         Ok(
             Link{
                 widget: self.widget.stor.widget(p)?,
@@ -161,11 +161,11 @@ impl<'c,E> Link<'c,E> where E: Env {
         )
     }
 
-    pub fn resolve_sub<'s>(&'s mut self, p: WPSlice<E>) -> Result<Link<'s,E>,()> where 'c: 's {
-        let rw = self.widget.wref.resolve_ref(p)?;
+    pub fn resolve_sub<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
+        let rw = self.widget.wref.resolve_ref(p.refc())?;
         let rw = rw.resolve_widget(&self.widget.stor)?;
         let w = Resolved{
-            path: E::WidgetPath::concatenated_slice(self.widget.path.slice(),p).into(),
+            path: E::WidgetPath::concatenated_slice(&self.widget.path,&p),
             wref: rw,
             stor: self.widget.stor,
         };
@@ -191,10 +191,10 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.widget(self.path).unwrap()
             .child_paths(self.path)
             .into_iter()
-            .filter(#[inline] move |s| predicate(s.slice()) )
+            .filter(#[inline] move |s| predicate(s) )
             .map(move |e| {
                 (
-                    self.ctx.widget(e.slice()).expect("Lost Child")
+                    self.ctx.widget(e).expect("Lost Child")
                 )
             })
     }
@@ -206,7 +206,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         for e in childs {
             if predicate(&e) {
                 f(
-                    self.ctx.widget_mut(e.slice()).expect("Lost Child")
+                    self.ctx.widget_mut(e).expect("Lost Child")
                 );
             }
         }
@@ -216,11 +216,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn parents(&'c self) -> Parents<'c,E> {
         Parents{
             stor: self.widget.stor,
-            next: Some(self.widget.path.slice()),
+            next: Some(self.widget.path.refc()),
         }
     }
     
-    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>,RcPath=EWPRc<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
+    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
         Link{
             widget: self.widget.with_env::<F>(),
             ctx,

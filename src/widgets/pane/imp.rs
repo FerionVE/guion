@@ -81,7 +81,7 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<
     let b = c.iter()
     .map(|c| 
         c
-        .slice() //TODO remove constant slice() requirement
+         //TODO remove constant slice() requirement
         .size(&mut l)
         .expect("Lost Widget")
     )
@@ -91,7 +91,7 @@ pub fn _render<W: IPane<E> + Widget<E> + 'static, E: Env + 'static>(mut l: Link<
     
     for (cc,bb) in c.iter().zip(b.iter()) {
         cc
-        .slice()
+        
         .render( &mut *l, (r.0,&r.1.slice(bb)) )
         .expect("Pane contains lost Widget");
     }
@@ -110,7 +110,7 @@ pub fn _size<W: IPane<E> + 'static, E: Env + 'static>(mut l: Link<E>) -> Size {
     
     for c in l.child_paths() {
         let cs = c
-        .slice()
+        
         .size(&mut l)
         .expect("Lost Widget");
         

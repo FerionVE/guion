@@ -54,8 +54,8 @@ impl<E> KbdState<E> where E: Env {
         where EEvent<E>: StdVarSup<E>,
     {
         if let Some(p) = deref_to_self(ctx).focused.take() {
-            if let Ok(w) = root.widget(p.slice()) {
-                let bounds = root.trace_bounds(p.slice()).unwrap();
+            if let Ok(w) = root.widget(p) {
+                let bounds = root.trace_bounds(p).unwrap();
                 ctx.link(w)._event_root((Event::from(LostFocus{}),&bounds,ts));
             }
         }

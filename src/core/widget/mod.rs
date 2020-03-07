@@ -33,9 +33,9 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>>;
 
     #[deprecated]
-    fn child_paths(&self, own_path: WPSlice<E>) -> Vec<E::WidgetPath> {
+    fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         self.childs_ref().into_iter() //TODO optimize, use direct accessors
-            .map(|c| c.self_in_parent(own_path) )
+            .map(|c| c.self_in_parent(own_path.refc()) )
             .collect::<Vec<_>>()
     }
 
@@ -54,9 +54,9 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     }
 
     #[inline]
-    fn resolve_mut<'a>(&'a mut self, i: WPSlice<E>, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+    fn resolve_mut<'a>(&'a mut self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if invalidate {self.set_invalid(true);}
-        if i.slice.is_empty() {
+        if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.as_immediate_mut()))
         }
         for c in self.childs_mut() {
@@ -67,8 +67,8 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         Err(())
     }
     #[inline]
-    fn resolve<'a>(&'a self, i: WPSlice<E>) -> Result<Resolvable<'a,E>,()> {
-        if i.slice.is_empty() {
+    fn resolve<'a>(&'a self, i: E::WidgetPath) -> Result<Resolvable<'a,E>,()> {
+        if i.is_empty() {
             return Ok(Resolvable::Widget(Rc::new(self.as_immediate())))
         }
         for c in self.childs_ref() {
@@ -88,8 +88,8 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
         Err(())
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: WPSlice<E>, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        if i.slice.is_empty() {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
+        if i.is_empty() {
             return Ok(*b)
         }
         self.resolve_child(i.index(0))
@@ -97,7 +97,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     }
     fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()>;
     #[inline]
-    fn self_in_parent(&self, parent: WPSlice<E>) -> E::WidgetPath {
+    fn self_in_parent(&self, parent: E::WidgetPath) -> E::WidgetPath {
         parent.attached(SubPath::from_id(self.id()))
     }
     #[inline]

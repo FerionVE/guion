@@ -15,7 +15,7 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
     while repeat {
         repeat = false;
 
-        let w = s.widget(current.slice()).expect("Lost Widget");
+        let w = s.widget(current.refc()).expect("Lost Widget");
 
         if !traverse_parents {
             traverse_parents = true;
@@ -42,7 +42,7 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
                     current = pc[idx-1].clone();
                 }else{
                     //parent traverse end was reached, traverse grandpa
-                    current = p.unslice();
+                    current = p.refc();
                     traverse_parents = true;
                     repeat = true;
                 }
@@ -51,7 +51,7 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
             }
         }
 
-        if !s.widget(current.slice()).expect("Lost Widget").focusable() {
+        if !s.widget(current.refc()).expect("Lost Widget").focusable() {
             repeat = true;
         }
 
