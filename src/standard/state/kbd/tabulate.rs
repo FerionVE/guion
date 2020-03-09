@@ -19,7 +19,7 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
 
         if !traverse_parents {
             traverse_parents = true;
-            if w.childs() != 0 {
+            if w.widget().childs() != 0 {
                 if let Some(c) = w.child_paths().into_iter().next() {
                     current = c;
                     //traverse into child, skip parent traverse
@@ -51,7 +51,7 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
             }
         }
 
-        if !s.widget(current.refc()).expect("Lost Widget").focusable() {
+        if !s.widget(current.refc()).expect("Lost Widget").widget().focusable() {
             repeat = true;
         }
 

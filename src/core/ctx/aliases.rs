@@ -20,8 +20,6 @@ pub type ECQueue<E: Env> = <E::Context as Context<E>>::Queue;
 pub type ECStateful<E: Env> = <E::Context as AsHandlerStateful<E>>::T;
 pub type EPressedKey<E: Env> = <ECStateful<E> as HandlerStateful<E>>::K;
 
-//pub type ESubWidgetID<E: Env> = <E::WidgetID as WidgetID>::SubWidgetID;
-//pub type EWPSlice<'a,E: Env> = <&'a E as EnvLt<'a>>::PathSlice;
 pub type EWPSub<E: Env> = <E::WidgetPath as WidgetPath<E>>::SubPath;
 
 pub type CtxRef<'a,E: Env> = (&'a E::Storage,&'a mut E::Context);

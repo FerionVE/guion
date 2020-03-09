@@ -16,16 +16,16 @@ pub struct ResolvedMut<'a,E> where E: Env {
 
 impl<'a,E> Resolved<'a,E> where E: Env {
     #[inline]
-    pub fn render(&self, c: &mut E::Context, r: &mut RenderLink<E>) -> bool {
-        (**self).render(c.link(self.clone()),r)
+    pub fn _render(&self, c: &mut E::Context, r: &mut RenderLink<E>) -> bool {
+        self.widget().render(c.link(self.clone()),r)
     }
     #[inline]
-    pub fn event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64)) {
-        (**self).event(c.link(self.clone()),e)
+    pub fn _event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64)) {
+        self.widget().event(c.link(self.clone()),e)
     }
     #[inline]
-    pub fn size(&self, c: &mut E::Context) -> ESize<E> {
-        (**self).size(c.link(self.clone()))
+    pub fn _size(&self, c: &mut E::Context) -> ESize<E> {
+        self.widget().size(c.link(self.clone()))
     }
     #[inline]
     pub fn link(&self, c: &'a mut E::Context) -> Link<'a,E> {
@@ -44,7 +44,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     #[allow(deprecated)]
     #[inline]
     pub fn child_paths(&self) -> Vec<E::WidgetPath> {
-        (**self).child_paths(self.path.refc())
+        self.widget().child_paths(self.path.refc())
     }
 
     pub fn with_env<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self) -> Resolved<'a,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
@@ -55,10 +55,10 @@ impl<'a,E> Resolved<'a,E> where E: Env {
 }
 
 impl<'a,E> Deref for Resolved<'a,E> where E: Env {
-    type Target = E::DynWidget;
+    type Target = Rc<WidgetRef<'a,E>>;
     #[inline]
     fn deref(&self) -> &Self::Target {
-        self.wref.widget().erase()
+        &self.wref
     }
 }
 impl<'a,E> Deref for ResolvedMut<'a,E> where E: Env {
@@ -76,7 +76,11 @@ impl<'a,E> DerefMut for ResolvedMut<'a,E> where E: Env {
 
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
     fn clone(&self) -> Self {
-        self.stor.widget(self.path.refc()).unwrap()
+        Self{
+            wref: self.wref.refc(),
+            path: self.path.clone(),
+            stor: self.stor,
+        }
     }
 }
 /// shrink the lifetime

@@ -25,57 +25,27 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
     }
 }
 
-pub fn resolve_in_root<'a,E: Env>(w: &'a E::DynWidget, p: E::WidgetPath) -> Option<(Rc<WidgetRef<'a,E>>,E::WidgetPath)> {
-    let r = w.resolve(p.refc());
-    let r = r.ok();
-
-    //TODO macro for this
-    if r.is_none() {return None;}
-    let r = r.unwrap();
+pub fn resolve_in_root<'a,E: Env>(w: &'a E::DynWidget, p: E::WidgetPath) -> Result<(Rc<WidgetRef<'a,E>>,E::WidgetPath),()> {
+    let r = w.resolve(p.refc())?;
     
     match r {
         Resolvable::Widget(w) => 
-            Some(
+            Ok(
                 (w,From::from(p))
             ),
         Resolvable::Path(p) => resolve_in_root(w,p),
     }
 }
 
-pub fn resolve_in_root_mut<'a,E: Env>(w: &'a mut E::DynWidget, p: E::WidgetPath, invalidate: bool) -> Option<(WidgetRefMut<'a,E>,E::WidgetPath)> {
-    let path = resolve_in_root::<E>(w,p).map(|e| e.1 );
+pub fn resolve_in_root_mut<'a,E: Env>(w: &'a mut E::DynWidget, p: E::WidgetPath, invalidate: bool) -> Result<(WidgetRefMut<'a,E>,E::WidgetPath),()> {
+    let final_path = resolve_in_root::<E>(w,p)
+        .map(|e| e.1 )?;
 
-    if path.is_none() {return None;}
-    let path = path.unwrap();
-
-    Some((
-        w.resolve_mut(path.refc(),invalidate)
+    Ok((
+        w.resolve_mut(final_path.refc(),invalidate)
             .unwrap()
             .as_widget()
             .unwrap_nodebug(),
-        path
+        final_path
     ))
 }
-
-/*pub fn resolve_in_root_mutt<'a,E: Env>(w: &'a mut E::DynWidget, p: E::WidgetPath, invalidate: bool) -> Option<(WidgetRefMut<'a,E>,E::WidgetPath)> {
-    fn dummy<'b,E: Env>(w: &'b mut E::DynWidget, p: E::WidgetPath) -> ResolvableMut<'b,E> {
-        todo!()
-    }
-
-    /*match dummy(w,p) {
-        ResolvableMut::Widget(w) => return Some((w,p.unslice().into())),
-        ResolvableMut::Path(p) => resolve_in_root_mutt(w,p,invalidate),
-    }*/
-
-    let path = {
-        match dummy(w,p) {
-            ResolvableMut::Widget(w) => None,
-            ResolvableMut::Path(p) => Some(p),
-        }
-    };
-    let path = path
-        .as_ref()
-        .map(|path| path )
-        .unwrap_or(p);
-    resolve_in_root_mutt(w,path,invalidate)
-}*/

@@ -20,7 +20,7 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn invalid(&self) -> bool {
         true
     }
-    //#[allow(unused)]
+    #[allow(unused)]
     fn set_invalid(&mut self, v: bool) {
         
     }

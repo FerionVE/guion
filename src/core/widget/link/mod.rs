@@ -46,18 +46,13 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.queue_mut().enqueue_widget_validate(s)
     }
     #[inline]
-    pub fn w(&self) -> &E::DynWidget {
-        &self.widget
-    }
-
-    #[inline]
-    pub fn widget(&self) -> Resolved<'c,E> {
-        self.widget.clone()
+    pub fn widget(&self) -> &E::DynWidget {
+        self.widget.widget()
     }
 
     #[inline]
     pub fn id(&self) -> E::WidgetID {
-        self.widget.id()
+        self.widget().id()
     }
 
     /*#[inline]
@@ -67,37 +62,37 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     #[inline]
     pub fn render(&mut self, r: &mut RenderLink<E>) -> bool {
-        self.ctx.render(self.widget(),r)
+        self.ctx.render(self.widget.clone(),r)
     }
     #[inline]
     pub fn event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
-        self.ctx.event(self.widget(),e)
+        self.ctx.event(self.widget.clone(),e)
     }
     #[inline]
     pub fn size(&mut self) -> ESize<E> {
-        self.ctx.size(self.widget())
+        self.ctx.size(self.widget.clone())
     }
     #[inline]
     pub fn _event_root(&mut self, e: (EEvent<E>,&Bounds,u64)) {
-        self.ctx._event_root(self.widget(),e)
+        self.ctx._event_root(self.widget.clone(),e)
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _render(&mut self, r: &mut RenderLink<E>) -> bool {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.wref.widget().render(w,r)
+        self.widget.widget().render(w,r)
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.wref.widget().event(w,e)
+        self.widget.widget().event(w,e)
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _size(&mut self) -> ESize<E> {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.wref.widget().size(w)
+        self.widget.widget().size(w)
     }
 
     pub fn trace_bounds(&mut self, root_bounds: &Bounds, force: bool) -> Bounds {
@@ -113,6 +108,8 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.state().is_focused(&self.id())
     }
 
+    #[deprecated]
+    #[allow(deprecated)]
     #[inline]
     pub fn child_paths(&self) -> Vec<E::WidgetPath> {
         self.widget.child_paths()
@@ -122,9 +119,9 @@ impl<'c,E> Link<'c,E> where E: Env {
     //(as shortening teh lifetime even more aggresse we MAY can put an iterator on it)
     #[inline]
     pub fn for_childs<'s>(&'s mut self, mut f: impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
-        let wref = self.widget.wref.refc();
+        //let wref = self.widget.wref.refc();
         let path = self.widget.path.refc();
-        let ch = self.widget.childs_ref();
+        let ch = self.widget.widget().childs_ref();
         let stor = self.widget.stor;
         for c in ch {
             let w = c.resolve_widget(stor)?;
@@ -162,10 +159,12 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     pub fn resolve_sub<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
+        let mut new_path = self.widget.path.clone().attached_subpath(&p);
         let rw = self.widget.wref.resolve_ref(p.refc())?;
+        rw.extract_path(&mut new_path);
         let rw = rw.resolve_widget(&self.widget.stor)?;
         let w = Resolved{
-            path: E::WidgetPath::concatenated_slice(&self.widget.path,&p),
+            path: new_path,
             wref: rw,
             stor: self.widget.stor,
         };

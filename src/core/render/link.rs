@@ -134,7 +134,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     #[inline]
     pub fn _render_widget(&mut self, mut w: Link<E>, pre: impl FnOnce(&mut ESVariant<E>,&mut Border), post: impl FnOnce(&mut ESVariant<E>,&mut Border)) -> bool {
-        if self.r.requires_render(&self.b,&*w.widget()) {
+        if self.r.requires_render(&self.b,w.widget()) {
             let mut border = w.default_border().clone();
             let mut style = self.v.clone();
 

@@ -1,6 +1,6 @@
 use super::*;
 
-/// Handlers are stacked inside a Container and any render/event/size action goes through the handler stack
+/// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
 pub trait Handler<E>: Sized + 'static where E: Env {
     fn _render(l: Link<E>, r: &mut RenderLink<E>) -> bool;
     fn _event(l: Link<E>, e: (EEvent<E>,&Bounds,u64));
