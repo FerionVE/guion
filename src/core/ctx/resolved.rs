@@ -16,6 +16,19 @@ pub struct ResolvedMut<'a,E> where E: Env {
 
 impl<'a,E> Resolved<'a,E> where E: Env {
     #[inline]
+    pub fn render(&self, c: &mut E::Context, r: &mut RenderLink<E>) -> bool {
+        c.render(self.clone(),r)
+    }
+    #[inline]
+    pub fn event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64)) {
+        c.event(self.clone(),e)
+    }
+    #[inline]
+    pub fn size(&self, c: &mut E::Context) -> ESize<E> {
+        c.size(self.clone())
+    }
+
+    #[inline]
     pub fn _render(&self, c: &mut E::Context, r: &mut RenderLink<E>) -> bool {
         self.widget().render(c.link(self.clone()),r)
     }
@@ -30,6 +43,11 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     #[inline]
     pub fn link(&self, c: &'a mut E::Context) -> Link<'a,E> {
         c.link(self.clone())
+    }
+
+    #[inline]
+    pub fn trace_bounds(&mut self, c: &mut E::Context, root_bounds: &Bounds, force: bool) -> Bounds {
+        self.stor.trace_bounds(c,self.path.refc(),root_bounds,force).unwrap()
     }
 
     /*#[inline]
