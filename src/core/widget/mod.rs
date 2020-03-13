@@ -45,6 +45,9 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn erase_mut(&mut self) -> &mut E::DynWidget {
         WidgetAsAny::_erase_mut(self)
     }
+    fn erase_move(self) -> EDynOwned<E> where Self: Sized {
+        <E::DynWidget as DynWidget<E>>::erase_move(self)
+    }
 
     fn as_immediate(&self) -> WidgetRef<E> {
         WidgetAsAny::_as_immediate(self)
@@ -118,13 +121,15 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     }
 
     /// attach widget's style
+    #[allow(unused)]
     #[inline]
     fn style(&self, s: &mut ESVariant<E>) {
-        let _ = s;
+        
     }
+    #[allow(unused)]
     #[inline]
     fn border(&self, b: &mut Border) {
-        let _ = b;
+        
     }
     /// returns this widget as Any
     #[inline]

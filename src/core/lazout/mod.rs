@@ -17,7 +17,7 @@ pub enum Orientation {
 }
 
 //TODO move to trait submodule
-pub trait ISize: From<Size> {
+pub trait ISize: From<Size> + Clone {
     #[inline]
     fn empty() -> Self where Self: Sized {
         Size::empty().into()

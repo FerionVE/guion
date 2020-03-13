@@ -74,6 +74,9 @@ where E: Env, E::Backend: Backend<E,Event=Self> {
     /*fn _is_root_event(&self) -> Option<RootEvent<E>> {
         self.is::<RootEvent<E>>()
     }*/
+    fn is_hover_update(&self) -> bool {
+        self.is_mouse_enter().is_some() || self.is_mouse_leave().is_some()
+    }
 }
 
 impl<E,T> StdVarSup<E> for T where T: 

@@ -30,10 +30,11 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                             //drop event if widget is gone
                             return;
                         }
-                        l.as_mut().s.kbd.down(
+                        l.as_mut().s.key.down(
                             key.clone(),
                             id.clone(),
                             e.2,
+                            None,
                         );
                         //emit KbdDown event
                         let mut l = l.with_widget(id).unwrap();
@@ -45,17 +46,23 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     }
                 },
                 RootEvent::KbdUp{key} => {
-                    let old = l.as_mut().s.kbd.up(key);
+                    let old = l.as_mut().s.key.up(key);
                     //TODO send up event to the widget which downed it
                     if let Some(p) = old {
+                        let event = KbdUp{
+                            key: p.key,
+                            down_widget: p.id.refc(),
+                            down_ts: p.ts,
+                        };
+                        if let Some(id) = l.as_ref().s.kbd.focused.clone() {
+                            if let Ok(mut l) = l.with_widget(id) {
+                                let wbounds = l.trace_bounds(e.1,false);
+                                l._event_root((Event::from(event.clone()),&wbounds,e.2));
+                            }
+                        }
                         //drop up if widget is gone TODO check if this is correct
                         if let Ok(mut l) = l.with_widget(p.id.refc()) {
                             let wbounds = l.trace_bounds(e.1,false);
-                            let event = KbdUp{
-                                key: p.key,
-                                down_widget: p.id.refc(),
-                                down_ts: p.ts,
-                            };
                             l._event_root((Event::from(event),&wbounds,e.2));
                         }
                     }
@@ -69,7 +76,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     let pos = l.as_ref().s.mouse.pos.expect("TODO");
                     let hovered = l.as_ref().s.mouse.hovered.clone().expect("TODO");
 
-                    l.as_mut().s.mouse.down(key.clone(),pos,hovered.clone(),e.2);
+                    l.as_mut().s.key.down(key.clone(),hovered.clone(),e.2,Some(pos));
 
                     if let Ok(mut w) = l.with_widget(hovered) {
                         let wbounds = w.trace_bounds(e.1,false);
@@ -82,20 +89,25 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     };
                 }
                 RootEvent::MouseUp{key} => {
-                    let old = l.as_mut().s.mouse.up(key);
+                    let old = l.as_mut().s.key.up(key);
                     //TODO send up event to the widget which downed it
                     if let Some(p) = old {
                         let pos = l.as_ref().s.mouse.pos.expect("TODO");
+                        let hovered = l.as_ref().s.mouse.hovered.clone().expect("TODO");
+                        let event = MouseUp{
+                            key: p.key,
+                            pos: pos,
+                            down_pos: p.cursor.expect("TODO"),
+                            down_widget: p.id.refc(),
+                            down_ts: p.ts
+                        };
+                        if let Ok(mut l) = l.with_widget(hovered) {
+                            let wbounds = l.trace_bounds(e.1,false);
+                            l._event_root((Event::from(event.clone()),&wbounds,e.2));
+                        }
                         if let Ok(mut l) = l.with_widget(p.id.refc()) {
                             //event dropped if widget gone
                             let wbounds = l.trace_bounds(e.1,false);
-                            let event = MouseUp{
-                                key: p.key,
-                                pos: pos,
-                                down_pos: p.start,
-                                down_widget: p.id.refc(),
-                                down_ts: p.ts
-                            };
                             l._event_root((Event::from(event),&wbounds,e.2));
                         }
                     }
