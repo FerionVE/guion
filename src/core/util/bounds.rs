@@ -116,6 +116,18 @@ impl Dims {
     }
 }
 
+impl<T,U> From<(T,U)> for Dims where T: Into<u32>, U: Into<u32> {
+    fn from(s: (T,U)) -> Self {
+        Self{w: s.0.into(), h: s.1.into()}
+    }
+}
+
+impl<T,U> From<(T,U)> for Offset where T: Into<i32>, U: Into<i32> {
+    fn from(s: (T,U)) -> Self {
+        Self{x: s.0.into(), y: s.1.into()}
+    }
+}
+
 qwutils::opion!(add(Bounds,Offset) |s,r| {
     s.off.x += r.x;
     s.off.y += r.y;

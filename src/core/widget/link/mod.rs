@@ -20,8 +20,8 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: impl FnOnce(&mut E::DynWidget), invalidate: bool) {
-        self.ctx.queue_mut().enqueue_widget_mut_closure(self.widget.path.refc(),Box::new(f),invalidate)
+    pub fn mutate_closure(&mut self, f: impl FnOnce(&mut E::DynWidget)+Sync+'static, invalidate: bool) {
+        self.ctx.queue_mut().enqueue_widget_mut_closure(self.widget.path.refc(),f,invalidate)
     }
     /// enqueue immutable access to this widget
     #[inline] 
@@ -30,8 +30,8 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// enqueue immutable access to this widget
     #[inline] 
-    pub fn later_closure(&mut self, f: impl FnOnce(&E::DynWidget)) {
-        self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.refc(),Box::new(f))
+    pub fn later_closure(&mut self, f: impl FnOnce(&E::DynWidget)+Sync+'static) {
+        self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.refc(),f)
     }
     #[inline]
     pub fn enqueue_invalidate(&mut self) {

@@ -16,6 +16,7 @@ pub struct Beton<E> where
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub border: Option<Border>,
+    pub text: String,
 }
 
 impl<E> Widget<E> for Beton<E> where
@@ -57,6 +58,15 @@ impl<E> Widget<E> for Beton<E> where
             StdVerb::Pressed(Self::pressed(&l).is_some())
         ])
             .border_rect(2);
+        r.with(&[
+            StdVerb::ObjForeground,
+            StdVerb::ObjText,
+            StdVerb::Hovered(l.is_hovered()),
+            StdVerb::Focused(l.is_focused()),
+            StdVerb::Locked(self.locked),
+            StdVerb::Pressed(Self::pressed(&l).is_some())
+        ])
+            .render_text(&self.text,l.ctx);
         true
     }
     fn event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
@@ -108,11 +118,16 @@ impl<E> Beton<E> where
             trigger: |_|{},
             locked: false,
             border: None,
+            text: "Button".to_owned(),
         }
     }
 
     pub fn with_trigger(mut self, fun: for<'a> fn(Link<E>)) -> Self {
         self.trigger = fun;
+        self
+    }
+    pub fn with_text(mut self, text: String) -> Self {
+        self.text = text;
         self
     }
 

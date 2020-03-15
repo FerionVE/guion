@@ -8,6 +8,7 @@ pub enum StdVerb {
     ObjDefault,
     ObjBackground,
     ObjForeground,
+    ObjText,
     ObjBox,
     ObjBorder,
     
