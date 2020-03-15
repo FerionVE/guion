@@ -7,7 +7,10 @@ use std::iter::Once;
 pub enum StdVerb {
     ObjDefault,
     ObjBackground,
+    ObjForeground,
+    ObjBox,
     ObjBorder,
+    
     ObjButton,
     ObjList,
     ObjTextBox,
@@ -27,7 +30,8 @@ pub enum StdVerb {
     VariantSecondary,
 
     Hovered(bool),
-    Selected(bool),
+    Focused(bool),
+    Pressed(bool),
     Locked(bool),
 
     CursorDefault,

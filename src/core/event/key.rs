@@ -14,6 +14,7 @@ pub trait Key: Clone + PartialEq + Debug {
     type Origin;
     const MOUSE_LEFT: Self;
     const ENTER: Self;
+    const SPACE: Self;
     const TAB: Self;
 
     fn origin(&self) -> Self::Origin;

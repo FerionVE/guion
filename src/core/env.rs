@@ -1,6 +1,5 @@
 use crate::core::ctx::widgets::Widgets;
 use super::*;
-use std::fmt::Debug;
 
 /// Type compound
 pub trait Env: Sized + Clone + Sync + 'static {

@@ -27,11 +27,3 @@ pub(crate) mod macro_prelude {
     pub use event::*;
     pub use event::variants::*;
 }
-
-macro_rules! std_bounds {
-    () => {
-        ERenderer<E>: $crate::macro_prelude::RenderStdWidgets<E>,
-        $crate::macro_prelude::ECHandler<E>: $crate::macro_prelude::AsHandlerStateful<E>, 
-        (EEvent<E>,&Bounds,u64): $crate::macro_prelude::VariantSupport<$crate::macro_prelude::KbdDown<EEKey<E>>,E>
-    };
-}

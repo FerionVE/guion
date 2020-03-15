@@ -3,12 +3,6 @@ use super::*;
 pub mod bounds;
 pub mod border;
 pub mod bounded_widget;
-//pub mod wpps;
-
-//pub use qwutils;
-
-//pub use qwutils::scoped::ScopedMut as ScopedMut;
-//pub use qwutils::scoped::Interior as Interior;
 
 pub trait AsRefMut<T> {
     fn as_ref(&self) -> &T;

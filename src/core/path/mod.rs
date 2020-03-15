@@ -1,4 +1,4 @@
-use std::{slice::SliceIndex, ops::{RangeBounds, Deref}};
+use std::{slice::SliceIndex, ops::{RangeBounds}};
 use super::ctx::widgets::Widgets;
 use qwutils::*;
 use super::*;
@@ -33,7 +33,7 @@ pub trait WidgetPath<E>: AsWidget<E> + AsWidgetImmediate<'static,E> + AsWidgetIm
     fn index<T>(&self, i: T) -> &Self::SubPath where T: SliceIndex<[Self::SubPath],Output=Self::SubPath>;
 
     #[inline]
-    fn eq<F: Env + 'static>(&self, o: &F::WidgetPath) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
+    fn eq_path<F: Env + 'static>(&self, o: &F::WidgetPath) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
         self.id().id_eq(o.id())
     }
     

@@ -1,6 +1,5 @@
 //pub mod as_any;
 use super::*;
-use std::ops::BitAnd;
 
 #[derive(Clone,Copy)]
 pub struct Offset {
@@ -85,6 +84,13 @@ impl Bounds {
             size: s,
         }
     }
+
+    pub fn from_ori(par_off: i32, unpar_off: i32, par_size: u32, unpar_size: u32, o: Orientation) -> Self {
+        match o {
+            Orientation::Horizontal => Self::from_xywh(par_off,unpar_off,par_size,unpar_size),
+            Orientation::Vertical => Self::from_xywh(unpar_off,par_off,unpar_size,par_size),
+        }
+    }
 }
 
 impl Offset {
@@ -92,6 +98,21 @@ impl Offset {
     pub fn is_inside(&self, b: &Bounds) -> bool {
         self.x >= b.x() && self.x < b.x1() &&
         self.y >= b.y() && self.y < b.y1()
+    }
+}
+
+impl Dims {
+    pub fn par(&self, o: Orientation) -> u32 {
+        match o {
+            Orientation::Horizontal => self.w,
+            Orientation::Vertical => self.h,
+        }
+    }
+    pub fn unpar(&self, o: Orientation) -> u32 {
+        match o {
+            Orientation::Horizontal => self.h,
+            Orientation::Vertical => self.w,
+        }
     }
 }
 
@@ -146,22 +167,3 @@ qwutils::opion!(bitand(Bounds,Bounds) |s,r| {
         }
     }
 });
-
-/*impl<'a,'b> BitAnd<&'b Bounds> for &'a Bounds {
-    type Output = Bounds;
-
-    fn bitand(self, o: &Bounds) -> Self::Output {
-        let nx = self.off.x.max(o.off.x);
-        let ny = self.off.y.max(o.off.y);
-        Bounds{
-            off: Offset{
-                x: nx,
-                y: ny,
-            },
-            size: Dims{
-                w: (self.x1().min(o.x1()) - nx).max(0) as u32,
-                h: (self.y1().min(o.y1()) - ny).max(0) as u32,
-            }
-        }
-    }
-}*/

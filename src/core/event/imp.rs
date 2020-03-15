@@ -35,17 +35,23 @@ impl<T,E> VariantDerive<E> for T where T: Variant<E> + Clone, E: Env {
 pub trait StdVarSup<E>:
     VariantSupport<KbdDown<E>,E> +
     VariantSupport<KbdUp<E>,E> +
+    VariantSupport<KbdPress<E>,E> +
     VariantSupport<MouseDown<E>,E> +
     VariantSupport<MouseUp<E>,E> +
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E> +
+    VariantSupport<WindowMove,E> +
+    VariantSupport<WindowResize,E> +
     VariantSupport<GainedFocus,E> +
     VariantSupport<LostFocus,E> +
     VariantSupport<RootEvent<E>,E>
 where E: Env, E::Backend: Backend<E,Event=Self> {
     fn is_kbd_down(&self) -> Option<KbdDown<E>> {
         self.is::<KbdDown<E>>()
+    }
+    fn is_kbd_press(&self) -> Option<KbdPress<E>> {
+        self.is::<KbdPress<E>>()
     }
     fn is_kbd_up(&self) -> Option<KbdUp<E>> {
         self.is::<KbdUp<E>>()
@@ -65,6 +71,12 @@ where E: Env, E::Backend: Backend<E,Event=Self> {
     fn is_mouse_leave(&self) -> Option<MouseLeave> {
         self.is::<MouseLeave>()
     }
+    fn is_window_move(&self) -> Option<WindowMove> {
+        self.is::<WindowMove>()
+    }
+    fn is_window_reset(&self) -> Option<WindowResize> {
+        self.is::<WindowResize>()
+    }
     fn is_gained_focus(&self) -> Option<GainedFocus> {
         self.is::<GainedFocus>()
     }
@@ -82,11 +94,14 @@ where E: Env, E::Backend: Backend<E,Event=Self> {
 impl<E,T> StdVarSup<E> for T where T: 
     VariantSupport<KbdDown<E>,E> +
     VariantSupport<KbdUp<E>,E> +
+    VariantSupport<KbdPress<E>,E> +
     VariantSupport<MouseDown<E>,E> +
     VariantSupport<MouseUp<E>,E> +
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E> +
+    VariantSupport<WindowMove,E> +
+    VariantSupport<WindowResize,E> +
     VariantSupport<GainedFocus,E> +
     VariantSupport<LostFocus,E> +
     VariantSupport<RootEvent<E>,E>

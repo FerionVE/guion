@@ -55,6 +55,30 @@ impl Size {
             y: SizeAxis::empty(),
         }
     }
+
+    pub fn flip(&mut self) {
+        todo!()
+    }
+
+    pub fn par(&self, dir: Orientation) -> &SizeAxis {
+        match dir {
+            Orientation::Horizontal => &self.x,
+            Orientation::Vertical => &self.y,
+        }
+    }
+    pub fn unpar(&self, dir: Orientation) -> &SizeAxis {
+        match dir {
+            Orientation::Horizontal => &self.y,
+            Orientation::Vertical => &self.x,
+        }
+    }
+
+    pub fn from_parallel(par: SizeAxis, unpar: SizeAxis, dir: Orientation) -> Self {
+        match dir {
+            Orientation::Horizontal => Self{x: par, y: unpar},
+            Orientation::Vertical => Self{x: unpar, y: par},
+        }
+    }
 }
 
 impl SizeAxis {

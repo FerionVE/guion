@@ -9,7 +9,8 @@ pub struct StdStyleVariant {
     pub accent: u32,
     pub variance: Variance,
     pub hovered: bool,
-    pub selected: bool,
+    pub focused: bool,
+    pub pressed: bool,
     pub locked: bool,
     pub cursor: StdCursor,
 }
@@ -19,6 +20,8 @@ pub struct StdStyleVariant {
 pub enum Obj {
     Default,
     Background,
+    Foreground,
+    Box,
     Border,
     Button,
     List,
@@ -53,7 +56,8 @@ impl Default for StdStyleVariant {
             accent: 0,
             variance: Variance::Default,
             hovered: false,
-            selected: false,
+            focused: false,
+            pressed: false,
             locked: false,
             cursor: StdCursor::Default,
         }
@@ -69,6 +73,8 @@ impl StyleVariantSupport<StdVerb> for StdStyleVariant {
         match v {
             StdVerb::ObjDefault => self.obj = Obj::Default,
             StdVerb::ObjBackground => self.obj = Obj::Background,
+            StdVerb::ObjForeground => self.obj = Obj::Foreground,
+            StdVerb::ObjBox => self.obj = Obj::Box,
             StdVerb::ObjBorder => self.obj = Obj::Border,
             StdVerb::ObjButton => self.obj = Obj::Button,
             StdVerb::ObjList => self.obj = Obj::List,
@@ -85,7 +91,8 @@ impl StyleVariantSupport<StdVerb> for StdStyleVariant {
             StdVerb::VariantCaution => self.variance = Variance::Caution,
             StdVerb::VariantSecondary => self.variance = Variance::Secondary,
             StdVerb::Hovered(v) => self.hovered = v,
-            StdVerb::Selected(v) => self.selected = v,
+            StdVerb::Focused(v) => self.focused = v,
+            StdVerb::Pressed(v) => self.pressed = v,
             StdVerb::Locked(v) => self.locked = v,
             StdVerb::CursorDefault => self.cursor = StdCursor::Default,
             StdVerb::CursorArrow => self.cursor = StdCursor::Arrow,

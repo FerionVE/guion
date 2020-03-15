@@ -37,10 +37,16 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                             None,
                         );
                         //emit KbdDown event
-                        let mut l = l.with_widget(id).unwrap();
+                        let mut l = l.with_widget(id.refc()).unwrap();
                         let wbounds = l.trace_bounds(e.1,false);
                         let event = KbdDown{
+                            key: key.clone(),
+                        };
+                        l._event_root((Event::from(event),&wbounds,e.2));
+                        let event = KbdPress{
                             key,
+                            down_widget: id.refc(),
+                            down_ts: e.2,
                         };
                         l._event_root((Event::from(event),&wbounds,e.2));
                     }
@@ -67,6 +73,23 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                         }
                     }
                 },
+                RootEvent::KbdPress{key} => {
+                    let old = l.as_mut().s.key.get(key);
+                    //TODO send up event to the widget which downed it
+                    if let Some(p) = old {
+                        let event = KbdPress{
+                            key: p.key.clone(),
+                            down_widget: p.id.refc(),
+                            down_ts: p.ts,
+                        };
+                        if let Some(id) = l.as_ref().s.kbd.focused.clone() {
+                            if let Ok(mut l) = l.with_widget(id) {
+                                let wbounds = l.trace_bounds(e.1,false);
+                                l._event_root((Event::from(event.clone()),&wbounds,e.2));
+                            }
+                        }
+                    }
+                }
                 RootEvent::MouseDown{key} => {
                     Self::_event_root(l.reference(),(Event::from(RootEvent::MouseUp{key: key.clone()}),e.1,e.2));
                     //unfocus previously focused widget
@@ -92,23 +115,26 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     let old = l.as_mut().s.key.up(key);
                     //TODO send up event to the widget which downed it
                     if let Some(p) = old {
-                        let pos = l.as_ref().s.mouse.pos.expect("TODO");
-                        let hovered = l.as_ref().s.mouse.hovered.clone().expect("TODO");
-                        let event = MouseUp{
-                            key: p.key,
-                            pos: pos,
-                            down_pos: p.cursor.expect("TODO"),
-                            down_widget: p.id.refc(),
-                            down_ts: p.ts
-                        };
-                        if let Ok(mut l) = l.with_widget(hovered) {
-                            let wbounds = l.trace_bounds(e.1,false);
-                            l._event_root((Event::from(event.clone()),&wbounds,e.2));
-                        }
-                        if let Ok(mut l) = l.with_widget(p.id.refc()) {
-                            //event dropped if widget gone
-                            let wbounds = l.trace_bounds(e.1,false);
-                            l._event_root((Event::from(event),&wbounds,e.2));
+                        if let Some(pos) = l.as_ref().s.mouse.pos {
+                            let hovered = l.as_ref().s.mouse.hovered.clone().unwrap();
+                            let event = MouseUp{
+                                key: p.key,
+                                pos: pos,
+                                down_pos: p.cursor.expect("TODO"), //fails if a invalid press was inserted into the state
+                                down_widget: p.id.refc(),
+                                down_ts: p.ts
+                            };
+                            if !hovered.eq_path::<E>(&p.id) {
+                                if let Ok(mut l) = l.with_widget(hovered) {
+                                    let wbounds = l.trace_bounds(e.1,false);
+                                    l._event_root((Event::from(event.clone()),&wbounds,e.2));
+                                }
+                            }
+                            if let Ok(mut l) = l.with_widget(p.id.refc()) {
+                                //event dropped if widget gone
+                                let wbounds = l.trace_bounds(e.1,false);
+                                l._event_root((Event::from(event),&wbounds,e.2));
+                            }
                         }
                     }
                 }
@@ -116,23 +142,39 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     //set pos
                     l.as_mut().s.mouse.pos = Some(dest);
                     //previous hovered widget
-                    let previous = l.as_mut().s.mouse.hovered.take();
+                    if let Some(p) = l.as_mut().s.mouse.hovered.take() {
+                        let mut l = l.with_widget(p)
+                            .expect("Lost Widget");
+                        let wbounds = l.trace_bounds(e.1,false);
+                        l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
+                    }
                     //hover state will be updated as the event passes through the widget tree
                     l._event_root((Event::from(MouseMove{dest}),e.1,e.2));
                     if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
                         let mut l = l.with_widget(p)
                             .expect("Lost Widget");
                         let wbounds = l.trace_bounds(e.1,false);
-                        l._event_root((Event::from(MouseEnter{dest}),&wbounds,e.2));
+                        l._event_root((Event::from(MouseEnter{}),&wbounds,e.2));
                     }
-                    if let Some(p) = previous {
+                    
+                }
+                RootEvent::MouseLeaveWindow{} => {
+                    if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
                         let mut l = l.with_widget(p)
                             .expect("Lost Widget");
                         let wbounds = l.trace_bounds(e.1,false);
-                        l._event_root((Event::from(MouseLeave{dest}),&wbounds,e.2));
+                        l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
                     }
+                    let mouse = &mut l.as_mut().s.mouse;
+                    mouse.pos = None;
+                    mouse.hovered = None;
                 }
-                _ => {}
+                RootEvent::WindowMove{pos,size} => {
+                    l._event_root((Event::from(WindowMove{pos,size}),&e.1,e.2))
+                }
+                RootEvent::WindowResize{size} => {
+                    l._event_root((Event::from(WindowResize{size}),&e.1,e.2))
+                }
             }
         }else{
             S::_event_root(l,e);

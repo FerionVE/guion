@@ -107,6 +107,7 @@ impl<E> Widget<E> for Box<dyn Widget<E>> where E: Env {
     fn set_invalid(&mut self, v: bool) {
         (**self).set_invalid(v)
     }
+    #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (**self).child_paths(own_path)
     }

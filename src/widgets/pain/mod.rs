@@ -209,7 +209,7 @@ pub fn _render<E>(mut l: Link<E>, r: &mut RenderLink<E>, o: Orientation) -> bool
     let mut validate = true;
     let mut i = 0usize;
 
-    l.for_childs(|mut c| {
+    l.for_childs(|c| {
         let mut r = r.slice(&bounds[i]);
         validate &= r.render_widget(c);
         i+=1;

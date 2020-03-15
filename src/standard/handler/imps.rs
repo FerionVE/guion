@@ -10,9 +10,6 @@ impl<S,E> HandlerStateful<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E:
         self.s.kbd.focused.as_ref().map(|p| p.id().clone() )
     }
     fn pressed(&self) -> &[Self::K] {
-        if self.s.key.pressed.len() > 0 {
-            eprintln!("e");
-        }
         &self.s.key.pressed[..]
     }
 }
