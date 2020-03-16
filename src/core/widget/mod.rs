@@ -4,7 +4,6 @@ use std::rc::Rc;
 use cast::WDC;
 
 pub mod link;
-pub mod fns;
 pub mod as_widget;
 pub mod cast;
 pub mod ext;
@@ -112,6 +111,10 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         
     }
 
+    fn inner<'s>(&'s self) -> Option<&'s dyn Widget<'w,E>> {
+        None
+    }
+
     fn debug_type_name(&self) {
         eprintln!("\t{}",self.type_name());
     }
@@ -153,40 +156,9 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         Err(())
     }
 
-    //fn typeid(&self) -> TypeId;
-}
-
-#[macro_export]
-macro_rules! widget_oofs {
-    (w:lifetime,s:lifetime) => {
-        fn typeid(&self) -> std::any::TypeId {
-            <Self as WDC<E>>::_typeid()
-        }
-        /*fn _typeid() -> std::any::TypeId where Self: Sized {
-            struct Ident;
-            std::any::TypeId::of::<Ident>()
-        }*/
-        fn box_ref<$s>(&$s self) -> $crate::core::ctx::aliases::WidgetRef<$s,E> where $w: $s {
-            Box::new(self)
-        }
-        fn box_box(self: Box<Self>) -> $crate::core::ctx::aliases::WidgetRef<$w,E> {
-            self
-        }
-    };
-}
-#[macro_export]
-macro_rules! widget_base {
-    (w:lifetime,s:lifetime) => {
-        fn base<$s>(&$s self) -> &$s dyn $crate::core::widget::Widget<$s,E> where $w: $s {
-            self
-        }
-        fn box_mut<$s>(&$s mut self) -> $crate::core::ctx::aliases::WidgetRefMut<$s,E> where $w: $s {
-            Box::new(self)
-        }
-        fn box_box_mut(self: Box<Self>) -> $crate::core::ctx::aliases::WidgetRefMut<$w,E> {
-            self
-        }
-    };
+    fn inner_mut<'s>(&'s mut self) -> Option<&'s mut dyn WidgetMut<'w,E>> {
+        None
+    }
 }
 
 pub trait WBase<'w,E> where E: Env {

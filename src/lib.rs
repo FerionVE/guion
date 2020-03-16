@@ -19,7 +19,6 @@ pub(crate) mod macro_prelude {
     pub use env::*;
     pub use backend::*;
     pub use widget::*;
-    pub use widget::fns::WidgetFns;
     pub use ctx::*;
     pub use ctx::aliases::*;
     pub use render::widgets::*;

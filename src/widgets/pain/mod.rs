@@ -62,6 +62,10 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: AsWidget<'w,E>+WDCSized<E>+'
     fn focusable(&self) -> bool {
         false
     }
+
+    fn border(&self, b: &mut Border) {
+        //*b = Border::empty();
+    }
 }
 impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: AsWidgetMut<'w,E>+WDCSized<E>+'w, T::StaturSized: AsWidget<'static,E>+WDCSized<E>, E: Env {
     fn set_invalid(&mut self, v: bool) {

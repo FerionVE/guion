@@ -13,14 +13,24 @@ pub trait WDCSized<E>: Sized {
 }
 
 impl<'w,E> dyn Widget<'w,E> where E: Env {
-    pub fn is_type<'s,'d,T>(&'s self) -> bool where T: Widget<'d,E>+WDC<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn is_type<'s,T>(&self) -> bool where T: Widget<'s,E>+WDC<E> {
         self.typeid() == T::_typeid()
     }
 
-    pub fn w_downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Widget<'d,E>+WDC<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Widget<'d,E>+WDC<E>, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&*(self as *const dyn Widget<'w,E> as *const T)) }
         } else {
+            None
+        }
+    }
+
+    pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Widget<'d,E>+WDC<E>, 'w: 's, 'w: 'd, 'd: 's {
+        if let Some(v) = Self::_downcast_ref::<T>(self) {
+            Some(v)
+        }else if let Some(senf) = self.inner() {
+            senf.downcast_ref::<T>()
+        }else{
             None
         }
     }
@@ -30,10 +40,20 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         self.typeid() == T::_typeid()
     }
     
-    pub fn w_downcast_mut<'s,T>(&'s mut self) -> Option<&'s mut T> where T: WidgetMut<'s,E>+WDC<E>, 'w: 's {
+    pub fn _downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: WidgetMut<'d,E>+WDC<E>, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&mut *(self as *mut dyn WidgetMut<'w,E> as *mut T)) }
         } else {
+            None
+        }
+    }
+
+    pub fn downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: WidgetMut<'d,E>+WDC<E>, 'w: 's, 'w: 'd, 'd: 's {
+        if self.is_type::<T>() {
+            self._downcast_mut::<T>()
+        }else if let Some(senf) = self.inner_mut() {
+            senf.downcast_mut::<T>()
+        }else{
             None
         }
     }

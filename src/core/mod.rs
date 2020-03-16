@@ -38,7 +38,6 @@ pub(crate) use util::bounds::*;
 pub(crate) use style::*;
 pub(crate) use state::handler::*;
 pub(crate) use widget::*;
-pub(crate) use widget::fns::*;
 pub(crate) use widget::link::*;
 pub(crate) use widget::as_widget::*;
 pub(crate) use id::*;
