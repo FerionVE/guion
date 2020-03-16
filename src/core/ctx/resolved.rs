@@ -4,7 +4,7 @@ use super::*;
 
 /// A reference to a resolved Widget
 pub struct Resolved<'a,E> where E: Env {
-    pub wref: Rc<WidgetRef<'a,E>>,
+    pub wref: WidgetRef<'a,E>,
     pub path: E::WidgetPath,
     pub stor: &'a E::Storage,
 }
@@ -15,6 +15,11 @@ pub struct ResolvedMut<'a,E> where E: Env {
 }
 
 impl<'a,E> Resolved<'a,E> where E: Env {
+    #[inline]
+    pub fn widget(&self) -> &WidgetRef<'a,E> {
+        &self.wref
+    }
+
     #[inline]
     pub fn render(&self, c: &mut E::Context, r: &mut RenderLink<E>) -> bool {
         c.render(self.clone(),r)
@@ -72,33 +77,16 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     }
 }
 
-impl<'a,E> Deref for Resolved<'a,E> where E: Env {
-    type Target = Rc<WidgetRef<'a,E>>;
+impl<'a,E> ResolvedMut<'a,E> where E: Env {
     #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.wref
-    }
-}
-impl<'a,E> Deref for ResolvedMut<'a,E> where E: Env {
-    type Target = E::DynWidget;
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        self.wref.widget().erase()
-    }
-}
-impl<'a,E> DerefMut for ResolvedMut<'a,E> where E: Env {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.wref.widget_mut().erase_mut()
+    pub fn widget<'s>(&'s mut self) -> &'s mut (dyn WidgetMut<'s,E>+'s) where 'a: 's {
+        short_rmut(&mut (*self.wref))
     }
 }
 
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
     fn clone(&self) -> Self {
-        Self{
-            wref: self.wref.refc(),
-            path: self.path.clone(),
-            stor: self.stor,
-        }
+        self.stor.widget(self.path.refc()).unwrap()
     }
 }
 /// shrink the lifetime
@@ -110,8 +98,14 @@ pub fn short_resolved<'l: 's,'s,E: Env>(i: Resolved<'l,E>) -> Resolved<'s,E> {
     }
 }
 /// shrink the lifetime
-pub fn short_wref<'l: 's,'s,E: Env>(i: Rc<WidgetRef<'l,E>>) -> Rc<WidgetRef<'s,E>> {
+pub fn short_wref<'l: 's,'s,E: Env>(i: WidgetRef<'l,E>) -> WidgetRef<'s,E> {
     unsafe{
-        std::mem::transmute::<Rc<WidgetRef<'l,E>>,Rc<WidgetRef<'s,E>>>(i) //roast me
+        std::mem::transmute::<WidgetRef<'l,E>,WidgetRef<'s,E>>(i) //roast me
+    }
+}
+/// shrink the lifetime
+pub fn short_rmut<'l: 's,'s,E: Env>(i: &'s mut dyn WidgetMut<'l,E>) -> &'s mut dyn WidgetMut<'s,E> {
+    unsafe{
+        std::mem::transmute::<&'s mut dyn WidgetMut<'l,E>,&'s mut dyn WidgetMut<'s,E>>(i) //roast me
     }
 }

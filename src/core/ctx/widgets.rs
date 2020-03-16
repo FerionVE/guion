@@ -25,7 +25,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
     }
 }
 
-pub fn resolve_in_root<'a,E: Env>(w: &'a E::DynWidget, p: E::WidgetPath) -> Result<(Rc<WidgetRef<'a,E>>,E::WidgetPath),()> {
+pub fn resolve_in_root<'l:'s,'s,E: Env>(w: &'s dyn Widget<'l,E>, p: E::WidgetPath) -> Result<(WidgetRef<'s,E>,E::WidgetPath),()> {
     let r = w.resolve(p.refc())?;
     
     match r {
@@ -37,8 +37,8 @@ pub fn resolve_in_root<'a,E: Env>(w: &'a E::DynWidget, p: E::WidgetPath) -> Resu
     }
 }
 
-pub fn resolve_in_root_mut<'a,E: Env>(w: &'a mut E::DynWidget, p: E::WidgetPath, invalidate: bool) -> Result<(WidgetRefMut<'a,E>,E::WidgetPath),()> {
-    let final_path = resolve_in_root::<E>(w,p)
+pub fn resolve_in_root_mut<'l:'s,'s,E: Env>(w: &'s mut dyn WidgetMut<'l,E>, p: E::WidgetPath, invalidate: bool) -> Result<(WidgetRefMut<'s,E>,E::WidgetPath),()> {
+    let final_path = resolve_in_root::<E>(w.base(),p)
         .map(|e| e.1 )?;
 
     Ok((

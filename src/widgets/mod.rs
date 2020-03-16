@@ -6,8 +6,8 @@
 /// module whose src can be used as template for new widget
 #[allow(unused_variables,unused_mut)]
 #[doc(hidden)]
-pub(crate) mod template;
+//pub(crate) mod template;
 
-pub mod null;
+//pub mod null;
 pub mod pain;
 pub mod beton;

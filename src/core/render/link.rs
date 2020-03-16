@@ -40,7 +40,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         self.force || self.r.force(&self.b)
     }
     #[inline]
-    pub fn requires_render(&mut self, w: &E::DynWidget) -> bool {
+    pub fn requires_render(&mut self, w: &dyn Widget<E>) -> bool {
         (w.invalid() || self.force) || self.r.requires_render(&self.b,w)
     }
     /// fork with force set
@@ -134,7 +134,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     #[inline]
     pub fn _render_widget(&mut self, mut w: Link<E>, pre: impl FnOnce(&mut ESVariant<E>,&mut Border), post: impl FnOnce(&mut ESVariant<E>,&mut Border)) -> bool {
-        if self.r.requires_render(&self.b,w.widget()) {
+        if w.widget().invalid() || self.r.force(&self.b) {//TODO fix requires_render fn lifetime issue
             let mut border = w.default_border().clone();
             let mut style = self.v.clone();
 

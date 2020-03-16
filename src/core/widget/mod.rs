@@ -1,15 +1,16 @@
 use super::*;
-use std::any::Any;
+use std::any::{TypeId, Any, type_name};
 use std::rc::Rc;
+use cast::WDC;
 
 pub mod link;
-pub mod dyn_widget;
 pub mod fns;
-pub mod immediate;
 pub mod as_widget;
-//mod imp;
+pub mod cast;
+pub mod ext;
+mod imp;
 
-pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
+pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
@@ -20,61 +21,40 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn invalid(&self) -> bool {
         true
     }
-    #[allow(unused)]
-    fn set_invalid(&mut self, v: bool) {
-        
-    }
+    
 
     fn childs(&self) -> usize;
     //fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()>;
     //fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()>;
 
-    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>>;
-    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>>;
-
+    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's;
+    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>>;
+    
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         self.childs_ref().into_iter() //TODO optimize, use direct accessors
             .map(|c| c.self_in_parent(own_path.refc()) )
             .collect::<Vec<_>>()
     }
-
-    fn erase(&self) -> &E::DynWidget {
-        WidgetAsAny::_erase(self)
-    }
-    fn erase_mut(&mut self) -> &mut E::DynWidget {
-        WidgetAsAny::_erase_mut(self)
-    }
-    fn erase_move(self) -> EDynOwned<E> where Self: Sized {
-        <E::DynWidget as DynWidget<E>>::erase_move(self)
-    }
-
-    fn as_immediate(&self) -> WidgetRef<E> {
-        WidgetAsAny::_as_immediate(self)
-    }
-    fn as_immediate_mut(&mut self) -> WidgetRefMut<E> {
-        WidgetAsAny::_as_immediate_mut(self)
-    }
-
+    
     #[inline]
-    fn resolve_mut<'a>(&'a mut self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
-        if invalidate {self.set_invalid(true);}
+    fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,()> where 'w: 's {
         if i.is_empty() {
-            return Ok(ResolvableMut::Widget(self.as_immediate_mut()))
+            return Ok(Resolvable::Widget(self.box_ref()))
         }
-        for c in self.childs_mut() {
+        for c in self.childs_ref() {
             if c.is_subpath(i.index(0)) {
-                return c.resolve_mut(i.slice(1..),invalidate);
+                return c.resolve(i.slice(1..));
             }
         }
         Err(())
     }
     #[inline]
-    fn resolve<'a>(&'a self, i: E::WidgetPath) -> Result<Resolvable<'a,E>,()> {
+    fn resolve_box(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
         if i.is_empty() {
-            return Ok(Resolvable::Widget(Rc::new(self.as_immediate())))
+            return Ok(Resolvable::Widget(self.box_box()))
         }
-        for c in self.childs_ref() {
+        for c in self.childs_box() {
             if c.is_subpath(i.index(0)) {
                 return c.resolve(i.slice(1..));
             }
@@ -131,24 +111,133 @@ pub trait Widget<E>: WidgetAsAny<E> where E: Env + 'static {
     fn border(&self, b: &mut Border) {
         
     }
-    /// returns this widget as Any
-    #[inline]
-    fn as_any(&self) -> &dyn Any {
-        WidgetAsAny::_as_any(self)
+
+    fn debug_type_name(&self) {
+        eprintln!("\t{}",self.type_name());
     }
-    /// returns this widget as Any
-    #[inline]
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        WidgetAsAny::_as_any_mut(self)
+}
+
+pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static {
+    #[allow(unused)]
+    fn set_invalid(&mut self, v: bool) {
+        
     }
-    /// returns a erased reference to a underlying struct for a wrapper, else to this widget
+    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's;
+    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>>;
+
+    
     #[inline]
-    fn as_any_inner(&self) -> &dyn Any {
-        WidgetAsAny::_as_any(self)
+    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'s,E>,()> where 'w: 's { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        if invalidate {self.set_invalid(true);}
+        if i.is_empty() {
+            return Ok(ResolvableMut::Widget(self.box_mut()))
+        }
+        for c in self.childs_mut() {
+            if c.is_subpath(i.index(0)) {
+                return c.resolve_mut(i.slice(1..),invalidate);
+            }
+        }
+        Err(())
     }
-    /// returns a erased reference to a underlying struct for a wrapper, else to this widget
-    #[inline]
-    fn as_any_inner_mut(&mut self) -> &mut dyn Any {
-        WidgetAsAny::_as_any_mut(self)
+
+    fn resolve_box_mut(mut self: Box<Self>, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'w,E>,()> {
+        if invalidate {self.set_invalid(true);}
+        if i.is_empty() {
+            return Ok(ResolvableMut::Widget(self.box_box_mut()))
+        }
+        for c in self.childs_box_mut() {
+            if c.is_subpath(i.index(0)) {
+                return c.resolve_mut(i.slice(1..),invalidate);
+            }
+        }
+        Err(())
+    }
+
+    //fn typeid(&self) -> TypeId;
+}
+
+#[macro_export]
+macro_rules! widget_oofs {
+    (w:lifetime,s:lifetime) => {
+        fn typeid(&self) -> std::any::TypeId {
+            <Self as WDC<E>>::_typeid()
+        }
+        /*fn _typeid() -> std::any::TypeId where Self: Sized {
+            struct Ident;
+            std::any::TypeId::of::<Ident>()
+        }*/
+        fn box_ref<$s>(&$s self) -> $crate::core::ctx::aliases::WidgetRef<$s,E> where $w: $s {
+            Box::new(self)
+        }
+        fn box_box(self: Box<Self>) -> $crate::core::ctx::aliases::WidgetRef<$w,E> {
+            self
+        }
+    };
+}
+#[macro_export]
+macro_rules! widget_base {
+    (w:lifetime,s:lifetime) => {
+        fn base<$s>(&$s self) -> &$s dyn $crate::core::widget::Widget<$s,E> where $w: $s {
+            self
+        }
+        fn box_mut<$s>(&$s mut self) -> $crate::core::ctx::aliases::WidgetRefMut<$s,E> where $w: $s {
+            Box::new(self)
+        }
+        fn box_box_mut(self: Box<Self>) -> $crate::core::ctx::aliases::WidgetRefMut<$w,E> {
+            self
+        }
+    };
+}
+
+pub trait WBase<'w,E> where E: Env {
+    fn typeid(&self) -> TypeId;
+    fn type_name(&self) -> &'static str;
+    fn erase<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's;
+    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> where 'w: 's;
+    fn box_box(self: Box<Self>) -> WidgetRef<'w,E>;
+    fn boxed(self) -> WidgetRef<'w,E> where Self: Sized;
+}
+impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+WDC<E>, E: Env {
+    fn typeid(&self) -> TypeId {
+        <Self as WDC<E>>::_typeid()
+    }
+    fn type_name(&self) -> &'static str {
+        type_name::<Self>()
+    }
+    fn erase<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's {
+        self
+    }
+    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> where 'w: 's {
+        Box::new(self.erase())
+    }
+    fn box_box(self: Box<Self>) -> WidgetRef<'w,E> {
+        self
+    }
+    fn boxed(self) -> WidgetRef<'w,E> where Self: Sized {
+        Box::new(self)
+    }
+}
+pub trait WBaseMut<'w,E> where E: Env {
+    fn base<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's;
+    fn erase_mut<'s>(&'s mut self) -> &'s mut dyn WidgetMut<'w,E> where 'w: 's;
+    fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> where 'w: 's;
+    fn box_box_mut(self: Box<Self>) -> WidgetRefMut<'w,E>;
+    fn boxed_mut(self) -> WidgetRefMut<'w,E> where Self: Sized;
+}
+impl<'w,T,E> WBaseMut<'w,E> for T where T: WidgetMut<'w,E>+WDC<E>, E: Env {
+    fn base<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's {
+        self
+    }
+    fn erase_mut<'s>(&'s mut self) -> &'s mut dyn WidgetMut<'w,E> where 'w: 's {
+        self
+    }
+    fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> where 'w: 's {
+        Box::new(self.erase_mut())
+    }
+    fn box_box_mut(self: Box<Self>) -> WidgetRefMut<'w,E> {
+        self
+    }
+    fn boxed_mut(self) -> WidgetRefMut<'w,E> where Self: Sized {
+        Box::new(self)
     }
 }

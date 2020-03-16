@@ -8,8 +8,6 @@ pub type EEKey<E: Env> = <EEvent<E> as Event<E>>::Key;
 pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
 pub type ESize<E: Env> = <E::Backend as Backend<E>>::Size;
 
-pub type EDynOwned<E: Env> = <E::DynWidget as DynWidget<E>>::Owned;
-
 pub type ESPPText<E: Env> = <EStyle<E> as Style<E>>::PreprocessedText;
 pub type ESPPChar<E: Env> = <EStyle<E> as Style<E>>::PreprocessedChar;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
@@ -27,3 +25,6 @@ pub type EWPSub<E: Env> = <E::WidgetPath as WidgetPath<E>>::SubPath;
 pub type CtxRef<'a,E: Env> = (&'a E::Storage,&'a mut E::Context);
 pub type CtxRefR<'a,E: Env> = (&'a E::Storage,&'a E::Context);
 pub type CtxRefM<'a,E: Env> = (&'a mut E::Storage,&'a mut E::Context);
+
+pub type WidgetRef<'a,E: Env> = Box<dyn Widget<'a,E>+'a>;
+pub type WidgetRefMut<'a,E: Env> = Box<dyn WidgetMut<'a,E>+'a>;

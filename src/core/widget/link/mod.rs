@@ -15,22 +15,22 @@ pub struct Link<'c,E> where E: Env {
 impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(&mut E::DynWidget), invalidate: bool) {
+    pub fn mutate(&mut self, f: fn(&mut dyn WidgetMut<E>), invalidate: bool) {
         self.ctx.queue_mut().enqueue_widget_mut(self.widget.path.refc(),f,invalidate)
     }
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: impl FnOnce(&mut E::DynWidget)+Sync+'static, invalidate: bool) {
+    pub fn mutate_closure(&mut self, f: impl FnOnce(&mut dyn WidgetMut<E>)+Sync+'static, invalidate: bool) {
         self.ctx.queue_mut().enqueue_widget_mut_closure(self.widget.path.refc(),f,invalidate)
     }
     /// enqueue immutable access to this widget
     #[inline] 
-    pub fn later(&mut self, f: fn(&E::DynWidget)) {
+    pub fn later(&mut self, f: fn(&dyn Widget<E>)) {
         self.ctx.queue_mut().enqueue_widget(self.widget.path.refc(),f)
     }
     /// enqueue immutable access to this widget
     #[inline] 
-    pub fn later_closure(&mut self, f: impl FnOnce(&E::DynWidget)+Sync+'static) {
+    pub fn later_closure(&mut self, f: impl FnOnce(&dyn Widget<E>)+Sync+'static) {
         self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.refc(),f)
     }
     #[inline]
@@ -46,8 +46,8 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.queue_mut().enqueue_widget_validate(s)
     }
     #[inline]
-    pub fn widget(&self) -> &E::DynWidget {
-        self.widget.widget()
+    pub fn widget(&self) -> &dyn Widget<'c,E> {
+        &**self.widget.widget()
     }
 
     #[inline]
@@ -56,7 +56,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     /*#[inline]
-    pub fn for_child<'s>(&'s self, child: &'s E::DynWidget) -> Link<'s> where 'c: 's {
+    pub fn for_child<'s>(&'s self, child: &'s dyn Widget<E>) -> Link<'s> where 'c: 's {
         
     }*/
 
@@ -126,7 +126,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         for c in ch {
             let w = c.resolve_widget(stor)?;
             let w = Resolved{
-                path: w.widget().self_in_parent(path.refc()).into(),
+                path: w.self_in_parent(path.refc()).into(),
                 wref: w,
                 stor,
             };
@@ -160,7 +160,7 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     pub fn resolve_sub<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
         let mut new_path = self.widget.path.clone().attached_subpath(&p);
-        let rw = self.widget.wref.resolve_ref(p.refc())?;
+        let rw = self.widget.wref.resolve(p.refc())?;
         rw.extract_path(&mut new_path);
         let rw = rw.resolve_widget(&self.widget.stor)?;
         let w = Resolved{
@@ -186,7 +186,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     /*
     /// iterate over childs
     #[inline]
-    pub fn childs(&'c self, predicate: impl Fn(WPSlice<'c,E>)->bool + 'c ) -> impl Iterator<Item=&'c E::DynWidget> + 'c {
+    pub fn childs(&'c self, predicate: impl Fn(WPSlice<'c,E>)->bool + 'c ) -> impl Iterator<Item=&'c dyn Widget<E>> + 'c {
         self.ctx.widget(self.path).unwrap()
             .child_paths(self.path)
             .into_iter()
@@ -199,7 +199,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// iterate over childs mut
     #[inline]
-    pub fn childs_mut(&'c mut self, mut f: impl FnMut(&mut E::DynWidget), mut predicate: impl FnMut(&E::WidgetPath)->bool) {
+    pub fn childs_mut(&'c mut self, mut f: impl FnMut(&mut dyn WidgetMut<E>), mut predicate: impl FnMut(&E::WidgetPath)->bool) {
         let childs: Vec<E::WidgetPath> = self.ctx.widget(self.path).unwrap().child_paths(self.path);
 
         for e in childs {

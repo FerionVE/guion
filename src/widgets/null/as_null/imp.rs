@@ -22,7 +22,7 @@ impl<T,E,C> INull<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'stat
     }
 }
 #[doc(hidden)]
-impl<T,E,C> Widget<E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: INull<E>, E: Env + 'static, ERenderer<E>: RenderStdWidgets<E>, E::Context: AsHandlerStateful<E>, ESVariant<E>: StyleVariantSupport<StdVerb> {
+impl<T,E,C> Widget<'static,E> for AsNull<T,E,C> where C: Borrow<T> + BorrowMut<T> + 'static, T: INull<E>, E: Env + 'static, ERenderer<E>: RenderStdWidgets<E>, E::Context: AsHandlerStateful<E>, ESVariant<E>: StyleVariantSupport<StdVerb> {
     crate::impl_null_inner!(AsNull<T,E,C>,E);
     #[inline]
     fn as_any_inner(&self) -> &dyn Any {

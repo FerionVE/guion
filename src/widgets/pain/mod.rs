@@ -1,36 +1,21 @@
 use super::*;
-use std::marker::PhantomData;
+use std::{rc::Rc, marker::PhantomData};
 use crate::core::*;
 
 pub mod toggle;
 use toggle::*;
 use calc::calc_bounds;
+use cast::{WDCSized, WDC};
 
-pub struct Pane<'c,T,E,M> where E: Env, M: Toggle {
+pub struct Pane<'w,T,E> where E: Env, T: WDCSized<E>+'w {
     id: E::WidgetID,
     childs: Vec<T>,
     orientation: Orientation,
-    p: PhantomData<&'c mut M>,
+    p: PhantomData<&'w mut ()>,
 }
 
-impl<'c,T,E> Pane<'c,T,E,TOwned> where E: Env {
-    pub fn new(id: E::WidgetID, childs: Vec<T>, orientation: Orientation) -> Pane<'static,T,E,TOwned> where T: Widget<E> {
-        Pane{
-            id,
-            childs,
-            orientation,
-            p: PhantomData,
-        }
-    }
-    pub fn immediate(id: E::WidgetID, childs: Vec<T>, orientation: Orientation) -> Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E> {
-        Pane{
-            id,
-            childs,
-            orientation,
-            p: PhantomData,
-        }
-    }
-    pub fn immediate_mut(id: E::WidgetID, childs: Vec<T>, orientation: Orientation) -> Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E> {
+impl<'w,T,E> Pane<'w,T,E> where E: Env, T: AsWidget<'w,E>+WDCSized<E>+'w, T::StaturSized: AsWidget<'static,E>+WDCSized<E> {
+    pub fn new(id: E::WidgetID, childs: Vec<T>, orientation: Orientation) -> Pane<'w,T,E> {
         Pane{
             id,
             childs,
@@ -40,7 +25,7 @@ impl<'c,T,E> Pane<'c,T,E,TOwned> where E: Env {
     }
 }
 
-impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: AsWidget<E>, E: Env, Self: 'static {
+impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: AsWidget<'w,E>+WDCSized<E>+'w, T::StaturSized: AsWidget<'static,E>+WDCSized<E>, E: Env {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -60,144 +45,45 @@ impl<T,E> Widget<E> for Pane<'static,T,E,TOwned> where T: AsWidget<E>, E: Env, S
         true
         //self.invalid
     }
-    fn set_invalid(&mut self, v: bool) {
-        let _ = v;
-        //self.invalid = true
-    }
     fn childs(&self) -> usize {
         self.childs.len()
     }
-    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
+    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         self.childs.iter()
             .map(|c| c.as_ref() )
             .collect::<Vec<_>>()
     }
-    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
+    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+        self.childs.into_iter()
+            .map(|c: T| c.consume_ref() )
+            .collect::<Vec<_>>()
+    }
+
+    fn focusable(&self) -> bool {
+        false
+    }
+}
+impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: AsWidgetMut<'w,E>+WDCSized<E>+'w, T::StaturSized: AsWidget<'static,E>+WDCSized<E>, E: Env {
+    fn set_invalid(&mut self, v: bool) {
+        let _ = v;
+        //self.invalid = true
+    }
+    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         self.childs.iter_mut()
             .map(|c| c.as_mut() )
             .collect::<Vec<_>>()
     }
-    fn focusable(&self) -> bool {
-        false
+    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+        self.childs.into_iter()
+            .map(|c| c.consume_mut() )
+            .collect::<Vec<_>>()
     }
 }
-
-impl<'c,T,E> Widget<E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: Env, Self: 'static {
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
-        _render(l,r,self.orientation)
-    }
-    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
-        _event(l,e,self.orientation)
-    }
-    fn size(&self, l: Link<E>) -> ESize<E> {
-        _size(l,self.orientation)
-    }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        _trace_bounds(l,i,b,force,self.orientation)
-    }
-    fn invalid(&self) -> bool {
-        true
-    }
-    fn set_invalid(&mut self, v: bool) {
-        let _ = v;
-    }
-    fn childs(&self) -> usize {
-        self.childs.len()
-    }
-    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
-        panic!()
-    }
-    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
-        panic!()
-    }
-    fn focusable(&self) -> bool {
-        false
-    }
+impl<'w,T,E> WDC<E> for Pane<'w,T,E> where T: WDCSized<E>+'w, T::StaturSized: WDCSized<E>, E: Env {
+    type Statur = Pane<'static,T::StaturSized,E>;
 }
-
-impl<'c,T,E> Widget<E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, E: Env, Self: 'static {
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
-        _render(l,r,self.orientation)
-    }
-    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
-        _event(l,e,self.orientation)
-    }
-    fn size(&self, l: Link<E>) -> ESize<E> {
-        _size(l,self.orientation)
-    }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        _trace_bounds(l,i,b,force,self.orientation)
-    }
-    fn invalid(&self) -> bool {
-        true
-    }
-    fn set_invalid(&mut self, v: bool) {
-        let _ = v;
-    }
-    fn childs(&self) -> usize {
-        self.childs.len()
-    }
-    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
-        panic!()
-    }
-    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
-        panic!()
-    }
-    fn focusable(&self) -> bool {
-        false
-    }
-    #[inline]
-    fn border(&self, b: &mut Border) {
-        *b = Border::empty();
-    }
-}
-
-impl<'c,T,E> WidgetImmediate<'c,E> for Pane<'c,T,E,TRef> where T: WidgetImmediate<'c,E>, E: Env {
-    fn resolve(self, s: E::WidgetPath) -> Result<Resolvable<'c,E>,()> where Self: Sized {
-        todo!()
-    }
-    fn resolve_box(self: Box<Self>, s: E::WidgetPath) -> Result<Resolvable<'c,E>,()> {
-        todo!()
-    }
-    fn resolve_ref(&self, s: E::WidgetPath) -> Result<Resolvable<'c,E>,()> {
-        todo!()
-    }
-    fn widget(&self) -> &E::DynWidget {
-        todo!()
-    }
-    fn cloned<'s>(&'s self) -> WidgetRef<'s,E> where 'c: 's {
-        todo!()
-    }
-}
-
-impl<'c,T,E> WidgetImmediateMut<'c,E> for Pane<'c,T,E,TMut> where T: WidgetImmediateMut<'c,E>, E: Env {
-    fn resolve(self, s: E::WidgetPath) -> Result<Resolvable<'c,E>,()> where Self: Sized {
-        todo!()
-    }
-    fn resolve_box(self: Box<Self>, s: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> {
-        todo!()
-    }
-    fn resolve_mut(self, s: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> where Self: Sized {
-        todo!()
-    }
-    fn resolve_mut_box(self: Box<Self>, s: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'c,E>,()> {
-        todo!()
-    }
-    fn widget(&self) -> &E::DynWidget {
-        todo!()
-    }
-    fn widget_mut(&mut self) -> &mut E::DynWidget {
-        todo!()
-    }
-    fn cloned_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> where 'c: 's {
-        todo!()
-    }
+impl<'w,T,E> WDCSized<E> for Pane<'w,T,E> where T: WDCSized<E>+'w, T::StaturSized: WDCSized<E>, E: Env {
+    type StaturSized = Pane<'static,T::StaturSized,E>;
 }
 
 pub fn _render<E>(mut l: Link<E>, r: &mut RenderLink<E>, o: Orientation) -> bool where
@@ -251,3 +137,15 @@ pub fn _trace_bounds<E>(mut l: Link<E>, i: usize, b: &Bounds, force: bool, o: Or
 
     bounds.get(i).map(|w| *w).ok_or(())
 }
+
+/*pub fn brokion<'a,W,E>(id: E::WidgetID, e: W) -> Pane<'a,W,E> where W: WidgetImmediate<'a,E>, E: Env {
+    Pane::immediate(
+        id,
+        vec![e],
+        Orientation::Horizontal,
+    )
+}
+pub fn bockion<'a,W,E>(id: E::WidgetID, e: W) -> bool where W: WidgetImmediate<'a,E>, E: Env {
+    let pane = brokion::<'a,W,E>(id, e);
+    pane.invalid()
+}*/

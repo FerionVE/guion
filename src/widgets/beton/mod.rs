@@ -1,13 +1,12 @@
 use super::*;
 use crate::core::*;
 use crate::core::event::key::Key;
+use std::marker::PhantomData;
+use cast::{WDCSized, WDC};
 
-pub struct Beton<E> where
+pub struct Beton<'w,E,S> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E>,
+    S: AsCaption<'w>,
 {
     pub trigger: for<'a> fn(Link<E>),
     id: E::WidgetID,
@@ -16,15 +15,17 @@ pub struct Beton<E> where
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub border: Option<Border>,
-    pub text: String,
+    pub text: S,
+    p: PhantomData<&'w mut ()>,
 }
 
-impl<E> Widget<E> for Beton<E> where
+impl<'w,E,S> Widget<'w,E> for Beton<'w,E,S> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
+    S: AsCaption<'w>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -58,15 +59,17 @@ impl<E> Widget<E> for Beton<E> where
             StdVerb::Pressed(Self::pressed(&l).is_some())
         ])
             .border_rect(2);
-        r.with(&[
-            StdVerb::ObjForeground,
-            StdVerb::ObjText,
-            StdVerb::Hovered(l.is_hovered()),
-            StdVerb::Focused(l.is_focused()),
-            StdVerb::Locked(self.locked),
-            StdVerb::Pressed(Self::pressed(&l).is_some())
-        ])
-            .render_text(&self.text,l.ctx);
+        self.text.cap(|s| 
+            r.with(&[
+                StdVerb::ObjForeground,
+                StdVerb::ObjText,
+                StdVerb::Hovered(l.is_hovered()),
+                StdVerb::Focused(l.is_focused()),
+                StdVerb::Locked(self.locked),
+                StdVerb::Pressed(Self::pressed(&l).is_some())
+            ])
+                .render_text(s,l.ctx)
+        );
         true
     }
     fn event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
@@ -90,25 +93,42 @@ impl<E> Widget<E> for Beton<E> where
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>> {
+    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         vec![]
     }
-    fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> {
-        vec![]   
+    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+        vec![]
     }
+    
     fn _trace_bounds(&self, _: Link<E>, _: usize, _: &Bounds, _: bool) -> Result<Bounds,()> {
         Err(())
     }
     fn focusable(&self) -> bool { true }
-    
 }
 
-impl<E> Beton<E> where
+impl<'w,E,S> WidgetMut<'w,E> for Beton<'w,E,S> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
+    S: AsCaption<'w>,
+{
+    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
+        vec![]
+    }
+    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+        vec![]
+    }
+}
+
+impl<'w,E,S> Beton<'w,E,S> where
+    E: Env,
+    ERenderer<E>: RenderStdWidgets<E>,
+    EEvent<E>: StdVarSup<E>,
+    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    E::Context: AsHandlerStateful<E>,
+    S: AsCaption<'w>,
 {
     pub fn new(id: E::WidgetID, size: ESize<E>) -> Self {
         Self{
@@ -118,7 +138,8 @@ impl<E> Beton<E> where
             trigger: |_|{},
             locked: false,
             border: None,
-            text: "Button".to_owned(),
+            text: S::default(),
+            p: PhantomData,
         }
     }
 
@@ -126,7 +147,7 @@ impl<E> Beton<E> where
         self.trigger = fun;
         self
     }
-    pub fn with_text(mut self, text: String) -> Self {
+    pub fn with_text(mut self, text: S) -> Self {
         self.text = text;
         self
     }
@@ -140,5 +161,54 @@ impl<E> Beton<E> where
             .or_else(||
                 l.state().is_pressed_and_id(&[EEKey::<E>::SPACE],id)
             )
+    }
+}
+
+impl<'w,E,S> WDC<E> for Beton<'w,E,S> where
+    E: Env,
+    S: AsCaption<'w>,
+{
+    type Statur = Beton<'static,E,S::Statur>;
+}
+impl<'w,E,S> WDCSized<E> for Beton<'w,E,S> where
+    E: Env,
+    S: AsCaption<'w>,
+{
+    type StaturSized = Beton<'static,E,S::Statur>;
+}
+
+pub trait AsCaption<'w>: Clone + 'w {
+    type Statur: AsCaption<'static> + 'static;
+
+    fn cap(&self, f: impl FnOnce(&str));
+    fn default() -> Self;
+}
+
+impl<'w> AsCaption<'w> for &'w str {
+    type Statur = &'static str;
+
+    fn cap(&self, f: impl FnOnce(&str)) {
+        f(self)
+    }
+    fn default() -> Self{
+        "Button"
+    }
+}
+impl<'w> AsCaption<'w> for &'w String {
+    type Statur = &'static String;
+    fn cap(&self, f: impl FnOnce(&str)) {
+        f(self)
+    }
+    fn default() -> Self{
+        Box::leak(Box::new("Button".to_owned()))
+    }
+}
+impl<'w> AsCaption<'w> for String {
+    type Statur = String;
+    fn cap(&self, f: impl FnOnce(&str)) {
+        f(self)
+    }
+    fn default() -> Self{
+        "Button".to_owned()
     }
 }

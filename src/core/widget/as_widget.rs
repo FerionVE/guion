@@ -1,54 +1,28 @@
 use super::*;
 
 /// AsWidget is an object which can interpret as Widget OR an Path
-pub trait AsWidget<E> where E: Env {
-    fn as_ref(&self) -> Resolvable<E>;
-    fn as_mut(&mut self) -> ResolvableMut<E>;
-}
-pub trait AsWidgetImmediate<'a,E> where E: Env {
-    fn into_ref(self) -> Resolvable<'a,E>;
+pub trait AsWidget<'a,E> where E: Env {
     fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'a: 's;
+    fn consume_ref(self) -> Resolvable<'a,E>;
 }
-pub trait AsWidgetImmediateMut<'a,E> where E: Env {
-    fn into_mut(self) -> ResolvableMut<'a,E>;
+pub trait AsWidgetMut<'a,E>: AsWidget<'a,E> where E: Env {
     fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'a: 's;
+    fn consume_mut(self) -> ResolvableMut<'a,E>;
 }
 
-
-impl<E,T> AsWidget<E> for T where T: Widget<E>, E: Env {
-    fn as_ref(&self) -> Resolvable<E> {
-        Resolvable::Widget(Rc::new(self.as_immediate()))
+impl<'a,E,T> AsWidget<'a,E> for T where T: Widget<'a,E>, E: Env {
+    fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'a: 's {
+        Resolvable::Widget(self.box_ref())
     }
-    fn as_mut(&mut self) -> ResolvableMut<E> {
-        ResolvableMut::Widget(self.as_immediate_mut())
-    }
-}
-/*impl<'w,E,T> AsWidgetImmediate<'w,E> for T where T: WidgetImmediate<'w,E> + 'static, E: Env {
-    fn as_ref(self) -> Resolvable<'w,E> {
-        Resolvable::Widget(Rc::new(Box::new(self)))
-    }
-}*/
-impl<'w,E> AsWidgetImmediate<'w,E> for WidgetRef<'w,E> where E: Env {
-    fn into_ref(self) -> Resolvable<'w,E> {
-        Resolvable::Widget(Rc::new(self))
-    }
-    fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'w: 's {
-        Resolvable::Widget(Rc::new(self.cloned()))
+    fn consume_ref(self) -> Resolvable<'a,E> {
+        Resolvable::Widget(Box::new(self))
     }
 }
-impl<'w,E> AsWidgetImmediate<'w,E> for Rc<WidgetRef<'w,E>> where E: Env {
-    fn into_ref(self) -> Resolvable<'w,E> {
-        Resolvable::Widget(self)
+impl<'a,E,T> AsWidgetMut<'a,E> for T where T: WidgetMut<'a,E>, E: Env {
+    fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'a: 's {
+        ResolvableMut::Widget(self.box_mut())
     }
-    fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'w: 's {
-        Resolvable::Widget(Rc::new(self.cloned()))
-    }
-}
-impl<'w,E> AsWidgetImmediateMut<'w,E> for WidgetRefMut<'w,E> where E: Env {
-    fn into_mut(self) -> ResolvableMut<'w,E> {
-        ResolvableMut::Widget(self)
-    }
-    fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'w: 's {
-        ResolvableMut::Widget(self.cloned_mut())
+    fn consume_mut(self) -> ResolvableMut<'a,E> {
+        ResolvableMut::Widget(Box::new(self))
     }
 }
