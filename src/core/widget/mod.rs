@@ -1,19 +1,27 @@
+//! Widgets are interfaced in two Traits for immutable and mutable operations
+//! The Traits features interface for queuering e.g. id or style, and also accessing or resolving child widgets
+//! Note that some functions in the traits are not meant to be called from externel, but over `Link`'s methods
 use super::*;
 use std::any::{TypeId, Any, type_name};
 use std::rc::Rc;
-use cast::WDC;
+use cast::Statize;
 
 pub mod link;
 pub mod as_widget;
 pub mod cast;
 pub mod ext;
-mod imp;
+#[doc(hidden)]
+pub mod imp;
 
+/// Core Trait of guion ™️
 pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
+    /// this method should not be called from external, rather `Link::render`
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
+    /// this method should not be called from external, rather `Link::event`
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64));
+    /// this method should not be called from external, rather `Link::size`
     fn size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
@@ -36,6 +44,8 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
             .collect::<Vec<_>>()
     }
     
+    /// resolve a deep child item by the given relative path
+    /// an empty path will resolve to this widget
     #[inline]
     fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,()> where 'w: 's {
         if i.is_empty() {
@@ -48,6 +58,8 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         }
         Err(())
     }
+    /// resolve a deep child item by the given relative path
+    /// an empty path will resolve to this widget
     #[inline]
     fn resolve_box(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
         if i.is_empty() {
@@ -110,7 +122,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn border(&self, b: &mut Border) {
         
     }
-
+    
     fn inner<'s>(&'s self) -> Option<&'s dyn Widget<'w,E>> {
         None
     }
@@ -128,7 +140,8 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's;
     fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>>;
 
-    
+    /// resolve a deep child item by the given relative path
+    /// an empty path will resolve to this widget
     #[inline]
     fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'s,E>,()> where 'w: 's { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if invalidate {self.set_invalid(true);}
@@ -143,6 +156,8 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         Err(())
     }
 
+    /// resolve a deep child item by the given relative path
+    /// an empty path will resolve to this widget
     fn resolve_box_mut(mut self: Box<Self>, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'w,E>,()> {
         if invalidate {self.set_invalid(true);}
         if i.is_empty() {
@@ -161,6 +176,8 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
     }
 }
 
+/// this trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
+#[doc(hidden)]
 pub trait WBase<'w,E> where E: Env {
     fn typeid(&self) -> TypeId;
     fn type_name(&self) -> &'static str;
@@ -169,9 +186,9 @@ pub trait WBase<'w,E> where E: Env {
     fn box_box(self: Box<Self>) -> WidgetRef<'w,E>;
     fn boxed(self) -> WidgetRef<'w,E> where Self: Sized;
 }
-impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+WDC<E>, E: Env {
+impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+Statize<E>, E: Env {
     fn typeid(&self) -> TypeId {
-        <Self as WDC<E>>::_typeid()
+        <Self as Statize<E>>::_typeid()
     }
     fn type_name(&self) -> &'static str {
         type_name::<Self>()
@@ -189,6 +206,9 @@ impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+WDC<E>, E: Env {
         Box::new(self)
     }
 }
+
+/// this trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
+#[doc(hidden)]
 pub trait WBaseMut<'w,E> where E: Env {
     fn base<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's;
     fn erase_mut<'s>(&'s mut self) -> &'s mut dyn WidgetMut<'w,E> where 'w: 's;
@@ -196,7 +216,7 @@ pub trait WBaseMut<'w,E> where E: Env {
     fn box_box_mut(self: Box<Self>) -> WidgetRefMut<'w,E>;
     fn boxed_mut(self) -> WidgetRefMut<'w,E> where Self: Sized;
 }
-impl<'w,T,E> WBaseMut<'w,E> for T where T: WidgetMut<'w,E>+WDC<E>, E: Env {
+impl<'w,T,E> WBaseMut<'w,E> for T where T: WidgetMut<'w,E>+Statize<E>, E: Env {
     fn base<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's {
         self
     }

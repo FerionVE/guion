@@ -32,6 +32,8 @@ impl<T,E> VariantDerive<E> for T where T: Variant<E> + Clone, E: Env {
     }
 }
 
+/// Extension Trait for Events supporting all standard variants.  
+/// Exists to simplify where clauses.
 pub trait StdVarSup<E>:
     VariantSupport<KbdDown<E>,E> +
     VariantSupport<KbdUp<E>,E> +
@@ -43,8 +45,8 @@ pub trait StdVarSup<E>:
     VariantSupport<MouseLeave,E> +
     VariantSupport<WindowMove,E> +
     VariantSupport<WindowResize,E> +
-    VariantSupport<GainedFocus,E> +
-    VariantSupport<LostFocus,E> +
+    VariantSupport<Focus,E> +
+    VariantSupport<Unfocus,E> +
     VariantSupport<RootEvent<E>,E>
 where E: Env, E::Backend: Backend<E,Event=Self> {
     fn is_kbd_down(&self) -> Option<KbdDown<E>> {
@@ -77,11 +79,11 @@ where E: Env, E::Backend: Backend<E,Event=Self> {
     fn is_window_reset(&self) -> Option<WindowResize> {
         self.is::<WindowResize>()
     }
-    fn is_gained_focus(&self) -> Option<GainedFocus> {
-        self.is::<GainedFocus>()
+    fn is_focus(&self) -> Option<Focus> {
+        self.is::<Focus>()
     }
-    fn is_lost_focus(&self) -> Option<LostFocus> {
-        self.is::<LostFocus>()
+    fn is_unfocus(&self) -> Option<Unfocus> {
+        self.is::<Unfocus>()
     }
     /*fn _is_root_event(&self) -> Option<RootEvent<E>> {
         self.is::<RootEvent<E>>()
@@ -102,13 +104,9 @@ impl<E,T> StdVarSup<E> for T where T:
     VariantSupport<MouseLeave,E> +
     VariantSupport<WindowMove,E> +
     VariantSupport<WindowResize,E> +
-    VariantSupport<GainedFocus,E> +
-    VariantSupport<LostFocus,E> +
+    VariantSupport<Focus,E> +
+    VariantSupport<Unfocus,E> +
     VariantSupport<RootEvent<E>,E>
 , E: Env, E::Backend: Backend<E,Event=T> {
 
 }
-
-/*impl<E> Event<E> for () where E: Env, E::Backend: Backend<E,Event=Self> {
-
-}*/

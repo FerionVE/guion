@@ -138,9 +138,9 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                         }
                     }
                 }
-                RootEvent::MouseMove{dest} => {
+                RootEvent::MouseMove{pos} => {
                     //set pos
-                    l.as_mut().s.mouse.pos = Some(dest);
+                    l.as_mut().s.mouse.pos = Some(pos);
                     //previous hovered widget
                     if let Some(p) = l.as_mut().s.mouse.hovered.take() {
                         let mut l = l.with_widget(p)
@@ -149,7 +149,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                         l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
                     }
                     //hover state will be updated as the event passes through the widget tree
-                    l._event_root((Event::from(MouseMove{dest}),e.1,e.2));
+                    l._event_root((Event::from(MouseMove{pos}),e.1,e.2));
                     if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
                         let mut l = l.with_widget(p)
                             .expect("Lost Widget");

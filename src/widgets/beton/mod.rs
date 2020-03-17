@@ -2,7 +2,7 @@ use super::*;
 use crate::core::*;
 use crate::core::event::key::Key;
 use std::marker::PhantomData;
-use cast::{WDCSized, WDC};
+use cast::Statize;
 
 pub struct Beton<'w,E,S> where
     E: Env,
@@ -164,17 +164,11 @@ impl<'w,E,S> Beton<'w,E,S> where
     }
 }
 
-impl<'w,E,S> WDC<E> for Beton<'w,E,S> where
+unsafe impl<'w,E,S> Statize<E> for Beton<'w,E,S> where
     E: Env,
     S: AsCaption<'w>,
 {
     type Statur = Beton<'static,E,S::Statur>;
-}
-impl<'w,E,S> WDCSized<E> for Beton<'w,E,S> where
-    E: Env,
-    S: AsCaption<'w>,
-{
-    type StaturSized = Beton<'static,E,S::Statur>;
 }
 
 pub trait AsCaption<'w>: Clone + 'w {

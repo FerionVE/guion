@@ -1,6 +1,6 @@
 use super::*;
 
-pub trait SubPath<E>: Clone + PartialEq + Sized where E: Env {
+pub trait SubPath<E>: Clone + PartialEq<Self> + Sized where E: Env {
     fn from_id(id: E::WidgetID) -> Self;
     fn eq_id(&self, id: E::WidgetID) -> bool;
     fn into_id(self) -> E::WidgetID;

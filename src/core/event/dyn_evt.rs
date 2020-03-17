@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 use super::*;
 use std::any::Any;
 
+/// Dynamic Event container. Supports all variants.
 pub struct DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {
     pub event: Box<dyn Variant<E>>,
     _m: PhantomData<(K,D)>,

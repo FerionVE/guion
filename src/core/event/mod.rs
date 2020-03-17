@@ -53,16 +53,7 @@ pub trait Variant<E>: VariantDerive<E> where E: Env {
     fn filter(&self, bounds: &Bounds) -> bool {
         self.position().map_or(true, |p| p.is_inside(bounds) )
     }
-    /// both own_bounds and subbounds are absolute
-    /*#[inline]
-    fn _slice(&mut self, bounds: &Bounds) {
-        if let Some(mut b) = self._bounds_mut() {
-            b &= bounds;
-        }
-    }
-    fn _bounds_mut(&mut self) -> Option<&mut Bounds> {
-        None
-    }*/
+    // both own_bounds and subbounds are absolute
 
     #[inline]
     fn consuming(&self) -> bool {

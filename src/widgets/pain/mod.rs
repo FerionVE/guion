@@ -5,16 +5,16 @@ use crate::core::*;
 pub mod toggle;
 use toggle::*;
 use calc::calc_bounds;
-use cast::{WDCSized, WDC};
+use cast::Statize;
 
-pub struct Pane<'w,T,E> where E: Env, T: WDCSized<E>+'w {
+pub struct Pane<'w,T,E> where E: Env, T: Statize<E>+Sized+'w {
     id: E::WidgetID,
     childs: Vec<T>,
     orientation: Orientation,
     p: PhantomData<&'w mut ()>,
 }
 
-impl<'w,T,E> Pane<'w,T,E> where E: Env, T: AsWidget<'w,E>+WDCSized<E>+'w, T::StaturSized: AsWidget<'static,E>+WDCSized<E> {
+impl<'w,T,E> Pane<'w,T,E> where E: Env, T: AsWidget<'w,E>+Statize<E> {
     pub fn new(id: E::WidgetID, childs: Vec<T>, orientation: Orientation) -> Pane<'w,T,E> {
         Pane{
             id,
@@ -25,7 +25,7 @@ impl<'w,T,E> Pane<'w,T,E> where E: Env, T: AsWidget<'w,E>+WDCSized<E>+'w, T::Sta
     }
 }
 
-impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: AsWidget<'w,E>+WDCSized<E>+'w, T::StaturSized: AsWidget<'static,E>+WDCSized<E>, E: Env {
+impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: AsWidget<'w,E>+Statize<E>, T::Statur: Statize<E>+Sized, E: Env {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -63,11 +63,12 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: AsWidget<'w,E>+WDCSized<E>+'
         false
     }
 
-    fn border(&self, b: &mut Border) {
+    fn border(&self, mut b: &mut Border) {
         //*b = Border::empty();
+        //b/=2;
     }
 }
-impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: AsWidgetMut<'w,E>+WDCSized<E>+'w, T::StaturSized: AsWidget<'static,E>+WDCSized<E>, E: Env {
+impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: AsWidgetMut<'w,E>+Statize<E>, T::Statur: Statize<E>+Sized, E: Env {
     fn set_invalid(&mut self, v: bool) {
         let _ = v;
         //self.invalid = true
@@ -83,11 +84,8 @@ impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: AsWidgetMut<'w,E>+WDCSize
             .collect::<Vec<_>>()
     }
 }
-impl<'w,T,E> WDC<E> for Pane<'w,T,E> where T: WDCSized<E>+'w, T::StaturSized: WDCSized<E>, E: Env {
-    type Statur = Pane<'static,T::StaturSized,E>;
-}
-impl<'w,T,E> WDCSized<E> for Pane<'w,T,E> where T: WDCSized<E>+'w, T::StaturSized: WDCSized<E>, E: Env {
-    type StaturSized = Pane<'static,T::StaturSized,E>;
+unsafe impl<'w,T,E> Statize<E> for Pane<'w,T,E> where T: Statize<E>, T::Statur: Statize<E>+Sized, E: Env {
+    type Statur = Pane<'static,T::Statur,E>;
 }
 
 pub fn _render<E>(mut l: Link<E>, r: &mut RenderLink<E>, o: Orientation) -> bool where

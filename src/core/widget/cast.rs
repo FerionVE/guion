@@ -1,31 +1,32 @@
 use super::*;
 
-//TODO simplify WDC and downcast impls into AnyLt struct
-pub trait WDC<E> {
+//TODO simplify Statize and downcast impls into AnyLt struct
+/// Trait for retrieving the TypeId of a non-'static type by providing the 'static variant of the type  
+/// [RFC 1849](https://github.com/rust-lang/rust/issues/41875)
+pub unsafe trait Statize<E> {
+    /// Should be `Self`, but with static lifetimes.  
+    /// CAUTION: As this type is used as TypeId for downcasting, it __must__ be as unique as the implementor, else __undefined behaviour__ can eventally occur at downcasting
     type Statur: ?Sized + 'static;
     
     fn _typeid() -> TypeId {
         TypeId::of::<Self::Statur>()
     }
 }
-pub trait WDCSized<E>: Sized {
-    type StaturSized: Sized + 'static;
-}
 
 impl<'w,E> dyn Widget<'w,E> where E: Env {
-    pub fn is_type<'s,T>(&self) -> bool where T: Widget<'s,E>+WDC<E> {
+    pub fn is_type<'s,T>(&self) -> bool where T: Widget<'s,E>+Statize<E> {
         self.typeid() == T::_typeid()
     }
 
-    pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Widget<'d,E>+WDC<E>, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Widget<'d,E>+Statize<E>, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&*(self as *const dyn Widget<'w,E> as *const T)) }
         } else {
             None
         }
     }
-
-    pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Widget<'d,E>+WDC<E>, 'w: 's, 'w: 'd, 'd: 's {
+    /// downcast the current widget to a specific implementation
+    pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Widget<'d,E>+Statize<E>, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_downcast_ref::<T>(self) {
             Some(v)
         }else if let Some(senf) = self.inner() {
@@ -36,19 +37,19 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
     }
 }
 impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
-    pub fn is_type<'s,T>(&self) -> bool where T: WidgetMut<'s,E>+WDC<E> {
+    pub fn is_type<'s,T>(&self) -> bool where T: WidgetMut<'s,E>+Statize<E> {
         self.typeid() == T::_typeid()
     }
     
-    pub fn _downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: WidgetMut<'d,E>+WDC<E>, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn _downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: WidgetMut<'d,E>+Statize<E>, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&mut *(self as *mut dyn WidgetMut<'w,E> as *mut T)) }
         } else {
             None
         }
     }
-
-    pub fn downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: WidgetMut<'d,E>+WDC<E>, 'w: 's, 'w: 'd, 'd: 's {
+    /// downcast the current widget to a specific implementation
+    pub fn downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: WidgetMut<'d,E>+Statize<E>, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             self._downcast_mut::<T>()
         }else if let Some(senf) = self.inner_mut() {
@@ -59,73 +60,45 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
     }
 }
 
-impl<'w,E> WDC<E> for dyn Widget<'w,E> where E: Env {
+unsafe impl<'w,E> Statize<E> for dyn Widget<'w,E> where E: Env {
     type Statur = dyn Widget<'static,E>;
 }
-impl<'w,E> WDC<E> for dyn WidgetMut<'w,E> where E: Env {
+unsafe impl<'w,E> Statize<E> for dyn WidgetMut<'w,E> where E: Env {
     type Statur = dyn WidgetMut<'static,E>;
 }
 
-/*impl<'s,T,E> WDC<E> for &'s T where T: WDC<E>, E: Env {
-    type Statur = &'static T::Statur;
-}
-impl<'s,T,E> WDC<E> for &'s mut T where T: WDC<E>, E: Env {
-    type Statur = &'static mut T::Statur;
-}
-impl<T,E> WDC<E> for Box<T> where T: WDC<E>+?Sized, E: Env {
-    type Statur = Box<T::Statur>;
-}
-
-impl<'s,T,E> WDCSized<E> for &'s T where T: WDC<E>, E: Env {
-    type StaturSized = &'static T::Statur;
-}
-impl<'s,T,E> WDCSized<E> for &'s mut T where T: WDC<E>, E: Env {
-    type StaturSized = &'static mut T::Statur;
-}
-impl<T,E> WDCSized<E> for Box<T> where T: WDC<E>+?Sized, E: Env {
-    type StaturSized = Box<T::Statur>;
-}*/
-
-impl<'l,'s,E> WDC<E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
+unsafe impl<'l,'s,E> Statize<E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     type Statur = &'static dyn Widget<'static,E>;
 }
-impl<'l,'s,E> WDC<E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's {
+unsafe impl<'l,'s,E> Statize<E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's {
     type Statur = &'static mut dyn WidgetMut<'static,E>;
 }
 
-impl<'l,'s,E> WDCSized<E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
-    type StaturSized = &'static dyn Widget<'static,E>;
+unsafe impl<'w,E> Statize<E> for WidgetRef<'w,E> where E: Env {
+    type Statur = WidgetRef<'static,E>;
 }
-impl<'l,'s,E> WDCSized<E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's {
-    type StaturSized = &'static mut dyn WidgetMut<'static,E>;
-}
-
-impl<'w,E> WDC<E> for Box<dyn Widget<'w,E>> where E: Env {
-    type Statur = Box<dyn Widget<'static,E>>;
-}
-impl<'w,E> WDCSized<E> for Box<dyn Widget<'w,E>> where E: Env {
-    type StaturSized = Box<dyn Widget<'static,E>>;
+unsafe impl<'w,E> Statize<E> for WidgetRefMut<'w,E> where E: Env {
+    type Statur = WidgetRefMut<'static,E>;
 }
 
-impl<'w,E> WDC<E> for Box<dyn WidgetMut<'w,E>> where E: Env {
-    type Statur = Box<dyn WidgetMut<'static,E>>;
-}
-impl<'w,E> WDCSized<E> for Box<dyn WidgetMut<'w,E>> where E: Env {
-    type StaturSized = Box<dyn WidgetMut<'static,E>>;
+/*pub trait ProtectedSelf<T> where T: ?Sized {
+
 }
 
+impl<T> ProtectedSelf<Self> for T where T: ?Sized {
 
-
-/*impl<T,E> WDC<E> for T where T: 'static, E: Env {
-    type Statur = Self;
 }*/
 
-/*impl<'s,'l,T,E> WDC<E> for &'s T where T: Widget<'l,E>+WDC<E>+'l + ?Sized, E: Env, 'l: 's {
-    type Statur = &'static T::Statur;
-}
-impl<'s,'l,T,E> WDC<E> for &'s mut T where T: Widget<'l,E>+WDC<E>+'l + ?Sized, E: Env, 'l: 's {
-    type Statur = &'static mut T::Statur;
-}
-impl<'s,T,E> WDC<E> for Box<T> where T: Widget<'s,E>+WDC<E> + ?Sized, E: Env {
-    type Statur = Box<T::Statur>;
+/*macro_rules! impl_statize_static {
+    ($t:ident $($tt:ident)+) => {
+        impl_statize_static!($t);
+        impl_statize_static!($($tt)*);
+    };
+    ($t:ident) => {
+        impl<E> Statize<E> for $t where E: Env {
+            type Statur = Self;
+        }
+    }
 }*/
+
+//impl_statize_static!(bool char f32 f64 i8 i16 i32 i64);

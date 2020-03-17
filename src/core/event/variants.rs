@@ -4,7 +4,6 @@ use super::*;
 #[derive(Clone)]
 pub struct KbdDown<E> where E: Env {
     pub key: EEKey<E>,
-    //pub widget: E::WidgetPath,
 }
 #[derive(Clone)]
 pub struct KbdUp<E> where E: Env {
@@ -35,15 +34,13 @@ pub struct MouseUp<E> where E: Env {
 
 #[derive(Clone)]
 pub struct MouseMove {
-    pub dest: Offset,
+    pub pos: Offset,
 }
 
 #[derive(Clone)]
-pub struct MouseEnter {
-}
+pub struct MouseEnter;
 #[derive(Clone)]
-pub struct MouseLeave {
-}
+pub struct MouseLeave;
 
 #[derive(Clone)]
 pub struct WindowMove {
@@ -57,12 +54,10 @@ pub struct WindowResize {
 }
 
 #[derive(Clone)]
-pub struct GainedFocus {
-}
+pub struct Focus;
 
 #[derive(Clone)]
-pub struct LostFocus {
-}
+pub struct Unfocus;
 
 macro_rules! pos {
     ($field:ident) => {
@@ -124,15 +119,15 @@ impl<E> Variant<E> for KbdUp<E> where E: Env {focused!();}
 
 impl<E> Variant<E> for MouseDown<E> where E: Env {consuming!();hovered!();pos!(pos);}
 impl<E> Variant<E> for MouseUp<E> where E: Env {consuming!();hovered!();pos!(pos);}
-impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(dest);}
+impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(pos);}
 impl<E> Variant<E> for MouseEnter where E: Env {consuming!();invalid!();}
 impl<E> Variant<E> for MouseLeave where E: Env {consuming!();invalid!();}
 
 impl<E> Variant<E> for WindowMove where E: Env {consuming!();invalid!();}
 impl<E> Variant<E> for WindowResize where E: Env {consuming!();invalid!();}
 
-impl<E> Variant<E> for GainedFocus where E: Env {consuming!();invalid!();}
-impl<E> Variant<E> for LostFocus where E: Env {consuming!();invalid!();}
+impl<E> Variant<E> for Focus where E: Env {consuming!();invalid!();}
+impl<E> Variant<E> for Unfocus where E: Env {consuming!();invalid!();}
 
 /*impl<E> KbdDown<E> where E: Env, E::Context: AsHandlerStateful<E> {
     pub fn widget(&self, c: &E::Context) -> &E::WidgetPath {
@@ -148,7 +143,7 @@ pub enum RootEvent<E> where E: Env {
     KbdUp{key: EEKey<E>},
     MouseDown{key: EEKey<E>},
     MouseUp{key: EEKey<E>},
-    MouseMove{dest: Offset}, //TODO which mouse moves??
+    MouseMove{pos: Offset}, //TODO which mouse moves??
     WindowMove{pos: Offset,size: Dims},
     WindowResize{size: Dims},
     MouseLeaveWindow{},

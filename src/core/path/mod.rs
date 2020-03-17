@@ -7,7 +7,16 @@ pub mod sub;
 pub use sub::*;
 
 /// A WidgetPath contains information to resolve to a specific Widget in a widget tree
-pub trait WidgetPath<E>: AsWidget<'static,E> + RefClonable + Clone + PartialEq + Sized + Send + Sync + 'static where E: Env<WidgetPath=Self> {
+pub trait WidgetPath<E>:
+    AsWidget<'static,E> +
+    RefClonable +
+    Clone +
+    PartialEq<Self> +
+    Sized +
+    Send +
+    Sync +
+    'static
+where E: Env<WidgetPath=Self> {
     type SubPath: SubPath<E>;
     
     fn attach(&mut self, sub: Self::SubPath);
