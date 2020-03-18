@@ -15,22 +15,22 @@ pub struct Link<'c,E> where E: Env {
 impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(&mut dyn WidgetMut<E>), invalidate: bool) {
+    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>), invalidate: bool) {
         self.ctx.queue_mut().enqueue_widget_mut(self.widget.path.refc(),f,invalidate)
     }
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: impl FnOnce(&mut dyn WidgetMut<E>)+Sync+'static, invalidate: bool) {
+    pub fn mutate_closure(&mut self, f: impl FnOnce(WidgetRefMut<E>)+Sync+'static, invalidate: bool) {
         self.ctx.queue_mut().enqueue_widget_mut_closure(self.widget.path.refc(),f,invalidate)
     }
     /// enqueue immutable access to this widget
     #[inline] 
-    pub fn later(&mut self, f: fn(&dyn Widget<E>)) {
+    pub fn later(&mut self, f: fn(WidgetRef<E>)) {
         self.ctx.queue_mut().enqueue_widget(self.widget.path.refc(),f)
     }
     /// enqueue immutable access to this widget
     #[inline] 
-    pub fn later_closure(&mut self, f: impl FnOnce(&dyn Widget<E>)+Sync+'static) {
+    pub fn later_closure(&mut self, f: impl FnOnce(WidgetRef<E>)+Sync+'static) {
         self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.refc(),f)
     }
     #[inline]
@@ -144,7 +144,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     pub fn child_sizes(&mut self) -> Result<Vec<ESize<E>>,()> {
-        let mut dest = Vec::new();
+        let mut dest = Vec::with_capacity(self.widget().childs());
         self.for_childs(#[inline] |mut w| dest.push(w.size()) )?;
         Ok(dest)
     }

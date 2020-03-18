@@ -5,7 +5,7 @@ pub mod link;
 
 pub trait Render<E>: Sized where E: Env, E::Backend: Backend<E,Renderer=Self> {
     #[inline]
-    fn requires_render(&mut self, b: &Bounds, w: &dyn Widget<E>) -> bool {
+    fn requires_render<'l,'s>(&mut self, b: &Bounds, w: &'s dyn Widget<'l,E>) -> bool where 'l: 's {
         w.invalid() || self.force(b)
     }
     /// if widgets should be rendered even if the don't require to

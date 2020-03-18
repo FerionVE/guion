@@ -1,5 +1,3 @@
-use std::rc::Rc;
-use std::ops::{Deref,DerefMut};
 use super::*;
 
 /// A reference to a resolved Widget

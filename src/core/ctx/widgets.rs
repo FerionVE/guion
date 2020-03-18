@@ -1,5 +1,5 @@
 use super::*;
-use std::rc::Rc;
+
 /// Implemented on the root of the widget tree
 pub trait Widgets<E>: Sized + 'static where E: Env {
     fn widget<'a>(&'a self, i: E::WidgetPath) -> Result<Resolved<'a,E>,()>;

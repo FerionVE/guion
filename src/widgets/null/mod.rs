@@ -1,33 +1,69 @@
-use crate::core::ctx::aliases::*;
-use crate::core::*;
-use widget::Widget;
-use ctx::*;
-use widget::link::Link;
+use super::*;
 
-pub mod imp;
-pub mod o;
-pub mod as_null;
+pub struct Null<E> where E: Env {
+    id: E::WidgetID,
+    pub size: ESize<E>,
+    pub style: Vec<StdVerb>,
+}
 
-#[doc(inline)]
-pub use imp::*;
-#[doc(inline)]
-pub use o::*;
+impl<E> Null<E> where E: Env {
+    pub fn new(id: E::WidgetID) -> Self {
+        Self {
+            id,
+            size: Size::empty().into(),
+            style: vec![],
+        }
+    } 
+}
 
-/*pub mod as_null {
-    crate::create_widget_as_widget_module!(INull,AsNull);
-}*/
+impl<E> Widget<'static,E> for Null<E> where
+    E: Env,
+    ERenderer<E>: RenderStdWidgets<E>,
+    ESVariant<E>: StyleVariantSupport<StdVerb>,
+{
+    fn id(&self) -> E::WidgetID {
+        self.id.clone()
+    }
+    fn render(&self, _: Link<E>, r: &mut RenderLink<E>) -> bool {
+        r.fill_rect();
+        true
+    }
+    fn event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
+        
+    }
+    fn size(&self, _: Link<E>) -> ESize<E> {
+        self.size.clone()
+    }
+    fn childs(&self) -> usize {
+        0
+    }
+    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'static: 's {
+        vec![]
+    }
+    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'static,E>> {
+        vec![]
+    }
+    fn _trace_bounds(&self, _: Link<E>, _: usize, _: &Bounds, _: bool) -> Result<Bounds,()> {
+        Err(())
+    }
+    fn focusable(&self) -> bool {
+        false
+    }
+}
 
-pub use as_null::*;
+impl<E> WidgetMut<'static,E> for Null<E> where
+    E: Env,
+    ERenderer<E>: RenderStdWidgets<E>,
+    ESVariant<E>: StyleVariantSupport<StdVerb>,
+{
+    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'static: 's {
+        vec![]
+    }
+    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'static,E>> {
+        vec![]
+    }
+}
 
-/// implement a view as Null over a type
-/// 
-/// Then put the reference or owned type inside a AsNull to use as widget
-/// If your type should only be viewed as one widget, you can use impl_null! to implement Widget directly
-pub trait INull<E>: Widget<E> where E: Env {
-    fn id(&self) -> E::WidgetID;
-
-    fn style(&self, s: &mut ESVariant<E>);
-    
-    fn invalid(&self) -> bool;
-    fn set_invalid(&mut self, v: bool);
+unsafe impl<E> Statize<E> for Null<E> where E: Env {
+    type Statur = Self;
 }

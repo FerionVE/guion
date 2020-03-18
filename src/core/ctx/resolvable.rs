@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use super::*;
 
 /// This enum is returned by widget's resolve function

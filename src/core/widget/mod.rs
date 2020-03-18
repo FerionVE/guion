@@ -2,8 +2,7 @@
 //! The Traits features interface for queuering e.g. id or style, and also accessing or resolving child widgets
 //! Note that some functions in the traits are not meant to be called from externel, but over `Link`'s methods
 use super::*;
-use std::any::{TypeId, Any, type_name};
-use std::rc::Rc;
+use std::any::{TypeId, type_name};
 use cast::Statize;
 
 pub mod link;
@@ -184,7 +183,7 @@ pub trait WBase<'w,E> where E: Env {
     fn erase<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's;
     fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> where 'w: 's;
     fn box_box(self: Box<Self>) -> WidgetRef<'w,E>;
-    fn boxed(self) -> WidgetRef<'w,E> where Self: Sized;
+    fn boxed_ref(self) -> WidgetRef<'w,E> where Self: Sized;
 }
 impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+Statize<E>, E: Env {
     fn typeid(&self) -> TypeId {
@@ -202,7 +201,7 @@ impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+Statize<E>, E: Env {
     fn box_box(self: Box<Self>) -> WidgetRef<'w,E> {
         self
     }
-    fn boxed(self) -> WidgetRef<'w,E> where Self: Sized {
+    fn boxed_ref(self) -> WidgetRef<'w,E> where Self: Sized {
         Box::new(self)
     }
 }
@@ -214,7 +213,7 @@ pub trait WBaseMut<'w,E> where E: Env {
     fn erase_mut<'s>(&'s mut self) -> &'s mut dyn WidgetMut<'w,E> where 'w: 's;
     fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> where 'w: 's;
     fn box_box_mut(self: Box<Self>) -> WidgetRefMut<'w,E>;
-    fn boxed_mut(self) -> WidgetRefMut<'w,E> where Self: Sized;
+    fn boxed(self) -> WidgetRefMut<'w,E> where Self: Sized;
 }
 impl<'w,T,E> WBaseMut<'w,E> for T where T: WidgetMut<'w,E>+Statize<E>, E: Env {
     fn base<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's {
@@ -229,7 +228,7 @@ impl<'w,T,E> WBaseMut<'w,E> for T where T: WidgetMut<'w,E>+Statize<E>, E: Env {
     fn box_box_mut(self: Box<Self>) -> WidgetRefMut<'w,E> {
         self
     }
-    fn boxed_mut(self) -> WidgetRefMut<'w,E> where Self: Sized {
+    fn boxed(self) -> WidgetRefMut<'w,E> where Self: Sized {
         Box::new(self)
     }
 }

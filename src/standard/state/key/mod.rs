@@ -1,5 +1,6 @@
 use crate::core::ctx::aliases::*;
 use crate::core::*;
+use std::mem::size_of;
 
 pub struct KeyState<E> where E: Env {
     pub pressed: Vec<StdPressedKey<E>>,
@@ -49,7 +50,7 @@ impl<E> KeyState<E> where E: Env {
 
     pub fn new() -> Self {
         Self{
-            pressed: Vec::new(),
+            pressed: Vec::with_capacity(4096 / size_of::<StdPressedKey<E>>()),
         }
     }
 }
