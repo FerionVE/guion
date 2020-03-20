@@ -1,19 +1,23 @@
 use super::*;
 
-pub struct Null<E> where E: Env {
+pub struct ProgressBar<E> where E: Env {
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: Vec<StdVerb>,
     pub border: Option<Border>,
+    pub value: f32,
+    pub orientation: Orientation,
 }
 
-impl<E> Null<E> where E: Env {
-    pub fn new(id: E::WidgetID) -> Self {
+impl<E> ProgressBar<E> where E: Env {
+    pub fn new(id: E::WidgetID, o: Orientation) -> Self {
         Self {
             id,
             size: Size::empty().into(),
             style: vec![],
             border: None,
+            value: 0.0,
+            orientation: o,
         }
     }
 
@@ -21,9 +25,14 @@ impl<E> Null<E> where E: Env {
         self.size = s;
         self
     }
+
+    pub fn with_value(mut self, v: f32) -> Self {
+        self.value = v;
+        self
+    }
 }
 
-impl<E> Widget<'static,E> for Null<E> where
+impl<E> Widget<'static,E> for ProgressBar<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
@@ -32,7 +41,19 @@ impl<E> Widget<'static,E> for Null<E> where
         self.id.clone()
     }
     fn render(&self, _: Link<E>, r: &mut RenderLink<E>) -> bool {
-        r.fill_rect();
+        r.with(&[
+            StdVerb::ObjBackground,
+        ])
+            .fill_rect();
+        r.slice_abs(&crop(&r.b, self.value, self.orientation))
+            .with(&[
+                StdVerb::ObjActive,
+            ])
+            .fill_rect();
+        r.with(&[
+            StdVerb::ObjBorder,
+        ])
+            .border_rect(2);
         true
     }
     fn event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
@@ -67,7 +88,7 @@ impl<E> Widget<'static,E> for Null<E> where
     }
 }
 
-impl<E> WidgetMut<'static,E> for Null<E> where
+impl<E> WidgetMut<'static,E> for ProgressBar<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
@@ -80,6 +101,15 @@ impl<E> WidgetMut<'static,E> for Null<E> where
     }
 }
 
-unsafe impl<E> Statize<E> for Null<E> where E: Env {
+unsafe impl<E> Statize<E> for ProgressBar<E> where E: Env {
     type Statur = Self;
+}
+
+pub fn crop(i: &Bounds, v: f32, o: Orientation) -> Bounds {
+    let (x, w) = i.par(o);
+    let (y, h) = i.unpar(o);
+
+    let w = ((w as f32) * v.max(0.0).min(1.0) ) as u32;
+
+    Bounds::from_ori(x, y, w, h, o)
 }

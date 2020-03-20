@@ -14,6 +14,7 @@ pub struct SizeAxis {
     pub min: u32,
     pub preferred: u32,
     pub max: Option<u32>,
+    pub pressure: f32,
 }
 
 impl Size {
@@ -23,11 +24,13 @@ impl Size {
                 min: w,
                 preferred: w,
                 max: Some(w),
+                pressure: 1.0,
             },
             y: SizeAxis{
                 min: h,
                 preferred: h,
                 max: Some(h),
+                pressure: 1.0,
             }
         }
     }
@@ -57,7 +60,7 @@ impl Size {
     }
 
     pub fn flip(&mut self) {
-        todo!()
+        std::mem::swap(&mut self.x, &mut self.y)
     }
 
     pub fn par(&self, dir: Orientation) -> &SizeAxis {
@@ -87,6 +90,16 @@ impl SizeAxis {
             min: 0,
             preferred: 0,
             max: None,
+            pressure: 1.0,
+        }
+    }
+
+    pub const fn fixed(s: u32) -> Self {
+        SizeAxis {
+            min: s,
+            preferred: s,
+            max: Some(s),
+            pressure: 0.0,
         }
     }
 }

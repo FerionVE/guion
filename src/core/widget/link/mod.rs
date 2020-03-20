@@ -15,35 +15,37 @@ pub struct Link<'c,E> where E: Env {
 impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>), invalidate: bool) {
-        self.ctx.queue_mut().enqueue_widget_mut(self.widget.path.refc(),f,invalidate)
+    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context), invalidate: bool) {
+        self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.path.refc(),f,invalidate})
     }
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: impl FnOnce(WidgetRefMut<E>)+Sync+'static, invalidate: bool) {
-        self.ctx.queue_mut().enqueue_widget_mut_closure(self.widget.path.refc(),f,invalidate)
+    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context)+'static>, invalidate: bool) {
+        self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f,invalidate})
     }
     /// enqueue immutable access to this widget
     #[inline] 
-    pub fn later(&mut self, f: fn(WidgetRef<E>)) {
-        self.ctx.queue_mut().enqueue_widget(self.widget.path.refc(),f)
+    pub fn later(&mut self, f: fn(WidgetRef<E>,&mut E::Context)) {
+        self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.path.refc(),f})
     }
     /// enqueue immutable access to this widget
     #[inline] 
-    pub fn later_closure(&mut self, f: impl FnOnce(WidgetRef<E>)+Sync+'static) {
-        self.ctx.queue_mut().enqueue_widget_closure(self.widget.path.refc(),f)
+    pub fn later_closure(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+Sync>) {
+        self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.path.refc(),f})
     }
     #[inline]
     pub fn enqueue_invalidate(&mut self) {
-        let s = self.widget.path.refc();
-        self.ctx.queue_mut().enqueue_widget_invalidate(s)
+        self.enqueue(StdEnqueueable::InvalidateWidget{path: self.widget.path.refc()})
     }
     /// mark the current widget as validated
     /// this should and should only be called from widget's render fn
     #[inline]
-    pub fn enqueue_validate(&mut self) {
-        let s = self.widget.path.refc();
-        self.ctx.queue_mut().enqueue_widget_validate(s)
+    pub fn enqueue_validate_render(&mut self) {
+        self.enqueue(StdEnqueueable::ValidateWidgetRender{path: self.widget.path.refc()})
+    }
+    #[inline]
+    pub fn enqueue_validate_size(&mut self, s: ESize<E>) {
+        self.enqueue(StdEnqueueable::ValidateWidgetSize{path: self.widget.path.refc(),size: s})
     }
     #[inline]
     pub fn widget(&self) -> &dyn Widget<'c,E> {
@@ -53,6 +55,10 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn id(&self) -> E::WidgetID {
         self.widget().id()
+    }
+
+    pub fn path(&self) -> E::WidgetPath {
+        self.widget.path.refc()
     }
 
     /*#[inline]
@@ -226,8 +232,8 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
     }
     #[inline]
-    pub fn enqueue<I>(&'c mut self, i: I) where ECQueue<E>: Enqueue<E,I> {
-        self.ctx.queue_mut().enqueue(i)
+    pub fn enqueue<I>(&mut self, i: I) where ECQueue<E>: Queue<I> {
+        self.ctx.queue_mut().push(i)
     }
 }
 

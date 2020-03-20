@@ -85,6 +85,18 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             force: self.force,
         }
     }
+    /// fork with area inside the bounds
+    #[inline]
+    pub fn slice_abs<'s>(&'s mut self, s: &'s Bounds) -> RenderLink<'s,E> where 'a: 's {
+        RenderLink{
+            r: self.r,
+            b: self.b & s,
+            br: self.b & s,
+            v: self.v.clone(),
+            s: self.s.clone(),
+            force: self.force,
+        }
+    }
     /// fork with attached style variant verbs
     #[inline]
     pub fn with<'s,V>(&'s mut self, verbs: impl IntoIterator<Item=impl Deref<Target=V>>) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Copy, 'a: 's {
@@ -156,7 +168,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
 
             if w.render(&mut fork) {
                 if w.widget().invalid() {
-                    w.enqueue_validate();
+                    w.enqueue_validate_render();
                 }
                 return true;
             }
@@ -205,7 +217,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env, ERenderer<E>: RenderStdWidgets<E> {
     }
     #[inline]
     pub fn render_preprocessed_text(&mut self, text: &ESPPText<E>, c: &mut E::Context) {
-        self.r.render_preprocessed_text(&self.b,text,&self.s,&self.v,c) //TODO we should no always give ctx through the render, for example the text/font can be inside the render head
+        self.r.render_preprocessed_text(&self.b,text,&self.s,&self.v,c) //TODO we should not always give ctx through the render, for example the text/font can be inside the render head
     }
     #[inline]
     pub fn set_cursor(&mut self, cursor: ESCursor<E>) {

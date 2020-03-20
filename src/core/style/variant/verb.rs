@@ -11,6 +11,7 @@ pub enum StdVerb {
     ObjText,
     ObjBox,
     ObjBorder,
+    ObjActive,
     
     ObjButton,
     ObjList,

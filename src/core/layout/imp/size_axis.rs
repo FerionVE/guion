@@ -1,11 +1,13 @@
 use qwutils::imp::option::OptionExt;
 use super::*;
+use std::iter::Sum;
 
 
 qwutils::opion!(add(SizeAxis,SizeAxis) |s,r| {
     s.min += r.min;
     s.preferred += r.preferred;
     s.max.add_to_lossy(r.max);
+    s.pressure = s.pressure.max(r.pressure);
 });
 
 qwutils::opion!(bitand(SizeAxis,SizeAxis) |s,r| {
@@ -15,4 +17,5 @@ qwutils::opion!(bitand(SizeAxis,SizeAxis) |s,r| {
 
     s.max.map(#[inline] |m| s.preferred = s.preferred.min(m) );
     s.preferred = s.preferred.max(s.min);
+    s.pressure = s.pressure.max(r.pressure);
 });

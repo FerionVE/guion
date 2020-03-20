@@ -91,6 +91,19 @@ impl Bounds {
             Orientation::Vertical => Self::from_xywh(unpar_off,par_off,unpar_size,par_size),
         }
     }
+
+    pub fn par(&self, o: Orientation) -> (i32,u32) { //TODO improve with negate orientation
+        match o {
+            Orientation::Horizontal => (self.off.x,self.size.w),
+            Orientation::Vertical => (self.off.y,self.size.h),
+        }
+    }
+    pub fn unpar(&self, o: Orientation) -> (i32,u32) {
+        match o {
+            Orientation::Horizontal => (self.off.y,self.size.h),
+            Orientation::Vertical => (self.off.x,self.size.w),
+        }
+    }
 }
 
 impl Offset {
@@ -98,6 +111,19 @@ impl Offset {
     pub fn is_inside(&self, b: &Bounds) -> bool {
         self.x >= b.x() && self.x < b.x1() &&
         self.y >= b.y() && self.y < b.y1()
+    }
+
+    pub fn par(&self, o: Orientation) -> i32 {
+        match o {
+            Orientation::Horizontal => self.x,
+            Orientation::Vertical => self.y,
+        }
+    }
+    pub fn unpar(&self, o: Orientation) -> i32 {
+        match o {
+            Orientation::Horizontal => self.y,
+            Orientation::Vertical => self.x,
+        }
     }
 }
 

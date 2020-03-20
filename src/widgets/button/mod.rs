@@ -76,7 +76,7 @@ impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
             l.enqueue_invalidate()
         }
         if let Some(ee) = e.0.is_mouse_up() {
-            if ee.down_widget.tip().eq_id(self.id()) && l.is_hovered() && !self.locked {
+            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.tip().eq_id(self.id()) && l.is_hovered() && !self.locked {
                 (self.trigger)(l)
             }
         } else if let Some(ee) = e.0.is_kbd_press() {
@@ -149,6 +149,12 @@ impl<'w,E,S> Button<'w,E,S> where
         self.text = text;
         self
     }
+
+    pub fn with_size(mut self, s: ESize<E>) -> Self {
+        self.size = s;
+        self
+    }
+
 
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
         let id = l.id();

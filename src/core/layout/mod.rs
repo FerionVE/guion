@@ -1,5 +1,5 @@
 use super::*;
-//TODO may use priv-mod-but-pub-use trick everywhere
+
 pub mod size;
 pub mod weight;
 pub mod calc;

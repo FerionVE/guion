@@ -26,7 +26,7 @@ pub use resolvable::*;
 /// A Context is regularly referenced in parallel with the widget tree
 pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     type Handler: Handler<E>;
-    type Queue: Queue<E>;
+    type Queue: Queue<StdEnqueueable<E>>;
     //type Meta: ContextMeta;
 
     #[inline] 

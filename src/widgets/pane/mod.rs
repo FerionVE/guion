@@ -5,8 +5,9 @@ use calc::calc_bounds;
 
 pub struct Pane<'w,T,E> where E: Env, T: Statize<E>+Sized+'w {
     id: E::WidgetID,
-    childs: Vec<T>,
-    orientation: Orientation,
+    pub childs: Vec<T>,
+    pub orientation: Orientation,
+    pub border: Option<Border>,
     p: PhantomData<&'w mut ()>,
 }
 
@@ -16,6 +17,7 @@ impl<'w,T,E> Pane<'w,T,E> where E: Env, T: AsWidget<'w,E>+Statize<E> {
             id,
             childs,
             orientation,
+            border: None,
             p: PhantomData,
         }
     }
@@ -60,8 +62,9 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: AsWidget<'w,E>+Statize<E>, T
     }
 
     fn border(&self, mut b: &mut Border) {
-        //*b = Border::empty();
-        //b/=2;
+        if let Some(senf) = &self.border {
+            *b = *senf;
+        }
     }
 }
 impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: AsWidgetMut<'w,E>+Statize<E>, T::Statur: Statize<E>+Sized, E: Env {
