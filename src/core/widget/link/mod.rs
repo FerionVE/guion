@@ -15,12 +15,12 @@ pub struct Link<'c,E> where E: Env {
 impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context), invalidate: bool) {
+    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), invalidate: bool) {
         self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.path.refc(),f,invalidate})
     }
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context)+'static>, invalidate: bool) {
+    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, invalidate: bool) {
         self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f,invalidate})
     }
     /// enqueue immutable access to this widget

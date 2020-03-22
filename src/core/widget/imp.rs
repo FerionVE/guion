@@ -30,7 +30,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
         (**self).focusable()
     }
     fn invalid(&self) -> bool {
-        true
+        (**self).invalid()
     }
     #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -110,7 +110,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
         (**self).focusable()
     }
     fn invalid(&self) -> bool {
-        true
+        (**self).invalid()
     }
     #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -205,7 +205,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
         (**self).focusable()
     }
     fn invalid(&self) -> bool {
-        true
+        (**self).invalid()
     }
     #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -283,7 +283,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
         (**self).focusable()
     }
     fn invalid(&self) -> bool {
-        true
+        (**self).invalid()
     }
     #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -378,3 +378,87 @@ pub fn short_widget_ref_mut<'l,'s,'y,E: Env>(i: &'y mut dyn WidgetMut<'l,E>) -> 
         std::mem::transmute::<&'y mut dyn WidgetMut<'l,E>,&'y mut dyn WidgetMut<'s,E>>(i) //roast me
     }
 }
+
+/*pub trait DeriveWidget<'w,E> where E: Env {
+    fn as_ref<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's;
+    fn consume_ref(self) -> WidgetRef<'w,E>;
+}
+pub trait DeriveWidgetMut<'w,E>: DeriveWidget<'w,E> where E: Env {
+    fn as_mut<'s>(&'s mut self) -> &'s mut dyn WidgetMut<'w,E> where 'w: 's;
+    fn consume_mut(self) -> WidgetRefMut<'w,E>;
+}
+
+impl<'w,T,E> Widget<'w,E> for T where T: DeriveWidget<'w,E>+Statize<E>, E: Env {
+    fn id(&self) -> E::WidgetID {
+        self.as_ref().id()
+    }
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+        self.as_ref().render(l,r)
+    }
+    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+        self.as_ref().event(l,e)
+    }
+    fn size(&self, l: Link<E>) -> ESize<E> {
+        self.as_ref().size(l)
+    }
+    fn childs(&self) -> usize {
+        self.as_ref().childs()
+    }
+    fn childs_ref<'a>(&'a self) -> Vec<Resolvable<'a,E>> where 'w: 'a {
+        self.as_ref().childs_ref()
+    }
+    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+        short_resolvable_vec(self.consume_ref().childs_ref())
+    }
+    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
+        self.as_ref()._trace_bounds(l, i, b, force)
+    }
+    fn focusable(&self) -> bool {
+        self.as_ref().focusable()
+    }
+    fn invalid(&self) -> bool {
+        self.as_ref()
+    }
+    #[allow(deprecated)]
+    fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
+        self.as_ref().child_paths(own_path)
+    }
+    fn resolve<'a>(&'a self, i: E::WidgetPath) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+        self.as_ref().resolve(i)
+    }
+    fn resolve_box(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
+        self.consume_ref().resolve(i)
+            .map(|e| short_resolvable(e) )
+    }
+    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+        self.as_ref().resolve_child(p)
+    }
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
+        self.as_ref().trace_bounds(l, i, b, force)
+    }
+    fn self_in_parent(&self, parent: E::WidgetPath) -> E::WidgetPath {
+        self.as_ref().self_in_parent(parent)
+    }
+    fn is_subpath(&self, p: &EWPSub<E>) -> bool {
+        self.as_ref().is_subpath(p)
+    }
+    fn _focus_on_mouse_down(&self) -> bool {
+        self.as_ref()._focus_on_mouse_down()
+    }
+    fn _tabulate_by_tab(&self) -> bool {
+        self.as_ref()._tabulate_by_tab()
+    }
+    fn style(&self, s: &mut ESVariant<E>) {
+        self.as_ref().style(s)
+    }
+    fn border(&self, b: &mut Border) {
+        self.as_ref().border(b)
+    }
+    fn debug_type_name(&self) {
+        eprintln!("\t{}",self.type_name());
+        self.as_ref().debug_type_name();
+    }
+    fn inner<'a>(&'a self) -> Option<&'a dyn Widget<'w,E>> {
+        Some(short_widget_ref(self.as_ref()))
+    }
+}*/

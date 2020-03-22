@@ -12,8 +12,8 @@ pub trait Queue<I> { //TODO probably remove mandantory StdEnqueueable bound
 pub enum StdEnqueueable<E> where E: Env {
     Render{force: bool},
     Event{event: EEvent<E>, ts: u64},
-    MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context), invalidate: bool},
-    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context)+'static>, invalidate: bool},
+    MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), invalidate: bool},
+    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, invalidate: bool},
     MutateRoot{f: fn(&mut E::Storage,&mut E::Context)},
     MutateRootClosure{f: Box<dyn FnOnce(&mut E::Storage,&mut E::Context)+'static>},
     AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context)},

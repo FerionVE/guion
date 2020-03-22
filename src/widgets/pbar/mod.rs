@@ -32,7 +32,7 @@ impl<E> ProgressBar<E> where E: Env {
     }
 }
 
-impl<E> Widget<'static,E> for ProgressBar<E> where
+impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
@@ -65,10 +65,10 @@ impl<E> Widget<'static,E> for ProgressBar<E> where
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'static: 's {
+    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         vec![]
     }
-    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'static,E>> {
+    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         vec![]
     }
     fn _trace_bounds(&self, _: Link<E>, _: usize, _: &Bounds, _: bool) -> Result<Bounds,()> {
@@ -88,15 +88,15 @@ impl<E> Widget<'static,E> for ProgressBar<E> where
     }
 }
 
-impl<E> WidgetMut<'static,E> for ProgressBar<E> where
+impl<'w,E> WidgetMut<'w,E> for ProgressBar<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
 {
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'static: 's {
+    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
     }
-    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'static,E>> {
+    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
         vec![]
     }
 }
