@@ -1,17 +1,17 @@
 //pub mod as_any;
 use super::*;
 
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Default)]
 pub struct Offset {
     pub x: i32,
     pub y: i32,
 }
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Default)]
 pub struct Dims {
     pub w: u32,
     pub h: u32,
 }
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Default)]
 pub struct Bounds {
     pub off: Offset,
     pub size: Dims,
@@ -29,6 +29,18 @@ impl Bounds {
                 h,
             }
         }
+    }
+    pub const fn from_xy(x: i32, y: i32) -> Self {
+        Self::from_xywh(x,y,0,0)
+    }
+    pub const fn from_wh(w: u32, h: u32) -> Self {
+        Self::from_xywh(0,0,w,h)
+    }
+    pub const fn from_off(off: Offset) -> Self {
+        Self::from_xywh(off.x,off.y,0,0)
+    }
+    pub const fn from_size(size: Dims) -> Self {
+        Self::from_xywh(0,0,size.w,size.h)
     }
 
     #[inline] pub fn x(&self) -> i32 { self.off.x }

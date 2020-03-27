@@ -78,32 +78,12 @@ impl<'a,E> Resolved<'a,E> where E: Env {
 impl<'a,E> ResolvedMut<'a,E> where E: Env {
     #[inline]
     pub fn widget<'s>(&'s mut self) -> &'s mut (dyn WidgetMut<'s,E>+'s) where 'a: 's {
-        short_rmut(&mut (*self.wref))
+        (&mut (*self.wref)).short_lt()
     }
 }
 
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
     fn clone(&self) -> Self {
         self.stor.widget(self.path.refc()).unwrap()
-    }
-}
-/// shrink the lifetime
-pub fn short_resolved<'l: 's,'s,E: Env>(i: Resolved<'l,E>) -> Resolved<'s,E> {
-    Resolved{
-        wref: short_wref(i.wref),
-        path: i.path,
-        stor: i.stor,
-    }
-}
-/// shrink the lifetime
-pub fn short_wref<'l: 's,'s,E: Env>(i: WidgetRef<'l,E>) -> WidgetRef<'s,E> {
-    unsafe{
-        std::mem::transmute::<WidgetRef<'l,E>,WidgetRef<'s,E>>(i) //roast me
-    }
-}
-/// shrink the lifetime
-pub fn short_rmut<'l: 's,'s,E: Env>(i: &'s mut dyn WidgetMut<'l,E>) -> &'s mut dyn WidgetMut<'s,E> {
-    unsafe{
-        std::mem::transmute::<&'s mut dyn WidgetMut<'l,E>,&'s mut dyn WidgetMut<'s,E>>(i) //roast me
     }
 }

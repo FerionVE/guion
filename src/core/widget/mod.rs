@@ -30,10 +30,18 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     
 
     fn childs(&self) -> usize;
-    //fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()>;
-    //fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()>;
+    fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's;
+    fn child_box(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()>;
 
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's;
+    #[deprecated]
+    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
+        let childs = self.childs();
+        let mut dest = Vec::with_capacity(childs);
+        for i in 0..childs {
+            dest.push(self.child(i).unwrap());
+        }
+        dest
+    }
     fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>>;
     
     #[deprecated]
@@ -50,9 +58,9 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_ref()))
         }
-        for c in self.childs_ref() {
-            if c.is_subpath(i.index(0)) {
-                return c.resolve(i.slice(1..));
+        for c in 0..self.childs() {
+            if self.child(c).unwrap().is_subpath(i.index(0)) {
+                return self.child(c).unwrap().resolve(i.slice(1..));
             }
         }
         Err(())
@@ -64,18 +72,18 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_box()))
         }
-        for c in self.childs_box() {
-            if c.is_subpath(i.index(0)) {
-                return c.resolve(i.slice(1..));
+        for c in 0..self.childs() {
+            if self.child(c).unwrap().is_subpath(i.index(0)) {
+                return self.child_box(c).unwrap_nodebug().resolve(i.slice(1..));
             }
         }
         Err(())
     }
     #[inline]
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
-        for (i,c) in self.childs_ref().iter().enumerate() {
-            if c.is_subpath(p) {
-                return Ok(i);
+        for c in 0..self.childs() {
+            if self.child(c).unwrap().is_subpath(p) {
+                return Ok(c);
             }
         }
         Err(())
@@ -136,6 +144,11 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
     fn set_invalid(&mut self, v: bool) {
         
     }
+
+    fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's;
+    fn child_box_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()>;
+
+    #[deprecated]
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's;
     fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>>;
 
@@ -147,9 +160,9 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
-        for c in self.childs_mut() {
-            if c.is_subpath(i.index(0)) {
-                return c.resolve_mut(i.slice(1..),invalidate);
+        for c in 0..self.childs() {
+            if self.child(c).unwrap().is_subpath(i.index(0)) {
+                return self.child_mut(c).unwrap().resolve_mut(i.slice(1..),invalidate);
             }
         }
         Err(())
@@ -162,9 +175,9 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
-        for c in self.childs_box_mut() {
-            if c.is_subpath(i.index(0)) {
-                return c.resolve_mut(i.slice(1..),invalidate);
+        for c in 0..self.childs() {
+            if self.child(c).unwrap().is_subpath(i.index(0)) {
+                return self.child_box_mut(c).unwrap_nodebug().resolve_mut(i.slice(1..),invalidate);
             }
         }
         Err(())

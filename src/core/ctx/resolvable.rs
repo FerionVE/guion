@@ -107,14 +107,3 @@ impl<'a,E> ResolvableMut<'a,E> where E: Env {
     }
 }
 
-pub fn short_resolvable<'l: 's,'s,E: Env>(i: Resolvable<'l,E>) -> Resolvable<'s,E> {
-    match i {
-        Resolvable::Widget(w) => Resolvable::Widget(short_wref(w)),
-        Resolvable::Path(p) => Resolvable::Path(p),
-    }
-}
-pub fn short_resolvable_vec<'l: 's,'s,E: Env>(i: Vec<Resolvable<'l,E>>) -> Vec<Resolvable<'s,E>> {
-    unsafe{
-        std::mem::transmute::<Vec<Resolvable<'l,E>>,Vec<Resolvable<'s,E>>>(i) //roast me
-    }
-}

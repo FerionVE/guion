@@ -1,38 +1,34 @@
 use super::*;
 
-pub struct Null<E> where E: Env {
-    id: E::WidgetID,
-    pub size: ESize<E>,
-    pub style: Vec<StdVerb>,
-    pub border: Option<Border>,
-}
-
-impl<E> Null<E> where E: Env {
-    pub fn new(id: E::WidgetID) -> Self {
-        Self {
-            id,
-            size: Size::empty().into(),
-            style: vec![],
-            border: None,
-        }
-    }
-
-    pub fn with_size(mut self, s: ESize<E>) -> Self {
-        self.size = s;
-        self
-    }
-}
-
-impl<'w,E> Widget<'w,E> for Null<E> where
+impl<'w,E,S> Widget<'w,E> for Label<'w,E,S> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
+    EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
+    S: Caption<'w>+Statize<E>,
+    S::Statur: Sized,
 {
+    fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
+        vec![]
+    }
+    fn style(&self, s: &mut ESVariant<E>) {
+        s.attach(&[StdVerb::ObjText]);
+        s.attach(&self.style[..]);
+    }
+    fn border(&self, b: &mut Border) {
+        if let Some(senf) = &self.border {
+            *b = *senf;
+        }
+    }
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn render(&self, _: Link<E>, r: &mut RenderLink<E>) -> bool {
-        r.fill_rect();
+    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+        r.with(&[
+            StdVerb::ObjForeground,
+            StdVerb::ObjText,
+        ])
+            .render_text(self.text.caption().as_ref(),l.ctx);
         true
     }
     fn event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
@@ -50,20 +46,12 @@ impl<'w,E> Widget<'w,E> for Null<E> where
     fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         vec![]
     }
+    
     fn _trace_bounds(&self, _: Link<E>, _: usize, _: &Bounds, _: bool) -> Result<Bounds,()> {
         Err(())
     }
     fn focusable(&self) -> bool {
         false
-    }
-    fn border(&self, b: &mut Border) {
-        if let Some(senf) = &self.border {
-            *b = *senf;
-        }
-    }
-    fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjDefault]);
-        s.attach(&self.style[..]);
     }
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         Err(())
@@ -73,10 +61,13 @@ impl<'w,E> Widget<'w,E> for Null<E> where
     }
 }
 
-impl<'w,E> WidgetMut<'w,E> for Null<E> where
+impl<'w,E,S> WidgetMut<'w,E> for Label<'w,E,S> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
+    EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
+    S: Caption<'w>+Statize<E>,
+    S::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
@@ -92,6 +83,3 @@ impl<'w,E> WidgetMut<'w,E> for Null<E> where
     }
 }
 
-unsafe impl<E> Statize<E> for Null<E> where E: Env {
-    type Statur = Self;
-}

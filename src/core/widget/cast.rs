@@ -89,16 +89,75 @@ impl<T> ProtectedSelf<Self> for T where T: ?Sized {
 
 }*/
 
-/*macro_rules! impl_statize_static {
-    ($t:ident $($tt:ident)+) => {
-        impl_statize_static!($t);
-        impl_statize_static!($($tt)*);
-    };
-    ($t:ident) => {
-        impl<E> Statize<E> for $t where E: Env {
-            type Statur = Self;
+mod imp {
+    use super::*;
+    use std::{borrow::Cow, path::{Path,PathBuf}};
+
+    unsafe impl<'w,T,E> Statize<E> for Box<T> where T: Statize<E>, E: Env {
+        type Statur = Box<T::Statur>;
+    }
+    unsafe impl<'w,T,E> Statize<E> for Vec<T> where T: Statize<E>, T::Statur: Sized, E: Env {
+        type Statur = Vec<T::Statur>;
+    }
+    unsafe impl<'w,T,E> Statize<E> for Option<T> where T: Statize<E>, T::Statur: Sized, E: Env {
+        type Statur = Option<T::Statur>;
+    }
+    unsafe impl<'w,T,U,E> Statize<E> for Result<T,U> where T: Statize<E>, T::Statur: Sized, U: Statize<E>, U::Statur: Sized, E: Env {
+        type Statur = Result<T::Statur,U::Statur>;
+    }
+    unsafe impl<'w,T,E> Statize<E> for Cow<'w,T> where T: Statize<E>+Clone, T::Statur: Sized, E: Env {
+        type Statur = Option<T::Statur>;
+    }
+    unsafe impl<'w,T,E> Statize<E> for &'w T where T: Statize<E>, E: Env {
+        type Statur = &'static T::Statur;
+    }
+    unsafe impl<'w,T,E> Statize<E> for &'w mut T where T: Statize<E>, E: Env {
+        type Statur = &'static mut T::Statur;
+    }
+    unsafe impl<'w,T,E> Statize<E> for &'w [T] where T: Statize<E>, T::Statur: Sized, E: Env {
+        type Statur = &'static [T::Statur];
+    }
+    unsafe impl<'w,T,E> Statize<E> for &'w mut [T] where T: Statize<E>, T::Statur: Sized, E: Env {
+        type Statur = &'static mut [T::Statur];
+    }
+    unsafe impl<'w,T,E> Statize<E> for Box<[T]> where T: Statize<E>, T::Statur: Sized, E: Env {
+        type Statur = Box<[T::Statur]>;
+    }
+
+    macro_rules! impl_statize_static {
+        ($t:ty;$($tt:ty);+) => {
+            impl_statize_static!($t);
+            impl_statize_static!($($tt);*);
+        };
+        ($t:ty) => {
+            unsafe impl<E> Statize<E> for $t where E: Env {
+                type Statur = Self;
+            }
         }
     }
-}*/
 
-//impl_statize_static!(bool char f32 f64 i8 i16 i32 i64);
+    impl_statize_static!(
+        bool;char;();
+        f32;f64;
+        i8;i16;i32;i64;i128;isize;
+        u8;u16;u32;u64;u128;usize;
+        str;String;
+        Path;PathBuf
+    );
+
+    macro_rules! impl_statize_tuple {
+        ($t:ident $($tt:ident)+) => {
+            impl_statize_tuple!($($tt)+);
+
+            unsafe impl<E,$t,$($tt),+> Statize<E> for ($t,$($tt),+) where
+                E: Env,
+                $t: Statize<E>, $t::Statur: Sized,
+                $($tt: Statize<E>, $tt::Statur: Sized),+ {
+                type Statur = ($t::Statur,$($tt::Statur),+);
+            }
+        };
+        ($t:ident) => {}
+    }
+
+    impl_statize_tuple!(A B C D F G H I J K L M N O P Q R S T U V W X Y Z AA AB AC AD AE AF AG);
+}

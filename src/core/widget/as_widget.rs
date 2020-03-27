@@ -1,28 +1,28 @@
 use super::*;
 
 /// AsWidget is an object which can interpret as Widget OR an Path
-pub trait AsWidget<'a,E> where E: Env {
-    fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'a: 's;
-    fn consume_ref(self) -> Resolvable<'a,E>;
+pub trait AsWidget<'w,E> where E: Env {
+    fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'w: 's;
+    fn consume_ref(self) -> Resolvable<'w,E>;
 }
-pub trait AsWidgetMut<'a,E>: AsWidget<'a,E> where E: Env {
-    fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'a: 's;
-    fn consume_mut(self) -> ResolvableMut<'a,E>;
+pub trait AsWidgetMut<'w,E>: AsWidget<'w,E> where E: Env {
+    fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'w: 's;
+    fn consume_mut(self) -> ResolvableMut<'w,E>;
 }
 
-impl<'a,E,T> AsWidget<'a,E> for T where T: Widget<'a,E>, E: Env {
-    fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'a: 's {
+impl<'w,E,T> AsWidget<'w,E> for T where T: Widget<'w,E>, E: Env {
+    fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'w: 's {
         Resolvable::Widget(self.box_ref())
     }
-    fn consume_ref(self) -> Resolvable<'a,E> {
+    fn consume_ref(self) -> Resolvable<'w,E> {
         Resolvable::Widget(Box::new(self))
     }
 }
-impl<'a,E,T> AsWidgetMut<'a,E> for T where T: WidgetMut<'a,E>, E: Env {
-    fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'a: 's {
+impl<'w,E,T> AsWidgetMut<'w,E> for T where T: WidgetMut<'w,E>, E: Env {
+    fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'w: 's {
         ResolvableMut::Widget(self.box_mut())
     }
-    fn consume_mut(self) -> ResolvableMut<'a,E> {
+    fn consume_mut(self) -> ResolvableMut<'w,E> {
         ResolvableMut::Widget(Box::new(self))
     }
 }

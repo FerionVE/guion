@@ -143,7 +143,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn _with_link<'s>(ctx: &mut E::Context, w: Resolved<'s,E>, f: impl FnOnce(Link<E>)) where 'c: 's {
         let l = Link{
-            widget: short_resolved(w),
+            widget: w.short_lt(),
             ctx,
         };
         f(l);
@@ -176,7 +176,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         };
         Ok(
             Link{
-                widget: short_resolved(w),
+                widget: w,
                 ctx: self.ctx,
             }
         )
@@ -184,7 +184,7 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     pub fn reference<'s>(&'s mut self) -> Link<'s,E> where 'c: 's {
         Link{
-            widget: short_resolved(self.widget.clone()),
+            widget: self.widget.clone().short_lt(),
             ctx: self.ctx
         }
     }

@@ -1,5 +1,8 @@
 use super::*;
 
+pub mod caption;
+pub mod state;
+
 pub trait Data<T> {
     fn with<R>(f: impl FnOnce(T)->R)->R;
 }
@@ -9,11 +12,11 @@ pub struct SizeCache<E> where E: Env {
 }
 
 impl<E> SizeCache<E> where E: Env {
-    fn with(&self, l: Link<E>, f: fn(Link<E>) -> ESize<E>) -> ESize<E> {
+    fn with(&self, mut l: Link<E>, f: fn(Link<E>) -> ESize<E>) -> ESize<E> {
         if let Some(c) = &self.c {
             c.clone()
         }else{
-            c = f(l);
+            let c = f(l.reference());
             l.enqueue_validate_size(c.clone());
             c
         }

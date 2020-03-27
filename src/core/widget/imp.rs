@@ -21,7 +21,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     }
     fn childs_box(self: Box<Self>) -> Vec<Resolvable<'s,E>> {
         let r: &'s dyn Widget<'l,E> = *self;
-        short_resolvable_vec(r.childs_ref())
+        r.childs_ref().short_lt()
     }
     fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
         (**self)._trace_bounds(l, i, b, force)
@@ -46,7 +46,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
         e*/
         let r: &'s dyn Widget<'l,E> = *self;
         r.resolve(i)
-            .map(|e| short_resolvable(e) )
+            .map(|e| e.short_lt() )
     }
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
         (**self).resolve_child(p)
@@ -77,7 +77,15 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
         (**self).debug_type_name();
     }
     fn inner<'a>(&'a self) -> Option<&'a dyn Widget<'s,E>> {
-        Some(short_widget_ref(&**self))
+        Some((&**self).short_lt())
+    }
+    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 's: 'a {
+        (**self).child(i)
+    }
+    fn child_box(self: Box<Self>, i: usize) -> Result<Resolvable<'s,E>,()> {
+        let r: &'s dyn Widget<'l,E> = *self;
+        r.child(i)
+            .map(|e| e.short_lt() )
     }
 }
 impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's {
@@ -101,7 +109,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
     }
     fn childs_box(self: Box<Self>) -> Vec<Resolvable<'s,E>> {
         let r: &'s dyn Widget<'l,E> = (**self).base();
-        short_resolvable_vec(r.childs_ref())
+        r.childs_ref().short_lt()
     }
     fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
         (**self)._trace_bounds(l, i, b, force)
@@ -122,7 +130,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
     fn resolve_box(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'s,E>,()> {
         let r: &'s dyn Widget<'l,E> = (**self).base();
         r.resolve(i)
-            .map(|e| short_resolvable(e) )
+            .map(|e| e.short_lt() )
     }
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
         (**self).resolve_child(p)
@@ -153,7 +161,14 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
         (**self).debug_type_name();
     }
     fn inner<'a>(&'a self) -> Option<&'a dyn Widget<'s,E>> {
-        Some(short_widget_ref((**self).base()))
+        Some((**self).base().short_lt())
+    }
+    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 's: 'a {
+        (**self).child(i)
+    }
+    fn child_box(self: Box<Self>, i: usize) -> Result<Resolvable<'s,E>,()> {
+        let r: &'s dyn Widget<'l,E> = (**self).base();
+        r.child(i)
     }
 }
 impl<'s,'l,E> WidgetMut<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's {
@@ -173,7 +188,14 @@ impl<'s,'l,E> WidgetMut<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 
         (**self).resolve_mut(i, invalidate)
     }
     fn inner_mut<'a>(&'a mut self) -> Option<&'a mut dyn WidgetMut<'s,E>> {
-        Some(short_widget_ref_mut(&mut **self))
+        Some((&mut **self).short_lt())
+    }
+    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 's: 'a {
+        (**self).child_mut(i)
+    }
+    fn child_box_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'s,E>,()> {
+        let r: &'s mut dyn WidgetMut<'l,E> = &mut **self;
+        r.child_mut(i)
     }
 }
 impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
@@ -196,7 +218,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
         (**self).childs_ref()
     }
     fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
-        short_resolvable_vec(Widget::childs_box(*self))
+        Widget::childs_box(*self).short_lt()
     }
     fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
         (**self)._trace_bounds(l, i, b, force)
@@ -220,7 +242,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
             .map(|e| short_resolvable(e) );
         e*/
         Widget::resolve_box(*self,i)
-            .map(|e| short_resolvable(e) )
+            .map(|e| e.short_lt() )
     }
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
         (**self).resolve_child(p)
@@ -253,6 +275,12 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
     fn inner<'a>(&'a self) -> Option<&'a dyn Widget<'w,E>> {
         Some(&**self)
     }
+    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+        (**self).child(i)
+    }
+    fn child_box(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+        Widget::child_box(*self,i)
+    }
 }
 impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn id(&self) -> E::WidgetID {
@@ -274,7 +302,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
         (**self).childs_ref()
     }
     fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
-        short_resolvable_vec(Widget::childs_box(*self))
+        Widget::childs_box(*self).short_lt()
     }
     fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
         (**self)._trace_bounds(l, i, b, force)
@@ -298,7 +326,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
             .map(|e| short_resolvable(e) );
         e*/
         Widget::resolve_box(*self,i)
-            .map(|e| short_resolvable(e) )
+            .map(|e| e.short_lt() )
     }
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
         (**self).resolve_child(p)
@@ -331,6 +359,12 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn inner<'a>(&'a self) -> Option<&'a dyn Widget<'w,E>> {
         Some((**self).base())
     }
+    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+        (**self).child(i)
+    }
+    fn child_box(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+        Widget::child_box(*self,i)
+    }
 }
 impl<'w,E> WidgetMut<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn childs_mut<'a>(&'a mut self) -> Vec<ResolvableMut<'a,E>> where 'w: 'a {
@@ -349,33 +383,13 @@ impl<'w,E> WidgetMut<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
         WidgetMut::resolve_box_mut(*self, i, invalidate)
     }
     fn inner_mut<'s>(&'s mut self) -> Option<&'s mut dyn WidgetMut<'w,E>> {
-        Some(short_widget_ref_mut(&mut **self))
+        Some((&mut **self).short_lt())
     }
-}
-
-/// shrink the lifetime
-pub fn short_widget_box<'l: 's,'s,E: Env>(i: Box<dyn Widget<'l,E>>) -> Box<dyn Widget<'s,E>> {
-    unsafe{
-        std::mem::transmute::<Box<dyn Widget<'l,E>>,Box<dyn Widget<'s,E>>>(i) //roast me
+    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+        WidgetMut::child_mut(&mut **self,i)
     }
-}
-/// shrink the lifetime
-pub fn short_widget_box_mut<'l: 's,'s,E: Env>(i: Box<dyn WidgetMut<'l,E>>) -> Box<dyn WidgetMut<'s,E>> {
-    unsafe{
-        std::mem::transmute::<Box<dyn WidgetMut<'l,E>>,Box<dyn WidgetMut<'s,E>>>(i) //roast me
-    }
-}
-
-/// shrink the lifetime
-pub fn short_widget_ref<'l,'s,'y,E: Env>(i: &'y dyn Widget<'l,E>) -> &'y dyn Widget<'s,E> where 'l: 's, 's: 'y, 'l: 'y {
-    unsafe{
-        std::mem::transmute::<&'y dyn Widget<'l,E>,&'y dyn Widget<'s,E>>(i) //roast me
-    }
-}
-/// shrink the lifetime
-pub fn short_widget_ref_mut<'l,'s,'y,E: Env>(i: &'y mut dyn WidgetMut<'l,E>) -> &'y mut dyn WidgetMut<'s,E> where 'l: 's, 's: 'y, 'l: 'y {
-    unsafe{
-        std::mem::transmute::<&'y mut dyn WidgetMut<'l,E>,&'y mut dyn WidgetMut<'s,E>>(i) //roast me
+    fn child_box_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+        WidgetMut::child_box_mut(*self,i)
     }
 }
 
