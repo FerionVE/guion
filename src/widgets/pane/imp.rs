@@ -1,6 +1,6 @@
 use super::*;
 
-impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize<E>, T::Statur: Statize<E>+Sized, E: Env {
+impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T::Statur: Statize+Sized, E: Env {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -47,7 +47,7 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize<E>
         self.childs.into_child(i)
     }
 }
-impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: WidgetArrayMut<'w,E>+Statize<E>, T::Statur: Statize<E>+Sized, E: Env {
+impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: WidgetArrayMut<'w,E>+Statize, T::Statur: Statize+Sized, E: Env {
     fn set_invalid(&mut self, v: bool) {
         let _ = v;
         //self.invalid = true

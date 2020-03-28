@@ -6,7 +6,7 @@ use wpps::*;
 
 pub mod imp;
 
-pub struct Pane<'w,T,E> where E: Env, T: Statize<E>+Sized+'w {
+pub struct Pane<'w,T,E> where E: Env, T: Statize+Sized+'w {
     id: E::WidgetID,
     pub childs: T,
     pub orientation: Orientation,
@@ -14,7 +14,7 @@ pub struct Pane<'w,T,E> where E: Env, T: Statize<E>+Sized+'w {
     p: PhantomData<&'w mut ()>,
 }
 
-impl<'w,T,E> Pane<'w,T,E> where E: Env, T: Statize<E>+Sized+'w {
+impl<'w,T,E> Pane<'w,T,E> where E: Env, T: Statize+Sized+'w {
     pub fn new(id: E::WidgetID, childs: T, orientation: Orientation) -> Pane<'w,T,E> {
         Pane{
             id,
@@ -26,7 +26,7 @@ impl<'w,T,E> Pane<'w,T,E> where E: Env, T: Statize<E>+Sized+'w {
     }
 }
 
-unsafe impl<'w,T,E> Statize<E> for Pane<'w,T,E> where T: Statize<E>, T::Statur: Statize<E>+Sized, E: Env {
+unsafe impl<'w,T,E> Statize for Pane<'w,T,E> where T: Statize, T::Statur: Statize+Sized, E: Env {
     type Statur = Pane<'static,T::Statur,E>;
 }
 

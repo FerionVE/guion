@@ -1,19 +1,24 @@
 use super::*;
+use util::state::{Mutize, AtomStateMut};
 
-impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
+impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    S: Caption<'w>+Statize,
-    S::Statur: Sized,
+    State: AtomState<bool>+Statize+Mutize<bool>+'w,
+    State::Mutur: Statize+Sized,
+    <State::Mutur as Statize>::Statur: Sized,
+    State::Statur: Sized,
+    Text: Caption<'w>+Statize+'w,
+    Text::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjButton]);
+        //s.attach(&[StdVerb::ObjCheckBox]);
         s.attach(&self.style[..]);
     }
     fn border(&self, b: &mut Border) {
@@ -25,29 +30,34 @@ impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
         self.id.clone()
     }
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
-        r.with(&[
-            StdVerb::ObjForeground,
-            StdVerb::Hovered(l.is_hovered()),
-            StdVerb::Focused(l.is_focused()),
-            StdVerb::Locked(self.locked),
-            StdVerb::Pressed(Self::pressed(&l).is_some())
-        ])
-            .fill_rect();
-        r.with(&[
-            StdVerb::ObjBorder,
-            StdVerb::Hovered(l.is_hovered()),
-            StdVerb::Focused(l.is_focused()),
-            StdVerb::Locked(self.locked),
-            StdVerb::Pressed(Self::pressed(&l).is_some())
-        ])
-            .border_rect(2);
+        let size = r.b.size.h;
+        let rect = Dims{w: size, h: size};
+        {
+            let b = Bounds::from_wh(size,size);
+            let mut r = r.slice(&b);
+            r.with(&[
+                StdVerb::ObjForeground,
+                StdVerb::Hovered(l.is_hovered()),
+                StdVerb::Focused(l.is_focused()),
+                StdVerb::Locked(self.locked),
+                StdVerb::Pressed(self.state.get())
+            ])
+                .fill_rect();
+            r.with(&[
+                StdVerb::ObjBorder,
+                StdVerb::Hovered(l.is_hovered()),
+                StdVerb::Focused(l.is_focused()),
+                StdVerb::Locked(self.locked),
+                //StdVerb::Pressed(self.state.get())
+            ])
+                .border_rect(2);
+        }
         r.with(&[
             StdVerb::ObjForeground,
             StdVerb::ObjText,
             StdVerb::Hovered(l.is_hovered()),
             StdVerb::Focused(l.is_focused()),
             StdVerb::Locked(self.locked),
-            StdVerb::Pressed(Self::pressed(&l).is_some())
         ])
             .render_text(self.text.caption().as_ref(),l.ctx);
         true
@@ -59,11 +69,13 @@ impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
         }
         if let Some(ee) = e.0.is_mouse_up() {
             if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.tip().eq_id(self.id()) && l.is_hovered() && !self.locked {
-                (self.trigger)(l)
+                (self.trigger)(l.reference(),!self.state.get());
+                Self::toggle(l)
             }
         } else if let Some(ee) = e.0.is_kbd_press() {
             if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.tip().eq_id(self.id()) {
-                (self.trigger)(l)
+                (self.trigger)(l.reference(),!self.state.get());
+                Self::toggle(l)
             }
         }
     }
@@ -93,14 +105,18 @@ impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
     }
 }
 
-impl<'w,E,S> WidgetMut<'w,E> for Button<'w,E,S> where
+impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    S: Caption<'w>+Statize,
-    S::Statur: Sized,
+    State: AtomStateMut<bool>+Statize+Mutize<bool>+'w,
+    State::Mutur: Statize+Sized,
+    <State::Mutur as Statize>::Statur: Sized,
+    State::Statur: Sized,
+    Text: Caption<'w>+Statize+'w,
+    Text::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
@@ -116,23 +132,24 @@ impl<'w,E,S> WidgetMut<'w,E> for Button<'w,E,S> where
     }
 }
 
-impl<'w,E,S> Button<'w,E,S> where
+impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    S: Caption<'w>+Statize,
-    S::Statur: Sized,
+    State: AtomState<bool>+Statize+Mutize<bool>+'w,
+    State::Mutur: Statize+Sized,
+    <State::Mutur as Statize>::Statur: Sized,
+    State::Statur: Sized,
+    Text: Caption<'w>+Statize+'w,
+    Text::Statur: Sized,
 {
-    pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
-        let id = l.id();
-        l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],id.clone())
-            .or_else(||
-                l.state().is_pressed_and_id(&[EEKey::<E>::ENTER],id.clone())
-            )
-            .or_else(||
-                l.state().is_pressed_and_id(&[EEKey::<E>::SPACE],id)
-            )
+    pub fn toggle(mut l: Link<E>) {
+        l.mutate(|mut w,_,_|{
+            let w = w.downcast_mut::<CheckBox<E,State::Mutur,Text>>().unwrap();
+            let v = w.state.get();
+            w.state.set(!v);
+        },true);
     }
 }

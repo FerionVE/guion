@@ -8,22 +8,9 @@ build-latest:
   script:
     - cargo build --verbose
 
-build-nightly:
-  stage: build
-  image: rustlang/rust:nightly
-  script:
-    - cargo build --verbose
-  allow_failure: true
-
 test-latest:
   stage: test
   image: rust:latest
-  script:
-    - cargo test --verbose
-
-test-nightly:
-  stage: test
-  image: rustlang/rust:nightly
   script:
     - cargo test --verbose
   allow_failure: true

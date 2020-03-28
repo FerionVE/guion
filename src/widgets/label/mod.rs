@@ -35,7 +35,7 @@ impl<'w,E,S> Label<'w,E,S> where
     E: Env,
     S: 'w,
 {
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> Label<'w,E,T> where T: Caption<'w>+Statize, T::Statur: Sized {
         Label{
             id: self.id,
             size: self.size,
@@ -52,9 +52,9 @@ impl<'w,E,S> Label<'w,E,S> where
     }
 }
 
-unsafe impl<'w,E,S> Statize<E> for Label<'w,E,S> where
+unsafe impl<'w,E,S> Statize for Label<'w,E,S> where
     E: Env,
-    S: Caption<'w>+Statize<E>,
+    S: Caption<'w>+Statize,
     S::Statur: Sized,
 {
     type Statur = Label<'static,E,S::Statur>;

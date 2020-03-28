@@ -402,7 +402,7 @@ pub trait DeriveWidgetMut<'w,E>: DeriveWidget<'w,E> where E: Env {
     fn consume_mut(self) -> WidgetRefMut<'w,E>;
 }
 
-impl<'w,T,E> Widget<'w,E> for T where T: DeriveWidget<'w,E>+Statize<E>, E: Env {
+impl<'w,T,E> Widget<'w,E> for T where T: DeriveWidget<'w,E>+Statize, E: Env {
     fn id(&self) -> E::WidgetID {
         self.as_ref().id()
     }

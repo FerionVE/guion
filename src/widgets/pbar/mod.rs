@@ -34,7 +34,7 @@ impl<E> ProgressBar<E> where E: Env {
     }
 }
 
-unsafe impl<E> Statize<E> for ProgressBar<E> where E: Env {
+unsafe impl<E> Statize for ProgressBar<E> where E: Env {
     type Statur = Self;
 }
 

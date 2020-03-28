@@ -1,6 +1,6 @@
 use super::*;
 
-pub trait WidgetArray<'w,E>: Sized + Statize<E> where E: Env {
+pub trait WidgetArray<'w,E>: Sized + Statize where E: Env {
     fn len(&self) -> usize;
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's;
     fn into_child(self, i: usize) -> Result<Resolvable<'w,E>,()>;
@@ -14,7 +14,7 @@ pub trait WidgetArrayMut<'w,E>: WidgetArray<'w,E> where E: Env {
     fn into_childs_mut(self) -> Vec<ResolvableMut<'w,E>>;
 }
 
-impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+Statize<E>, T::Statur: Sized, E: Env {
+impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+Statize, T::Statur: Sized, E: Env {
     fn len(&self) -> usize {
         self.len()
     }
@@ -39,7 +39,7 @@ impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+Statize<E>, T:
             .collect::<Vec<_>>()
     }
 }
-impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+Statize<E>, T::Statur: Sized, E: Env {
+impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+Statize, T::Statur: Sized, E: Env {
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
@@ -62,7 +62,7 @@ impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+Statize<
     }
 }
 
-impl<'w,'l,T,E> WidgetArray<'w,E> for &'w [T] where T: AsWidget<'l,E>+Statize<E>, T::Statur: Sized, E: Env, 'l: 'w {
+impl<'w,'l,T,E> WidgetArray<'w,E> for &'w [T] where T: AsWidget<'l,E>+Statize, T::Statur: Sized, E: Env, 'l: 'w {
     fn len(&self) -> usize {
         (**self).len()
     }
@@ -84,7 +84,7 @@ impl<'w,'l,T,E> WidgetArray<'w,E> for &'w [T] where T: AsWidget<'l,E>+Statize<E>
     }
 }
 
-impl<'w,'l,T,E> WidgetArray<'w,E> for &'w mut [T] where T: AsWidget<'l,E>+Statize<E>, T::Statur: Sized, E: Env, 'l: 'w {
+impl<'w,'l,T,E> WidgetArray<'w,E> for &'w mut [T] where T: AsWidget<'l,E>+Statize, T::Statur: Sized, E: Env, 'l: 'w {
     fn len(&self) -> usize {
         (**self).len()
     }
@@ -105,7 +105,7 @@ impl<'w,'l,T,E> WidgetArray<'w,E> for &'w mut [T] where T: AsWidget<'l,E>+Statiz
             .collect::<Vec<_>>()
     }
 }
-impl<'w,'l,T,E> WidgetArrayMut<'w,E> for &'w mut [T] where T: AsWidgetMut<'l,E>+Statize<E>, T::Statur: Sized, E: Env, 'l: 'w {
+impl<'w,'l,T,E> WidgetArrayMut<'w,E> for &'w mut [T] where T: AsWidgetMut<'l,E>+Statize, T::Statur: Sized, E: Env, 'l: 'w {
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
