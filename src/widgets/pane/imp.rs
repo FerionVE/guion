@@ -26,7 +26,7 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T
     fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         self.childs.childs()
     }
-    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         self.childs.into_childs()
     }
 
@@ -43,7 +43,7 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         self.childs.child(i)
     }
-    fn child_box(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
         self.childs.into_child(i)
     }
 }
@@ -55,13 +55,13 @@ impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: WidgetArrayMut<'w,E>+Stat
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         self.childs.childs_mut()
     }
-    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
         self.childs.into_childs_mut()
     }
     fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
         self.childs.child_mut(i)
     }
-    fn child_box_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
         self.childs.into_child_mut(i)
     }
 }

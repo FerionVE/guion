@@ -88,7 +88,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         vec![]
     }
-    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         vec![]
     }
     
@@ -100,7 +100,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         Err(())
     }
-    fn child_box(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
     }
 }
@@ -121,13 +121,13 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
     }
-    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
         vec![]
     }
     fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
         Err(())
     }
-    fn child_box_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
         Err(())
     }
 }

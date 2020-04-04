@@ -39,12 +39,12 @@ impl<'w> Caption<'w> for OsString {
     }
 }
 
-impl<'w,'l,T> Caption<'w> for &'w T where T: Caption<'l>, 'l: 'w {
+impl<'w,'l,T> Caption<'w> for &'w T where T: Caption<'l>+?Sized, 'l: 'w {
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         (**self).caption()
     }
 }
-impl<'w,'l,T> Caption<'w> for &'w mut T where T: Caption<'l>, 'l: 'w {
+impl<'w,'l,T> Caption<'w> for &'w mut T where T: Caption<'l>+?Sized, 'l: 'w {
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         (**self).caption()
     }

@@ -31,7 +31,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
 
     fn childs(&self) -> usize;
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's;
-    fn child_box(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()>;
+    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()>;
 
     #[deprecated]
     fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
@@ -42,7 +42,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         }
         dest
     }
-    fn childs_box(self: Box<Self>) -> Vec<Resolvable<'w,E>>;
+    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>>;
     
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -68,13 +68,13 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     /// resolve a deep child item by the given relative path
     /// an empty path will resolve to this widget
     #[inline]
-    fn resolve_box(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
+    fn into_resolve(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_box()))
         }
         for c in 0..self.childs() {
             if self.child(c).unwrap().is_subpath(i.index(0)) {
-                return self.child_box(c).unwrap_nodebug().resolve(i.slice(1..));
+                return self.into_child(c).unwrap_nodebug().resolve(i.slice(1..));
             }
         }
         Err(())
@@ -146,11 +146,11 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
     }
 
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's;
-    fn child_box_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()>;
+    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()>;
 
     #[deprecated]
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's;
-    fn childs_box_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>>;
+    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>>;
 
     /// resolve a deep child item by the given relative path
     /// an empty path will resolve to this widget
@@ -170,14 +170,14 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
 
     /// resolve a deep child item by the given relative path
     /// an empty path will resolve to this widget
-    fn resolve_box_mut(mut self: Box<Self>, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_resolve_mut(mut self: Box<Self>, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'w,E>,()> {
         if invalidate {self.set_invalid(true);}
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
         for c in 0..self.childs() {
             if self.child(c).unwrap().is_subpath(i.index(0)) {
-                return self.child_box_mut(c).unwrap_nodebug().resolve_mut(i.slice(1..),invalidate);
+                return self.into_child_mut(c).unwrap_nodebug().resolve_mut(i.slice(1..),invalidate);
             }
         }
         Err(())

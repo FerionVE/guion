@@ -25,10 +25,10 @@ pub struct CheckBox<'w,E,State,Text> where
 impl<'w,State,E> CheckBox<'w,E,State,&'static str> where
     E: Env,
 {
-    pub fn new(id: E::WidgetID, size: ESize<E>, state: State) -> Self {
+    pub fn new(id: E::WidgetID, state: State) -> Self {
         Self{
             id,
-            size,
+            size: ESize::<E>::empty(),
             style: vec![],
             trigger: |_,_|{},
             locked: false,
@@ -87,12 +87,13 @@ fn compile_test<E>(id: E::WidgetID) -> WidgetRefMut<'static,E> where
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
 {
-    let b: CheckBox<'static,E,bool,String> = CheckBox::new(id, ESize::<E>::empty(), false).with_text("".to_owned());
+    let b: CheckBox<'static,E,bool,&'static str> = CheckBox::new(id, false);
     //b.into()
     eprintln!("{}",b.childs());
     let mut b = true;
     let c = AtomState::get(&b);
     AtomStateMut::set(&mut b, !c); // Discovery: `AtomState::set` would actually introduce ICE
+    eprintln!("{}", <&'static str as Caption>::caption(&"AKW"));
     eprintln!("{:?}",std::any::TypeId::of::< <&'static str as Statize>::Statur >());
     eprintln!("{:?}",std::any::TypeId::of::< <bool as Statize>::Statur >());
     eprintln!("{:?}",std::any::TypeId::of::< <bool as Mutize<bool>>::Mutur >());

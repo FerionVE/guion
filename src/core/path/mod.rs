@@ -31,7 +31,7 @@ where E: Env<WidgetPath=Self> {
         self
     }
 
-    fn id(&self) -> &E::WidgetID; //TODO no ref id
+    fn id(&self) -> E::WidgetID; //TODO no ref id
     fn tip(&self) -> &Self::SubPath;
 
     fn parent(&self) -> Option<Self>;
@@ -43,7 +43,7 @@ where E: Env<WidgetPath=Self> {
 
     #[inline]
     fn eq_path<F: Env + 'static>(&self, o: &F::WidgetPath) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
-        self.id().id_eq(o.id())
+        self.id().id_eq(&o.id())
     }
     
     #[deprecated]

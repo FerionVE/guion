@@ -23,10 +23,10 @@ pub struct Button<'w,E,S> where
 impl<'w,E> Button<'w,E,&'static str> where
     E: Env,
 {
-    pub fn new(id: E::WidgetID, size: ESize<E>) -> Self {
+    pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
-            size,
+            size: ESize::<E>::empty(),
             style: vec![],
             trigger: |_|{},
             locked: false,

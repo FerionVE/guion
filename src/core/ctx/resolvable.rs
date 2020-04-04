@@ -12,7 +12,7 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
     #[inline]
     pub fn resolve(self, sub: E::WidgetPath) -> Result<Resolvable<'a,E>,()> {
         match self {
-            Resolvable::Widget(w) => w.resolve_box(sub),
+            Resolvable::Widget(w) => w.into_resolve(sub),
             Resolvable::Path(p) => Ok(Resolvable::Path(p)),
         }
     }
@@ -50,16 +50,6 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
     }
 }
 
-/*impl<'a,E> RefClonable for Resolvable<'a,E> where E: Env {
-    #[inline]
-    fn refc(&self) -> Self {
-        match self {
-            Resolvable::Widget(w) => Resolvable::Widget(w.refc()),
-            Resolvable::Path(p) => Resolvable::Path(p.refc()),
-        }
-    }
-}*/
-
 pub enum ResolvableMut<'a,E> where E: Env {
     Widget(WidgetRefMut<'a,E>),
     Path(E::WidgetPath),
@@ -78,7 +68,7 @@ impl<'a,E> ResolvableMut<'a,E> where E: Env {
     #[inline]
     pub fn resolve_mut(self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> {
         match self {
-            ResolvableMut::Widget(w) => w.resolve_box_mut(i,invalidate),
+            ResolvableMut::Widget(w) => w.into_resolve_mut(i,invalidate),
             ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p)),
         }
     }
