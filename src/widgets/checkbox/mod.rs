@@ -93,11 +93,9 @@ fn compile_test<E>(id: E::WidgetID) -> WidgetRefMut<'static,E> where
     eprintln!("{}",b.childs());
     let mut b = true;
     let c = AtomState::get(&b);
-    AtomStateMut::set(&mut b, !c); // Discovery: `AtomState::set` would actually introduce ICE
+    AtomStateMut::set(&mut b, !c); // Discovery: `AtomState::set` would actually trigger ICE
     eprintln!("{}", <&'static str as Caption>::caption(&"AKW"));
     eprintln!("{:?}",std::any::TypeId::of::< <&'static str as Statize>::Statur >());
     eprintln!("{:?}",std::any::TypeId::of::< <bool as Statize>::Statur >());
-    eprintln!("{:?}",std::any::TypeId::of::< <bool as Mutize<bool>>::Mutur >());
-    eprintln!("{:?}",std::any::TypeId::of::< <<bool as Mutize<bool>>::Mutur as Statize>::Statur >());
     todo!()
 }

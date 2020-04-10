@@ -3,6 +3,7 @@ use std::ops::DerefMut;
 use std::ops::Deref;
 use super::*;
 
+#[doc(hidden)]
 pub mod imp;
 use imp::*;
 

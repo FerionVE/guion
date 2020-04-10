@@ -4,8 +4,7 @@ use super::*;
 /// Trait for retrieving the TypeId of a non-'static type by providing the 'static variant of the type  
 /// [RFC 1849](https://github.com/rust-lang/rust/issues/41875)
 pub unsafe trait Statize {
-    /// Should be `Self`, but with static lifetimes.  
-    /// CAUTION: As this type is used as TypeId for downcasting, it __must__ be as unique as the implementor, else __undefined behaviour__ can eventally occur at downcasting
+    /// Must be `Self`, but with all lifetimes 'static
     type Statur: ?Sized + 'static;
     
     fn _typeid() -> TypeId {
@@ -117,14 +116,6 @@ unsafe impl<'w,E> Statize for WidgetRef<'w,E> where E: Env {
 unsafe impl<'w,E> Statize for WidgetRefMut<'w,E> where E: Env {
     type Statur = WidgetRefMut<'static,E>;
 }
-
-/*pub trait ProtectedSelf<T> where T: ?Sized {
-
-}
-
-impl<T> ProtectedSelf<Self> for T where T: ?Sized {
-
-}*/
 
 mod imp {
     use super::*;

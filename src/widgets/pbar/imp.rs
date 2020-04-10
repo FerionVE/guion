@@ -54,10 +54,10 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
         s.attach(&[StdVerb::ObjDefault]);
         s.attach(&self.style[..]);
     }
-    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+    fn child<'a>(&'a self, _: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         Err(())
     }
-    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+    fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
     }
 }
@@ -73,10 +73,10 @@ impl<'w,E> WidgetMut<'w,E> for ProgressBar<E> where
     fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
         vec![]
     }
-    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+    fn child_mut<'a>(&'a mut self, _: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
         Err(())
     }
-    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut(self: Box<Self>, _: usize) -> Result<ResolvableMut<'w,E>,()> {
         Err(())
     }
 }

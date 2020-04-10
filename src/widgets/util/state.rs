@@ -44,20 +44,3 @@ impl<T> AtomStateMut<T> for Cow<'_,T> where T: Copy {
         *self.to_mut() = v;
     }
 }
-
-pub trait Mutize<T> {
-    type Mutur: AtomStateMut<T> + 'static;
-}
-
-impl<T> Mutize<T> for T where T: Statize, T::Statur: AtomStateMut<T>+Sized {
-    type Mutur = T::Statur;
-}
-impl<T> Mutize<T> for &T where T: Statize, &'static mut T::Statur: AtomStateMut<T> {
-    type Mutur = &'static mut T::Statur;
-}
-impl<T> Mutize<T> for &mut T where T: Statize, &'static mut T::Statur: AtomStateMut<T> {
-    type Mutur = &'static mut T::Statur;
-}
-impl<T> Mutize<T> for Cow<'_,T> where T: Statize+Clone, T::Statur: Clone, Cow<'static,T::Statur>: AtomStateMut<T>+Sized {
-    type Mutur = Cow<'static,T::Statur>;
-}

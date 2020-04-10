@@ -34,7 +34,7 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T
         false
     }
 
-    fn border(&self, mut b: &mut Border) {
+    fn border(&self, b: &mut Border) {
         if let Some(senf) = &self.border {
             *b = *senf;
         }

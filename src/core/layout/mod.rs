@@ -1,12 +1,10 @@
 use super::*;
 
 pub mod size;
-pub mod weight;
 pub mod calc;
 mod imp;
 
 pub use size::*;
-pub use weight::*;
 
 ///Layouting with Lazout (qwertz intensifies)
 

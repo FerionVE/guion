@@ -15,7 +15,7 @@ impl Index<Orientation> for Size {
     }
 }
 
-impl Index<Orientation> for Weight {
+/*impl Index<Orientation> for Weight {
     type Output = WeightAxis;
     #[inline]
     fn index(&self, i: Orientation) -> &Self::Output {
@@ -24,7 +24,7 @@ impl Index<Orientation> for Weight {
             Orientation::Vertical => &self.y,
         }
     }
-}
+}*/
 
 impl AsRef<Self> for SizeAxis {
     #[inline]

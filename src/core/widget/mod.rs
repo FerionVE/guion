@@ -1,6 +1,6 @@
-//! Widgets are interfaced in two Traits for immutable and mutable operations
-//! The Traits features interface for queuering e.g. id or style, and also accessing or resolving child widgets
-//! Note that some functions in the traits are not meant to be called from externel, but over `Link`'s methods
+//! Widgets are interfaced in two Traits for immutable and mutable operations  
+//! The Traits features interface for queuering e.g. id or style, and also accessing or resolving child widgets  
+//! Note that some functions in the traits are not meant to be called from externel, but over `Link`'s methods  
 use super::*;
 use std::any::{TypeId, type_name};
 use cast::Statize;
@@ -61,7 +61,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         }
         for c in 0..self.childs() {
             if self.child(c).unwrap().is_subpath(i.index(0)) {
-                return self.child(c).unwrap().resolve(i.slice(1..));
+                return self.child(c).unwrap().resolve_child(i.slice(1..));
             }
         }
         Err(())
@@ -75,7 +75,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         }
         for c in 0..self.childs() {
             if self.child(c).unwrap().is_subpath(i.index(0)) {
-                return self.into_child(c).unwrap_nodebug().resolve(i.slice(1..));
+                return self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..));
             }
         }
         Err(())
@@ -139,6 +139,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         eprintln!("\t{}",self.type_name());
     }
 
+    #[allow(unused)]
     #[doc(hidden)]
     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
         None
@@ -168,7 +169,7 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         }
         for c in 0..self.childs() {
             if self.child(c).unwrap().is_subpath(i.index(0)) {
-                return self.child_mut(c).unwrap().resolve_mut(i.slice(1..),invalidate);
+                return self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..),invalidate);
             }
         }
         Err(())
@@ -183,7 +184,7 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         }
         for c in 0..self.childs() {
             if self.child(c).unwrap().is_subpath(i.index(0)) {
-                return self.into_child_mut(c).unwrap_nodebug().resolve_mut(i.slice(1..),invalidate);
+                return self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..),invalidate);
             }
         }
         Err(())
@@ -193,10 +194,12 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         None
     }
 
+    #[allow(unused)]
     #[doc(hidden)]
     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
         Widget::_as_trait_ref(self,t)
     }
+    #[allow(unused)]
     #[doc(hidden)]
     unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
         None

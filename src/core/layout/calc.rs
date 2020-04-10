@@ -39,17 +39,14 @@ pub fn calc_bounds<S: ISize>(outer: &Dims, ws: &[S], o: Orientation) -> Vec<Boun
 
     let mut allocated = 0u32;
 
-    let mut pressure_sum = 0f32;
-
-    let mut repeat = true;
     let mut last = false;
 
     loop {
-        repeat = false;
+        let mut repeat = false;
 
         let free = width-allocated;
+        let mut pressure_sum = 0f32;
 
-        pressure_sum = 0.0;
         for (_,axis) in v.iter().zip(pars.iter()).filter(|(s,_)| s.is_none() ) {
             pressure_sum += axis.pressure;
         }
@@ -85,70 +82,6 @@ pub fn calc_bounds<S: ISize>(outer: &Dims, ws: &[S], o: Orientation) -> Vec<Boun
 
     for v in v.iter() {
         let par = v.unwrap();
-        
-        let b = Bounds::from_ori(out_off as i32, 0, par, outer.unpar(o), o);
-
-        out_off += par;
-
-        dest.push(b);
-    }
-
-    dest
-}
-
-pub fn calc_bounds_old<S: ISize>(outer: &Dims, ws: &[S], o: Orientation) -> Vec<Bounds> {
-    if ws.is_empty() {return vec![];}
-
-    let lenf = ws.len() as f32;
-
-    let mut par = SizeAxis::empty();
-    let mut unpar = SizeAxis::empty();
-
-    let mut pressure_sum = 0.0;
-
-    for w in ws {
-        let w: Size = w.as_std();
-        let p = w.par(o);
-        let u = w.unpar(o);
-        par += p;
-        unpar &= u;
-        pressure_sum += p.pressure; 
-    }
-
-    let dest_w = outer.par(o) as i32;
-
-    let growable = dest_w - (par.min as i32);
-    let growablef = growable as f32;
-
-    let would_grow = ws.iter()
-        .map(|v| {
-            let v = v.as_std();
-            let axis = v.par(o);
-
-            let part_w = dest_w as f32 / lenf;
-
-            let growabl = part_w - (axis.min as f32);
-
-            //let budget_scaled = budget*rest/dest_w;
-            growabl.max(0.0)
-        })
-        .collect::<Vec<_>>();
-
-    let would_grow_sum = would_grow.iter()
-        //.map(|(_,g)| g)
-        .sum::<f32>();
-
-    assert!(would_grow_sum >= growablef);
-
-    let mut out_off = 0u32;
-
-    let mut dest = Vec::with_capacity(ws.len());
-
-    for (v,g) in ws.iter().zip(would_grow) {
-        let v = v.as_std();
-        let v = v.par(o);
-
-        let par = (g * growablef / would_grow_sum) as u32 + v.min;
         
         let b = Bounds::from_ori(out_off as i32, 0, par, outer.unpar(o), o);
 
