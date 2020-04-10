@@ -5,6 +5,7 @@ pub mod border;
 pub mod bounded_widget;
 pub mod wpps;
 pub mod shortlt;
+pub mod traitcast;
 
 pub trait AsRefMut<T> {
     fn as_ref(&self) -> &T;

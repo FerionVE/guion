@@ -4,6 +4,7 @@
 use super::*;
 use std::any::{TypeId, type_name};
 use cast::Statize;
+use traitcast::TraitObject;
 
 pub mod link;
 pub mod as_widget;
@@ -137,6 +138,11 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn debug_type_name(&self) {
         eprintln!("\t{}",self.type_name());
     }
+
+    #[doc(hidden)]
+    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
+        None
+    }
 }
 
 pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static {
@@ -184,6 +190,15 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
     }
 
     fn inner_mut<'s>(&'s mut self) -> Option<&'s mut dyn WidgetMut<'w,E>> {
+        None
+    }
+
+    #[doc(hidden)]
+    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
+        Widget::_as_trait_ref(self,t)
+    }
+    #[doc(hidden)]
+    unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
         None
     }
 }

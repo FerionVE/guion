@@ -1,5 +1,8 @@
 use super::*;
 use util::state::{Mutize, AtomStateMut};
+use trayt::ICheckBox;
+use std::any::TypeId;
+use traitcast::TraitObject;
 
 impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     E: Env,
@@ -130,6 +133,25 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
         Err(())
     }
+
+    /// _as_trait impls are done by macro later
+    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
+        if t == ICheckBox::_typeid() {
+            let senf: &dyn ICheckBox = self;
+            let senf = std::mem::transmute::<&dyn ICheckBox,TraitObject>(senf);
+            return Some(senf);
+        }
+        None
+    }
+
+    unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
+        if t == ICheckBox::_typeid() {
+            let senf: &mut dyn ICheckBox = self;
+            let senf = std::mem::transmute::<&mut dyn ICheckBox,TraitObject>(senf);
+            return Some(senf);
+        }
+        None
+    }
 }
 
 impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
@@ -147,9 +169,10 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
 {
     pub fn toggle(mut l: Link<E>) {
         l.mutate(|mut w,_,_|{
-            let w = w.downcast_mut::<CheckBox<E,State::Mutur,Text>>().unwrap();
+            /*let w = w.downcast_mut::<CheckBox<E,State::Mutur,Text>>().unwrap();
             let v = w.state.get();
-            w.state.set(!v);
+            w.state.set(!v);*/
+            w.traitcast_mut::<dyn ICheckBox>().unwrap().toggle();
         },true);
     }
 }

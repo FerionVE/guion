@@ -35,6 +35,24 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
             None
         }
     }
+    pub fn _traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
+        let t = unsafe{self._as_trait_ref(T::_typeid())};
+        if let Some(v) = t {
+            unsafe { Some(std::mem::transmute_copy::<TraitObject,&'s T>(&v)) }
+        } else {
+            None
+        }
+    }
+    /// this will definetly cause UB and delet ur computer
+    pub fn traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
+        if let Some(v) = Self::_traitcast_ref::<T>(self) {
+            Some(v)
+        }else if let Some(senf) = self.inner() {
+            senf.traitcast_ref::<T>()
+        }else{
+            None
+        }
+    }
 }
 impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
     pub fn is_type<T>(&self) -> bool where T: Statize {
@@ -54,6 +72,25 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
             self._downcast_mut::<T>()
         }else if let Some(senf) = self.inner_mut() {
             senf.downcast_mut::<T>()
+        }else{
+            None
+        }
+    }
+    pub fn _traitcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize+?Sized+'d, 'w: 's, 'd: 's {
+        let t = unsafe{self._as_trait_mut(T::_typeid())};
+        if let Some(v) = t {
+            unsafe { Some(std::mem::transmute_copy::<TraitObject,&'s mut T>(&v)) }
+        } else {
+            None
+        }
+    }
+    /// this will definetly cause UB and delet ur computer
+    pub fn traitcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize+?Sized+'d, 'w: 's, 'd: 's {
+        let t = unsafe{WidgetMut::_as_trait_ref(self,T::_typeid()).is_some()};
+        if t {
+            self._traitcast_mut::<T>()
+        }else if let Some(senf) = self.inner_mut() {
+            senf.traitcast_mut::<T>()
         }else{
             None
         }

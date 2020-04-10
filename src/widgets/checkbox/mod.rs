@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use util::{state::*, caption::Caption};
 
 pub mod imp;
+pub mod trayt;
 
 pub struct CheckBox<'w,E,State,Text> where
     E: Env,
