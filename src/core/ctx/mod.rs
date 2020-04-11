@@ -1,23 +1,6 @@
 use super::*;
 
-#[allow(type_alias_bounds)]
-pub mod aliases;
-use aliases::*;
-
-pub mod widgets;
-pub use widgets::*;
-
 pub mod queue;
-pub use queue::*;
-
-pub mod handler;
-pub use handler::*;
-
-pub mod resolved;
-pub use resolved::*;
-
-pub mod resolvable;
-pub use resolvable::*;
 
 /// The Context contains the Handlers, the queue and other side data and is also the entry point for most actions.
 /// A Context is regularly referenced in parallel with the widget tree

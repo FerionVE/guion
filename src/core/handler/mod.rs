@@ -1,5 +1,7 @@
 use super::*;
 
+pub mod standard;
+
 /// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
 pub trait Handler<E>: Sized + 'static where E: Env {
     fn _render(l: Link<E>, r: &mut RenderLink<E>) -> bool;

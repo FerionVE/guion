@@ -10,9 +10,6 @@ pub mod color;
 pub use color::*;
 use std::ops::Deref;
 
-pub mod standard;
-pub mod cursor;
-
 pub trait Style<E>: Clone where E: Env, E::Backend: Backend<E,Style=Self> {
     type Font;
     type Cursor;

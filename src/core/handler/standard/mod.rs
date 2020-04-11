@@ -1,9 +1,7 @@
 use crate::core::*;
 use std::marker::PhantomData;
-use ctx::Handler;
-use super::state::StdState;
 use event::variants::{Focus, Unfocus};
-use crate::core::ctx::widgets::Widgets;
+use state::standard::StdState;
 
 pub mod imp;
 pub mod imps;

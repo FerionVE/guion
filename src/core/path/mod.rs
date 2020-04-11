@@ -1,14 +1,17 @@
 use std::{slice::SliceIndex, ops::{RangeBounds}};
-use super::ctx::widgets::Widgets;
-use qwutils::*;
+use qwutils::RefClonable;
 use super::*;
 
 pub mod sub;
 pub use sub::*;
 
+pub mod standard;
+
 /// A WidgetPath contains information to resolve to a specific Widget in a widget tree
 pub trait WidgetPath<E>:
-    AsWidget<'static,E> +
+    //AsWidget<'static,E> +
+    Into<E::WidgetPath> +
+    From<E::WidgetPath> +
     RefClonable +
     Clone +
     PartialEq<Self> +
@@ -16,7 +19,7 @@ pub trait WidgetPath<E>:
     Send +
     Sync +
     'static
-where E: Env<WidgetPath=Self> {
+where E: Env {
     type SubPath: SubPath<E>;
     
     fn attach(&mut self, sub: Self::SubPath);
@@ -50,20 +53,20 @@ where E: Env<WidgetPath=Self> {
     #[allow(deprecated)]
     #[inline]
     fn child_paths_of_slice<'a>(&self, c: CtxRefR<'a,E>) -> Result<Vec<E::WidgetPath>,()> {
-        Ok( c.0.widget(self.refc())?.child_paths() )
+        Ok( c.0.widget(self.refc().into())?.child_paths() )
     }
 
     #[inline]
     fn render(&self, c: CtxRef<E>, r: &mut RenderLink<E>) -> Result<bool,()> {
-        Ok( c.1.render(c.0.widget(self.refc())?,r) )
+        Ok( c.1.render(c.0.widget(self.refc().into())?,r) )
     }
     #[inline]
     fn event(&self, c: CtxRef<E>, e: (EEvent<E>,&Bounds,u64)) -> Result<(),()> {
-        Ok( c.1.event(c.0.widget(self.refc())?,e) )
+        Ok( c.1.event(c.0.widget(self.refc().into())?,e) )
     }
     #[inline]
     fn size(&self, c: CtxRef<E>) -> Result<ESize<E>,()> {
-        Ok( c.1.size(c.0.widget(self.refc())?) )
+        Ok( c.1.size(c.0.widget(self.refc().into())?) )
     }
 
     #[inline]

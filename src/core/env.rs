@@ -1,8 +1,7 @@
-use crate::core::ctx::widgets::Widgets;
 use super::*;
 
 /// Type compound
-pub trait Env: Sized + Clone + Sync + 'static {
+pub trait Env: Sized + Clone + PartialEq + Send + Sync + 'static {
     type Backend: Backend<Self>;
     type Context: Context<Self>;
     type Storage: Widgets<Self>;

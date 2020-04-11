@@ -1,7 +1,7 @@
-use crate::standard::state::kbd::KbdState;
-use crate::standard::state::mouse::MouseState;
 use crate::core::*;
-use key::KeyState;
+use key::*;
+use kbd::*;
+use mouse::*;
 
 pub mod key;
 pub mod kbd;

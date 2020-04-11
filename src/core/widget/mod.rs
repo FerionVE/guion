@@ -12,6 +12,9 @@ pub mod cast;
 pub mod ext;
 #[doc(hidden)]
 pub mod imp;
+pub mod resolved;
+pub mod resolvable;
+pub mod widgets;
 
 /// Core Trait of guion ™️
 pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {

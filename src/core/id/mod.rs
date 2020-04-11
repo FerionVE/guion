@@ -1,5 +1,7 @@
 use super::*;
 
+pub mod standard;
+
 pub trait WidgetID: Clone + PartialEq + Sized + 'static {
     #[inline]
     fn id_eq<I: WidgetID + 'static>(&self, o: &I) -> bool where Self: 'static {

@@ -8,6 +8,8 @@ pub mod key;
 pub mod imp;
 pub mod dyn_evt;
 
+pub mod variant;
+
 /// an Event holds one of the support Variant and can be downcasted to a specific Variant
 pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self> {
     type Dest: Destination;
@@ -37,36 +39,6 @@ pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self
     fn position(&self) -> Option<Offset>;
 
     fn _root_only(&self) -> bool;
-}
-
-pub trait VariantSupport<V,E>: Event<E> where E: Env, E::Backend: Backend<E,Event=Self>, V: Variant<E> {
-    fn from_variant(v: V) -> Self;
-    fn to_variant(&self) -> Option<V>;
-}
-
-pub trait Variant<E>: VariantDerive<E> where E: Env {
-    #[inline]
-    fn position(&self) -> Option<Offset> {
-        None
-    }
-    #[inline]
-    fn filter(&self, bounds: &Bounds) -> bool {
-        self.position().map_or(true, |p| p.is_inside(bounds) )
-    }
-    // both own_bounds and subbounds are absolute
-
-    #[inline]
-    fn consuming(&self) -> bool {
-        false
-    }
-    #[inline]
-    fn destination(&self) -> EEDest<E> {
-        Destination::default()
-    }
-    #[inline]
-    fn _root_only(&self) -> bool {
-        false
-    }
 }
 
 pub trait Destination: Clone + Sized {

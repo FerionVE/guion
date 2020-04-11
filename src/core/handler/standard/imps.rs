@@ -1,5 +1,5 @@
 use super::*;
-use crate::standard::state::key::StdPressedKey;
+use state::standard::key::StdPressedKey;
 
 impl<S,E> HandlerStateful<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self> + 'static, EEvent<E>: StdVarSup<E> {
     type K = StdPressedKey<E>;

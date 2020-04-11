@@ -1,5 +1,5 @@
 use crate::core::*;
-use crate::standard::state::mouse::drag::DragItem;
+use drag::*;
 use util::bounds::Offset;
 
 pub mod drag;

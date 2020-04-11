@@ -2,7 +2,10 @@ use super::*;
 
 pub mod verb;
 pub use verb::*;
-use cursor::StdCursor;
+
+pub mod standard;
+
+use standard::StdCursor;
 
 pub trait StyleVariant: Clone + Default {
     
