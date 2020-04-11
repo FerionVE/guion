@@ -44,3 +44,10 @@ impl<T> AtomStateMut<T> for Cow<'_,T> where T: Copy {
         *self.to_mut() = v;
     }
 }
+
+unsafe impl<T> Statize for dyn AtomState<T> where T: Statize {
+    type Statur = dyn AtomState<T::Statur>;
+}
+unsafe impl<T> Statize for dyn AtomStateMut<T> where T: Statize {
+    type Statur = dyn AtomStateMut<T::Statur>;
+}

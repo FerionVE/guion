@@ -130,24 +130,16 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
         Err(())
     }
 
-    /// _as_trait impls are done by macro later
-    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
-        if t == ICheckBox::_typeid() {
-            let senf: &dyn ICheckBox = self;
-            let senf = std::mem::transmute::<&dyn ICheckBox,TraitObject>(senf);
-            return Some(senf);
-        }
-        None
-    }
-
-    unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
-        if t == ICheckBox::_typeid() {
-            let senf: &mut dyn ICheckBox = self;
-            let senf = std::mem::transmute::<&mut dyn ICheckBox,TraitObject>(senf);
-            return Some(senf);
-        }
-        None
-    }
+    impl_traitcast!(
+        dyn ICheckBox => |s| s;
+        dyn AtomState<bool> => |s| &s.state;
+        dyn AtomStateMut<bool> => |s| &s.state;
+    );
+    impl_traitcast_mut!(
+        dyn ICheckBox => |s| s;
+        dyn AtomState<bool> => |s| &mut s.state;
+        dyn AtomStateMut<bool> => |s| &mut s.state;
+    );
 }
 
 impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
@@ -163,9 +155,6 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
 {
     pub fn toggle(mut l: Link<E>) {
         l.mutate(|mut w,_,_|{
-            /*let w = w.downcast_mut::<CheckBox<E,State::Mutur,Text>>().unwrap();
-            let v = w.state.get();
-            w.state.set(!v);*/
             w.traitcast_mut::<dyn ICheckBox>().unwrap().toggle();
         },true);
     }

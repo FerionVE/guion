@@ -17,11 +17,11 @@ pub mod imp;
 pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
-    /// this method should not be called from external, rather `Link::render`
+    /// this method should not be called from external, rather [`Link::render`][../link/struct.Link.html#method.render]
     fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
-    /// this method should not be called from external, rather `Link::event`
+    /// this method should not be called from external, rather [`Link::event`][../link/struct.Link.html#method.event]
     fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64));
-    /// this method should not be called from external, rather `Link::size`
+    /// this method should not be called from external, rather [`Link::size`][../link/struct.Link.html#method.size]
     fn size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
@@ -139,6 +139,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         eprintln!("\t{}",self.type_name());
     }
 
+    /// The impl_traitcast! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
@@ -194,11 +195,13 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         None
     }
 
+    /// The impl_traitcast! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
         Widget::_as_trait_ref(self,t)
     }
+    /// The impl_traitcast_mut! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
     unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
