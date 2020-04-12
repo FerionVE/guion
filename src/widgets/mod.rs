@@ -1,5 +1,5 @@
+//! some standard widgets. WIP
 use super::*;
-use crate::core::*;
 
 pub mod util;
 

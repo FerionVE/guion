@@ -1,5 +1,5 @@
 use super::*;
-use crate::core::event::key::Key;
+use crate::event::key::Key;
 use std::marker::PhantomData;
 use util::{state::*, caption::Caption};
 

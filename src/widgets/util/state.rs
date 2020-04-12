@@ -1,9 +1,12 @@
+//! Traits for state types
 use super::*;
 use std::borrow::Cow;
 
+/// Simple atomic type state
 pub trait AtomState<T> {
     fn get(&self) -> T;
 }
+/// Simple atomic type state
 pub trait AtomStateMut<T>: AtomState<T> {
     fn set(&mut self, v: T);
 }
