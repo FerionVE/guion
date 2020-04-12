@@ -4,6 +4,7 @@ use std::{any::TypeId, sync::atomic::{AtomicUsize,Ordering}};
 
 static ID_ITER: AtomicUsize = AtomicUsize::new(0);
 
+/// A simple incremental usize-based ID
 #[derive(Clone,PartialEq,Hash,Debug)]
 pub enum StdID {
     Dyn(usize),

@@ -1,6 +1,9 @@
 use super::*;
 use std::{ops::Range, sync::Arc, marker::PhantomData};
 
+#[allow(type_alias_bounds)]
+pub type StandardPath<E: Env> = SimplePath<E,StdID>;
+
 #[derive(PartialEq,Clone)]
 pub struct SimplePath<E,S> {
     v: Arc<Vec<S>>,

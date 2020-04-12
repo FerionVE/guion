@@ -1,4 +1,4 @@
-//! Event contaioner and variants
+//! Event container and variants
 use crate::event::key::Key;
 use super::*;
 use std::any::Any;

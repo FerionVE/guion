@@ -3,6 +3,7 @@ name = "guion"
 version = "0.1.0"
 authors = ["qwertz19281 <dellen903@gmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 qwutils = { git = "https://github.com/qwertz19281/rust_utils", rev = "3dd92de46947d65ec59a3c2aa8a885d09171ad4c" }
