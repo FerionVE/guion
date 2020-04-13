@@ -23,7 +23,7 @@ impl<'w,E,S> Widget<'w,E> for Label<'w,E,S> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         r.with(&[
             StdVerb::ObjForeground,
             StdVerb::ObjText,
@@ -31,10 +31,10 @@ impl<'w,E,S> Widget<'w,E> for Label<'w,E,S> where
             .render_text(self.text.caption().as_ref(),l.ctx);
         true
     }
-    fn event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
+    fn _event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
         
     }
-    fn size(&self, _: Link<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()
     }
     fn childs(&self) -> usize {

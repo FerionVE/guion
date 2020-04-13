@@ -34,15 +34,15 @@ impl<'a,E> Resolved<'a,E> where E: Env {
 
     #[inline]
     pub fn _render(&self, c: &mut E::Context, r: &mut RenderLink<E>) -> bool {
-        self.widget().render(c.link(self.clone()),r)
+        self.widget()._render(c.link(self.clone()),r)
     }
     #[inline]
     pub fn _event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64)) {
-        self.widget().event(c.link(self.clone()),e)
+        self.widget()._event(c.link(self.clone()),e)
     }
     #[inline]
     pub fn _size(&self, c: &mut E::Context) -> ESize<E> {
-        self.widget().size(c.link(self.clone()))
+        self.widget()._size(c.link(self.clone()))
     }
     #[inline]
     pub fn link(&self, c: &'a mut E::Context) -> Link<'a,E> {

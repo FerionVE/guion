@@ -1,13 +1,13 @@
 use super::*;
 
-impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
+impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    S: Caption<'w>+Statize,
-    S::Statur: Sized,
+    Text: Caption<'w>+Statize,
+    Text::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -24,7 +24,7 @@ impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         r.with(&[
             StdVerb::ObjForeground,
             StdVerb::Hovered(l.is_hovered()),
@@ -52,7 +52,7 @@ impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
             .render_text(self.text.caption().as_ref(),l.ctx);
         true
     }
-    fn event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         //let mut invalid = false;
         if e.0.is_hover_update() || e.0.is_kbd_down().is_some() || e.0.is_kbd_up().is_some() {
             l.enqueue_invalidate()
@@ -67,7 +67,7 @@ impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
             }
         }
     }
-    fn size(&self, _: Link<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -93,14 +93,14 @@ impl<'w,E,S> Widget<'w,E> for Button<'w,E,S> where
     }
 }
 
-impl<'w,E,S> WidgetMut<'w,E> for Button<'w,E,S> where
+impl<'w,E,Text> WidgetMut<'w,E> for Button<'w,E,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    S: Caption<'w>+Statize,
-    S::Statur: Sized,
+    Text: Caption<'w>+Statize,
+    Text::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

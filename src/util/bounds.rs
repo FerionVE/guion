@@ -85,15 +85,28 @@ impl Bounds {
         senf
     }
     /// get bound with size s and centered relative to self
-    pub fn inner_centered(&self, s: Dims) -> Self {
-        let nx = (self.size.w as i32 - s.w as i32)/2;
-        let ny = (self.size.h as i32 - s.h as i32)/2;
+    pub fn inner_centered(&self, size: Dims) -> Self {
+        let nx = (self.size.w as i32 - size.w as i32)/2;
+        let ny = (self.size.h as i32 - size.h as i32)/2;
         Self{
             off: Offset{
                 x: self.off.x + nx,
                 y: self.off.y + ny,
             },
-            size: s,
+            size,
+        }
+    }
+    /// inner_centered but advanced
+    pub fn inner_aligned(&self, size: Dims, align: (f32,f32)) -> Self {
+        //let align = (align.0.min(1.0).max(0.0), align.1.min(1.0).max(0.0));
+        let nx = (self.size.w as f32 - size.w as f32)*align.0;
+        let ny = (self.size.h as f32 - size.h as f32)*align.1;
+        Self{
+            off: Offset{
+                x: self.off.x + nx as i32,
+                y: self.off.y + ny as i32,
+            },
+            size,
         }
     }
 

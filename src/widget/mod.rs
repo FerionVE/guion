@@ -22,12 +22,12 @@ pub mod array;
 pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
-    /// this method should not be called from external, rather [`Link::render`][../link/struct.Link.html#method.render]
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
-    /// this method should not be called from external, rather [`Link::event`][../link/struct.Link.html#method.event]
-    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64));
-    /// this method should not be called from external, rather [`Link::size`][../link/struct.Link.html#method.size]
-    fn size(&self, l: Link<E>) -> ESize<E>;
+    /// this method should not be called from external, rather [`Link::render`](link/struct.Link.html#method.render)
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
+    /// this method should not be called from external, rather [`Link::event`](link/struct.Link.html#method.event)
+    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64));
+    /// this method should not be called from external, rather [`Link::size`](link/struct.Link.html#method.size)
+    fn _size(&self, l: Link<E>) -> ESize<E>;
 
     /// returns if the widget should be rendered
     fn invalid(&self) -> bool {
@@ -57,7 +57,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
             .collect::<Vec<_>>()
     }
     
-    /// resolve a deep child item by the given relative path
+    /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
     #[inline]
     fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,()> where 'w: 's {
@@ -71,7 +71,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         }
         Err(())
     }
-    /// resolve a deep child item by the given relative path
+    /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
     #[inline]
     fn into_resolve(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
@@ -165,7 +165,7 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's;
     fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>>;
 
-    /// resolve a deep child item by the given relative path
+    /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
     #[inline]
     fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'s,E>,()> where 'w: 's { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
@@ -181,7 +181,7 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         Err(())
     }
 
-    /// resolve a deep child item by the given relative path
+    /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
     fn into_resolve_mut(mut self: Box<Self>, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'w,E>,()> {
         if invalidate {self.set_invalid(true);}

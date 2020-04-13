@@ -30,40 +30,43 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         let size = r.b.size.h;
-        let rect = Dims{w: size, h: size};
         {
-            let b = Bounds::from_wh(size,size);
-            let mut r = r.slice(&b);
+            let rect = Bounds::from_wh(size,size);
+            let mut r = r.slice(&rect);
             r.with(&[
-                StdVerb::ObjForeground,
-                StdVerb::Hovered(l.is_hovered()),
-                StdVerb::Focused(l.is_focused()),
-                StdVerb::Locked(self.locked),
-                StdVerb::Pressed(self.state.get())
-            ])
+                    StdVerb::ObjForeground,
+                    StdVerb::Hovered(l.is_hovered()),
+                    StdVerb::Focused(l.is_focused()),
+                    StdVerb::Locked(self.locked),
+                    StdVerb::Pressed(self.state.get())
+                ])
                 .fill_rect();
             r.with(&[
-                StdVerb::ObjBorder,
-                StdVerb::Hovered(l.is_hovered()),
-                StdVerb::Focused(l.is_focused()),
-                StdVerb::Locked(self.locked),
-                //StdVerb::Pressed(self.state.get())
-            ])
+                    StdVerb::ObjBorder,
+                    StdVerb::Hovered(l.is_hovered()),
+                    StdVerb::Focused(l.is_focused()),
+                    StdVerb::Locked(self.locked),
+                    //StdVerb::Pressed(self.state.get())
+                ])
                 .border_rect(2);
         }
-        r.with(&[
-            StdVerb::ObjForeground,
-            StdVerb::ObjText,
-            StdVerb::Hovered(l.is_hovered()),
-            StdVerb::Focused(l.is_focused()),
-            StdVerb::Locked(self.locked),
-        ])
-            .render_text(self.text.caption().as_ref(),l.ctx);
+        {
+            let text_border = Border::new(size+r.last_border.left*2,0,0,0);
+            r.inside_border(&text_border)
+                .with(&[
+                    StdVerb::ObjForeground,
+                    StdVerb::ObjText,
+                    StdVerb::Hovered(l.is_hovered()),
+                    StdVerb::Focused(l.is_focused()),
+                    StdVerb::Locked(self.locked),
+                ])
+                .render_text_aligned(self.text.caption().as_ref(),(0.0,0.5),l.ctx);
+        }
         true
     }
-    fn event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         //let mut invalid = false;
         if e.0.is_hover_update() || e.0.is_kbd_down().is_some() || e.0.is_kbd_up().is_some() {
             l.enqueue_invalidate()
@@ -80,7 +83,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
             }
         }
     }
-    fn size(&self, _: Link<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()
     }
     fn childs(&self) -> usize {

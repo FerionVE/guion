@@ -87,19 +87,19 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn _render(&mut self, r: &mut RenderLink<E>) -> bool {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.widget().render(w,r)
+        self.widget.widget()._render(w,r)
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.widget().event(w,e)
+        self.widget.widget()._event(w,e)
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _size(&mut self) -> ESize<E> {
         let w = self.ctx.link(self.widget.clone());
-        self.widget.widget().size(w)
+        self.widget.widget()._size(w)
     }
 
     pub fn trace_bounds(&mut self, root_bounds: &Bounds, force: bool) -> Bounds {

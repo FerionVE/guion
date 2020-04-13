@@ -9,6 +9,7 @@ pub struct RenderLink<'a,E> where E: Env {
     pub b: Bounds,
     /// current slice, but including last border
     pub br: Bounds,
+    pub last_border: Border,
     pub v: ESVariant<E>,
     pub s: EStyle<E>,
     /// whether rendering is enforced (e.g. if invalidation from outside occured)
@@ -20,6 +21,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         Self{
             r,
             br: b.clone(),
+            last_border: Border::empty(),
             b,
             v,
             s,
@@ -49,6 +51,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.clone(),
+            last_border: self.last_border.clone(),
             br: self.br.clone(),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -67,6 +70,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.inside_border(s),
+            last_border: s.clone(),
             br: self.b.clone(),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -79,6 +83,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.slice(s),
+            last_border: Border::empty(),
             br: self.b.slice(s),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -91,7 +96,34 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b & s,
+            last_border: Border::empty(),
             br: self.b & s,
+            v: self.v.clone(),
+            s: self.s.clone(),
+            force: self.force,
+        }
+    }
+    /// fork with area inside the bounds
+    #[inline]
+    pub fn inner_centered<'s>(&'s mut self, size: Dims) -> RenderLink<'s,E> where 'a: 's {
+        RenderLink{
+            r: self.r,
+            b: self.b.inner_centered(size),
+            last_border: Border::empty(),
+            br: self.b.inner_centered(size),
+            v: self.v.clone(),
+            s: self.s.clone(),
+            force: self.force,
+        }
+    }
+    /// fork with area inside the bounds
+    #[inline]
+    pub fn inner_aligned<'s>(&'s mut self, size: Dims, align: (f32,f32)) -> RenderLink<'s,E> where 'a: 's {
+        RenderLink{
+            r: self.r,
+            b: self.b.inner_aligned(size,align),
+            last_border: Border::empty(),
+            br: self.b.inner_aligned(size,align),
             v: self.v.clone(),
             s: self.s.clone(),
             force: self.force,
@@ -104,6 +136,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             force: self.force(),
             r: self.r,
             b: self.b.clone(),
+            last_border: Border::empty(),
             br: self.br.clone(),
             v: self.v.with(verbs),
             s: self.s.clone(),
@@ -116,6 +149,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             force: self.force(),
             r: self.r,
             b: self.br.clone(),
+            last_border: Border::empty(),
             br: self.br.clone(),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -160,6 +194,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             let mut fork = RenderLink{
                 r: self.r,
                 b: self.b.inside_border(&border),
+                last_border: border.clone(),
                 br: self.b.clone(),
                 v: style,
                 s: self.s.clone(),
@@ -213,7 +248,13 @@ impl<'a,E> RenderLink<'a,E> where E: Env, ERenderer<E>: RenderStdWidgets<E> {
     #[allow(deprecated)]
     #[inline]
     pub fn render_text(&mut self, text: &str, c: &mut E::Context) {
-        self.r.render_text(&self.b,text,&self.s,&self.v,c)
+        self.render_text_aligned(text,(0.5,0.5),c)
+    }
+    #[deprecated = "avoid this because stuff is not cached"]
+    #[allow(deprecated)]
+    #[inline]
+    pub fn render_text_aligned(&mut self, text: &str, align: (f32,f32), c: &mut E::Context) {
+        self.r.render_text(&self.b,text,align,&self.s,&self.v,c)
     }
     #[inline]
     pub fn render_preprocessed_text(&mut self, text: &ESPPText<E>, c: &mut E::Context) {

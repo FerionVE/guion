@@ -5,9 +5,9 @@ use util::caption::Caption;
 
 pub mod imp;
 
-pub struct Button<'w,E,S> where
+pub struct Button<'w,E,Text> where
     E: Env,
-    S: 'w,
+    Text: 'w,
 {
     pub trigger: for<'a> fn(Link<'a,E>),
     id: E::WidgetID,
@@ -16,7 +16,7 @@ pub struct Button<'w,E,S> where
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub border: Option<Border>,
-    pub text: S,
+    pub text: Text,
     p: PhantomData<&'w mut ()>,
 }
 
@@ -37,9 +37,9 @@ impl<'w,E> Button<'w,E,&'static str> where
     }
 }
 
-impl<'w,E,S> Button<'w,E,S> where
+impl<'w,E,Text> Button<'w,E,Text> where
     E: Env,
-    S: 'w,
+    Text: 'w,
 {
     
 
@@ -66,10 +66,10 @@ impl<'w,E,S> Button<'w,E,S> where
     }
 }
 
-unsafe impl<'w,E,S> Statize for Button<'w,E,S> where
+unsafe impl<'w,E,Text> Statize for Button<'w,E,Text> where
     E: Env,
-    S: Caption<'w>+Statize,
-    S::Statur: Sized,
+    Text: Caption<'w>+Statize,
+    Text::Statur: Sized,
 {
-    type Statur = Button<'static,E,S::Statur>;
+    type Statur = Button<'static,E,Text::Statur>;
 }

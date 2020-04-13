@@ -4,13 +4,13 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
         _render(l,r,self.orientation)
     }
-    fn event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         _event(l,e,self.orientation)
     }
-    fn size(&self, l: Link<E>) -> ESize<E> {
+    fn _size(&self, l: Link<E>) -> ESize<E> {
         _size(l,self.orientation)
     }
     fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {

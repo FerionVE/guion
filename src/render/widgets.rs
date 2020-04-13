@@ -6,7 +6,7 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, E::Backend: Backend<E,Ren
     fn border_rect(&mut self, b: &Bounds, c: ESColor<E>, thickness: u32);
     #[deprecated = "avoid this because stuff is not cached"]
     #[inline]
-    fn render_text(&mut self, b: &Bounds, text: &str, style: &EStyle<E>, variant: &ESVariant<E>, c: &mut E::Context) {
+    fn render_text(&mut self, b: &Bounds, text: &str, align: (f32,f32), style: &EStyle<E>, variant: &ESVariant<E>, c: &mut E::Context) {
         let pp = style.preprocess_text(text,c);
         self.render_preprocessed_text(b,&pp,style,variant,c);
     }

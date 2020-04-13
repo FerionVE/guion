@@ -5,7 +5,7 @@ guion is heavily WIP right now, API and concepts are still in flux.
 Goals: 
 - Data is the Widget: Widgets own data or reference data as immediate widget.
 - Widget Tree separate from Context, State and side-data
-- Flexibility: Components are defined in generic
+- Flexibility: Components are defined in generics
   - Standard implementations can be combined with e.g. a custom ID implementation.
 - Standard Widgets: Rich Set of Standard Widgets
   - Ability to own or reference data (immediate widgets)
@@ -14,7 +14,7 @@ Goals:
 
 Future Goals:
 - Simplicity
-    - Right now the flexibility causes a degree of complexits
+    - Right now the flexibility causes a degree of complexity
     - A simple interface limited to specific contexes and backends can still be implemented
     - Some complexitiy is currenty caused by language limitations
 - Performance
