@@ -1,17 +1,26 @@
-# Guion
+# guion
+
+guion is heavily WIP right now, API and concepts are still in flux.
 
 Goals: 
-- Separate Data Structure: Widget tree stored in Context and accessed per ID/index
-- Flexibility: Can be used/implemented with any Backend
-  - Most types are generic from Context over Render and Event to WidgetID
+- Data is the Widget: Widgets own data or reference data as immediate widget.
+- Widget Tree separate from Context, State and side-data
+- Flexibility: Components are defined in generic
+  - Standard implementations can be combined with e.g. a custom ID implementation.
 - Standard Widgets: Rich Set of Standard Widgets
-  - The Standard Widgets are traits which can implemented on any type (standard implementations are also included)
-- Standard Context: with features like hover, tabulating and drag/drop
+  - Ability to own or reference data (immediate widgets)
+- Standard Context: with features like hover, tabulating, and drag/drop in the future...
 - Layout Calculation, Invalidation, ...
 
-Non-Goals:
-- Simplicity: That's the price of Flexibility... 
+Future Goals:
+- Simplicity
+    - Right now the flexibility causes a degree of complexits
     - A simple interface limited to specific contexes and backends can still be implemented
-- Performance: Flexibility and Simplicity have priority
+    - Some complexitiy is currenty caused by language limitations
+- Performance
+    - is not the priority right not
+    - although guion is designed in a manner of performance
     - Rust is strong in inlining the complexity away
     - (Performance should be good enough because stuff is implemented inline-friendly)
+
+Check out [guion_sdl2](https://github.com/ferionve/guion_sdl2) for a (also WIP) backend implementation.
