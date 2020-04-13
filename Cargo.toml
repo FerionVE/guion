@@ -6,5 +6,5 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-qwutils = { git = "https://github.com/qwertz19281/rust_utils", rev = "3dd92de46947d65ec59a3c2aa8a885d09171ad4c" }
+qwutils = { version = "0.1.0", git = "https://github.com/qwertz19281/rust_utils", rev = "3dd92de46947d65ec59a3c2aa8a885d09171ad4c" }
 #qwutils = { path = "../qwutils" }
