@@ -142,6 +142,26 @@ impl<'c,E> Link<'c,E> where E: Env {
         Ok(())
     }
     #[inline]
+    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,()> where 'c: 's {
+        let path = self.widget.path.refc();
+        let stor = self.widget.stor;
+
+        let c = self.widget.widget().child(i)?;
+
+        let w = c.resolve_widget(stor)?;
+        let w = Resolved{
+            path: w.self_in_parent(path.refc()).into(),
+            wref: w,
+            stor,
+        };
+        let l = Link{
+            widget: w.short_lt(),
+            ctx: self.ctx,
+        };
+
+        Ok(l)
+    }
+    #[inline]
     pub fn _with_link<'s>(ctx: &mut E::Context, w: Resolved<'s,E>, f: impl FnOnce(Link<E>)) where 'c: 's {
         let l = Link{
             widget: w.short_lt(),
@@ -183,9 +203,25 @@ impl<'c,E> Link<'c,E> where E: Env {
         )
     }
 
+    /*pub fn with_resolvable<'l,'s>(&'s mut self, r: Resolvable<'w,E>) -> Result<Link<'s,E>,()> where 'l: 's {
+        r.extract_path(&mut new_path);
+        let rw = r.resolve_widget(&self.widget.stor)?;
+        let w = Resolved{
+            path: new_path,
+            wref: rw,
+            stor: self.widget.stor,
+        };
+        Ok(
+            Link{
+                widget: w,
+                ctx: self.ctx,
+            }
+        )
+    }*/
+
     pub fn reference<'s>(&'s mut self) -> Link<'s,E> where 'c: 's {
         Link{
-            widget: self.widget.clone().short_lt(),
+            widget: self.widget.reference(),
             ctx: self.ctx
         }
     }

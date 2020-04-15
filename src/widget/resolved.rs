@@ -54,6 +54,15 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         self.stor.trace_bounds(c,self.path.refc(),root_bounds,force).unwrap()
     }
 
+    #[inline]
+    pub fn reference<'s>(&'s self) -> Resolved<'s,E> where 'a: 's {
+        Resolved{
+            wref: Box::new(&*self.wref),
+            path: self.path.clone(),
+            stor: &self.stor,
+        }
+    }
+
     /*#[inline]
     pub fn childs(&self) -> Vec<Resolved<E>> {
         (**self)._childs(self.path)

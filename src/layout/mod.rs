@@ -31,6 +31,7 @@ pub trait ISize: From<Size> + Into<Size> + Clone {
     fn add_y(&mut self, o: &Self);
     fn flip(&mut self);
     fn as_std(&self) -> Size;
+    fn add_space(&mut self, v: u32, dir: Orientation);
 }
 
 impl ISize for Size {
@@ -45,5 +46,11 @@ impl ISize for Size {
     }
     fn as_std(&self) -> Size {
         self.clone()
+    }
+    fn add_space(&mut self, v: u32, dir: Orientation) {
+        match dir {
+            Orientation::Horizontal => self.x += v,
+            Orientation::Vertical => self.y += v,
+        }
     }
 }

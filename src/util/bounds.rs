@@ -63,8 +63,10 @@ impl Bounds {
         s.size -= b.border_effective();
         s
     }
-    /// b is the inner and relative to self
+
     /// get the part of the inner which also is inside this bound
+    /// 
+    /// Use the BitAnd operator if the inner bound is absolute
     pub fn slice(&self, inner_relative: &Bounds) -> Self {
         let b = inner_relative;
         Self{
@@ -97,6 +99,7 @@ impl Bounds {
         }
     }
     /// inner_centered but advanced
+    /// align is the start-to-end relative position (0.0 - 1.0)
     pub fn inner_aligned(&self, size: Dims, align: (f32,f32)) -> Self {
         //let align = (align.0.min(1.0).max(0.0), align.1.min(1.0).max(0.0));
         let nx = (self.size.w as f32 - size.w as f32)*align.0;

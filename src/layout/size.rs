@@ -7,8 +7,8 @@ pub struct Size {
     pub y: SizeAxis,
 }
 
-/// SizeAxis +/+= SizeAxis
-/// SizeAxis &/&= SizeAxis
+/// The SizeAxis holds layouting constraints for one axis
+/// Supported Operators: Add, BitAnd
 #[derive(Clone)]
 pub struct SizeAxis {
     pub min: u32,
