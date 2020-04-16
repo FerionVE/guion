@@ -52,7 +52,6 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                 },
                 RootEvent::KbdUp{key} => {
                     let old = l.as_mut().s.key.up(key);
-                    //TODO send up event to the widget which downed it
                     if let Some(p) = old {
                         let event = KbdUp{
                             key: p.key,

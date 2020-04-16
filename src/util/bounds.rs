@@ -153,6 +153,13 @@ impl Offset {
             Orientation::Vertical => self.x,
         }
     }
+
+    pub fn from_ori(par: i32, unpar: i32, o: Orientation) -> Self {
+        match o {
+            Orientation::Horizontal => Self{x: par, y: unpar},
+            Orientation::Vertical => Self{x: unpar, y: par},
+        }
+    }
 }
 
 impl Dims {
@@ -166,6 +173,13 @@ impl Dims {
         match o {
             Orientation::Horizontal => self.h,
             Orientation::Vertical => self.w,
+        }
+    }
+
+    pub fn from_ori(par: u32, unpar: u32, o: Orientation) -> Self {
+        match o {
+            Orientation::Horizontal => Self{w: par, h: unpar},
+            Orientation::Vertical => Self{w: unpar, h: par},
         }
     }
 }

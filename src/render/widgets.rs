@@ -1,7 +1,7 @@
 use super::*;
 
 //TODO refine standard render functions
-pub trait RenderStdWidgets<E>: Render<E> where E: Env, E::Backend: Backend<E,Renderer=Self>, EStyle<E>: Style<E> {
+pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<Self>,*/ EStyle<E>: Style<E> {
     fn fill_rect(&mut self, b: &Bounds, c: ESColor<E>);
     fn border_rect(&mut self, b: &Bounds, c: ESColor<E>, thickness: u32);
     #[deprecated = "avoid this because stuff is not cached"]

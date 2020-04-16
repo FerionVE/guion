@@ -1,5 +1,6 @@
 use super::*;
 use util::state::*;
+use crate::event::key::Key; //TODO fix req of this import
 
 impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     E: Env,
@@ -7,26 +8,35 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    L: AsWidget<'w,E>+Statize+Sized+'w, L::Statur: Sized,
-    R: AsWidget<'w,E>+Statize+Sized+'w, R::Statur: Sized,
-    V: AtomState<f32>+Statize+Sized+'w, V::Statur: Sized,
+    L: AsWidget<'w,E>+Statize+'w, L::Statur: Sized,
+    R: AsWidget<'w,E>+Statize+'w, R::Statur: Sized,
+    V: AtomState<f32>+Statize+'w, V::Statur: Sized,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) -> bool {
-        let bounds = self.calc_bounds(&r.b); 
+        let bounds = self.calc_bounds(&r.b,self.state.get()); 
         
         let mut validate = true;
 
         {
+            if l.state().is_hovered(&self.id) {
+                r.set_cursor(StdCursor::SizeAll.into());
+            }
+            r.slice_abs(&bounds[1])
+                .with(&[StdVerb::ObjForeground])
+                .fill_rect();
+        }
+
+        {
             let left = l.for_child(0).expect("Dead Path inside Pane");
-            let mut r = r.slice(&bounds[0]);
+            let mut r = r.slice_abs(&bounds[0]);
             validate &= r.render_widget(left);
         }
         {
             let right = l.for_child(1).expect("Dead Path inside Pane");
-            let mut r = r.slice(&bounds[2]);
+            let mut r = r.slice_abs(&bounds[2]);
             validate &= r.render_widget(right);
         }
         {
@@ -36,7 +46,8 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
         false
     }
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
-        let bounds = self.calc_bounds(e.1); 
+        let o = self.orientation;
+        let mut bounds = self.calc_bounds(e.1,self.state.get()); 
 
         {
             let sliced = e.1.slice(&bounds[1]);
@@ -50,17 +61,55 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
                 //into relative f32
                 //enqueue mutate setting the AtomStateMut
             }
+
+            if let Some(mm) = e.0.is_mouse_move() {
+                //if mouse is down and was pressed on us
+                if let Some(_) = l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()) {
+                    let cursor = l.state().cursor_pos().expect("TODO");
+                    let mut cx = cursor.par(o);
+                    let (mut wx0, ww) = e.1.par(o);
+                    let mut wx1 = wx0 + ww as i32;
+
+                    let l_min = l.for_child(0)
+                        .expect("Dead Path inside Pane").size()
+                        .as_std().par(o).min;
+                    let r_min = l.for_child(1)
+                        .expect("Dead Path inside Pane").size()
+                        .as_std().par(o).min;
+
+                    wx0 += (self.width/2) as i32;
+                    wx1 -= (self.width/2) as i32;
+
+                    let ewx0 = wx0 - l_min as i32;
+                    let ewx1 = wx1 - r_min as i32;
+
+                    cx = cx.min(ewx1-1).max(ewx0);
+                    
+                    if ewx1 > ewx0 {
+                        let ww = wx1 - wx0;
+                        cx = cx - wx0;
+                        let fcx = (cx as f32)/(ww as f32);
+
+                        l.mutate_closure(Box::new(move |mut w,_,_|{
+                            let w = w.traitcast_mut::<dyn AtomStateMut<f32>>().unwrap();
+                            w.set(fcx);
+                        }),true);
+
+                        bounds = self.calc_bounds(e.1,fcx);
+                    }
+                }
+            }
         }
         {
             let mut left = l.for_child(0).expect("Dead Path inside Pane");
-            let sliced = e.1.slice(&bounds[0]);
+            let sliced = e.1 & &bounds[0];
             if let Some(ee) = e.0.filter_cloned(&sliced) {
                 left.event((ee,&sliced,e.2));
             }
         }
         {
-            let mut right = l.for_child(0).expect("Dead Path inside Pane");
-            let sliced = e.1.slice(&bounds[2]);
+            let mut right = l.for_child(1).expect("Dead Path inside Pane");
+            let sliced = e.1 & &bounds[2];
             if let Some(ee) = e.0.filter_cloned(&sliced) {
                 right.event((ee,&sliced,e.2));
             }
@@ -74,7 +123,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     }
     fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
         if i > 2 {return Err(());}
-        Ok(self.calc_bounds(b)[i])
+        Ok(self.calc_bounds(b,self.state.get())[i])
     }
     fn invalid(&self) -> bool {
         true
@@ -95,7 +144,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     }
 
     fn border(&self, b: &mut Border) {
-        let _ = b;
+        *b = Border::empty();
     }
 
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
@@ -111,9 +160,9 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    L: AsWidgetMut<'w,E>+Statize+Sized+'w, L::Statur: Sized,
-    R: AsWidgetMut<'w,E>+Statize+Sized+'w, R::Statur: Sized,
-    V: AtomStateMut<f32>+Statize+Sized+'w, V::Statur: Sized,
+    L: AsWidgetMut<'w,E>+Statize+'w, L::Statur: Sized,
+    R: AsWidgetMut<'w,E>+Statize+'w, R::Statur: Sized,
+    V: AtomStateMut<f32>+Statize+'w, V::Statur: Sized,
 {
     fn set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -131,23 +180,32 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
         self.childs.into_child_mut(i)
     }
+
+    impl_traitcast!(
+        dyn AtomState<f32> => |s| &s.state;
+        dyn AtomStateMut<f32> => |s| &s.state;
+    );
+    impl_traitcast_mut!(
+        dyn AtomState<f32> => |s| &mut s.state;
+        dyn AtomStateMut<f32> => |s| &mut s.state;
+    );
 }
 
 impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
     E: Env,
     V: AtomState<f32>+Statize+Sized+'w, V::Statur: Sized,
 {
-    fn calc_bounds(&self, b: &Bounds) -> [Bounds;3] {
+    fn calc_bounds(&self, b: &Bounds, v: f32) -> [Bounds;3] {
+        let handle_width = self.width.min(b.w());
         let o = self.orientation;
         let (x,w) = b.par(o);
         let (y,h) = b.unpar(o);
-        let v = self.state.get();
-        let w0 = ((w as f32 - self.width as f32)*v.max(0.0).min(1.0)) as u32;
-        let w2 = w - w0 - self.width;
+        let w0 = ((w as f32 - handle_width as f32)*v.max(0.0).min(1.0)) as u32;
+        let w2 = w - w0 - handle_width;
         let x1 = x + w0 as i32;
-        let x2 = x1 + self.width as i32;
+        let x2 = x1 + handle_width as i32;
         let left = Bounds::from_ori(x, y, w0, h, o);
-        let center = Bounds::from_ori(x1, y, self.width, h, o);
+        let center = Bounds::from_ori(x1, y, handle_width, h, o);
         let right = Bounds::from_ori(x2, y, w2, h, o);
         [left,center,right]
     }

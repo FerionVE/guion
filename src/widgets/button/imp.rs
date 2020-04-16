@@ -6,8 +6,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    Text: Caption<'w>+Statize,
-    Text::Statur: Sized,
+    Text: Caption<'w>+Statize, Text::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -99,8 +98,7 @@ impl<'w,E,Text> WidgetMut<'w,E> for Button<'w,E,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    Text: Caption<'w>+Statize,
-    Text::Statur: Sized,
+    Text: Caption<'w>+Statize, Text::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
@@ -122,8 +120,7 @@ impl<'w,E,S> Button<'w,E,S> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    S: Caption<'w>+Statize,
-    S::Statur: Sized,
+    S: Caption<'w>+Statize, S::Statur: Sized,
 {
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
         let id = l.id();

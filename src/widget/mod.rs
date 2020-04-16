@@ -41,19 +41,16 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
 
     #[deprecated]
     fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
-        let childs = self.childs();
-        let mut dest = Vec::with_capacity(childs);
-        for i in 0..childs {
-            dest.push(self.child(i).unwrap());
-        }
-        dest
+        (0..self.childs())
+            .map(|i| self.child(i).unwrap() )
+            .collect::<Vec<_>>()
     }
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>>;
     
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
-        self.childs_ref().into_iter() //TODO optimize, use direct accessors
-            .map(|c| c.self_in_parent(own_path.refc()) )
+        (0..self.childs())
+            .map(|i| self.child(i).unwrap().self_in_parent(own_path.refc()) )
             .collect::<Vec<_>>()
     }
     

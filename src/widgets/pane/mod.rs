@@ -14,7 +14,7 @@ pub struct Pane<'w,T,E> where E: Env, T: Statize+Sized+'w {
 }
 
 impl<'w,T,E> Pane<'w,T,E> where E: Env, T: Statize+Sized+'w {
-    pub fn new(id: E::WidgetID, childs: T, orientation: Orientation) -> Pane<'w,T,E> {
+    pub fn new(id: E::WidgetID, orientation: Orientation, childs: T) -> Pane<'w,T,E> {
         Pane{
             id,
             childs,

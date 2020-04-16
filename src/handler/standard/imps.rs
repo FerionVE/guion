@@ -12,4 +12,7 @@ impl<S,E> HandlerStateful<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E:
     fn pressed(&self) -> &[Self::K] {
         &self.s.key.pressed[..]
     }
+    fn cursor_pos(&self) -> Option<Offset> {
+        self.s.mouse.pos
+    }
 }

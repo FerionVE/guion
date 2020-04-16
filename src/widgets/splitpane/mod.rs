@@ -14,8 +14,8 @@ pub struct SplitPane<'w,L,R,V,E> where E: Env {
     p: PhantomData<&'w mut ()>,
 }
 
-impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where E: Env, L: Statize+Sized+'w, R: Statize+Sized+'w, V: Statize+Sized+'w {
-    pub fn new(id: E::WidgetID, childs: (L,R), state: V, orientation: Orientation) -> SplitPane<'w,L,R,V,E> {
+impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where E: Env {
+    pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,L,R,V,E> {
         SplitPane{
             id,
             childs,
@@ -29,9 +29,9 @@ impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where E: Env, L: Statize+Sized+'w, R: Sta
 
 unsafe impl<'w,L,R,V,E> Statize for SplitPane<'w,L,R,V,E> where 
     E: Env,
-    L: Statize+Sized+'w, L::Statur: Sized,
-    R: Statize+Sized+'w, R::Statur: Sized,
-    V: Statize+Sized+'w, V::Statur: Sized,
+    L: Statize+'w, L::Statur: Sized,
+    R: Statize+'w, R::Statur: Sized,
+    V: Statize+'w, V::Statur: Sized,
 {
     type Statur = SplitPane<'static,L::Statur,R::Statur,V::Statur,E>;
 }

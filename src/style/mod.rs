@@ -2,18 +2,14 @@
 use super::*;
 
 pub mod font;
-pub use font::*;
-
 pub mod variant;
-pub use variant::*;
-
 pub mod color;
-pub use color::*;
+
 use std::ops::Deref;
 
 pub trait Style<E>: Clone where E: Env, E::Backend: Backend<E,Style=Self> {
     type Font;
-    type Cursor;
+    type Cursor: From<StdCursor>;
     type Color: Color;
     type PreprocessedText: PreprocessedText<E>;
     type PreprocessedChar: PreprocessedChar;

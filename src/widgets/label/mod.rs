@@ -54,8 +54,7 @@ impl<'w,E,S> Label<'w,E,S> where
 
 unsafe impl<'w,E,S> Statize for Label<'w,E,S> where
     E: Env,
-    S: Caption<'w>+Statize,
-    S::Statur: Sized,
+    S: Caption<'w>+Statize, S::Statur: Sized,
 {
     type Statur = Label<'static,E,S::Statur>;
 }

@@ -1,4 +1,5 @@
 use super::*;
+//move state trait to standard state trait. state is not a core feature!
 
 pub trait AsHandlerStateful<E>: Context<E> + Sized where E: Env<Context=Self> {
     type T: HandlerStateful<E>;
@@ -40,5 +41,7 @@ pub trait HandlerStateful<E>: Handler<E> + 'static where E: Env {
         self.pressed().iter()
             .find(|p| p.key() == c[0] && p.widget() == id )
     }
+
+    fn cursor_pos(&self) -> Option<Offset>;
 }
 

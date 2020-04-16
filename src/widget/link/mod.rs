@@ -69,36 +69,43 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     #[inline]
     pub fn render(&mut self, r: &mut RenderLink<E>) -> bool {
-        self.ctx.render(self.widget.clone(),r)
+        self.ctx.render(self.widget.reference(),r)
     }
     #[inline]
     pub fn event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
-        self.ctx.event(self.widget.clone(),e)
+        self.ctx.event(self.widget.reference(),e)
     }
     #[inline]
     pub fn size(&mut self) -> ESize<E> {
-        self.ctx.size(self.widget.clone())
+        self.ctx.size(self.widget.reference())
     }
     #[inline]
     pub fn _event_root(&mut self, e: (EEvent<E>,&Bounds,u64)) {
-        self.ctx._event_root(self.widget.clone(),e)
+        self.ctx._event_root(self.widget.reference(),e)
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _render(&mut self, r: &mut RenderLink<E>) -> bool {
-        let w = self.ctx.link(self.widget.clone());
+        let w = self.ctx.link(self.widget.reference());
         self.widget.widget()._render(w,r)
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
-        let w = self.ctx.link(self.widget.clone());
-        self.widget.widget()._event(w,e)
+        let mut b = *self.ctx.default_border();
+        self.widget().border(&mut b);
+        let b = e.1.inside_border(&b); //TODO unify border opt fns into on layer (why tf is border for event done here and border for render done in RenderLink??)
+
+        if let Some(ee) = e.0.filter(&b) {
+            let e = (ee,&b,e.2);
+            let w = self.ctx.link(self.widget.reference());
+            self.widget.widget()._event(w,e)
+        }
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _size(&mut self) -> ESize<E> {
-        let w = self.ctx.link(self.widget.clone());
+        let w = self.ctx.link(self.widget.reference());
         self.widget.widget()._size(w)
     }
 
@@ -186,7 +193,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     pub fn resolve_sub<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
-        let mut new_path = self.widget.path.clone().attached_subpath(&p);
+        let mut new_path = self.widget.path.refc().attached_subpath(&p);
         let rw = self.widget.wref.resolve(p.refc())?;
         rw.extract_path(&mut new_path);
         let rw = rw.resolve_widget(&self.widget.stor)?;
