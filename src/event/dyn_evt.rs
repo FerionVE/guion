@@ -25,7 +25,6 @@ impl<E,K,D> Event<E> for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Eve
     #[inline]
     fn filter(self, bounds: &Bounds) -> Option<Self> {
         if self.event.filter(bounds) {
-            //self.event._slice(bounds);
             Some(self)
         }else{
             None

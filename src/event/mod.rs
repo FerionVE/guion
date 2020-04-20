@@ -57,9 +57,3 @@ pub trait Destination: Clone + Sized {
         Self::ROOT
     }
 }
-/*
- *  pub struct EventImpl {
- *      pub inner: SDLEvent,
- *      pub root: bool,
- *  }
- */

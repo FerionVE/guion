@@ -42,7 +42,3 @@ Fns:
 
     - if mouse key 0
         - reset DragState
-
-
-
-SelectionIterFwd:

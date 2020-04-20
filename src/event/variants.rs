@@ -128,13 +128,6 @@ impl<E> Variant<E> for WindowResize where E: Env {consuming!();invalid!();}
 
 impl<E> Variant<E> for Focus where E: Env {consuming!();invalid!();}
 impl<E> Variant<E> for Unfocus where E: Env {consuming!();invalid!();}
-
-/*impl<E> KbdDown<E> where E: Env, E::Context: AsHandlerStateful<E> {
-    pub fn widget(&self, c: &E::Context) -> &E::WidgetPath {
-        c.state()
-    }
-}*/
-
 #[non_exhaustive]
 #[derive(Clone)]
 pub enum RootEvent<E> where E: Env {

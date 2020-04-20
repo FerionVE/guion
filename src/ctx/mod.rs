@@ -8,7 +8,6 @@ pub mod queue;
 pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     type Handler: Handler<E>;
     type Queue: Queue<StdEnqueueable<E>>;
-    //type Meta: ContextMeta;
 
     #[inline] 
     fn handler_mut<H: Handler<E>>(&mut self) -> &mut H where Self: AsRefMut<H> {

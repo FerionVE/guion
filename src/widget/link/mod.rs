@@ -62,11 +62,6 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.widget.path.refc()
     }
 
-    /*#[inline]
-    pub fn for_child<'s>(&'s self, child: &'s dyn Widget<E>) -> Link<'s> where 'c: 's {
-        
-    }*/
-
     #[inline]
     pub fn render(&mut self, r: &mut RenderLink<E>) -> bool {
         self.ctx.render(self.widget.reference(),r)
@@ -129,8 +124,6 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.widget.child_paths()
     }
 
-    //THIS IS AN ULTRA HACK
-    //(as shortening teh lifetime even more aggresse we MAY can put an iterator on it)
     #[inline]
     pub fn for_childs<'s>(&'s mut self, mut f: impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
         //let wref = self.widget.wref.refc();
@@ -210,21 +203,6 @@ impl<'c,E> Link<'c,E> where E: Env {
         )
     }
 
-    /*pub fn with_resolvable<'l,'s>(&'s mut self, r: Resolvable<'w,E>) -> Result<Link<'s,E>,()> where 'l: 's {
-        r.extract_path(&mut new_path);
-        let rw = r.resolve_widget(&self.widget.stor)?;
-        let w = Resolved{
-            path: new_path,
-            wref: rw,
-            stor: self.widget.stor,
-        };
-        Ok(
-            Link{
-                widget: w,
-                ctx: self.ctx,
-            }
-        )
-    }*/
 
     pub fn reference<'s>(&'s mut self) -> Link<'s,E> where 'c: 's {
         Link{
@@ -233,33 +211,13 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
     }
 
-    /*
-    /// iterate over childs
-    #[inline]
-    pub fn childs(&'c self, predicate: impl Fn(WPSlice<'c,E>)->bool + 'c ) -> impl Iterator<Item=&'c dyn Widget<E>> + 'c {
-        self.ctx.widget(self.path).unwrap()
-            .child_paths(self.path)
-            .into_iter()
-            .filter(#[inline] move |s| predicate(s) )
-            .map(move |e| {
-                (
-                    self.ctx.widget(e).expect("Lost Child")
-                )
-            })
+    pub fn childs<'s>(&'s self) -> impl Iterator<Item=Resolvable<'s,E>>+'s where 'c: 's {
+        let w = self.widget().short_lt();
+        (0..w.childs())
+            .map(move |i| w.child(i).unwrap() )
     }
-    /// iterate over childs mut
-    #[inline]
-    pub fn childs_mut(&'c mut self, mut f: impl FnMut(&mut dyn WidgetMut<E>), mut predicate: impl FnMut(&E::WidgetPath)->bool) {
-        let childs: Vec<E::WidgetPath> = self.ctx.widget(self.path).unwrap().child_paths(self.path);
 
-        for e in childs {
-            if predicate(&e) {
-                f(
-                    self.ctx.widget_mut(e).expect("Lost Child")
-                );
-            }
-        }
-    }*/
+
     /// iterate from current up to the root element
     #[inline]
     pub fn parents(&'c self) -> Parents<'c,E> {

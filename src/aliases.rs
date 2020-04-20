@@ -1,4 +1,5 @@
 //! Aliases for deep/nested types inside Env
+#![allow(type_alias_bounds)]
 use super::*;
 
 pub type ERenderer<E: Env> = <E::Backend as Backend<E>>::Renderer;
