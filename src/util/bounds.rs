@@ -112,6 +112,22 @@ impl Bounds {
             size,
         }
     }
+    /// inner_centered but advanced
+    /// align is the start-to-end relative position (0.0 - 1.0)
+    pub fn inner_aligned_f(&self, size: (f32,f32), align: (f32,f32)) -> Self {
+        let align = (align.0.min(1.0).max(0.0), align.1.min(1.0).max(0.0));
+        let nx = (self.size.w as f32 - size.0)*align.0;
+        let ny = (self.size.h as f32 - size.1)*align.1;
+        let nw = ((nx+size.0) as i32 - nx as i32) as u32;
+        let nh = ((ny+size.1) as i32 - ny as i32) as u32;
+        Self{
+            off: Offset{
+                x: self.off.x + nx as i32,
+                y: self.off.y + ny as i32,
+            },
+            size: Dims{w: nw, h: nh},
+        }
+    }
 
     pub fn from_ori(par_off: i32, unpar_off: i32, par_size: u32, unpar_size: u32, o: Orientation) -> Self {
         match o {
@@ -131,6 +147,10 @@ impl Bounds {
             Orientation::Horizontal => (self.off.y,self.size.h),
             Orientation::Vertical => (self.off.x,self.size.w),
         }
+    }
+
+    pub fn not_empty(&self) -> bool {
+        self.size.not_empty()
     }
 }
 
@@ -181,6 +201,10 @@ impl Dims {
             Orientation::Horizontal => Self{w: par, h: unpar},
             Orientation::Vertical => Self{w: unpar, h: par},
         }
+    }
+
+    pub fn not_empty(&self) -> bool {
+        self.w > 0 && self.h > 0
     }
 }
 
