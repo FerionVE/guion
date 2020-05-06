@@ -12,7 +12,6 @@ pub trait Style<E>: Clone where E: Env, E::Backend: Backend<E,Style=Self> {
     type Cursor: From<StdCursor>;
     type Color: Color;
     type PreprocessedText: PreprocessedText<E>;
-    type PreprocessedChar: PreprocessedChar;
     type Variant: StyleVariant;
 
     fn font(&self, v: &Self::Variant) -> Option<&Self::Font>;

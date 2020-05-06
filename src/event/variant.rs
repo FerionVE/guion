@@ -28,4 +28,8 @@ pub trait Variant<E>: VariantDerive<E> where E: Env {
     fn _root_only(&self) -> bool {
         false
     }
+
+    fn _debug_type_name(&self) {
+        eprintln!("Evention {}",std::any::type_name::<Self>());
+    }
 }

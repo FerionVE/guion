@@ -10,7 +10,6 @@ pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
 pub type ESize<E: Env> = <E::Backend as Backend<E>>::Size;
 
 pub type ESPPText<E: Env> = <EStyle<E> as Style<E>>::PreprocessedText;
-pub type ESPPChar<E: Env> = <EStyle<E> as Style<E>>::PreprocessedChar;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;

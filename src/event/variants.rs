@@ -17,6 +17,10 @@ pub struct KbdPress<E> where E: Env {
     pub down_widget: E::WidgetPath,
     pub down_ts: u64,
 }
+#[derive(Clone)]
+pub struct TextInput {
+    pub text: String, //TODO Arc<str> for less clonery
+}
 
 #[derive(Clone)]
 pub struct MouseDown<E> where E: Env {
@@ -30,6 +34,12 @@ pub struct MouseUp<E> where E: Env {
     pub down_pos: Offset,
     pub down_widget: E::WidgetPath,
     pub down_ts: u64,
+}
+
+#[derive(Clone)]
+pub struct MouseScroll {
+    pub x: i32,
+    pub y: i32,
 }
 
 #[derive(Clone)]
@@ -116,9 +126,11 @@ macro_rules! invalid {
 impl<E> Variant<E> for KbdDown<E> where E: Env {focused!();}
 impl<E> Variant<E> for KbdPress<E> where E: Env {focused!();}
 impl<E> Variant<E> for KbdUp<E> where E: Env {focused!();}
+impl<E> Variant<E> for TextInput where E: Env {focused!();}
 
 impl<E> Variant<E> for MouseDown<E> where E: Env {consuming!();hovered!();pos!(pos);}
 impl<E> Variant<E> for MouseUp<E> where E: Env {consuming!();hovered!();pos!(pos);}
+impl<E> Variant<E> for MouseScroll where E: Env {consuming!();hovered!();}
 impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(pos);}
 impl<E> Variant<E> for MouseEnter where E: Env {consuming!();invalid!();}
 impl<E> Variant<E> for MouseLeave where E: Env {consuming!();invalid!();}
@@ -134,8 +146,10 @@ pub enum RootEvent<E> where E: Env {
     KbdDown{key: EEKey<E>},
     KbdPress{key: EEKey<E>},
     KbdUp{key: EEKey<E>},
+    TextInput{text: String},
     MouseDown{key: EEKey<E>},
     MouseUp{key: EEKey<E>},
+    MouseScroll{x: i32, y: i32},
     MouseMove{pos: Offset}, //TODO which mouse moves??
     WindowMove{pos: Offset,size: Dims},
     WindowResize{size: Dims},

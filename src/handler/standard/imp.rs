@@ -173,6 +173,22 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                 RootEvent::WindowResize{size} => {
                     l._event_root((Event::from(WindowResize{size}),&e.1,e.2))
                 }
+                RootEvent::TextInput{text} => {
+                    if let Some(id) = l.as_ref().s.kbd.focused.clone() {
+                        if let Ok(mut l) = l.with_widget(id) {
+                            let wbounds = l.trace_bounds(e.1,false);
+                            l._event_root((Event::from(TextInput{text}),&wbounds,e.2));
+                        }
+                    }
+                }
+                RootEvent::MouseScroll{x,y} => {
+                    let hovered = l.as_ref().s.mouse.hovered.clone().expect("TODO");
+                    
+                    if let Ok(mut w) = l.with_widget(hovered) {
+                        let wbounds = w.trace_bounds(e.1,false);
+                        w._event_root((Event::from(MouseScroll{x,y}),&wbounds,e.2))
+                    };
+                }
             }
         }else{
             S::_event_root(l,e);

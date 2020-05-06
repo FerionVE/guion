@@ -38,8 +38,10 @@ pub trait StdVarSup<E>:
     VariantSupport<KbdDown<E>,E> +
     VariantSupport<KbdUp<E>,E> +
     VariantSupport<KbdPress<E>,E> +
+    VariantSupport<TextInput,E> +
     VariantSupport<MouseDown<E>,E> +
     VariantSupport<MouseUp<E>,E> +
+    VariantSupport<MouseScroll,E> +
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E> +
@@ -58,11 +60,26 @@ where E: Env, E::Backend: Backend<E,Event=Self> {
     fn is_kbd_up(&self) -> Option<KbdUp<E>> {
         self.is::<KbdUp<E>>()
     }
+    fn is_kbd_down_or_press(&self) -> Option<KbdDown<E>> {
+        if let Some(ee) = self.is_kbd_down() {
+            Some(ee)
+        }else if let Some(ee) = self.is_kbd_press() {
+            Some(KbdDown{key: ee.key})
+        }else{
+            None
+        }
+    }
+    fn is_text_input(&self) -> Option<TextInput> {
+        self.is::<TextInput>()
+    }
     fn is_mouse_down(&self) -> Option<MouseDown<E>> {
         self.is::<MouseDown<E>>()
     }
     fn is_mouse_up(&self) -> Option<MouseUp<E>> {
         self.is::<MouseUp<E>>()
+    }
+    fn is_mouse_scroll(&self) -> Option<MouseScroll> {
+        self.is::<MouseScroll>()
     }
     fn is_mouse_move(&self) -> Option<MouseMove> {
         self.is::<MouseMove>()
@@ -97,8 +114,10 @@ impl<E,T> StdVarSup<E> for T where T:
     VariantSupport<KbdDown<E>,E> +
     VariantSupport<KbdUp<E>,E> +
     VariantSupport<KbdPress<E>,E> +
+    VariantSupport<TextInput,E> +
     VariantSupport<MouseDown<E>,E> +
     VariantSupport<MouseUp<E>,E> +
+    VariantSupport<MouseScroll,E> +
     VariantSupport<MouseMove,E> +
     VariantSupport<MouseEnter,E> +
     VariantSupport<MouseLeave,E> +

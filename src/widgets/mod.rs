@@ -11,3 +11,4 @@ pub mod label;
 pub mod pbar;
 pub mod checkbox;
 pub mod splitpane;
+pub mod textbox;

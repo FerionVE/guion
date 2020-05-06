@@ -257,8 +257,8 @@ impl<'a,E> RenderLink<'a,E> where E: Env, ERenderer<E>: RenderStdWidgets<E> {
         self.r.render_text(&self.b,text,align,&self.s,&self.v,c)
     }
     #[inline]
-    pub fn render_preprocessed_text(&mut self, text: &ESPPText<E>, c: &mut E::Context) {
-        self.r.render_preprocessed_text(&self.b,text,&self.s,&self.v,c) //TODO we should not always give ctx through the render, for example the text/font can be inside the render head
+    pub fn render_preprocessed_text(&mut self, text: &ESPPText<E>, inner_offset: Offset, c: &mut E::Context) {
+        self.r.render_preprocessed_text(&self.b,text,inner_offset,&self.s,&self.v,c) //TODO we should not always give ctx through the render, for example the text/font can be inside the render head
     }
     #[inline]
     pub fn set_cursor(&mut self, cursor: ESCursor<E>) {

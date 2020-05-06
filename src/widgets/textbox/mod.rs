@@ -4,7 +4,7 @@ use util::caption::Caption;
 
 pub mod imp;
 
-pub struct Label<'w,E,S> where
+pub struct TextBox<'w,E,S> where
     E: Env,
     S: 'w,
 {
@@ -16,7 +16,7 @@ pub struct Label<'w,E,S> where
     p: PhantomData<&'w mut ()>,
 }
 
-impl<'w,E> Label<'w,E,&'static str> where
+impl<'w,E> TextBox<'w,E,String> where
     E: Env,
 {
     pub fn new(id: E::WidgetID) -> Self {
@@ -25,18 +25,18 @@ impl<'w,E> Label<'w,E,&'static str> where
             size: Size::empty().into(),
             style: vec![],
             border: None,
-            text: "",
+            text: "".to_owned(),
             p: PhantomData,
         }
     }
 }
 
-impl<'w,E,S> Label<'w,E,S> where
+impl<'w,E,S> TextBox<'w,E,S> where
     E: Env,
     S: 'w,
 {
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T> where T: Caption<'w>+Statize, T::Statur: Sized {
-        Label{
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T> where T: Caption<'w>+Statize, T::Statur: Sized {
+        TextBox{
             id: self.id,
             size: self.size,
             style: self.style,
@@ -52,9 +52,9 @@ impl<'w,E,S> Label<'w,E,S> where
     }
 }
 
-unsafe impl<'w,E,S> Statize for Label<'w,E,S> where
+unsafe impl<'w,E,S> Statize for TextBox<'w,E,S> where
     E: Env,
     S: Statize, S::Statur: Sized,
 {
-    type Statur = Label<'static,E,S::Statur>;
+    type Statur = TextBox<'static,E,S::Statur>;
 }

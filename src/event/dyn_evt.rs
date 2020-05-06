@@ -46,6 +46,10 @@ impl<E,K,D> Event<E> for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Eve
     fn _root_only(&self) -> bool {
         self.event._root_only()
     }
+
+    fn _debug_type_name(&self) {
+        self.event._debug_type_name();
+    }
 }
 
 impl<V,E,K,D> VariantSupport<V,E> for DynEvent<E,K,D> where V: Variant<E>, E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {

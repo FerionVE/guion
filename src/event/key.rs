@@ -16,6 +16,7 @@ pub trait Key: Clone + PartialEq + Debug {
     const ENTER: Self;
     const SPACE: Self;
     const TAB: Self;
+    const BACKSPACE: Self;
 
     fn origin(&self) -> Self::Origin;
 }

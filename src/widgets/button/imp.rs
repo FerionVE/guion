@@ -52,8 +52,9 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
         true
     }
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+        //e.0._debug_type_name();
         //let mut invalid = false;
-        if e.0.is_hover_update() || e.0.is_kbd_down().is_some() || e.0.is_kbd_up().is_some() {
+        if e.0.is_hover_update() || e.0.is_kbd_press().is_some() || e.0.is_kbd_up().is_some() { //TODO catch down and press
             l.enqueue_invalidate()
         }
         if let Some(ee) = e.0.is_mouse_up() {

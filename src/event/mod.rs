@@ -40,6 +40,8 @@ pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self
     fn position(&self) -> Option<Offset>;
 
     fn _root_only(&self) -> bool;
+
+    fn _debug_type_name(&self);
 }
 
 pub trait Destination: Clone + Sized {

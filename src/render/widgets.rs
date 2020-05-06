@@ -8,9 +8,10 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<
     #[inline]
     fn render_text(&mut self, b: &Bounds, text: &str, align: (f32,f32), style: &EStyle<E>, variant: &ESVariant<E>, c: &mut E::Context) {
         let pp = style.preprocess_text(text,c);
-        self.render_preprocessed_text(b,&pp,style,variant,c);
+        let b = b.inner_aligned(pp.size(),align);
+        self.render_preprocessed_text(&b,&pp,Offset::default(),style,variant,c);
     }
-    fn render_preprocessed_text(&mut self, b: &Bounds, text: &ESPPText<E>, style: &EStyle<E>, variant: &ESVariant<E>, c: &mut E::Context);
+    fn render_preprocessed_text(&mut self, b: &Bounds, text: &ESPPText<E>, inner_offset: Offset, style: &EStyle<E>, variant: &ESVariant<E>, c: &mut E::Context);
 
     fn set_cursor(&mut self, b: &Bounds, cursor: ESCursor<E>);
 

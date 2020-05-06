@@ -70,3 +70,35 @@ impl_caption_gen!(
     i8;i16;i32;i64;i128;isize;
     u8;u16;u32;u64;u128;usize
 );
+
+pub trait CaptionMut<'w>: Caption<'w> {
+    fn push<'s>(&'s mut self, s: &str) where 'w: 's;
+    fn pop<'s>(&'s mut self, n: usize) where 'w: 's;
+}
+
+impl<'w> CaptionMut<'w> for String {
+    fn push<'s>(&'s mut self, s: &str) where 'w: 's {
+        self.push_str(s);
+    }
+    fn pop<'s>(&'s mut self, n: usize) where 'w: 's {
+        for _ in 0..n {
+            self.pop();
+        }
+    }
+}
+
+impl<'w,'l,T> CaptionMut<'w> for &'w mut T where T: CaptionMut<'l>+?Sized, 'l: 'w {
+    fn push<'s>(&'s mut self, s: &str) where 'w: 's {
+        (**self).push(s)
+    }
+    fn pop<'s>(&'s mut self, n: usize) where 'w: 's {
+        (**self).pop(n)
+    }
+}
+
+unsafe impl<'w> Statize for dyn Caption<'w> {
+    type Statur = dyn Caption<'static>;
+}
+unsafe impl<'w> Statize for dyn CaptionMut<'w> {
+    type Statur = dyn CaptionMut<'static>;
+}

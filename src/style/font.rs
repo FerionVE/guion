@@ -6,13 +6,13 @@ pub trait Font<E>: Sized where EStyle<E>: Style<E,Font=Self>, E: Env {
 
 /// Text in a optimized form for faster frequent rendering and iterating
 pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=Self>, E: Env {
+    //type LineIter: Iterator<Item=(Self::CharIter,Bounds)>;
+    //type CharIter: Iterator<Item=Bounds>;
+
     fn size(&self) -> Dims;
-    fn style(&self) -> &EStyle<E>; //TODO TextCache validates invalidate state and compares style
-    fn chars(&self) -> &[ESPPChar<E>];
-    fn back(&self) -> String;
+    fn lines<'s>(&'s self) -> CrazyWorkaroundPPIter<'s>;
+
+    fn generate(s: &str, size: (f32,f32)) -> Self; 
 }
 
-pub trait PreprocessedChar {
-    fn offset(&self) -> Offset;
-    fn char(&self) -> char;
-}
+pub type CrazyWorkaroundPPIter<'a> = Box<dyn Iterator<Item=(Box<dyn Iterator<Item=Option<Bounds>>+'a>,Bounds)>+'a>;
