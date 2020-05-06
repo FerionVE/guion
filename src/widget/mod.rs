@@ -50,7 +50,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (0..self.childs())
-            .map(|i| self.child(i).unwrap().self_in_parent(own_path.refc()) )
+            .map(|i| self.child(i).unwrap().in_parent_path(own_path.refc()) )
             .collect::<Vec<_>>()
     }
     
@@ -62,7 +62,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
             return Ok(Resolvable::Widget(self.box_ref()))
         }
         for c in 0..self.childs() {
-            if self.child(c).unwrap().is_subpath(i.index(0)) {
+            if self.child(c).unwrap().resolves_to(i.index(0)) {
                 return self.child(c).unwrap().resolve_child(i.slice(1..));
             }
         }
@@ -76,7 +76,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
             return Ok(Resolvable::Widget(self.box_box()))
         }
         for c in 0..self.childs() {
-            if self.child(c).unwrap().is_subpath(i.index(0)) {
+            if self.child(c).unwrap().resolves_to(i.index(0)) {
                 return self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..));
             }
         }
@@ -85,7 +85,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     #[inline]
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
         for c in 0..self.childs() {
-            if self.child(c).unwrap().is_subpath(p) {
+            if self.child(c).unwrap().resolves_to(p) {
                 return Ok(c);
             }
         }
@@ -101,12 +101,12 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     }
     fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()>;
     #[inline]
-    fn self_in_parent(&self, parent: E::WidgetPath) -> E::WidgetPath {
+    fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         parent.attached(SubPath::from_id(self.id()))
     }
     #[inline]
-    fn is_subpath(&self, p: &EWPSub<E>) -> bool {
-        p.eq_id(self.id())
+    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
+        p.resolves_to_id(self.id())
     }
 
     /// should the widget be focusable, regularly true for interactive widgets, false for layouts
@@ -171,7 +171,7 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
         for c in 0..self.childs() {
-            if self.child(c).unwrap().is_subpath(i.index(0)) {
+            if self.child(c).unwrap().resolves_to(i.index(0)) {
                 return self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..),invalidate);
             }
         }
@@ -186,7 +186,7 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
         for c in 0..self.childs() {
-            if self.child(c).unwrap().is_subpath(i.index(0)) {
+            if self.child(c).unwrap().resolves_to(i.index(0)) {
                 return self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..),invalidate);
             }
         }

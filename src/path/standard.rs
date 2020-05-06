@@ -84,6 +84,18 @@ impl<E,S> RefClonable for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Syn
     }
 }
 
+impl<E,S> Add<Self> for SimplePath<E,S> where
+    E: Env,
+    S: SubPath<E> + From<E::WidgetID>+Into<E::WidgetID> + Send+Sync + 'static,
+    Self: From<E::WidgetPath>+Into<E::WidgetPath>
+{
+    type Output = E::WidgetPath;
+    fn add(self, rhs: Self) -> Self::Output {
+        self.attached_subpath(&rhs).into()
+    }
+}
+
+
 //TODO fix the AsWidget generic impl
 /*impl<E,S> AsWidget<'static,E> for SimplePath<E,S> where E: Env {
     fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'static: 's {

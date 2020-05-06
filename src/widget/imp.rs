@@ -50,11 +50,11 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
         (**self).trace_bounds(l, i, b, force)
     }
-    fn self_in_parent(&self, parent: E::WidgetPath) -> E::WidgetPath {
-        (**self).self_in_parent(parent)
+    fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
+        (**self).in_parent_path(parent)
     }
-    fn is_subpath(&self, p: &EWPSub<E>) -> bool {
-        (**self).is_subpath(p)
+    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
+        (**self).resolves_by(p)
     }
     fn _focus_on_mouse_down(&self) -> bool {
         (**self)._focus_on_mouse_down()
@@ -131,11 +131,11 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
         (**self).trace_bounds(l, i, b, force)
     }
-    fn self_in_parent(&self, parent: E::WidgetPath) -> E::WidgetPath {
-        (**self).self_in_parent(parent)
+    fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
+        (**self).in_parent_path(parent)
     }
-    fn is_subpath(&self, p: &EWPSub<E>) -> bool {
-        (**self).is_subpath(p)
+    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
+        (**self).resolves_by(p)
     }
     fn _focus_on_mouse_down(&self) -> bool {
         (**self)._focus_on_mouse_down()
@@ -240,11 +240,11 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
         (**self).trace_bounds(l, i, b, force)
     }
-    fn self_in_parent(&self, parent: E::WidgetPath) -> E::WidgetPath {
-        (**self).self_in_parent(parent)
+    fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
+        (**self).in_parent_path(parent)
     }
-    fn is_subpath(&self, p: &EWPSub<E>) -> bool {
-        (**self).is_subpath(p)
+    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
+        (**self).resolves_by(p)
     }
     fn _focus_on_mouse_down(&self) -> bool {
         (**self)._focus_on_mouse_down()
@@ -320,11 +320,11 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
         (**self).trace_bounds(l, i, b, force)
     }
-    fn self_in_parent(&self, parent: E::WidgetPath) -> E::WidgetPath {
-        (**self).self_in_parent(parent)
+    fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
+        (**self).in_parent_path(parent)
     }
-    fn is_subpath(&self, p: &EWPSub<E>) -> bool {
-        (**self).is_subpath(p)
+    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
+        (**self).resolves_by(p)
     }
     fn _focus_on_mouse_down(&self) -> bool {
         (**self)._focus_on_mouse_down()

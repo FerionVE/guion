@@ -14,7 +14,7 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
     pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'a,E>,()> {
         match self {
             Resolvable::Widget(w) => w.into_resolve(sub),
-            Resolvable::Path(p) => Ok(Resolvable::Path(p)),
+            Resolvable::Path(p) => Ok(Resolvable::Path(p + sub)),
         }
     }
     /// completely resolve using the storage
@@ -31,21 +31,21 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
             *dest = p.refc();
         }
     }
-    /// is_subpath on the targeted widget
+    /// if the path particle would resolve to this widget
     #[deprecated]
     #[inline]
-    pub fn is_subpath(&self, p: &EWPSub<E>) -> bool {
+    pub fn resolves_to(&self, p: &EWPSub<E>) -> bool {
         match self {
-            Resolvable::Widget(w) => w.is_subpath(p),
-            Resolvable::Path(w) => w.tip() == p, //TODO WRONG use widget's fns
+            Resolvable::Widget(w) => w.resolves_by(p),
+            Resolvable::Path(w) => p.resolves_to_path(w.refc()), //TODO WRONG use widget's fns
         }
     }
-    /// self_in_parent on the targeted widget
+    /// extend the path representing the parent of this widget to resolve to this widget
     #[deprecated]
     #[inline]
-    pub fn self_in_parent(&self, parent: E::WidgetPath) -> E::WidgetPath {
+    pub fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         match self {
-            Resolvable::Widget(w) => w.self_in_parent(parent),
+            Resolvable::Widget(w) => w.in_parent_path(parent),
             Resolvable::Path(w) => w.refc().into(), //TODO WRONG use widget's fns
         }
     }
@@ -70,7 +70,7 @@ impl<'a,E> ResolvableMut<'a,E> where E: Env {
     pub fn resolve_child_mut(self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> {
         match self {
             ResolvableMut::Widget(w) => w.into_resolve_mut(i,invalidate),
-            ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p)),
+            ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p + i)),
         }
     }
     #[deprecated]
@@ -90,10 +90,10 @@ impl<'a,E> ResolvableMut<'a,E> where E: Env {
     /// is_subpath on the targeted widget
     #[deprecated]
     #[inline]
-    pub fn is_subpath(&self, p: &EWPSub<E>) -> bool {
+    pub fn resolves_by(&self, p: &EWPSub<E>) -> bool {
         match self {
-            ResolvableMut::Widget(w) => w.is_subpath(p),
-            ResolvableMut::Path(w) => w.tip() == p, //TODO WRONG use widget's fns
+            ResolvableMut::Widget(w) => w.resolves_by(p),
+            ResolvableMut::Path(w) => p.resolves_to_path(w.refc()), //TODO WRONG use widget's fns
         }
     }
 }

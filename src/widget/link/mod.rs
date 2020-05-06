@@ -133,7 +133,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         for c in ch {
             let w = c.resolve_widget(stor)?;
             let w = Resolved{
-                path: w.self_in_parent(path.refc()).into(),
+                path: w.in_parent_path(path.refc()).into(),
                 wref: w,
                 stor,
             };
@@ -150,7 +150,7 @@ impl<'c,E> Link<'c,E> where E: Env {
 
         let w = c.resolve_widget(stor)?;
         let w = Resolved{
-            path: w.self_in_parent(path.refc()).into(),
+            path: w.in_parent_path(path.refc()).into(),
             wref: w,
             stor,
         };
