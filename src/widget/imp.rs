@@ -25,8 +25,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'s,E>> {
         (**self).childs_ref()
     }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        (**self)._trace_bounds(l, i, b, force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+        (**self).child_bounds(l, b, force)
     }
     fn focusable(&self) -> bool {
         (**self).focusable()
@@ -106,8 +106,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'s,E>> {
         (**self).childs_ref()
     }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        (**self)._trace_bounds(l, i, b, force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+        (**self).child_bounds(l, b, force)
     }
     fn focusable(&self) -> bool {
         (**self).focusable()
@@ -215,8 +215,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         Widget::into_childs(*self).short_lt()
     }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        (**self)._trace_bounds(l, i, b, force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+        (**self).child_bounds(l, b, force)
     }
     fn focusable(&self) -> bool {
         (**self).focusable()
@@ -295,8 +295,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         Widget::into_childs(*self).short_lt()
     }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        (**self)._trace_bounds(l, i, b, force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+        (**self).child_bounds(l, b, force)
     }
     fn focusable(&self) -> bool {
         (**self).focusable()

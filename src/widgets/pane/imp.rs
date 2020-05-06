@@ -13,8 +13,8 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T
     fn _size(&self, l: Link<E>) -> ESize<E> {
         _size(l,self.orientation)
     }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        _trace_bounds(l,i,b,force,self.orientation)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+        child_bounds(l,b,force,self.orientation)
     }
     fn invalid(&self) -> bool {
         true
@@ -109,11 +109,11 @@ pub fn _size<E>(mut l: Link<E>, o: Orientation) -> ESize<E> where
     s
 }
 
-pub fn _trace_bounds<E>(mut l: Link<E>, i: usize, b: &Bounds, force: bool, o: Orientation) -> Result<Bounds,()> where
+pub fn child_bounds<E>(mut l: Link<E>, b: &Bounds, force: bool, o: Orientation) -> Result<Vec<Bounds>,()> where
     E: Env,
 {
     let sizes = l.child_sizes().expect("Dead Path Inside Pane");
     let bounds = calc_bounds(&b.size,&sizes,o); 
 
-    bounds.get(i).map(|w| *w).ok_or(())
+    Ok(bounds)
 }

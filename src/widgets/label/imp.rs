@@ -46,8 +46,8 @@ impl<'w,E,S> Widget<'w,E> for Label<'w,E,S> where
         vec![]
     }
     
-    fn _trace_bounds(&self, _: Link<E>, _: usize, _: &Bounds, _: bool) -> Result<Bounds,()> {
-        Err(())
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+        Ok(vec![])
     }
     fn focusable(&self) -> bool {
         false

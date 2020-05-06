@@ -121,9 +121,8 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
         s.add_space(self.width,self.orientation);
         s
     }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        if i > 2 {return Err(());}
-        Ok(self.calc_bounds(b,self.state.get())[i])
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+        Ok(self.calc_bounds(b,self.state.get()))
     }
     fn invalid(&self) -> bool {
         true
@@ -195,7 +194,7 @@ impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
     E: Env,
     V: AtomState<f32>+Statize+Sized+'w, V::Statur: Sized,
 {
-    fn calc_bounds(&self, b: &Bounds, v: f32) -> [Bounds;3] {
+    fn calc_bounds(&self, b: &Bounds, v: f32) -> Vec<Bounds> {
         let handle_width = self.width.min(b.w());
         let o = self.orientation;
         let (x,w) = b.par(o);
@@ -207,6 +206,6 @@ impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
         let left = Bounds::from_ori(x, y, w0, h, o);
         let center = Bounds::from_ori(x1, y, handle_width, h, o);
         let right = Bounds::from_ori(x2, y, w2, h, o);
-        [left,center,right]
+        vec![left,center,right]
     }
 }

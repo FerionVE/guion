@@ -12,7 +12,7 @@ pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=S
     fn size(&self) -> Dims;
     fn lines<'s>(&'s self) -> CrazyWorkaroundPPIter<'s>;
 
-    fn generate(s: &str, size: (f32,f32)) -> Self; 
+    fn generate(s: &str, size: (f32,f32), ctx: &mut E::Context) -> Self; 
 }
 
 pub type CrazyWorkaroundPPIter<'a> = Box<dyn Iterator<Item=(Box<dyn Iterator<Item=Option<Bounds>>+'a>,Bounds)>+'a>;

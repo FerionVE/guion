@@ -97,10 +97,13 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         if i.is_empty() {
             return Ok(*b)
         }
-        self.resolve_child(i.index(0))
-            .and_then(|i| self._trace_bounds(l,i,b,force) )
+        let child = self.resolve_child(i.index(0))?;
+        let bounds = self.child_bounds(l,b,force)?;
+        
+        Ok(bounds[child])
     }
-    fn _trace_bounds(&self, l: Link<E>, i: usize, b: &Bounds, force: bool) -> Result<Bounds,()>;
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()>;
+    
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         parent.attached(SubPath::from_id(self.id()))
