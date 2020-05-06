@@ -62,6 +62,13 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.widget.path.refc()
     }
 
+    pub fn ident(&self) -> WidgetIdent<E> {
+        WidgetIdent{
+            id: self.id(),
+            path: self.path(),
+        }
+    }
+
     #[inline]
     pub fn render(&mut self, r: &mut RenderLink<E>) -> bool {
         self.ctx.render(self.widget.reference(),r)

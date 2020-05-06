@@ -70,12 +70,12 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
             l.enqueue_invalidate()
         }
         if let Some(ee) = e.0.is_mouse_up() {
-            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.tip().eq_id(self.id()) && l.is_hovered() && !self.locked {
+            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
                 (self.trigger)(l.reference(),!self.state.get());
                 Self::toggle(l)
             }
         } else if let Some(ee) = e.0.is_kbd_press() {
-            if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.tip().eq_id(self.id()) {
+            if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
                 (self.trigger)(l.reference(),!self.state.get());
                 Self::toggle(l)
             }

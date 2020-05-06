@@ -8,7 +8,7 @@ pub struct KeyState<E> where E: Env {
 pub struct StdPressedKey<E> where E: Env {
     pub key: EEKey<E>,
     ///the widget which was selected (focused) where the key press started
-    pub id: E::WidgetPath,
+    pub down: WidgetIdent<E>,
     ///the time the key press started
     pub ts: u64,
     pub cursor: Option<Offset>,
@@ -16,12 +16,12 @@ pub struct StdPressedKey<E> where E: Env {
 
 impl<E> KeyState<E> where E: Env {
     #[inline]
-    pub fn down(&mut self, key: EEKey<E>, id: E::WidgetPath, ts: u64, cursor: Option<Offset>) -> Option<StdPressedKey<E>> {
+    pub fn down(&mut self, key: EEKey<E>, down: WidgetIdent<E>, ts: u64, cursor: Option<Offset>) -> Option<StdPressedKey<E>> {
         let old = self.up(key.clone());
         self.pressed.push(
             StdPressedKey{
                 key,
-                id,
+                down,
                 ts,
                 cursor,
             }
@@ -58,8 +58,8 @@ impl<E> PressedKey<E> for StdPressedKey<E> where E: Env {
     fn key(&self) -> EEKey<E> {
         self.key.clone()
     }
-    fn widget(&self) -> E::WidgetID {
-        self.id.id().clone()
+    fn widget(&self) -> WidgetIdent<E> {
+        self.down.clone()
     }
     fn timestamp(&self) -> u64 {
         self.ts

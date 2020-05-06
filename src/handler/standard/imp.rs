@@ -12,7 +12,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
     #[inline] 
     fn _event(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         if let Some(_) = e.0.is::<MouseMove>() {
-            l.as_mut().s.mouse.hovered = Some(l.widget.path.clone());
+            l.as_mut().s.mouse.hovered = Some(l.ident());
         }
         S::_event(l,e);
         //todo!()
@@ -25,7 +25,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                 RootEvent::KbdDown{key} => {
                     Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = l.as_ref().s.kbd.focused.clone() {
-                        if !l.widget.stor.has_widget(id.refc()) {
+                        if !l.widget.stor.has_widget(id.refc().path) {
                             //drop event if widget is gone
                             return;
                         }
@@ -36,7 +36,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                             None,
                         );
                         //emit KbdDown event
-                        let mut l = l.with_widget(id.refc()).unwrap();
+                        let mut l = l.with_widget(id.refc().path).unwrap();
                         let wbounds = l.trace_bounds(e.1,false);
                         let event = KbdDown{
                             key: key.clone(),
@@ -55,17 +55,17 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     if let Some(p) = old {
                         let event = KbdUp{
                             key: p.key,
-                            down_widget: p.id.refc(),
+                            down_widget: p.down.refc(),
                             down_ts: p.ts,
                         };
                         if let Some(id) = l.as_ref().s.kbd.focused.clone() {
-                            if let Ok(mut l) = l.with_widget(id) {
+                            if let Ok(mut l) = l.with_widget(id.path) {
                                 let wbounds = l.trace_bounds(e.1,false);
                                 l._event_root((Event::from(event.clone()),&wbounds,e.2));
                             }
                         }
                         //drop up if widget is gone TODO check if this is correct
-                        if let Ok(mut l) = l.with_widget(p.id.refc()) {
+                        if let Ok(mut l) = l.with_widget(p.down.refc().path) {
                             let wbounds = l.trace_bounds(e.1,false);
                             l._event_root((Event::from(event),&wbounds,e.2));
                         }
@@ -77,11 +77,11 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     if let Some(p) = old {
                         let event = KbdPress{
                             key: p.key.clone(),
-                            down_widget: p.id.refc(),
+                            down_widget: p.down.refc(),
                             down_ts: p.ts,
                         };
                         if let Some(id) = l.as_ref().s.kbd.focused.clone() {
-                            if let Ok(mut l) = l.with_widget(id) {
+                            if let Ok(mut l) = l.with_widget(id.path) {
                                 let wbounds = l.trace_bounds(e.1,false);
                                 l._event_root((Event::from(event.clone()),&wbounds,e.2));
                             }
@@ -99,7 +99,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
 
                     l.as_mut().s.key.down(key.clone(),hovered.clone(),e.2,Some(pos));
 
-                    if let Ok(mut w) = l.with_widget(hovered) {
+                    if let Ok(mut w) = l.with_widget(hovered.path) {
                         let wbounds = w.trace_bounds(e.1,false);
                         //focus the hovered if it should by mouse down
                         if w.widget()._focus_on_mouse_down() {
@@ -119,16 +119,16 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                                 key: p.key,
                                 pos: pos,
                                 down_pos: p.cursor.expect("TODO"), //fails if a invalid press was inserted into the state
-                                down_widget: p.id.refc(),
+                                down_widget: p.down.refc(),
                                 down_ts: p.ts
                             };
-                            if !hovered.eq_path::<E>(&p.id) {
-                                if let Ok(mut l) = l.with_widget(hovered) {
+                            if hovered != p.down {
+                                if let Ok(mut l) = l.with_widget(hovered.path) {
                                     let wbounds = l.trace_bounds(e.1,false);
                                     l._event_root((Event::from(event.clone()),&wbounds,e.2));
                                 }
                             }
-                            if let Ok(mut l) = l.with_widget(p.id.refc()) {
+                            if let Ok(mut l) = l.with_widget(p.down.refc().path) {
                                 //event dropped if widget gone
                                 let wbounds = l.trace_bounds(e.1,false);
                                 l._event_root((Event::from(event),&wbounds,e.2));
@@ -141,7 +141,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     l.as_mut().s.mouse.pos = Some(pos);
                     //previous hovered widget
                     if let Some(p) = l.as_mut().s.mouse.hovered.take() {
-                        let mut l = l.with_widget(p)
+                        let mut l = l.with_widget(p.path)
                             .expect("Lost Widget");
                         let wbounds = l.trace_bounds(e.1,false);
                         l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
@@ -149,7 +149,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     //hover state will be updated as the event passes through the widget tree
                     l._event_root((Event::from(MouseMove{pos}),e.1,e.2));
                     if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
-                        let mut l = l.with_widget(p)
+                        let mut l = l.with_widget(p.path)
                             .expect("Lost Widget");
                         let wbounds = l.trace_bounds(e.1,false);
                         l._event_root((Event::from(MouseEnter{}),&wbounds,e.2));
@@ -158,7 +158,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                 }
                 RootEvent::MouseLeaveWindow{} => {
                     if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
-                        let mut l = l.with_widget(p)
+                        let mut l = l.with_widget(p.path)
                             .expect("Lost Widget");
                         let wbounds = l.trace_bounds(e.1,false);
                         l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
@@ -175,7 +175,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                 }
                 RootEvent::TextInput{text} => {
                     if let Some(id) = l.as_ref().s.kbd.focused.clone() {
-                        if let Ok(mut l) = l.with_widget(id) {
+                        if let Ok(mut l) = l.with_widget(id.path) {
                             let wbounds = l.trace_bounds(e.1,false);
                             l._event_root((Event::from(TextInput{text}),&wbounds,e.2));
                         }
@@ -184,7 +184,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                 RootEvent::MouseScroll{x,y} => {
                     let hovered = l.as_ref().s.mouse.hovered.clone().expect("TODO");
                     
-                    if let Ok(mut w) = l.with_widget(hovered) {
+                    if let Ok(mut w) = l.with_widget(hovered.path) {
                         let wbounds = w.trace_bounds(e.1,false);
                         w._event_root((Event::from(MouseScroll{x,y}),&wbounds,e.2))
                     };

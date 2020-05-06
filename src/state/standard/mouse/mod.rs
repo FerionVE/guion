@@ -7,7 +7,7 @@ pub mod drag;
 pub struct MouseState<E> where E: Env {
     pub drag: Option<DragItem<E>>,
     pub pos: Option<Offset>,
-    pub hovered: Option<E::WidgetPath>,
+    pub hovered: Option<WidgetIdent<E>>,
 }
 
 impl<E> MouseState<E> where E: Env {

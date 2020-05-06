@@ -30,11 +30,8 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
         senf.extend_from_slice(sub._get());
         self.slice.end += ExactSizeIterator::len(&sub.slice); //todo fix ambi
     }
-    fn id(&self) -> E::WidgetID {
-        self.tip().clone().into()
-    }
-    fn tip(&self) -> &S {
-        &self.v[self.slice.end-1]
+    fn tip(&self) -> Option<&S> {
+        self.v.get(self.slice.end-1)
     }
     fn parent(&self) -> Option<Self> {
         if self.is_empty() {return None;}
@@ -55,26 +52,22 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
         }
     }
     fn index<T>(&self, i: T) -> &S where T: SliceIndex<[S],Output=S> {
-        &self._get()[i]
+        &self._get()[i] //TODO eventually non-panic refactor
     }
 }
 
 impl<E,S> SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
-    pub fn new(range: &[S], root_id: S) -> Self {
-        let mut dest = Vec::with_capacity(range.len()+1);
-        dest.push(root_id);
+    pub fn new(range: &[S]) -> Self {
+        let mut dest = Vec::with_capacity(range.len()); //TODO simplify and generalize
         dest.extend_from_slice(range);
         Self{
-            slice: 1..dest.len(),
+            slice: 0..dest.len(),
             v: Arc::new(dest),
             _p: PhantomData,
         }
     }
     fn _get(&self) -> &[S] {
         &self.v[self.slice.clone()]
-    }
-    fn _root(&self) -> &S {
-        &self.v[0]
     }
 }
 
@@ -83,18 +76,6 @@ impl<E,S> RefClonable for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Syn
         self.clone()
     }
 }
-
-impl<E,S> Add<Self> for SimplePath<E,S> where
-    E: Env,
-    S: SubPath<E> + From<E::WidgetID>+Into<E::WidgetID> + Send+Sync + 'static,
-    Self: From<E::WidgetPath>+Into<E::WidgetPath>
-{
-    type Output = E::WidgetPath;
-    fn add(self, rhs: Self) -> Self::Output {
-        self.attached_subpath(&rhs).into()
-    }
-}
-
 
 //TODO fix the AsWidget generic impl
 /*impl<E,S> AsWidget<'static,E> for SimplePath<E,S> where E: Env {

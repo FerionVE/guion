@@ -32,7 +32,7 @@ impl WidgetID for StdID {
     
 }
 
-impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self>, EWPSub<E>: Into<Self> + From<Self>, Self: From<EWPSub<E>> {
+impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> {
     fn from_id(id: E::WidgetID) -> Self {
         id.into()
     }
@@ -47,8 +47,9 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self>,
         self == &id.into()
     }
     fn resolves_to_path(&self, p: E::WidgetPath) -> bool {
-        let tip: Self = (*p.tip()).into();
-        *self == tip
+        p.tip().map_or(false,|tip| { //TODO verify correctness of None => false
+            *self == tip.clone().into_id().into()
+        })
     }
 
     fn is<T: Any>(&self) -> bool { //TODO default underlying-trait impl hack

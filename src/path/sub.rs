@@ -4,8 +4,8 @@ pub trait SubPath<E>:
     Clone +
     PartialEq<Self> +
     Sized +
-    From<EWPSub<E>> +
-    Into<EWPSub<E>> +
+    //From<EWPSub<E>> +
+    //Into<EWPSub<E>> +
 where E: Env {
     fn from_id(id: E::WidgetID) -> Self;
     fn _eq_id(&self, id: E::WidgetID) -> bool;

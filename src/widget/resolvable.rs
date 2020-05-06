@@ -14,7 +14,7 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
     pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'a,E>,()> {
         match self {
             Resolvable::Widget(w) => w.into_resolve(sub),
-            Resolvable::Path(p) => Ok(Resolvable::Path(p + sub)),
+            Resolvable::Path(p) => Ok(Resolvable::Path(p.attached_subpath(&sub))),
         }
     }
     /// completely resolve using the storage
@@ -70,7 +70,7 @@ impl<'a,E> ResolvableMut<'a,E> where E: Env {
     pub fn resolve_child_mut(self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> {
         match self {
             ResolvableMut::Widget(w) => w.into_resolve_mut(i,invalidate),
-            ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p + i)),
+            ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p.attached_subpath(&i))),
         }
     }
     #[deprecated]

@@ -15,7 +15,6 @@ pub trait WidgetPath<E>:
     From<E::WidgetPath> +
     RefClonable +
     Clone +
-    Add<Self,Output=E::WidgetPath> +
     PartialEq<Self> +
     Sized +
     Send +
@@ -36,8 +35,7 @@ where E: Env {
         self
     }
 
-    fn id(&self) -> E::WidgetID;
-    fn tip(&self) -> &Self::SubPath;
+    fn tip(&self) -> Option<&Self::SubPath>;
 
     fn parent(&self) -> Option<Self>;
 
@@ -46,10 +44,10 @@ where E: Env {
     fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize>;
     fn index<T>(&self, i: T) -> &Self::SubPath where T: SliceIndex<[Self::SubPath],Output=Self::SubPath>;
 
-    #[inline]
+    /*#[inline]
     fn eq_path<F: Env + 'static>(&self, o: &F::WidgetPath) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
-        self.id().id_eq(&o.id())
-    }
+        self.tip() == o.tip()
+    }*/
     
     #[deprecated]
     #[allow(deprecated)]
