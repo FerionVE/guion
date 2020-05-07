@@ -1,6 +1,6 @@
 # guion
 
-[![docs.rs](https://docs.rs/guion/badge.svg)](https://docs.rs/guion/)
+[Documentation](https://docs.rs/guion/0.2.0-dev1/)
 
 guion is heavily WIP right now, API and concepts are still in flux.
 

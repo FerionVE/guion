@@ -149,7 +149,7 @@ pub enum RootEvent<E> where E: Env {
     TextInput{text: String},
     MouseDown{key: EEKey<E>},
     MouseUp{key: EEKey<E>},
-    MouseScroll{x: i32, y: i32},
+    MouseScroll{x: i32, y: i32}, //TODO replace with Offset
     MouseMove{pos: Offset}, //TODO which mouse moves??
     WindowMove{pos: Offset,size: Dims},
     WindowResize{size: Dims},

@@ -4,6 +4,9 @@ use std::{ffi::{OsStr,OsString}, path::*};
 
 pub trait Caption<'w> {
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's;
+    fn len<'s>(&'s self) -> usize where 'w: 's {
+        self.caption().len()
+    }
 }
 
 impl<'w> Caption<'w> for str {
