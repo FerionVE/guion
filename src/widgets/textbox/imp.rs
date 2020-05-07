@@ -60,21 +60,30 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
             let s = ee.text;
             l.mutate_closure(Box::new(move |mut w,_,_| {
                 let wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
-                wc.push(&s);
+                wc.push(cursor as usize,&s);
                 cursor += s.len() as u32;
                 cursor = cursor.min(wc.len() as u32);
                 w.traitcast_mut::<dyn AtomStateMut<u32>>().unwrap().set(cursor);
             }),true);
         } else if let Some(ee) = e.0.is_kbd_press() {
-            if ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE {
+            if
+                ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE ||
+                ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
+            {
                 l.mutate_closure(Box::new(move |mut w,_,_| {
                     let wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
                     if ee.key == EEKey::<E>::BACKSPACE {
-                        wc.pop(1);
+                        wc.pop_left(cursor as usize,1);
                         cursor=cursor.saturating_sub(1);
                     }
                     if ee.key == EEKey::<E>::ENTER {
-                        wc.push("\n");
+                        wc.push(cursor as usize,"\n");
+                        cursor+=1;
+                    }
+                    if ee.key == EEKey::<E>::LEFT {
+                        cursor=cursor.saturating_sub(1);
+                    }
+                    if ee.key == EEKey::<E>::RIGHT {
                         cursor+=1;
                     }
                     cursor = cursor.min(wc.len() as u32);

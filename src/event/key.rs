@@ -17,6 +17,10 @@ pub trait Key: Clone + PartialEq + Debug {
     const SPACE: Self;
     const TAB: Self;
     const BACKSPACE: Self;
+    const LEFT: Self;
+    const RIGHT: Self;
+    const UP: Self;
+    const DOWN: Self;
 
     fn origin(&self) -> Self::Origin;
 }

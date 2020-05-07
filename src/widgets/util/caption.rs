@@ -75,27 +75,29 @@ impl_caption_gen!(
 );
 
 pub trait CaptionMut<'w>: Caption<'w> {
-    fn push<'s>(&'s mut self, s: &str) where 'w: 's;
-    fn pop<'s>(&'s mut self, n: usize) where 'w: 's;
+    fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's;
+    fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's;
 }
 
 impl<'w> CaptionMut<'w> for String {
-    fn push<'s>(&'s mut self, s: &str) where 'w: 's {
-        self.push_str(s);
+    fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's {
+        self.insert_str(off,s);
     }
-    fn pop<'s>(&'s mut self, n: usize) where 'w: 's {
-        for _ in 0..n {
-            self.pop();
+    fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's {
+        let popable = n.min(off).min(self.len());
+        let pop_start = off - popable;
+        for _ in 0..popable { //TODO VERY INEFFICIENT optimize
+            self.remove(pop_start);
         }
     }
 }
 
 impl<'w,'l,T> CaptionMut<'w> for &'w mut T where T: CaptionMut<'l>+?Sized, 'l: 'w {
-    fn push<'s>(&'s mut self, s: &str) where 'w: 's {
-        (**self).push(s)
+    fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's {
+        (**self).push(off,s)
     }
-    fn pop<'s>(&'s mut self, n: usize) where 'w: 's {
-        (**self).pop(n)
+    fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's {
+        (**self).pop_left(off,n)
     }
 }
 
