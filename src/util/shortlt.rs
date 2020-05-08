@@ -49,6 +49,16 @@ impl<'l:'s,'s,E: Env> Resolvable<'l,E> {
         }
     }
 }
+pub trait ShortResolvableRef<'l,'s,'y,E> where 'l: 's, 'l: 'y, 's: 'y, E: Env {
+    fn short_lt(self) -> &'y Resolvable<'s,E>;
+}
+impl<'l,'s,'y,E> ShortResolvableRef<'l,'s,'y,E> for &'y Resolvable<'l,E> where 'l: 's, 'l: 'y, 's: 'y, E: Env {
+    fn short_lt(self) -> &'y Resolvable<'s,E> {
+        unsafe{
+            std::mem::transmute::<&'y Resolvable<'l,E>,&'y Resolvable<'s,E>>(self)
+        }
+    }
+}
 impl<'l:'s,'s,E: Env> ResolvableMut<'l,E> {
     pub fn short_lt(self) -> ResolvableMut<'s,E> {
         match self {
@@ -83,6 +93,16 @@ impl<'l:'s,'s,E: Env> ResolvedMut<'l,E> {
         ResolvedMut{
             wref: self.wref.short_lt(),
             path: self.path,
+        }
+    }
+}
+pub trait ShortResolvedRef<'l,'s,'y,E> where 'l: 's, 'l: 'y, 's: 'y, E: Env {
+    fn short_lt(self) -> &'y Resolved<'s,E>;
+}
+impl<'l,'s,'y,E> ShortResolvedRef<'l,'s,'y,E> for &'y Resolved<'l,E> where 'l: 's, 'l: 'y, 's: 'y, E: Env {
+    fn short_lt(self) -> &'y Resolved<'s,E> {
+        unsafe{
+            std::mem::transmute::<&'y Resolved<'l,E>,&'y Resolved<'s,E>>(self)
         }
     }
 }

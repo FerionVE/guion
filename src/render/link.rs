@@ -180,14 +180,14 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     #[inline]
     pub fn _render_widget(&mut self, mut w: Link<E>, pre: impl FnOnce(&mut ESVariant<E>,&mut Border), post: impl FnOnce(&mut ESVariant<E>,&mut Border)) -> bool {
-        if self.requires_render(w.widget()) {
+        if self.requires_render(&*w.widget) {
             let mut border = w.default_border().clone();
             let mut style = self.v.clone();
 
             pre(&mut style, &mut border);
 
-            w.widget().border(&mut border);
-            w.widget().style(&mut style);
+            w.widget.border(&mut border);
+            w.widget.style(&mut style);
 
             post(&mut style, &mut border);
 
@@ -202,7 +202,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             };
 
             if w.render(&mut fork) {
-                if w.widget().invalid() {
+                if w.widget.invalid() {
                     w.enqueue_validate_render();
                 }
                 return true;

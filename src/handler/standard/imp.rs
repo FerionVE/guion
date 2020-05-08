@@ -102,7 +102,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     if let Ok(mut w) = l.with_widget(hovered.path) {
                         let wbounds = w.trace_bounds(e.1,false);
                         //focus the hovered if it should by mouse down
-                        if w.widget()._focus_on_mouse_down() {
+                        if w.widget._focus_on_mouse_down() {
                             Self::focus(w.reference(),e.2,e.1,&wbounds);
                         }
 

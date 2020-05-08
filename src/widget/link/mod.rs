@@ -48,14 +48,10 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn enqueue_validate_size(&mut self, s: ESize<E>) {
         self.enqueue(StdEnqueueable::ValidateWidgetSize{path: self.widget.path.refc(),size: s})
     }
-    #[inline]
-    pub fn widget(&self) -> &dyn Widget<'c,E> {
-        &**self.widget.widget()
-    }
 
     #[inline]
     pub fn id(&self) -> E::WidgetID {
-        self.widget().id()
+        self.widget.id()
     }
 
     pub fn path(&self) -> E::WidgetPath {
@@ -95,7 +91,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn _event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
         let mut b = *self.ctx.default_border();
-        self.widget().border(&mut b);
+        self.widget.border(&mut b);
         let b = e.1.inside_border(&b); //TODO unify border opt fns into on layer (why tf is border for event done here and border for render done in RenderLink??)
 
         if let Some(ee) = e.0.filter(&b) {
@@ -178,7 +174,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     pub fn child_sizes(&mut self) -> Result<Vec<ESize<E>>,()> {
-        let mut dest = Vec::with_capacity(self.widget().childs());
+        let mut dest = Vec::with_capacity(self.widget.childs());
         self.for_childs(#[inline] |mut w| dest.push(w.size()) )?;
         Ok(dest)
     }
@@ -219,7 +215,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     pub fn childs<'s>(&'s self) -> impl Iterator<Item=Resolvable<'s,E>>+'s where 'c: 's {
-        let w = self.widget().short_lt();
+        let w = (&self.widget).short_lt(); //TODO this looks like a fkn move and ref
         (0..w.childs())
             .map(move |i| w.child(i).unwrap() )
     }

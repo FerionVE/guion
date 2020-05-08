@@ -1,6 +1,7 @@
 use super::*;
 use std::{ops::Deref, borrow::Borrow};
 
+/// WidgetIdent is combined WidgetID and Path, and can be found in event to make it comparable by the ID and resolvable by the Path
 #[derive(Clone)]
 pub struct WidgetIdent<E> where E: Env {
     pub id: E::WidgetID,
@@ -26,7 +27,7 @@ impl<E> AsRef<E::WidgetPath> for WidgetIdent<E> where E: Env {
 }
 
 impl<E> Deref for WidgetIdent<E> where E: Env {
-    type Target: = E::WidgetPath;
+    type Target = E::WidgetPath;
     fn deref(&self) -> &Self::Target {
         &self.path
     }

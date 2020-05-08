@@ -1,5 +1,5 @@
 use super::*;
-use util::{state::{AtomStateMut, AtomState}, caption::CaptionMut};
+use util::{state::*, caption::CaptionMut};
 
 impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
     E: Env,
@@ -8,8 +8,8 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
     S: Caption<'w>+Statize, S::Statur: Sized,
-    P: AtomState<(u32,u32)>+Statize, P::Statur: Sized,
-    C: AtomState<u32>+Statize, C::Statur: Sized,
+    P: AtomStateX<E,(u32,u32)>+Statize, P::Statur: Sized,
+    C: AtomStateX<E,u32>+Statize, C::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -54,7 +54,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
     }
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         //e.0._debug_type_name();
-        let mut cursor = self.cursor.get();
+        let mut cursor = self.cursor.get(l.ctx);
 
         if let Some(ee) = e.0.is_text_input() {
             let s = ee.text;
@@ -70,7 +70,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
                 ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE ||
                 ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
             {
-                l.mutate_closure(Box::new(move |mut w,_,_| {
+                l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
                     if ee.key == EEKey::<E>::BACKSPACE {
                         wc.pop_left(cursor as usize,1);
@@ -87,7 +87,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
                         cursor+=1;
                     }
                     cursor = cursor.min(wc.len() as u32);
-                    w.traitcast_mut::<dyn AtomStateMut<u32>>().unwrap().set(cursor);
+                    w.traitcast_mut::<dyn AtomStateXMut<E,u32>>().unwrap().set(cursor,ctx);
                 }),true);
             }
         } else if let Some(ee) = e.0.is_mouse_scroll() {
@@ -138,8 +138,8 @@ impl<'w,E,S,P,C> WidgetMut<'w,E> for TextBox<'w,E,S,P,C> where
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
     S: CaptionMut<'w>+Statize, S::Statur: Sized,
-    P: AtomStateMut<(u32,u32)>+Statize, P::Statur: Sized,
-    C: AtomStateMut<u32>+Statize, C::Statur: Sized,
+    P: AtomStateXMut<E,(u32,u32)>+Statize, P::Statur: Sized,
+    C: AtomStateXMut<E,u32>+Statize, C::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
@@ -156,13 +156,13 @@ impl<'w,E,S,P,C> WidgetMut<'w,E> for TextBox<'w,E,S,P,C> where
 
     impl_traitcast!(
         dyn CaptionMut => |s| &s.text;
-        dyn AtomStateMut<(u32,u32)> => |s| &s.scroll;
-        dyn AtomStateMut<u32> => |s| &s.cursor;
+        dyn AtomStateXMut<E,(u32,u32)> => |s| &s.scroll;
+        dyn AtomStateXMut<E,u32> => |s| &s.cursor;
     );
     impl_traitcast_mut!(
         dyn CaptionMut => |s| &mut s.text;
-        dyn AtomStateMut<(u32,u32)> => |s| &mut s.scroll;
-        dyn AtomStateMut<u32> => |s| &mut s.cursor;
+        dyn AtomStateXMut<E,(u32,u32)> => |s| &mut s.scroll;
+        dyn AtomStateXMut<E,u32> => |s| &mut s.cursor;
     );
 }
 
@@ -174,8 +174,8 @@ pub struct State<E> where E: Env {
 }
 
 impl<E> State<E> where E: Env {
-    pub fn retrieve<'a,S,P,C>(s: &S, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a>, P: AtomState<(u32,u32)>, C: AtomState<u32> {
-        let off = p.get();
+    pub fn retrieve<'a,S,P,C>(s: &S, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a>, P: AtomStateX<E,(u32,u32)>, C: AtomStateX<E,u32> {
+        let off = p.get(ctx);
         let caption = s.caption();
         let glyphs = ESPPText::<E>::generate(caption.as_ref(),(20.0,20.0),ctx);
         assert_eq!(glyphs.chars() as usize,caption.len()+1);
@@ -184,7 +184,7 @@ impl<E> State<E> where E: Env {
             siz.w.saturating_sub( b.w() ),
             siz.h.saturating_sub( b.h() ),
         );
-        let cursor = c.get();
+        let cursor = c.get(ctx);
         let num_glyphs = caption.len() as u32;
         let cursor = cursor.min(num_glyphs);
         Self{

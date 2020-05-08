@@ -1,5 +1,6 @@
 //! Widget reference including it's path and a reference to the root
 use super::*;
+use std::ops::Deref;
 
 /// A reference to a resolved Widget
 pub struct Resolved<'a,E> where E: Env {
@@ -82,6 +83,14 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         let stor = self.stor.with_env::<F>();
         let path = rc_path_with_env::<E,F>(self.path.refc());
         stor.widget(path).unwrap()
+    }
+}
+
+impl<'a,E> Deref for Resolved<'a,E> where E: Env {
+    type Target = WidgetRef<'a,E>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.wref
     }
 }
 
