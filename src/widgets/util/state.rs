@@ -64,7 +64,8 @@ pub trait AtomStateXMut<E,T>: AtomStateX<E,T> where E: Env {
     fn set(&mut self, v: T, c: &mut E::Context);
 }
 
-impl<E,T,I> AtomStateX<E,T> for I where I: AtomState<T>, T: Copy, E: Env {
+// TODO make it less error-prone as you probably forget the X in the traitcast fns
+impl<E,T,I> AtomStateX<E,T> for I where I: AtomState<T>, T: Copy, E: Env { 
     fn get(&self, _: &mut E::Context) -> T {
         self.get()
     }

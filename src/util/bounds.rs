@@ -214,9 +214,22 @@ impl<T,U> From<(T,U)> for Dims where T: Into<u32>, U: Into<u32> {
     }
 }
 
-impl<T,U> From<(T,U)> for Offset where T: Into<i32>, U: Into<i32> {
+/*impl<T,U> From<(T,U)> for Offset where T: Into<i32>, U: Into<i32> {
     fn from(s: (T,U)) -> Self {
         Self{x: s.0.into(), y: s.1.into()}
+    }
+}*/
+
+// TODO richer casting over num trait, also reverse impl
+
+impl From<(i32,i32)> for Offset {
+    fn from(s: (i32,i32)) -> Self {
+        Self{x: s.0, y: s.1}
+    }
+}
+impl From<(u32,u32)> for Offset {
+    fn from(s: (u32,u32)) -> Self {
+        Self{x: s.0 as i32, y: s.1 as i32}
     }
 }
 

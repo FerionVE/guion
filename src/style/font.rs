@@ -26,6 +26,13 @@ pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=S
         i
     }
 
+    fn glyphs<'s>(&'s self) -> Box<dyn Iterator<Item=PPChar>+'s> {
+        Box::new( //TODO OPTI use ext trait to avoid boxing
+            self.lines()
+            .flat_map(|(c,_)| c )
+        )
+    }
+
     fn char_at(&self, i: u32) -> Option<PPChar> {
         self.lines()
             .flat_map(|(c,_)| c )

@@ -1,5 +1,6 @@
 use super::*;
 use util::{state::*, caption::CaptionMut};
+use state::{Cursor, State};
 
 impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
     E: Env,
@@ -36,7 +37,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
         let mut r = r.inside_border(&border);
         let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&r.b);
         if let Some(c) = s.cursor_display_pos(s.cursor) { //TODO fix as it should work if cursor is at end
-            let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 -10, 1, 20);
+            let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 -10, 2, 20);
             let b = b - s.off2();
             r.slice(&b)
                 .with(&[
@@ -55,15 +56,17 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         //e.0._debug_type_name();
         let mut cursor = self.cursor.get(l.ctx);
+        let border = Border::new(4, 4, 4, 4);
+        let b = e.1.inside_border(&border);
 
         if let Some(ee) = e.0.is_text_input() {
             let s = ee.text;
-            l.mutate_closure(Box::new(move |mut w,_,_| {
+            l.mutate_closure(Box::new(move |mut w,ctx,_| {
                 let wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
                 wc.push(cursor as usize,&s);
                 cursor += s.len() as u32;
                 cursor = cursor.min(wc.len() as u32);
-                w.traitcast_mut::<dyn AtomStateMut<u32>>().unwrap().set(cursor);
+                w.traitcast_mut::<dyn AtomStateXMut<E,u32>>().unwrap().set(cursor,ctx);
             }),true);
         } else if let Some(ee) = e.0.is_kbd_press() {
             if
@@ -91,17 +94,30 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
                 }),true);
             }
         } else if let Some(ee) = e.0.is_mouse_scroll() {
-            let border = Border::new(4, 4, 4, 4);
-            let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&e.1.inside_border(&border));
+            let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
+            
             let off = (
                 s.off.0 as i32 + ee.x,
                 s.off.1 as i32 + ee.y,
             );
             let off = s.bound_off((off.0.max(0) as u32, off.1.max(0) as u32));
-            l.mutate_closure(Box::new(move |mut w,_,_| {
-                let w = w.traitcast_mut::<dyn AtomStateMut<(u32,u32)>>().unwrap();
-                w.set(off);
+            l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                let w = w.traitcast_mut::<dyn AtomStateXMut<E,(u32,u32)>>().unwrap();
+                w.set(off,ctx);
             }),true);
+        } else if l.is_hovered() && l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()).is_some() {
+                let cursor = l.state().cursor_pos().expect("TODO"); //TODO strange event handling
+
+                let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
+                
+                let mut tpos = cursor - b.off + Offset::from(s.off);
+                tpos.y+=10; //TODO FIX boundary precision all over the place
+                let cursor = s.cursor_pos_reverse(tpos);
+                assert!(cursor < s.glyphs.chars());
+
+                l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                    w.traitcast_mut::<dyn AtomStateXMut<E,u32>>().unwrap().set(cursor,ctx)
+                }),true);
         }
     }
     fn _size(&self, _: Link<E>) -> ESize<E> {
@@ -164,62 +180,4 @@ impl<'w,E,S,P,C> WidgetMut<'w,E> for TextBox<'w,E,S,P,C> where
         dyn AtomStateXMut<E,(u32,u32)> => |s| &mut s.scroll;
         dyn AtomStateXMut<E,u32> => |s| &mut s.cursor;
     );
-}
-
-pub struct State<E> where E: Env {
-    off: (u32,u32),
-    max_off: (u32,u32), 
-    cursor: u32,
-    glyphs: ESPPText<E>,
-}
-
-impl<E> State<E> where E: Env {
-    pub fn retrieve<'a,S,P,C>(s: &S, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a>, P: AtomStateX<E,(u32,u32)>, C: AtomStateX<E,u32> {
-        let off = p.get(ctx);
-        let caption = s.caption();
-        let glyphs = ESPPText::<E>::generate(caption.as_ref(),(20.0,20.0),ctx);
-        assert_eq!(glyphs.chars() as usize,caption.len()+1);
-        let siz = glyphs.size();
-        let max_off = (
-            siz.w.saturating_sub( b.w() ),
-            siz.h.saturating_sub( b.h() ),
-        );
-        let cursor = c.get(ctx);
-        let num_glyphs = caption.len() as u32;
-        let cursor = cursor.min(num_glyphs);
-        Self{
-            off,
-            max_off,
-            cursor,
-            glyphs,
-        }
-    }
-    pub fn bound_off(&self, o: (u32,u32)) -> (u32,u32) {
-        (
-            o.0.min(self.max_off.0),
-            o.1.min(self.max_off.1),
-        )
-    }
-    pub fn bound_off2(&self, o: (u32,u32)) -> Offset {
-        Offset{
-            x: o.0.min(self.max_off.0) as i32,
-            y: o.1.min(self.max_off.1) as i32,
-        }
-    }
-    pub fn off2(&self) -> Offset {
-        Offset{
-            x: self.off.0 as i32,
-            y: self.off.1 as i32,
-        }
-    }
-
-    pub fn cursor_display_pos(&self, i: u32) -> Option<(u32,u32)> {
-        self.glyphs.char_at(i)
-        .map(|i| 
-            (
-                i.offset.x as u32,
-                i.offset.y as u32,
-            )
-        )
-    }
 }

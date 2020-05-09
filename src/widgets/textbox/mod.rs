@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use util::caption::Caption;
 
 pub mod imp;
+pub mod state;
 
 pub struct TextBox<'w,E,S,P,C> where
     E: Env,
@@ -30,7 +31,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),u32> where
             style: vec![],
             border: None,
             text: "".to_owned(),
-            scroll: (9,0),
+            scroll: (0,0),
             cursor: 0,
             p: PhantomData,
         }
