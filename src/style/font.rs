@@ -39,6 +39,10 @@ pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=S
             .skip(i as usize)
             .next()
     }
+
+    fn line_ascent(&self) -> u32;
+    fn line_height(&self) -> u32;
+    fn line_distance(&self) -> u32;
 }
 
 pub struct PPChar {

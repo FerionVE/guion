@@ -30,6 +30,18 @@ impl Bounds {
             }
         }
     }
+    pub fn from_xyxy(x0: i32, y0: i32, x1: i32, y1: i32) -> Self {
+        Self{
+            off: Offset{
+                x: x0,
+                y: y0,
+            },
+            size: Dims{
+                w: x1.saturating_sub(x0) as u32,
+                h: y1.saturating_sub(y0) as u32,
+            }
+        }
+    }
     pub const fn from_xy(x: i32, y: i32) -> Self {
         Self::from_xywh(x,y,0,0)
     }

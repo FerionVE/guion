@@ -214,7 +214,8 @@ mod imp {
         i8;i16;i32;i64;i128;isize;
         u8;u16;u32;u64;u128;usize;
         str;String;//&'static str;
-        Path;PathBuf
+        Path;PathBuf;
+        crate::widgets::textbox::state::Cursor
     );
 
     macro_rules! impl_statize_tuple {

@@ -1,6 +1,7 @@
 use super::*;
 use std::marker::PhantomData;
 use util::caption::Caption;
+use state::Cursor;
 
 pub mod imp;
 pub mod state;
@@ -21,7 +22,7 @@ pub struct TextBox<'w,E,S,P,C> where
     p: PhantomData<&'w mut ()>,
 }
 
-impl<'w,E> TextBox<'w,E,String,(u32,u32),u32> where
+impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor> where
     E: Env,
 {
     pub fn new(id: E::WidgetID) -> Self {
@@ -32,7 +33,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),u32> where
             border: None,
             text: "".to_owned(),
             scroll: (0,0),
-            cursor: 0,
+            cursor: Cursor{select: 0, caret: 0}, //TODO default trait
             p: PhantomData,
         }
     }
