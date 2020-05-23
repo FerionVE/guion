@@ -8,7 +8,7 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, _: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, _: Link<E>, r: &mut RenderLink<E>) {
         r.with(&[
             StdVerb::ObjBackground,
         ])
@@ -22,7 +22,6 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
             StdVerb::ObjBorder,
         ])
             .border_rect(2);
-        true
     }
     fn _event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
         

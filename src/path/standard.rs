@@ -1,13 +1,13 @@
 use super::*;
 use std::{ops::Range, sync::Arc, marker::PhantomData};
+use arc_slice::ArcSlice;
 
 #[allow(type_alias_bounds)]
 pub type StandardPath<E: Env> = SimplePath<E,StdID>;
 
 #[derive(PartialEq,Clone)]
 pub struct SimplePath<E,S> {
-    v: Arc<Vec<S>>,
-    slice: Range<usize>,
+    v: ArcSlice<S>,
     _p: PhantomData<E>,
 }
 
@@ -18,56 +18,50 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
 {
     type SubPath = S;
     fn attach(&mut self, sub: S) {
-        Arc::make_mut(&mut self.v).push(sub);
-        self.slice.end += 1;
+        self.v.push(sub);
     }
     fn attached(mut self, sub: S) -> Self { //TODO can be default impl
         self.attach(sub);
         self
     }
     fn attach_subpath(&mut self, sub: &Self) {
-        let senf = Arc::make_mut(&mut self.v);
-        senf.extend_from_slice(sub._get());
-        self.slice.end += ExactSizeIterator::len(&sub.slice); //todo fix ambi
+        self.v.extend_from_slice(&sub.v);
     }
     fn tip(&self) -> Option<&S> {
-        self.v.get(self.slice.end-1)
+        self.v.get(self.v.len()-1)
+    }
+    fn exact_eq(&self, o: &Self) -> bool {
+        self.v[..] == o.v[..]
     }
     fn parent(&self) -> Option<Self> {
         if self.is_empty() {return None;}
+        let mut parent = self.v.refc();
+        parent.pop().unwrap();
         Some(Self{
-            v: self.v.refc(),
-            slice: self.slice.start .. self.slice.end-1,
+            v: parent,
             _p: PhantomData,
         })
     }
     fn is_empty(&self) -> bool {
-        ExactSizeIterator::len(&self.slice) == 0
+        self.v.is_empty()
     }
     fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize> {
         Self{
-            v: self.v.refc(),
-            slice: slice_range(&self.slice,range),
+            v: self.v.slice(range),
             _p: PhantomData,
         }
     }
     fn index<T>(&self, i: T) -> &S where T: SliceIndex<[S],Output=S> {
-        &self._get()[i] //TODO eventually non-panic refactor
+        &self.v[i] //TODO eventually non-panic refactor
     }
 }
 
 impl<E,S> SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
     pub fn new(range: &[S]) -> Self {
-        let mut dest = Vec::with_capacity(range.len()); //TODO simplify and generalize
-        dest.extend_from_slice(range);
         Self{
-            slice: 0..dest.len(),
-            v: Arc::new(dest),
+            v: ArcSlice::from(range),
             _p: PhantomData,
         }
-    }
-    fn _get(&self) -> &[S] {
-        &self.v[self.slice.clone()]
     }
 }
 
@@ -75,6 +69,10 @@ impl<E,S> RefClonable for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Syn
     fn refc(&self) -> Self {
         self.clone()
     }
+}
+
+unsafe impl<E,S> Statize for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
+    type Statur = Self;
 }
 
 //TODO fix the AsWidget generic impl
@@ -95,18 +93,3 @@ impl<E,S> AsWidgetMut<'static,E> for SimplePath<E,S> where E: Env {
     }
 }*/
 
-fn slice_range<S>(range: &Range<usize>, slice: S) -> Range<usize> where S: RangeBounds<usize> {
-    let (os,oe) = (range.start,range.end);
-    let (mut s,mut e) = (os,oe);
-    match slice.end_bound() {
-        std::ops::Bound::Included(b) => e = oe.min(b-1+os),
-        std::ops::Bound::Excluded(b) => e = oe.min(b+os),
-        std::ops::Bound::Unbounded => (),
-    }
-    match slice.start_bound() {
-        std::ops::Bound::Included(b) => s = os.max(b+os),
-        std::ops::Bound::Excluded(b) => s = os.max(b-1+os),
-        std::ops::Bound::Unbounded => (),
-    }
-    s..e
-}

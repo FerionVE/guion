@@ -1,7 +1,12 @@
 use super::*;
 use state::standard::key::StdPressedKey;
 
-impl<S,E> HandlerStateful<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self> + 'static, EEvent<E>: StdVarSup<E> {
+impl<S,E> HandlerStateful<E> for StdHandler<S,E> where
+    S: Handler<E>,
+    E: Env,
+    E::Context: AsRefMut<Self> + AsHandlerStateful<E> + 'static,
+    EEvent<E>: StdVarSup<E>
+{
     type K = StdPressedKey<E>;
     fn hovered(&self) -> Option<E::WidgetID> { //TODO eventually WidgetIdent return in trait
         self.s.mouse.hovered.as_ref().map(|p| p.id.clone() )

@@ -23,7 +23,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         r.with(&[
             StdVerb::ObjForeground,
             StdVerb::Hovered(l.is_hovered()),
@@ -49,7 +49,6 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
             StdVerb::Pressed(Self::pressed(&l).is_some())
         ])
             .render_text(self.text.caption().as_ref(),l.ctx);
-        true
     }
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         //e.0._debug_type_name();

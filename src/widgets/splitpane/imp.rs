@@ -15,14 +15,15 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let bounds = self.calc_bounds(&r.b,self.state.get()); 
-        
-        let mut validate = true;
 
         {
             if l.state().is_hovered(&self.id) {
-                r.set_cursor(StdCursor::SizeAll.into());
+                r.set_cursor(match self.orientation {
+                    Orientation::Horizontal => StdCursor::SizeWE,
+                    Orientation::Vertical => StdCursor::SizeNS,
+                }.into());
             }
             r.slice_abs(&bounds[1])
                 .with(&[StdVerb::ObjForeground])
@@ -32,18 +33,16 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
         {
             let left = l.for_child(0).expect("Dead Path inside Pane");
             let mut r = r.slice_abs(&bounds[0]);
-            validate &= r.render_widget(left);
+            r.render_widget(left);
         }
         {
             let right = l.for_child(1).expect("Dead Path inside Pane");
             let mut r = r.slice_abs(&bounds[2]);
-            validate &= r.render_widget(right);
+            r.render_widget(right);
         }
         {
             //TODO render center
         }
-
-        false
     }
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         let o = self.orientation;
@@ -93,7 +92,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
                         l.mutate_closure(Box::new(move |mut w,_,_|{
                             let w = w.traitcast_mut::<dyn AtomStateMut<f32>>().unwrap();
                             w.set(fcx);
-                        }),true);
+                        }));
 
                         bounds = self.calc_bounds(e.1,fcx);
                     }
@@ -123,10 +122,6 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     }
     fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
         Ok(self.calc_bounds(b,self.state.get()))
-    }
-    fn invalid(&self) -> bool {
-        true
-        //self.invalid
     }
     fn childs(&self) -> usize {
         self.childs.len()
@@ -163,7 +158,7 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     R: AsWidgetMut<'w,E>+Statize+'w, R::Statur: Sized,
     V: AtomStateMut<f32>+Statize+'w, V::Statur: Sized,
 {
-    fn set_invalid(&mut self, v: bool) {
+    fn _set_invalid(&mut self, v: bool) {
         let _ = v;
         //self.invalid = true
     }

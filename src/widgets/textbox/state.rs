@@ -82,7 +82,7 @@ impl<E> State<E> where E: Env {
     pub fn selection_box(&self) -> Vec<Bounds> {
         let sel = self.cursor.range();
 
-        if ExactSizeIterator::len(&sel) == 0 {
+        if sel.len() == 0 {
             return Vec::new();
         }
 

@@ -2,7 +2,7 @@ use super::*;
 use util::{state::*, caption::CaptionMut};
 use state::{Cursor, State};
 
-impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
+impl<'w,E,S,P,C,V> Widget<'w,E> for TextBox<'w,E,S,P,C,V> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -11,6 +11,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
     S: Caption<'w>+Statize, S::Statur: Sized,
     P: AtomStateX<E,(u32,u32)>+Statize, P::Statur: Sized,
     C: AtomStateX<E,Cursor>+Statize, C::Statur: Sized,
+    V: AtomStateX<E,bool>+Statize, V::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -27,7 +28,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         r.with(&[
             StdVerb::ObjBorder,
             StdVerb::Focused(l.is_focused()),
@@ -59,7 +60,6 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
                 StdVerb::ObjText,
             ])
                 .render_preprocessed_text(&s.glyphs, s.off2(), &mut l.ctx);
-        true
     }
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         //e.0._debug_type_name();
@@ -79,7 +79,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
                 cursor.limit(wc.len() as u32);
                 cursor.unselect();
                 w.traitcast_mut::<dyn AtomStateXMut<E,Cursor>>().unwrap().set(cursor,ctx);
-            }),true);
+            }));
         } else if let Some(ee) = e.0.is_kbd_press() {
             if
                 ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE ||
@@ -110,7 +110,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
                     }
                     cursor = cursor.min(wc.len() as u32);
                     w.traitcast_mut::<dyn AtomStateXMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                }),true);
+                }));
             }
         } else if let Some(ee) = e.0.is_mouse_scroll() {
             let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
@@ -123,7 +123,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
             l.mutate_closure(Box::new(move |mut w,ctx,_| {
                 let w = w.traitcast_mut::<dyn AtomStateXMut<E,(u32,u32)>>().unwrap();
                 w.set(off,ctx);
-            }),true);
+            }));
         } else {
             if let Some(mouse) = l.state().cursor_pos() { //TODO strange event handling
                 let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
@@ -139,7 +139,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
 
                     l.mutate_closure(Box::new(move |mut w,ctx,_| {
                         w.traitcast_mut::<dyn AtomStateXMut<E,Cursor>>().unwrap().set(cursor,ctx)
-                    }),true);
+                    }));
                 } else if l.is_hovered() && l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()).is_some() {
                     cursor.caret = s.cursor_pos_reverse(tpos);
                     //cursor.unselect();
@@ -147,7 +147,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
 
                     l.mutate_closure(Box::new(move |mut w,ctx,_| {
                         w.traitcast_mut::<dyn AtomStateXMut<E,Cursor>>().unwrap().set(cursor,ctx)
-                    }),true);
+                    }));
                 }
             }
         }
@@ -179,7 +179,7 @@ impl<'w,E,S,P,C> Widget<'w,E> for TextBox<'w,E,S,P,C> where
     }
 }
 
-impl<'w,E,S,P,C> WidgetMut<'w,E> for TextBox<'w,E,S,P,C> where
+impl<'w,E,S,P,C,V> WidgetMut<'w,E> for TextBox<'w,E,S,P,C,V> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -188,6 +188,7 @@ impl<'w,E,S,P,C> WidgetMut<'w,E> for TextBox<'w,E,S,P,C> where
     S: CaptionMut<'w>+Statize, S::Statur: Sized,
     P: AtomStateXMut<E,(u32,u32)>+Statize, P::Statur: Sized,
     C: AtomStateXMut<E,Cursor>+Statize, C::Statur: Sized,
+    V: AtomStateX<E,bool>+Statize, V::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

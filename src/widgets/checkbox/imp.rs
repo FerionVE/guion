@@ -28,7 +28,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         let size = r.b.size.h;
         {
             let rect = Bounds::from_wh(size,size);
@@ -62,7 +62,6 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
                 ])
                 .render_text_aligned(self.text.caption().as_ref(),(0.0,0.5),l.ctx);
         }
-        true
     }
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         //let mut invalid = false;
@@ -153,6 +152,6 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     pub fn toggle(mut l: Link<E>) {
         l.mutate(|mut w,_,_|{
             w.traitcast_mut::<dyn ICheckBox>().unwrap().toggle();
-        },true);
+        });
     }
 }

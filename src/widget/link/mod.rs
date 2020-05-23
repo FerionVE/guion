@@ -16,37 +16,53 @@ pub struct Link<'c,E> where E: Env {
 impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), invalidate: bool) {
-        self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.path.refc(),f,invalidate})
+    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)) {
+        self.mutate_at(f,StdOrder::PostCurrent,0)
+    }
+    #[inline] 
+    pub fn mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.path.refc(),f},o,p)
     }
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, invalidate: bool) {
-        self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f,invalidate})
+    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>) {
+        self.mutate_closure_at(f,StdOrder::PostCurrent,0)
+    }
+    #[inline] 
+    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f},o,p)
     }
     /// enqueue immutable access to this widget
     #[inline] 
     pub fn later(&mut self, f: fn(WidgetRef<E>,&mut E::Context)) {
-        self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.path.refc(),f})
+        self.later_at(f,StdOrder::PostCurrent,0)
+    }
+    #[inline] 
+    pub fn later_at<O>(&mut self, f: fn(WidgetRef<E>,&mut E::Context), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.path.refc(),f},o,p)
     }
     /// enqueue immutable access to this widget
     #[inline] 
     pub fn later_closure(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+Sync>) {
-        self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.path.refc(),f})
+        self.later_closure_at(f,StdOrder::PostCurrent,0)
+    }
+    #[inline] 
+    pub fn later_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+Sync>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.path.refc(),f},o,p)
     }
     #[inline]
     pub fn enqueue_invalidate(&mut self) {
-        self.enqueue(StdEnqueueable::InvalidateWidget{path: self.widget.path.refc()})
+        self.enqueue(StdEnqueueable::InvalidateWidget{path: self.widget.path.refc()},StdOrder::PreRender,0)
     }
     /// mark the current widget as validated
     /// this should and should only be called from widget's render fn
     #[inline]
     pub fn enqueue_validate_render(&mut self) {
-        self.enqueue(StdEnqueueable::ValidateWidgetRender{path: self.widget.path.refc()})
+        self.enqueue(StdEnqueueable::ValidateWidgetRender{path: self.widget.path.refc()},StdOrder::RenderValidation,0)
     }
     #[inline]
     pub fn enqueue_validate_size(&mut self, s: ESize<E>) {
-        self.enqueue(StdEnqueueable::ValidateWidgetSize{path: self.widget.path.refc(),size: s})
+        self.enqueue(StdEnqueueable::ValidateWidgetSize{path: self.widget.path.refc(),size: s},StdOrder::RenderValidation,0)
     }
 
     #[inline]
@@ -59,14 +75,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     pub fn ident(&self) -> WidgetIdent<E> {
-        WidgetIdent{
-            id: self.id(),
-            path: self.path(),
-        }
+        self.widget.ident()
     }
 
     #[inline]
-    pub fn render(&mut self, r: &mut RenderLink<E>) -> bool {
+    pub fn render(&mut self, r: &mut RenderLink<E>) {
         self.ctx.render(self.widget.reference(),r)
     }
     #[inline]
@@ -83,9 +96,9 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// bypasses Context and Handler(s)
     #[inline]
-    pub fn _render(&mut self, r: &mut RenderLink<E>) -> bool {
+    pub fn _render(&mut self, r: &mut RenderLink<E>) {
         let w = self.ctx.link(self.widget.reference());
-        self.widget.widget()._render(w,r)
+        (**self.widget)._render(w,r)
     }
     /// bypasses Context and Handler(s)
     #[inline]
@@ -97,14 +110,14 @@ impl<'c,E> Link<'c,E> where E: Env {
         if let Some(ee) = e.0.filter(&b) {
             let e = (ee,&b,e.2);
             let w = self.ctx.link(self.widget.reference());
-            self.widget.widget()._event(w,e)
+            (**self.widget)._event(w,e)
         }
     }
     /// bypasses Context and Handler(s)
     #[inline]
     pub fn _size(&mut self) -> ESize<E> {
         let w = self.ctx.link(self.widget.reference());
-        self.widget.widget()._size(w)
+        (**self.widget)._size(w)
     }
 
     pub fn trace_bounds(&mut self, root_bounds: &Bounds, force: bool) -> Bounds {
@@ -131,7 +144,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn for_childs<'s>(&'s mut self, mut f: impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
         //let wref = self.widget.wref.refc();
         let path = self.widget.path.refc();
-        let ch = self.widget.widget().childs_ref();
+        let ch = self.widget.childs_ref();
         let stor = self.widget.stor;
         for c in ch {
             let w = c.resolve_widget(stor)?;
@@ -149,7 +162,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         let path = self.widget.path.refc();
         let stor = self.widget.stor;
 
-        let c = self.widget.widget().child(i)?;
+        let c = self.widget.child(i)?;
 
         let w = c.resolve_widget(stor)?;
         let w = Resolved{
@@ -237,8 +250,8 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
     }
     #[inline]
-    pub fn enqueue<I>(&mut self, i: I) where ECQueue<E>: Queue<I> {
-        self.ctx.queue_mut().push(i)
+    pub fn enqueue<I,O>(&mut self, i: I, o: O, p: i64) where ECQueue<E>: Queue<I,O> {
+        self.ctx.queue_mut().push(i,o,p)
     }
 }
 

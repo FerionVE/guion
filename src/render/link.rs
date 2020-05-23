@@ -41,10 +41,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     pub fn force(&mut self) -> bool {
         self.force || self.r.force(&self.b)
     }
-    #[inline]
-    pub fn requires_render<'l,'s>(&mut self, w: &'s dyn Widget<'l,E>) -> bool where 'l: 's {
-        (w.invalid() || self.force) || self.r.requires_render(&self.b,w)
-    }
     /// fork with force set
     #[inline]
     pub fn with_force<'s>(&'s mut self, force: bool) -> RenderLink<'s,E> where 'a: 's {
@@ -171,7 +167,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }*/
 
     #[inline]
-    pub fn render_widget(&mut self, w: Link<E>) -> bool {
+    pub fn render_widget(&mut self, w: Link<E>) {
         self._render_widget(
             w,
             #[inline] |_,_| {},
@@ -179,36 +175,28 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         )
     }
     #[inline]
-    pub fn _render_widget(&mut self, mut w: Link<E>, pre: impl FnOnce(&mut ESVariant<E>,&mut Border), post: impl FnOnce(&mut ESVariant<E>,&mut Border)) -> bool {
-        if self.requires_render(&*w.widget) {
-            let mut border = w.default_border().clone();
-            let mut style = self.v.clone();
+    pub fn _render_widget(&mut self, mut w: Link<E>, pre: impl FnOnce(&mut ESVariant<E>,&mut Border), post: impl FnOnce(&mut ESVariant<E>,&mut Border)) {
+        let mut border = w.default_border().clone();
+        let mut style = self.v.clone();
 
-            pre(&mut style, &mut border);
+        pre(&mut style, &mut border);
 
-            w.widget.border(&mut border);
-            w.widget.style(&mut style);
+        w.widget.border(&mut border);
+        w.widget.style(&mut style);
 
-            post(&mut style, &mut border);
+        post(&mut style, &mut border);
 
-            let mut fork = RenderLink{
-                r: self.r,
-                b: self.b.inside_border(&border),
-                last_border: border.clone(),
-                br: self.b.clone(),
-                v: style,
-                s: self.s.clone(),
-                force: self.force,
-            };
+        let mut fork = RenderLink{
+            r: self.r,
+            b: self.b.inside_border(&border),
+            last_border: border.clone(),
+            br: self.b.clone(),
+            v: style,
+            s: self.s.clone(),
+            force: self.force,
+        };
 
-            if w.render(&mut fork) {
-                if w.widget.invalid() {
-                    w.enqueue_validate_render();
-                }
-                return true;
-            }
-        }
-        false
+        w.render(&mut fork)
     }
 
     #[deprecated]

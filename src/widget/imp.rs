@@ -5,7 +5,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     fn id(&self) -> E::WidgetID {
         (**self).id()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         (**self)._render(l,r)
     }
     fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
@@ -31,9 +31,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     fn focusable(&self) -> bool {
         (**self).focusable()
     }
-    fn invalid(&self) -> bool {
-        (**self).invalid()
-    }
+
     #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (**self).child_paths(own_path)
@@ -86,7 +84,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
     fn id(&self) -> E::WidgetID {
         (**self).id()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         (**self)._render(l,r)
     }
     fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
@@ -112,9 +110,7 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
     fn focusable(&self) -> bool {
         (**self).focusable()
     }
-    fn invalid(&self) -> bool {
-        (**self).invalid()
-    }
+
     #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (**self).child_paths(own_path)
@@ -173,14 +169,14 @@ impl<'s,'l,E> WidgetMut<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 
     fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'s,E>> {
         (**self).childs_mut()
     }
-    fn set_invalid(&mut self, v: bool) {
-        (**self).set_invalid(v)
+    fn _set_invalid(&mut self, v: bool) {
+        (**self)._set_invalid(v)
     }
-    fn resolve_mut<'a>(&'a mut self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> where 's: 'a { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
-        (**self).resolve_mut(i, invalidate)
+    fn resolve_mut<'a>(&'a mut self, i: E::WidgetPath) -> Result<ResolvableMut<'a,E>,()> where 's: 'a { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        (**self).resolve_mut(i)
     }
-    fn into_resolve_mut(self: Box<Self>, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'s,E>,()> {
-        (**self).resolve_mut(i, invalidate)
+    fn into_resolve_mut(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,()> {
+        (**self).resolve_mut(i)
     }
     fn inner_mut<'a>(&'a mut self) -> Option<&'a mut dyn WidgetMut<'s,E>> {
         Some((**self).short_lt())
@@ -196,7 +192,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
     fn id(&self) -> E::WidgetID {
         (**self).id()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         (**self)._render(l,r)
     }
     fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
@@ -221,9 +217,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
     fn focusable(&self) -> bool {
         (**self).focusable()
     }
-    fn invalid(&self) -> bool {
-        (**self).invalid()
-    }
+
     #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (**self).child_paths(own_path)
@@ -276,7 +270,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn id(&self) -> E::WidgetID {
         (**self).id()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         (**self)._render(l,r)
     }
     fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
@@ -301,9 +295,7 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn focusable(&self) -> bool {
         (**self).focusable()
     }
-    fn invalid(&self) -> bool {
-        (**self).invalid()
-    }
+
     #[allow(deprecated)]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (**self).child_paths(own_path)
@@ -360,14 +352,14 @@ impl<'w,E> WidgetMut<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
         WidgetMut::into_childs_mut(*self)
     }
-    fn set_invalid(&mut self, v: bool) {
-        (**self).set_invalid(v)
+    fn _set_invalid(&mut self, v: bool) {
+        (**self)._set_invalid(v)
     }
-    fn resolve_mut<'a>(&'a mut self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
-        (**self).resolve_mut(i, invalidate)
+    fn resolve_mut<'a>(&'a mut self, i: E::WidgetPath) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        (**self).resolve_mut(i)
     }
-    fn into_resolve_mut(self: Box<Self>, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'w,E>,()> {
-        WidgetMut::into_resolve_mut(*self, i, invalidate)
+    fn into_resolve_mut(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> {
+        WidgetMut::into_resolve_mut(*self, i)
     }
     fn inner_mut<'s>(&'s mut self) -> Option<&'s mut dyn WidgetMut<'w,E>> {
         Some((&mut **self).short_lt())

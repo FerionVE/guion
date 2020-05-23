@@ -7,7 +7,7 @@ pub mod queue;
 /// A Context is regularly referenced in parallel with the widget tree
 pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     type Handler: Handler<E>;
-    type Queue: Queue<StdEnqueueable<E>>;
+    type Queue: Queue<StdEnqueueable<E>,StdOrder>;
 
     #[inline] 
     fn handler_mut<H: Handler<E>>(&mut self) -> &mut H where Self: AsRefMut<H> {
@@ -25,7 +25,7 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     fn _handler(&self) -> &Self::Handler;
 
     #[inline] 
-    fn render(&mut self, w: Resolved<E>, r: &mut RenderLink<E>) -> bool {
+    fn render(&mut self, w: Resolved<E>, r: &mut RenderLink<E>) {
         Self::Handler::_render(self.link(w),r)
     }
     #[inline] 

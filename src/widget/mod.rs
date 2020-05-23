@@ -24,17 +24,11 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
     /// this method should not be called from external, rather [`Link::render`](link/struct.Link.html#method.render)
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool;
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>);
     /// this method should not be called from external, rather [`Link::event`](link/struct.Link.html#method.event)
     fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64));
     /// this method should not be called from external, rather [`Link::size`](link/struct.Link.html#method.size)
     fn _size(&self, l: Link<E>) -> ESize<E>;
-
-    /// returns if the widget should be rendered
-    fn invalid(&self) -> bool {
-        true
-    }
-    
 
     fn childs(&self) -> usize;
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's;
@@ -155,7 +149,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
 
 pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static {
     #[allow(unused)]
-    fn set_invalid(&mut self, v: bool) {
+    fn _set_invalid(&mut self, v: bool) {
         
     }
 
@@ -169,14 +163,13 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
     /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
     #[inline]
-    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'s,E>,()> where 'w: 's { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
-        if invalidate {self.set_invalid(true);}
+    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,()> where 'w: 's { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
         for c in 0..self.childs() {
             if self.child(c).unwrap().resolves_to(i.index(0)) {
-                return self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..),invalidate);
+                return self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..));
             }
         }
         Err(())
@@ -184,14 +177,13 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
 
     /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
-    fn into_resolve_mut(mut self: Box<Self>, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'w,E>,()> {
-        if invalidate {self.set_invalid(true);}
+    fn into_resolve_mut(mut self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
         for c in 0..self.childs() {
             if self.child(c).unwrap().resolves_to(i.index(0)) {
-                return self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..),invalidate);
+                return self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..));
             }
         }
         Err(())

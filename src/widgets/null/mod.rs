@@ -31,9 +31,8 @@ impl<'w,E> Widget<'w,E> for Null<E> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, _: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, _: Link<E>, r: &mut RenderLink<E>) {
         r.fill_rect();
-        true
     }
     fn _event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
         

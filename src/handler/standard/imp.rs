@@ -2,10 +2,16 @@ use crate::util::bounds::Bounds;
 use crate::*;
 use super::*;
 use event::variants::*;
+use state::standard::kbd::tabulate::tabulate;
 
-impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self> + 'static, EEvent<E>: StdVarSup<E> {
+impl<S,E> Handler<E> for StdHandler<S,E> where
+    S: Handler<E>,
+    E: Env,
+    E::Context: AsRefMut<Self> + AsHandlerStateful<E> + 'static,
+    EEvent<E>: StdVarSup<E>
+{
     #[inline] 
-    fn _render(l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(l: Link<E>, r: &mut RenderLink<E>) {
         S::_render(l,r)
         //todo!()
     }
@@ -23,7 +29,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
         if let Some(ee) = e.0.is::<RootEvent<E>>() {
             match ee {
                 RootEvent::KbdDown{key} => {
-                    Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
+                    //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = l.as_ref().s.kbd.focused.clone() {
                         if !l.widget.stor.has_widget(id.refc().path) {
                             //drop event if widget is gone
@@ -42,13 +48,15 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                             key: key.clone(),
                         };
                         l._event_root((Event::from(event),&wbounds,e.2));
-                        let event = KbdPress{
-                            key,
+                        /*let event = KbdPress{
+                            key: key.clone(),
                             down_widget: id.refc(),
                             down_ts: e.2,
                         };
-                        l._event_root((Event::from(event),&wbounds,e.2));
+                        l._event_root((Event::from(event),&wbounds,e.2));*/
+                        l._event_root((Event::from(RootEvent::KbdPress{key}),e.1,e.2));
                     }
+                    //l._event_root((Event::from(RootEvent::KbdPress{key}),e.1,e.2));
                 },
                 RootEvent::KbdUp{key} => {
                     let old = l.as_mut().s.key.up(key);
@@ -72,7 +80,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                     }
                 },
                 RootEvent::KbdPress{key} => {
-                    let old = l.as_mut().s.key.get(key);
+                    let old = l.as_mut().s.key.get(key.clone());
                     //TODO send up event to the widget which downed it
                     if let Some(p) = old {
                         let event = KbdPress{
@@ -81,9 +89,16 @@ impl<S,E> Handler<E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context
                             down_ts: p.ts,
                         };
                         if let Some(id) = l.as_ref().s.kbd.focused.clone() {
-                            if let Ok(mut l) = l.with_widget(id.path) {
+                            if let Ok(mut l) = l.with_widget(id.path.refc()) {
                                 let wbounds = l.trace_bounds(e.1,false);
                                 l._event_root((Event::from(event.clone()),&wbounds,e.2));
+
+                                if key == EEKey::<E>::TAB && l.widget._tabulate_by_tab() {
+                                    let reverse = l.state().is_pressed(&[EEKey::<E>::SHIFT]).is_some();
+                                    let path = tabulate::<E>(l.widget.stor,id.path,reverse);
+                                    //better way than this hack to get the ident
+                                    l.as_mut().s.kbd.focused = Some(WidgetIdent::from_path(path,l.widget.stor).expect("TODO"));
+                                }
                             }
                         }
                     }

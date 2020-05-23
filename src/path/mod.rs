@@ -15,7 +15,6 @@ pub trait WidgetPath<E>:
     From<E::WidgetPath> +
     RefClonable +
     Clone +
-    PartialEq<Self> +
     Sized +
     Send +
     Sync +
@@ -36,6 +35,7 @@ where E: Env {
     }
 
     fn tip(&self) -> Option<&Self::SubPath>;
+    fn exact_eq(&self, o: &Self) -> bool;
 
     fn parent(&self) -> Option<Self>;
 
@@ -57,7 +57,7 @@ where E: Env {
     }
 
     #[inline]
-    fn render(&self, c: CtxRef<E>, r: &mut RenderLink<E>) -> Result<bool,()> {
+    fn render(&self, c: CtxRef<E>, r: &mut RenderLink<E>) -> Result<(),()> {
         Ok( c.1.render(c.0.widget(self.refc().into())?,r) )
     }
     #[inline]

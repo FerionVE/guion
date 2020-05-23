@@ -14,5 +14,5 @@ repository = "https://github.com/ferionve/guion"
 readme = "README.md"
 
 [dependencies]
-qwutils = { version = "0.1.1", git = "https://github.com/qwertz19281/rust_utils", rev = "c828ec4d864524e8846f25fc34f17e606accf3cc" }
+qwutils = { version = "0.2.0", git = "https://github.com/qwertz19281/rust_utils", rev = "d58605ccbbbe4931c122d5b5002251e6e8a47e78" }
 #qwutils = { path = "../qwutils" }

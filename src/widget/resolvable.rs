@@ -67,9 +67,9 @@ impl<'a,E> ResolvableMut<'a,E> where E: Env {
     /// resolve further with the subpath if not a path
     /// meant to be used inside widget's resolve fn
     #[inline]
-    pub fn resolve_child_mut(self, i: E::WidgetPath, invalidate: bool) -> Result<ResolvableMut<'a,E>,()> {
+    pub fn resolve_child_mut(self, i: E::WidgetPath) -> Result<ResolvableMut<'a,E>,()> {
         match self {
-            ResolvableMut::Widget(w) => w.into_resolve_mut(i,invalidate),
+            ResolvableMut::Widget(w) => w.into_resolve_mut(i),
             ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p.attached_subpath(&i))),
         }
     }

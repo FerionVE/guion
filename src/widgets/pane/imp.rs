@@ -4,7 +4,7 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         _render(l,r,self.orientation)
     }
     fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
@@ -15,10 +15,6 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T
     }
     fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
         child_bounds(l,b,force,self.orientation)
-    }
-    fn invalid(&self) -> bool {
-        true
-        //self.invalid
     }
     fn childs(&self) -> usize {
         self.childs.len()
@@ -48,7 +44,7 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where T: WidgetArray<'w,E>+Statize, T
     }
 }
 impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: WidgetArrayMut<'w,E>+Statize, T::Statur: Statize+Sized, E: Env {
-    fn set_invalid(&mut self, v: bool) {
+    fn _set_invalid(&mut self, v: bool) {
         let _ = v;
         //self.invalid = true
     }
@@ -66,22 +62,19 @@ impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where T: WidgetArrayMut<'w,E>+Stat
     }
 }
 
-pub fn _render<E>(mut l: Link<E>, r: &mut RenderLink<E>, o: Orientation) -> bool where
+pub fn _render<E>(mut l: Link<E>, r: &mut RenderLink<E>, o: Orientation) where
     E: Env,
 {
     let sizes = l.child_sizes().expect("Dead Path Inside Pane");
     let bounds = calc_bounds(&r.b.size,&sizes,o); 
     
-    let mut validate = true;
     let mut i = 0usize;
 
     l.for_childs(|c| {
         let mut r = r.slice(&bounds[i]);
-        validate &= r.render_widget(c);
+        r.render_widget(c);
         i+=1;
     }).expect("Dead Path inside Pane");
-
-    false
 }
 
 pub fn _event<E>(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64), o: Orientation) where

@@ -5,7 +5,7 @@ pub mod standard;
 
 /// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
 pub trait Handler<E>: Sized + 'static where E: Env {
-    fn _render(l: Link<E>, r: &mut RenderLink<E>) -> bool;
+    fn _render(l: Link<E>, r: &mut RenderLink<E>);
     fn _event(l: Link<E>, e: (EEvent<E>,&Bounds,u64));
     fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds,u64));
     fn _size(l: Link<E>) -> ESize<E>;
@@ -13,7 +13,7 @@ pub trait Handler<E>: Sized + 'static where E: Env {
 
 impl<E> Handler<E> for () where E: Env {
     #[inline] 
-    fn _render(mut l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(mut l: Link<E>, r: &mut RenderLink<E>) {
         l._render(r)
     }
     #[inline] 

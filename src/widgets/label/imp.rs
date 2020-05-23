@@ -22,13 +22,12 @@ impl<'w,E,S> Widget<'w,E> for Label<'w,E,S> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) -> bool {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         r.with(&[
             StdVerb::ObjForeground,
             StdVerb::ObjText,
         ])
             .render_text(self.text.caption().as_ref(),l.ctx);
-        true
     }
     fn _event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
         

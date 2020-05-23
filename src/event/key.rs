@@ -16,6 +16,8 @@ pub trait Key: Clone + PartialEq + Debug {
     const ENTER: Self;
     const SPACE: Self;
     const TAB: Self;
+    const SHIFT: Self;
+    const CTRL: Self;
     const BACKSPACE: Self;
     const LEFT: Self;
     const RIGHT: Self;

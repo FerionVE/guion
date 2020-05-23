@@ -4,16 +4,16 @@ use super::*;
 /// The Queue accesible from the Context, used to enqueue events or actions from any thread
 /// invalidations are always done right before rendering
 /// validations are always done right after rendering
-pub trait Queue<I> { //TODO probably remove mandantory StdEnqueueable bound
-    fn push(&mut self, v: I);
-    fn send(&self, v: I);
+pub trait Queue<I,O> { //TODO probably remove mandantory StdEnqueueable bound
+    fn push(&mut self, v: I, o: O, p: i64);
+    fn send(&self, v: I, o: O, p: i64);
 }
 
 pub enum StdEnqueueable<E> where E: Env {
     Render{force: bool},
     Event{event: EEvent<E>, ts: u64},
-    MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), invalidate: bool},
-    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, invalidate: bool},
+    MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)},
+    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>},
     MutateRoot{f: fn(&mut E::Storage,&mut E::Context)},
     MutateRootClosure{f: Box<dyn FnOnce(&mut E::Storage,&mut E::Context)+'static>},
     AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context)},
@@ -25,14 +25,53 @@ pub enum StdEnqueueable<E> where E: Env {
     ValidateWidgetSize{path: E::WidgetPath, size: ESize<E>},
 }
 
-/// to be executed by the queue impl, always DIRECTLY before rendering
-pub fn invalidate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),()> {
-    stor._widget_mut(i,true)?;
-    Ok(())
+/// event ordering in a standard loop
+///
+/// loop {
+///     PreEvents()
+///     for event in events {
+///         PreEvent()
+///         process(event)
+///         PostCurrent()
+///         PostEvent()
+///     }
+///     PostEvents()
+///     PreRender()
+///     render()
+///     RenderValidation()
+///     PostCurrent()
+///     PostRender()
+/// }
+#[derive(Copy,Clone,Hash,Eq,PartialEq)]
+pub enum StdOrder {
+    /// before processing events
+    PreEvents,
+    /// before processing a single event
+    PreEvent,
+    /// after processing a single event
+    PostEvent,
+    /// after processing events
+    PostEvents,
+    /// before rendering
+    PreRender,
+    /// directly after rendering
+    RenderValidation,
+    /// after rendering and RenderValidation
+    PostRender,
+
+    // after the current pass
+    PostCurrent,
 }
+
+/// to be executed by the queue impl, always DIRECTLY before rendering
+#[deprecated]
+pub fn invalidate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),()> {
+    stor.widget_mut(i)
+        .map(|mut w| w._set_invalid(true) )
+}
+#[deprecated]
 /// to be executed by the queue impl, always DIRECTLY after rendering
 pub fn validate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),()> {
-    let mut w = stor._widget_mut(i,false)?;
-    w.widget().set_invalid(false);
-    Ok(())
+    stor.widget_mut(i)
+        .map(|mut w| w._set_invalid(false) )
 }

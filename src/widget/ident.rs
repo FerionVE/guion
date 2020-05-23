@@ -12,6 +12,10 @@ impl<E> WidgetIdent<E> where E: Env {
     pub fn is(&self, w: E::WidgetID) -> bool {
         self.id == w //TODO AsID trait
     }
+    #[deprecated]
+    pub fn from_path(path: E::WidgetPath, stor: &E::Storage) -> Result<Self,()> {
+        stor.widget(path).map(|r| r.ident() )
+    }
 }
 
 impl<E> PartialEq for WidgetIdent<E> where E: Env {
