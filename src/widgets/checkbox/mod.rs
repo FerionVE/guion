@@ -51,7 +51,7 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
         self.trigger = fun;
         self
     }
-    pub fn with_text<T>(self, text: T) -> CheckBox<'w,E,State,T> where T: Caption<'w>+Statize, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> CheckBox<'w,E,State,T> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
         CheckBox{
             id: self.id,
             size: self.size,
@@ -71,10 +71,10 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     }
 }
 
-unsafe impl<'w,E,State,Text> Statize for CheckBox<'w,E,State,Text> where
+unsafe impl<'w,E,State,Text> Statize<E> for CheckBox<'w,E,State,Text> where
     E: Env,
-    State: Statize+'w, State::Statur: Sized,
-    Text: Statize+'w, Text::Statur: Sized,
+    State: Statize<E>+'w, State::Statur: Sized,
+    Text: Statize<E>+'w, Text::Statur: Sized,
 {
     type Statur = CheckBox<'static,E,State::Statur,Text::Statur>;
 }
@@ -93,7 +93,7 @@ fn compile_test<E>(id: E::WidgetID) -> WidgetRefMut<'static,E> where
     let c = AtomState::get(&b);
     AtomStateMut::set(&mut b, !c); // Discovery: `AtomState::set` would actually trigger ICE
     eprintln!("{}", <&'static str as Caption>::caption(&"AKW"));
-    eprintln!("{:?}",std::any::TypeId::of::< <&'static str as Statize>::Statur >());
-    eprintln!("{:?}",std::any::TypeId::of::< <bool as Statize>::Statur >());
+    eprintln!("{:?}",std::any::TypeId::of::< <&'static str as Statize<E>>::Statur >());
+    eprintln!("{:?}",std::any::TypeId::of::< <bool as Statize<E>>::Statur >());
     todo!()
 }

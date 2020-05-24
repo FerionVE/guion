@@ -49,7 +49,7 @@ impl<'w,E,S,P,C,V> TextBox<'w,E,S,P,C,V> where
     C: 'w,
     V: 'w,
 {
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,P,C,V> where T: Caption<'w>+Statize, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,P,C,V> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
         TextBox{
             id: self.id,
             size: self.size,
@@ -63,7 +63,7 @@ impl<'w,E,S,P,C,V> TextBox<'w,E,S,P,C,V> where
         }
     }
 
-    pub fn with_states<PP,CC>(self, scroll: PP, cursor: CC) -> TextBox<'w,E,S,PP,CC,V> where PP: Statize+'w, CC: Statize+'w {
+    pub fn with_states<PP,CC>(self, scroll: PP, cursor: CC) -> TextBox<'w,E,S,PP,CC,V> where PP: Statize<E>+'w, CC: Statize<E>+'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -83,12 +83,12 @@ impl<'w,E,S,P,C,V> TextBox<'w,E,S,P,C,V> where
     }
 }
 
-unsafe impl<'w,E,S,P,C,V> Statize for TextBox<'w,E,S,P,C,V> where
+unsafe impl<'w,E,S,P,C,V> Statize<E> for TextBox<'w,E,S,P,C,V> where
     E: Env,
-    S: Statize, S::Statur: Sized,
-    P: Statize, P::Statur: Sized,
-    C: Statize, C::Statur: Sized,
-    V: Statize, V::Statur: Sized,
+    S: Statize<E>, S::Statur: Sized,
+    P: Statize<E>, P::Statur: Sized,
+    C: Statize<E>, C::Statur: Sized,
+    V: Statize<E>, V::Statur: Sized,
 {
     type Statur = TextBox<'static,E,S::Statur,P::Statur,C::Statur,V::Statur>;
 }

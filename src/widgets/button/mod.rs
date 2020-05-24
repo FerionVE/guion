@@ -47,7 +47,7 @@ impl<'w,E,Text> Button<'w,E,Text> where
         self.trigger = fun;
         self
     }
-    pub fn with_text<T>(self, text: T) -> Button<'w,E,T> where T: Caption<'w>+Statize, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> Button<'w,E,T> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
         Button{
             id: self.id,
             size: self.size,
@@ -66,9 +66,9 @@ impl<'w,E,Text> Button<'w,E,Text> where
     }
 }
 
-unsafe impl<'w,E,Text> Statize for Button<'w,E,Text> where
+unsafe impl<'w,E,Text> Statize<E> for Button<'w,E,Text> where
     E: Env,
-    Text: Caption<'w>+Statize, Text::Statur: Sized,
+    Text: Caption<'w>+Statize<E>, Text::Statur: Sized,
 {
     type Statur = Button<'static,E,Text::Statur>;
 }

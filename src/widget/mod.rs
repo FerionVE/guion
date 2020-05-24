@@ -217,9 +217,9 @@ pub trait WBase<'w,E> where E: Env {
     fn box_box(self: Box<Self>) -> WidgetRef<'w,E>;
     fn boxed_ref(self) -> WidgetRef<'w,E> where Self: Sized;
 }
-impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+Statize, E: Env {
+impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+Statize<E>, E: Env {
     fn typeid(&self) -> TypeId {
-        <Self as Statize>::_typeid()
+        <Self as Statize<E>>::_typeid()
     }
     fn type_name(&self) -> &'static str {
         type_name::<Self>()
@@ -247,7 +247,7 @@ pub trait WBaseMut<'w,E> where E: Env {
     fn box_box_mut(self: Box<Self>) -> WidgetRefMut<'w,E>;
     fn boxed(self) -> WidgetRefMut<'w,E> where Self: Sized;
 }
-impl<'w,T,E> WBaseMut<'w,E> for T where T: WidgetMut<'w,E>+Statize, E: Env {
+impl<'w,T,E> WBaseMut<'w,E> for T where T: WidgetMut<'w,E>+Statize<E>, E: Env {
     fn base<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's {
         self
     }

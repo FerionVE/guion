@@ -71,7 +71,7 @@ impl<E,S> RefClonable for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Syn
     }
 }
 
-unsafe impl<E,S> Statize for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
+unsafe impl<E,S> Statize<E> for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
     type Statur = Self;
 }
 

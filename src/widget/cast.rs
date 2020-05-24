@@ -4,7 +4,7 @@ use super::*;
 //TODO simplify Statize and downcast impls into AnyLt struct
 /// Trait for retrieving the TypeId of a non-'static type by providing the 'static variant of the type  
 /// [RFC 1849](https://github.com/rust-lang/rust/issues/41875)
-pub unsafe trait Statize {
+pub unsafe trait Statize<E> {
     /// Must be `Self`, but with all lifetimes 'static
     type Statur: ?Sized + 'static;
     
@@ -14,11 +14,11 @@ pub unsafe trait Statize {
 }
 
 impl<'w,E> dyn Widget<'w,E> where E: Env {
-    pub fn is_type<T>(&self) -> bool where T: Statize {
+    pub fn is_type<T>(&self) -> bool where T: Statize<E> {
         self.typeid() == T::_typeid()
     }
 
-    pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&*(self as *const dyn Widget<'w,E> as *const T)) }
         } else {
@@ -26,7 +26,7 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
         }
     }
     /// downcast the current widget to a specific implementation
-    pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_downcast_ref::<T>(self) {
             Some(v)
         }else if let Some(senf) = self.inner() {
@@ -35,7 +35,7 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
             None
         }
     }
-    pub fn _traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn _traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
         let t = unsafe{self._as_trait_ref(T::_typeid())};
         if let Some(v) = t {
             unsafe { Some(std::mem::transmute_copy::<TraitObject,&'s T>(&v)) }
@@ -44,7 +44,7 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
         }
     }
     /// this will definetly cause UB and delet ur computer
-    pub fn traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_traitcast_ref::<T>(self) {
             Some(v)
         }else if let Some(senf) = self.inner() {
@@ -55,11 +55,11 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
     }
 }
 impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
-    pub fn is_type<T>(&self) -> bool where T: Statize {
+    pub fn is_type<T>(&self) -> bool where T: Statize<E> {
         self.typeid() == T::_typeid()
     }
     
-    pub fn _downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize+'d, 'w: 's, 'd: 's {
+    pub fn _downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize<E>+'d, 'w: 's, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&mut *(self as *mut dyn WidgetMut<'w,E> as *mut T)) }
         } else {
@@ -67,7 +67,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
     /// downcast the current widget to a specific implementation
-    pub fn downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize+'d, 'w: 's, 'd: 's {
+    pub fn downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize<E>+'d, 'w: 's, 'd: 's {
         if self.is_type::<T>() {
             self._downcast_mut::<T>()
         }else if let Some(senf) = self.inner_mut() {
@@ -76,7 +76,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
             None
         }
     }
-    pub fn _traitcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize+?Sized+'d, 'w: 's, 'd: 's {
+    pub fn _traitcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize<E>+?Sized+'d, 'w: 's, 'd: 's {
         let t = unsafe{self._as_trait_mut(T::_typeid())};
         if let Some(v) = t {
             unsafe { Some(std::mem::transmute_copy::<TraitObject,&'s mut T>(&v)) }
@@ -85,7 +85,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
     /// this will definetly cause UB and delet ur computer
-    pub fn traitcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize+?Sized+'d, 'w: 's, 'd: 's {
+    pub fn traitcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize<E>+?Sized+'d, 'w: 's, 'd: 's {
         // god plz fix https://github.com/rust-lang/rust/issues/51826
         let t = unsafe{self._as_trait_mut(T::_typeid())};
         if let Some(v) = t {
@@ -97,7 +97,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
 
-    pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&*(self as *const dyn WidgetMut<'w,E> as *const T)) }
         } else {
@@ -105,7 +105,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
     /// downcast the current widget to a specific implementation
-    pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_downcast_ref::<T>(self) {
             Some(v)
         }else if let Some(senf) = self.inner() {
@@ -114,7 +114,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
             None
         }
     }
-    pub fn _traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn _traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
         let t = unsafe{WidgetMut::_as_trait_ref(self,T::_typeid())};
         if let Some(v) = t {
             unsafe { Some(std::mem::transmute_copy::<TraitObject,&'s T>(&v)) }
@@ -123,7 +123,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
     /// this will definetly cause UB and delet ur computer
-    pub fn traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
+    pub fn traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_traitcast_ref::<T>(self) {
             Some(v)
         }else if let Some(senf) = self.inner() {
@@ -134,61 +134,70 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
     }
 }
 
-unsafe impl<'w,E> Statize for dyn Widget<'w,E> where E: Env {
+unsafe impl<'w,E> Statize<E> for dyn Widget<'w,E> where E: Env {
     type Statur = dyn Widget<'static,E>;
 }
-unsafe impl<'w,E> Statize for dyn WidgetMut<'w,E> where E: Env {
+unsafe impl<'w,E> Statize<E> for dyn WidgetMut<'w,E> where E: Env {
     type Statur = dyn WidgetMut<'static,E>;
 }
 
-unsafe impl<'l,'s,E> Statize for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
+/*unsafe impl<'l,'s,E> Statize<E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     type Statur = &'static dyn Widget<'static,E>;
 }
-unsafe impl<'l,'s,E> Statize for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's {
+unsafe impl<'l,'s,E> Statize<E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's {
     type Statur = &'static mut dyn WidgetMut<'static,E>;
-}
+}*/
 
-unsafe impl<'w,E> Statize for WidgetRef<'w,E> where E: Env {
+/*unsafe impl<'w,E> Statize<E> for WidgetRef<'w,E> where E: Env {
     type Statur = WidgetRef<'static,E>;
 }
-unsafe impl<'w,E> Statize for WidgetRefMut<'w,E> where E: Env {
+unsafe impl<'w,E> Statize<E> for WidgetRefMut<'w,E> where E: Env {
     type Statur = WidgetRefMut<'static,E>;
-}
+}*/
 
 mod imp {
     use super::*;
-    use std::{borrow::Cow, path::{Path,PathBuf}};
+    use std::{borrow::Cow, path::{Path,PathBuf}, sync::Arc, rc::Rc};
 
-    unsafe impl<'w,T> Statize for Box<T> where T: Statize {
+    unsafe impl<'w,T,E> Statize<E> for Box<T> where T: Statize<E>+?Sized {
         type Statur = Box<T::Statur>;
     }
-    unsafe impl<'w,T> Statize for Vec<T> where T: Statize, T::Statur: Sized {
+    unsafe impl<'w,T,E> Statize<E> for Rc<T> where T: Statize<E>+?Sized {
+        type Statur = Rc<T::Statur>;
+    }
+    unsafe impl<'w,T,E> Statize<E> for Arc<T> where T: Statize<E>+?Sized {
+        type Statur = Arc<T::Statur>;
+    }
+    unsafe impl<'w,T,E> Statize<E> for Vec<T> where T: Statize<E>, T::Statur: Sized {
         type Statur = Vec<T::Statur>;
     }
-    unsafe impl<'w,T> Statize for Option<T> where T: Statize, T::Statur: Sized {
+    unsafe impl<'w,T,E> Statize<E> for Option<T> where T: Statize<E>, T::Statur: Sized {
         type Statur = Option<T::Statur>;
     }
-    unsafe impl<'w,T,U> Statize for Result<T,U> where T: Statize, T::Statur: Sized, U: Statize, U::Statur: Sized {
+    unsafe impl<'w,T,U,E> Statize<E> for Result<T,U> where T: Statize<E>, T::Statur: Sized, U: Statize<E>, U::Statur: Sized {
         type Statur = Result<T::Statur,U::Statur>;
     }
-    unsafe impl<'w,T> Statize for Cow<'w,T> where T: Statize+Clone, T::Statur: Sized {
-        type Statur = Option<T::Statur>;
+    unsafe impl<'w,T,E> Statize<E> for Cow<'w,T> where T: Statize<E>+Clone+?Sized, T::Statur: Clone {
+        type Statur = Cow<'static,T::Statur>;
     }
-    /*unsafe impl<'w,T> Statize for &'w T where T: Statize {
+    unsafe impl<'w,T,E> Statize<E> for &'w T where T: Statize<E>+?Sized {
         type Statur = &'static T::Statur;
     }
-    unsafe impl<'w,T> Statize for &'w mut T where T: Statize {
+    unsafe impl<'w,T,E> Statize<E> for &'w mut T where T: Statize<E>+?Sized {
         type Statur = &'static mut T::Statur;
-    }*/
-    unsafe impl<'w,T> Statize for &'w [T] where T: Statize, T::Statur: Sized {
+    }
+    /*unsafe impl<'w,T,E> Statize<E> for &'w [T] where T: Statize<E>, T::Statur: Sized {
         type Statur = &'static [T::Statur];
     }
-    unsafe impl<'w,T> Statize for &'w mut [T] where T: Statize, T::Statur: Sized {
+    unsafe impl<'w,T,E> Statize<E> for &'w mut [T] where T: Statize<E>, T::Statur: Sized {
         type Statur = &'static mut [T::Statur];
+    }*/
+    unsafe impl<'w,T,E> Statize<E> for [T] where T: Statize<E>, T::Statur: Sized {
+        type Statur = [T::Statur];
     }
-    unsafe impl<'w,T> Statize for Box<[T]> where T: Statize, T::Statur: Sized {
+    /*unsafe impl<'w,T,E> Statize<E> for Box<[T]> where T: Statize<E>, T::Statur: Sized {
         type Statur = Box<[T::Statur]>;
-    }
+    }*/
 
     macro_rules! impl_statize_static {
         ($t:ty;$($tt:ty);+) => {
@@ -196,15 +205,15 @@ mod imp {
             impl_statize_static!($($tt);*);
         };
         ($t:ty) => {
-            unsafe impl Statize for $t {
+            unsafe impl<E> Statize<E> for $t {
                 type Statur = Self;
             }
-            unsafe impl Statize for &$t {
+            /*unsafe impl<E> Statize<E> for &$t {
                 type Statur = &'static $t;
             }
-            unsafe impl Statize for &mut $t {
+            unsafe impl<E> Statize<E> for &mut $t {
                 type Statur = &'static $t;
-            }
+            }*/
         }
     }
 
@@ -223,23 +232,23 @@ mod imp {
         ($t:ident $($tt:ident)+) => {
             impl_statize_tuple!($($tt)+);
 
-            unsafe impl<$t,$($tt),+> Statize for ($t,$($tt),+) where
-                $t: Statize, $t::Statur: Sized,
-                $($tt: Statize, $tt::Statur: Sized),+ {
+            unsafe impl<E,$t,$($tt),+> Statize<E> for ($t,$($tt),+) where
+                $t: Statize<E>, $t::Statur: Sized,
+                $($tt: Statize<E>, $tt::Statur: Sized),+ {
                 type Statur = ($t::Statur,$($tt::Statur),+);
             }
 
-            unsafe impl<$t,$($tt),+> Statize for &($t,$($tt),+) where
-                $t: Statize, $t::Statur: Sized,
-                $($tt: Statize, $tt::Statur: Sized),+ {
+            /*unsafe impl<E,$t,$($tt),+> Statize<E> for &($t,$($tt),+) where
+                $t: Statize<E>, $t::Statur: Sized,
+                $($tt: Statize<E>, $tt::Statur: Sized),+ {
                 type Statur = &'static ($t::Statur,$($tt::Statur),+);
             }
 
-            unsafe impl<$t,$($tt),+> Statize for &mut ($t,$($tt),+) where
-                $t: Statize, $t::Statur: Sized,
-                $($tt: Statize, $tt::Statur: Sized),+ {
+            unsafe impl<E,$t,$($tt),+> Statize<E> for &mut ($t,$($tt),+) where
+                $t: Statize<E>, $t::Statur: Sized,
+                $($tt: Statize<E>, $tt::Statur: Sized),+ {
                 type Statur = &'static mut ($t::Statur,$($tt::Statur),+);
-            }
+            }*/
         };
         ($t:ident) => {}
     }

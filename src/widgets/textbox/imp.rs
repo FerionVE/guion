@@ -8,10 +8,10 @@ impl<'w,E,S,P,C,V> Widget<'w,E> for TextBox<'w,E,S,P,C,V> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    S: Caption<'w>+Statize, S::Statur: Sized,
-    P: AtomStateX<E,(u32,u32)>+Statize, P::Statur: Sized,
-    C: AtomStateX<E,Cursor>+Statize, C::Statur: Sized,
-    V: AtomStateX<E,bool>+Statize, V::Statur: Sized,
+    S: Caption<'w>+Statize<E>, S::Statur: Sized,
+    P: AtomStateX<E,(u32,u32)>+Statize<E>, P::Statur: Sized,
+    C: AtomStateX<E,Cursor>+Statize<E>, C::Statur: Sized,
+    V: AtomStateX<E,bool>+Statize<E>, V::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -185,10 +185,10 @@ impl<'w,E,S,P,C,V> WidgetMut<'w,E> for TextBox<'w,E,S,P,C,V> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    S: CaptionMut<'w>+Statize, S::Statur: Sized,
-    P: AtomStateXMut<E,(u32,u32)>+Statize, P::Statur: Sized,
-    C: AtomStateXMut<E,Cursor>+Statize, C::Statur: Sized,
-    V: AtomStateX<E,bool>+Statize, V::Statur: Sized,
+    S: CaptionMut<'w>+Statize<E>, S::Statur: Sized,
+    P: AtomStateXMut<E,(u32,u32)>+Statize<E>, P::Statur: Sized,
+    C: AtomStateXMut<E,Cursor>+Statize<E>, C::Statur: Sized,
+    V: AtomStateX<E,bool>+Statize<E>, V::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

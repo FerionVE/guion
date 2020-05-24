@@ -10,8 +10,8 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    State: AtomState<bool>+Statize+'w, State::Statur: Sized,
-    Text: Caption<'w>+Statize+'w, Text::Statur: Sized,
+    State: AtomState<bool>+Statize<E>+'w, State::Statur: Sized,
+    Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -112,8 +112,8 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    State: AtomStateMut<bool>+Statize+'w, State::Statur: Sized,
-    Text: Caption<'w>+Statize+'w, Text::Statur: Sized,
+    State: AtomStateMut<bool>+Statize<E>+'w, State::Statur: Sized,
+    Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
@@ -146,8 +146,8 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    State: AtomState<bool>+Statize+'w, State::Statur: Sized,
-    Text: Caption<'w>+Statize+'w, Text::Statur: Sized,
+    State: AtomState<bool>+Statize<E>+'w, State::Statur: Sized,
+    Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {
     pub fn toggle(mut l: Link<E>) {
         l.mutate(|mut w,_,_|{

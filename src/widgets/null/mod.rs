@@ -91,6 +91,6 @@ impl<'w,E> WidgetMut<'w,E> for Null<E> where
     }
 }
 
-unsafe impl<E> Statize for Null<E> where E: Env {
+unsafe impl<E> Statize<E> for Null<E> where E: Env {
     type Statur = Self;
 }

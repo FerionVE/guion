@@ -8,15 +8,15 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    L: AsWidget<'w,E>+Statize+'w, L::Statur: Sized,
-    R: AsWidget<'w,E>+Statize+'w, R::Statur: Sized,
-    V: AtomState<f32>+Statize+'w, V::Statur: Sized,
+    L: AsWidget<'w,E>+Statize<E>+'w, L::Statur: Sized,
+    R: AsWidget<'w,E>+Statize<E>+'w, R::Statur: Sized,
+    V: AtomStateX<E,f32>+Statize<E>+'w, V::Statur: Sized,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let bounds = self.calc_bounds(&r.b,self.state.get()); 
+        let bounds = self.calc_bounds(&r.b,self.state.get(l.ctx)); 
 
         {
             if l.state().is_hovered(&self.id) {
@@ -46,7 +46,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     }
     fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
         let o = self.orientation;
-        let mut bounds = self.calc_bounds(e.1,self.state.get()); 
+        let mut bounds = self.calc_bounds(e.1,self.state.get(l.ctx)); 
 
         {
             let sliced = e.1.slice(&bounds[1]);
@@ -89,9 +89,9 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
                         cx = cx - wx0;
                         let fcx = (cx as f32)/(ww as f32);
 
-                        l.mutate_closure(Box::new(move |mut w,_,_|{
-                            let w = w.traitcast_mut::<dyn AtomStateMut<f32>>().unwrap();
-                            w.set(fcx);
+                        l.mutate_closure(Box::new(move |mut w,c,_|{
+                            let w = w.traitcast_mut::<dyn AtomStateXMut<E,f32>>().unwrap();
+                            w.set(fcx,c);
                         }));
 
                         bounds = self.calc_bounds(e.1,fcx);
@@ -121,7 +121,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
         s
     }
     fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
-        Ok(self.calc_bounds(b,self.state.get()))
+        Ok(self.calc_bounds(b,self.state.get(l.ctx)))
     }
     fn childs(&self) -> usize {
         self.childs.len()
@@ -154,9 +154,9 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    L: AsWidgetMut<'w,E>+Statize+'w, L::Statur: Sized,
-    R: AsWidgetMut<'w,E>+Statize+'w, R::Statur: Sized,
-    V: AtomStateMut<f32>+Statize+'w, V::Statur: Sized,
+    L: AsWidgetMut<'w,E>+Statize<E>+'w, L::Statur: Sized,
+    R: AsWidgetMut<'w,E>+Statize<E>+'w, R::Statur: Sized,
+    V: AtomStateXMut<E,f32>+Statize<E>+'w, V::Statur: Sized,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -176,18 +176,18 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     }
 
     impl_traitcast!(
-        dyn AtomState<f32> => |s| &s.state;
-        dyn AtomStateMut<f32> => |s| &s.state;
+        dyn AtomStateX<E,f32> => |s| &s.state;
+        dyn AtomStateXMut<E,f32> => |s| &s.state;
     );
     impl_traitcast_mut!(
-        dyn AtomState<f32> => |s| &mut s.state;
-        dyn AtomStateMut<f32> => |s| &mut s.state;
+        dyn AtomStateX<E,f32> => |s| &mut s.state;
+        dyn AtomStateXMut<E,f32> => |s| &mut s.state;
     );
 }
 
 impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
     E: Env,
-    V: AtomState<f32>+Statize+Sized+'w, V::Statur: Sized,
+    V: AtomStateX<E,f32>+Statize<E>+'w, V::Statur: Sized,
 {
     fn calc_bounds(&self, b: &Bounds, v: f32) -> Vec<Bounds> {
         let handle_width = self.width.min(b.w());

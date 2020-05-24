@@ -18,6 +18,6 @@ impl<'w,E,State,Text> ICheckBox<'w> for CheckBox<'w,E,State,Text> where
     }
 }
 
-unsafe impl<'w> Statize for dyn ICheckBox<'w> {
+unsafe impl<'w,E> Statize<E> for dyn ICheckBox<'w> {
     type Statur = dyn ICheckBox<'static>;
 }

@@ -11,47 +11,47 @@ pub trait AtomStateMut<T>: AtomState<T> {
     fn set(&mut self, v: T);
 }
 
-impl<T> AtomState<T> for T where T: Copy {
+impl<T> AtomState<T> for T where T: Clone {
     fn get(&self) -> T {
-        *self
+        self.clone()
     }
 }
-impl<T> AtomState<T> for &T where T: Copy {
+impl<T> AtomState<T> for &T where T: Clone {
     fn get(&self) -> T {
-        **self
+        (**self).clone()
     }
 }
-impl<T> AtomState<T> for &mut T where T: Copy {
+impl<T> AtomState<T> for &mut T where T: Clone {
     fn get(&self) -> T {
-        **self
+        (**self).clone()
     }
 }
-impl<T> AtomStateMut<T> for &mut T where T: Copy {
+impl<T> AtomStateMut<T> for &mut T where T: Clone {
     fn set(&mut self, v: T) {
         **self = v;
     }
 }
-impl<T> AtomStateMut<T> for T where T: Copy {
+impl<T> AtomStateMut<T> for T where T: Clone {
     fn set(&mut self, v: T) {
         *self = v;
     }
 }
 
-impl<T> AtomState<T> for Cow<'_,T> where T: Copy {
+impl<T> AtomState<T> for Cow<'_,T> where T: Clone {
     fn get(&self) -> T {
-        *self.as_ref()
+        (*self.as_ref()).clone()
     }
 }
-impl<T> AtomStateMut<T> for Cow<'_,T> where T: Copy {
+impl<T> AtomStateMut<T> for Cow<'_,T> where T: Clone {
     fn set(&mut self, v: T) {
         *self.to_mut() = v;
     }
 }
 
-unsafe impl<T> Statize for dyn AtomState<T> where T: Statize {
+unsafe impl<T,E> Statize<E> for dyn AtomState<T> where T: Statize<E> {
     type Statur = dyn AtomState<T::Statur>;
 }
-unsafe impl<T> Statize for dyn AtomStateMut<T> where T: Statize {
+unsafe impl<T,E> Statize<E> for dyn AtomStateMut<T> where T: Statize<E> {
     type Statur = dyn AtomStateMut<T::Statur>;
 }
 
@@ -65,20 +65,20 @@ pub trait AtomStateXMut<E,T>: AtomStateX<E,T> where E: Env {
 }
 
 // TODO make it less error-prone as you probably forget the X in the traitcast fns
-impl<E,T,I> AtomStateX<E,T> for I where I: AtomState<T>, T: Copy, E: Env { 
+impl<E,T,I> AtomStateX<E,T> for I where I: AtomState<T>, T: Clone, E: Env { 
     fn get(&self, _: &mut E::Context) -> T {
         self.get()
     }
 }
-impl<E,T,I> AtomStateXMut<E,T> for I where I: AtomStateMut<T>, T: Copy, E: Env {
+impl<E,T,I> AtomStateXMut<E,T> for I where I: AtomStateMut<T>, T: Clone, E: Env {
     fn set(&mut self, v: T, _: &mut E::Context) {
         self.set(v)
     }
 }
 
-unsafe impl<E,T> Statize for dyn AtomStateX<E,T> where T: Statize, E: Env {
+unsafe impl<E,T> Statize<E> for dyn AtomStateX<E,T> where T: Statize<E>, E: Env {
     type Statur = dyn AtomStateX<E,T::Statur>;
 }
-unsafe impl<E,T> Statize for dyn AtomStateXMut<E,T> where T: Statize, E: Env {
+unsafe impl<E,T> Statize<E> for dyn AtomStateXMut<E,T> where T: Statize<E>, E: Env {
     type Statur = dyn AtomStateXMut<E,T::Statur>;
 }

@@ -22,7 +22,7 @@ macro_rules! impl_traitcast {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
         unsafe fn _as_trait_ref(&self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
-                if t == <$trait as $crate::widget::cast::Statize>::_typeid() {
+                if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
                     let $id = self;
                     let senf: &$trait = $access;
                     let senf = std::mem::transmute::<&$trait,$crate::util::traitcast::TraitObject>(senf);
@@ -46,7 +46,7 @@ macro_rules! impl_traitcast_mut {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
         unsafe fn _as_trait_mut(&mut self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
-                if t == <$trait as $crate::widget::cast::Statize>::_typeid() {
+                if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
                     let $id = self;
                     let senf: &mut $trait = $access;
                     let senf = std::mem::transmute::<&mut $trait,$crate::util::traitcast::TraitObject>(senf);
@@ -60,13 +60,13 @@ macro_rules! impl_traitcast_mut {
 
 macro_rules! impl_statize_lte {
     ($trait:ident) => {
-        unsafe impl<'w,E> Statize for dyn $trait<'w,E> where E: Env {
+        unsafe impl<'w,E> Statize<E> for dyn $trait<'w,E> where E: Env {
             type Statur = dyn $trait<'static,E>;
         }
-        unsafe impl<'l,'s,E> Statize for &'s dyn $trait<'l,E> where E: Env, 'l: 's {
+        unsafe impl<'l,'s,E> Statize<E> for &'s dyn $trait<'l,E> where E: Env, 'l: 's {
             type Statur = &'static dyn $trait<'static,E>;
         }
-        unsafe impl<'l,'s,E> Statize for &'s mut dyn $trait<'l,E> where E: Env, 'l: 's {
+        unsafe impl<'l,'s,E> Statize<E> for &'s mut dyn $trait<'l,E> where E: Env, 'l: 's {
             type Statur = &'static mut dyn $trait<'static,E>;
         }
     };

@@ -101,9 +101,9 @@ impl<'w,'l,T> CaptionMut<'w> for &'w mut T where T: CaptionMut<'l>+?Sized, 'l: '
     }
 }
 
-unsafe impl<'w> Statize for dyn Caption<'w> {
+unsafe impl<'w,E> Statize<E> for dyn Caption<'w> {
     type Statur = dyn Caption<'static>;
 }
-unsafe impl<'w> Statize for dyn CaptionMut<'w> {
+unsafe impl<'w,E> Statize<E> for dyn CaptionMut<'w> {
     type Statur = dyn CaptionMut<'static>;
 }

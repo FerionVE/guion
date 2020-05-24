@@ -5,7 +5,12 @@ use calc::calc_bounds;
 
 pub mod imp;
 
-pub struct SplitPane<'w,L,R,V,E> where E: Env {
+pub struct SplitPane<'w,L,R,V,E> where
+    E: Env,
+    L: 'w,
+    R: 'w,
+    V: 'w,
+{
     id: E::WidgetID,
     pub childs: (L,R),
     pub state: V,
@@ -14,7 +19,12 @@ pub struct SplitPane<'w,L,R,V,E> where E: Env {
     p: PhantomData<&'w mut ()>,
 }
 
-impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where E: Env {
+impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
+    E: Env,
+    L: 'w,
+    R: 'w,
+    V: 'w,
+{
     pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,L,R,V,E> {
         SplitPane{
             id,
@@ -27,11 +37,11 @@ impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where E: Env {
     }
 }
 
-unsafe impl<'w,L,R,V,E> Statize for SplitPane<'w,L,R,V,E> where 
+unsafe impl<'w,L,R,V,E> Statize<E> for SplitPane<'w,L,R,V,E> where 
     E: Env,
-    L: Statize+'w, L::Statur: Sized,
-    R: Statize+'w, R::Statur: Sized,
-    V: Statize+'w, V::Statur: Sized,
+    L: Statize<E>+'w, L::Statur: Sized,
+    R: Statize<E>+'w, R::Statur: Sized,
+    V: Statize<E>+'w, V::Statur: Sized,
 {
     type Statur = SplitPane<'static,L::Statur,R::Statur,V::Statur,E>;
 }
