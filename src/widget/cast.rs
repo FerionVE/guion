@@ -215,7 +215,8 @@ mod imp {
         u8;u16;u32;u64;u128;usize;
         str;String;//&'static str;
         Path;PathBuf;
-        crate::widgets::textbox::state::Cursor
+        crate::widgets::textbox::state::Cursor;
+        StdID
     );
 
     macro_rules! impl_statize_tuple {
@@ -226,6 +227,18 @@ mod imp {
                 $t: Statize, $t::Statur: Sized,
                 $($tt: Statize, $tt::Statur: Sized),+ {
                 type Statur = ($t::Statur,$($tt::Statur),+);
+            }
+
+            unsafe impl<$t,$($tt),+> Statize for &($t,$($tt),+) where
+                $t: Statize, $t::Statur: Sized,
+                $($tt: Statize, $tt::Statur: Sized),+ {
+                type Statur = &'static ($t::Statur,$($tt::Statur),+);
+            }
+
+            unsafe impl<$t,$($tt),+> Statize for &mut ($t,$($tt),+) where
+                $t: Statize, $t::Statur: Sized,
+                $($tt: Statize, $tt::Statur: Sized),+ {
+                type Statur = &'static mut ($t::Statur,$($tt::Statur),+);
             }
         };
         ($t:ident) => {}

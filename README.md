@@ -1,6 +1,6 @@
 # guion
 
-[Documentation](https://docs.rs/guion/0.2.0-dev1/)
+[Documentation](https://docs.rs/guion/0.2.0-dev2/)
 
 guion is heavily WIP right now, API and concepts are still in flux.
 

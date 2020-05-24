@@ -136,7 +136,7 @@ impl<E> State<E> where E: Env {
     }
 }
 
-#[derive(Copy,Clone)]
+#[derive(Copy,Clone,Default)]
 pub struct Cursor {
     pub select: u32,
     pub caret: u32,

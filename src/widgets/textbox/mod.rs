@@ -63,6 +63,20 @@ impl<'w,E,S,P,C,V> TextBox<'w,E,S,P,C,V> where
         }
     }
 
+    pub fn with_states<PP,CC>(self, scroll: PP, cursor: CC) -> TextBox<'w,E,S,PP,CC,V> where PP: Statize+'w, CC: Statize+'w {
+        TextBox{
+            id: self.id,
+            size: self.size,
+            style: self.style,
+            border: self.border,
+            text: self.text,
+            scroll,
+            cursor,
+            validation: self.validation,
+            p: PhantomData,
+        }
+    }
+
     pub fn with_size(mut self, s: ESize<E>) -> Self {
         self.size = s;
         self
