@@ -199,7 +199,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         w.render(&mut fork)
     }
 
-    #[deprecated]
+    /*#[deprecated]
     #[inline] 
     pub fn render_widgets<'b>(&mut self, i: impl Iterator<Item=E::WidgetPath>+'b, c: CtxRef<E>, overlap: bool) {
         /*if overlap {
@@ -220,7 +220,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             }
         }*/
         todo!()
-    }
+    }*/
 }
 
 impl<'a,E> RenderLink<'a,E> where E: Env, ERenderer<E>: RenderStdWidgets<E> {

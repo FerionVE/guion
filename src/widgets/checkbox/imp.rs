@@ -1,8 +1,6 @@
 use super::*;
 use util::state::AtomStateMut;
 use trayt::ICheckBox;
-use std::any::TypeId;
-use traitcast::TraitObject;
 
 impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     E: Env,
@@ -93,7 +91,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
         vec![]
     }
     
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool { true }

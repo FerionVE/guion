@@ -165,7 +165,7 @@ impl<'w,E,S,P,C,V> Widget<'w,E> for TextBox<'w,E,S,P,C,V> where
         vec![]
     }
     
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {

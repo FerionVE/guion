@@ -1,4 +1,5 @@
 use super::*;
+use std::{collections::HashMap, any::TypeId};
 //move state trait to standard state trait. state is not a core feature!
 
 pub trait AsHandlerStateful<E>: Context<E> + Sized where E: Env<Context=Self> {
@@ -43,5 +44,7 @@ pub trait HandlerStateful<E>: Handler<E> + 'static where E: Env {
     }
 
     fn cursor_pos(&self) -> Option<Offset>;
+
+    fn remote_states(&mut self) -> &mut HashMap<(E::WidgetID,TypeId),Box<dyn Any>>;
 }
 

@@ -78,22 +78,3 @@ unsafe impl<'w,E,State,Text> Statize<E> for CheckBox<'w,E,State,Text> where
 {
     type Statur = CheckBox<'static,E,State::Statur,Text::Statur>;
 }
-
-fn compile_test<E>(id: E::WidgetID) -> WidgetRefMut<'static,E> where
-    E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E>,
-{
-    let b: CheckBox<'static,E,bool,&'static str> = CheckBox::new(id, false);
-    //b.into()
-    eprintln!("{}",b.childs());
-    let mut b = true;
-    let c = AtomState::get(&b);
-    AtomStateMut::set(&mut b, !c); // Discovery: `AtomState::set` would actually trigger ICE
-    eprintln!("{}", <&'static str as Caption>::caption(&"AKW"));
-    eprintln!("{:?}",std::any::TypeId::of::< <&'static str as Statize<E>>::Statur >());
-    eprintln!("{:?}",std::any::TypeId::of::< <bool as Statize<E>>::Statur >());
-    todo!()
-}

@@ -38,7 +38,7 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         vec![]
     }
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {

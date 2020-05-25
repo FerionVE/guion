@@ -1,5 +1,5 @@
 use super::*;
-use std::{ops::Range, sync::Arc, marker::PhantomData};
+use std::marker::PhantomData;
 use arc_slice::ArcSlice;
 
 #[allow(type_alias_bounds)]

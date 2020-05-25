@@ -20,4 +20,7 @@ impl<S,E> HandlerStateful<E> for StdHandler<S,E> where
     fn cursor_pos(&self) -> Option<Offset> {
         self.s.mouse.pos
     }
+    fn remote_states(&mut self) -> &mut std::collections::HashMap<(E::WidgetID,std::any::TypeId),Box<dyn Any>> {
+        &mut self.s.remote_states
+    }
 }

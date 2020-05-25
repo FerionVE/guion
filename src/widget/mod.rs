@@ -56,12 +56,8 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_ref()))
         }
-        for c in 0..self.childs() {
-            if self.child(c).unwrap().resolves_to(i.index(0)) {
-                return self.child(c).unwrap().resolve_child(i.slice(1..));
-            }
-        }
-        Err(())
+        let c = self.resolve_child(i.index(0))?;
+        self.child(c).unwrap().resolve_child(i.slice(1..))
     }
     /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
@@ -70,12 +66,8 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_box()))
         }
-        for c in 0..self.childs() {
-            if self.child(c).unwrap().resolves_to(i.index(0)) {
-                return self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..));
-            }
-        }
-        Err(())
+        let c = self.resolve_child(i.index(0))?;
+        self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..))
     }
     #[inline]
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
@@ -167,26 +159,18 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
-        for c in 0..self.childs() {
-            if self.child(c).unwrap().resolves_to(i.index(0)) {
-                return self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..));
-            }
-        }
-        Err(())
+        let c = self.resolve_child(i.index(0))?;
+        self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..))
     }
 
     /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
-    fn into_resolve_mut(mut self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_resolve_mut(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
-        for c in 0..self.childs() {
-            if self.child(c).unwrap().resolves_to(i.index(0)) {
-                return self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..));
-            }
-        }
-        Err(())
+        let c = self.resolve_child(i.index(0))?;
+        self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..))
     }
 
     fn inner_mut<'s>(&'s mut self) -> Option<&'s mut dyn WidgetMut<'w,E>> {

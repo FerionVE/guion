@@ -1,5 +1,4 @@
 use crate::*;
-use ctx::*;
 use widget::Widget;
 
 pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) -> E::WidgetPath {

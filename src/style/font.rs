@@ -18,7 +18,7 @@ pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=S
         let mut i = 0u32; //TODO more optimal fn
 
         for (l,_) in self.lines() {
-            for c in l {
+            for _ in l {
                 i+=1;
             }
         }

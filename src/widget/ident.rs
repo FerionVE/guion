@@ -1,5 +1,5 @@
 use super::*;
-use std::{ops::Deref, borrow::Borrow};
+use std::ops::Deref;
 
 /// WidgetIdent is combined WidgetID and Path, and can be found in event to make it comparable by the ID and resolvable by the Path
 #[derive(Clone)]

@@ -79,7 +79,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
         vec![]
     }
     
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
     }
     fn focusable(&self) -> bool { true }

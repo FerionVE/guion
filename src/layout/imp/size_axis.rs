@@ -1,7 +1,5 @@
 use qwutils::imp::option::OptionExt;
 use super::*;
-use std::iter::Sum;
-
 
 qwutils::opion!(add(SizeAxis,SizeAxis) |s,r| {
     s.min += r.min;

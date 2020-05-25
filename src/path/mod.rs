@@ -1,5 +1,5 @@
 //! A path contains information, like widget id, which can denote a location of a widget
-use std::{slice::SliceIndex, ops::{RangeBounds, Add}};
+use std::{slice::SliceIndex, ops::RangeBounds};
 use qwutils::RefClonable;
 use super::*;
 
