@@ -1,5 +1,6 @@
 use super::*;
 use state::standard::key::StdPressedKey;
+use std::any::TypeId;
 
 impl<S,E> HandlerStateful<E> for StdHandler<S,E> where
     S: Handler<E>,
@@ -20,7 +21,18 @@ impl<S,E> HandlerStateful<E> for StdHandler<S,E> where
     fn cursor_pos(&self) -> Option<Offset> {
         self.s.mouse.pos
     }
-    fn remote_states(&mut self) -> &mut std::collections::HashMap<(E::WidgetID,std::any::TypeId),Box<dyn Any>> {
-        &mut self.s.remote_states
+    fn remote_state_or_default<T>(&self, i: E::WidgetID) -> T where T: Default + Clone + 'static {
+        self.s.remote_states
+            .get(&(i,TypeId::of::<T>()))
+            .map_or_else(T::default,|v|
+                v
+                .downcast_ref::<T>()
+                .unwrap()
+                .clone()
+            )
+    }
+    fn push_remote_state<T>(&mut self, i: E::WidgetID, v: T) where T: 'static {
+        self.s.remote_states
+            .insert((i,TypeId::of::<T>()),Box::new(v)); //TODO do not realloc always
     }
 }

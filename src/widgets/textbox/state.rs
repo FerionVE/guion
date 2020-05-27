@@ -14,7 +14,7 @@ impl<E> State<E> where E: Env {
         let off = p.get(ctx);
         let caption = s.caption();
         let glyphs = ESPPText::<E>::generate(caption.as_ref(),(20.0,20.0),ctx);
-        assert_eq!(glyphs.chars() as usize,caption.len()+1);
+        //assert_eq!(glyphs.chars() as usize,caption.len()+1);
         let siz = glyphs.size();
         let max_off = (
             siz.w.saturating_sub( b.w() ),

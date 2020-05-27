@@ -45,6 +45,7 @@ pub trait HandlerStateful<E>: Handler<E> + 'static where E: Env {
 
     fn cursor_pos(&self) -> Option<Offset>;
 
-    fn remote_states(&mut self) -> &mut HashMap<(E::WidgetID,TypeId),Box<dyn Any>>;
+    fn remote_state_or_default<T>(&self, i: E::WidgetID) -> T where T: Default + Clone + 'static;
+    fn push_remote_state<T>(&mut self, i: E::WidgetID, v: T) where T: 'static;
 }
 

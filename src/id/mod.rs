@@ -1,9 +1,10 @@
 //! Unique indentifier for widgets
 use super::*;
+use std::hash::Hash;
 
 pub mod standard;
 
-pub trait WidgetID: Clone + PartialEq + Sized + 'static {
+pub trait WidgetID: Clone + PartialEq + Eq + Sized + Hash + 'static {
     #[inline]
     fn id_eq<I: WidgetID + 'static>(&self, o: &I) -> bool where Self: 'static {
         Any::downcast_ref::<Self>(o)

@@ -25,3 +25,25 @@ pub trait ValidState {
     fn rerender(&self) -> bool;
     fn relayout(&self) -> bool;
 }
+
+#[macro_export]
+macro_rules! impl_env_stds {
+    ($e:ty) => {
+        impl<'w> $crate::widget::as_widget::AsWidget<'w,$e> for <$e as $crate::env::Env>::WidgetPath {
+            fn as_ref<'s>(&'s self) -> $crate::widget::resolvable::Resolvable<'s,$e> where 'w: 's {
+                $crate::widget::resolvable::Resolvable::Path(self.clone().into())
+            }
+            fn into_ref(self) -> $crate::widget::resolvable::Resolvable<'w,$e> {
+                $crate::widget::resolvable::Resolvable::Path(self.clone().into())
+            }
+        }
+        impl<'w> $crate::widget::as_widget::AsWidgetMut<'w,$e> for <$e as $crate::env::Env>::WidgetPath {
+            fn as_mut<'s>(&'s mut self) -> $crate::widget::resolvable::ResolvableMut<'s,$e> where 'w: 's {
+                $crate::widget::resolvable::ResolvableMut::Path(self.clone().into())
+            }
+            fn into_mut(self) -> $crate::widget::resolvable::ResolvableMut<'w,$e> {
+                $crate::widget::resolvable::ResolvableMut::Path(self.clone().into())
+            }
+        }
+    };
+}
