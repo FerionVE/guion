@@ -8,7 +8,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    State: AtomState<bool>+Statize<E>+'w, State::Statur: Sized,
+    State: AtomState<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -36,7 +36,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
                     StdVerb::Hovered(l.is_hovered()),
                     StdVerb::Focused(l.is_focused()),
                     StdVerb::Locked(self.locked),
-                    StdVerb::Pressed(self.state.get())
+                    StdVerb::Pressed(self.state.get(l.ctx))
                 ])
                 .fill_rect();
             r.with(&[
@@ -68,13 +68,15 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
         }
         if let Some(ee) = e.0.is_mouse_up() {
             if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
-                (self.trigger)(l.reference(),!self.state.get());
-                Self::toggle(l)
+                let new = !self.state.get(l.ctx);
+                (self.trigger)(l.reference(),new);
+                Self::set(l,new)
             }
         } else if let Some(ee) = e.0.is_kbd_press() {
             if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
-                (self.trigger)(l.reference(),!self.state.get());
-                Self::toggle(l)
+                let new = !self.state.get(l.ctx);
+                (self.trigger)(l.reference(),new);
+                Self::set(l,new)
             }
         }
     }
@@ -110,7 +112,7 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    State: AtomStateMut<bool>+Statize<E>+'w, State::Statur: Sized,
+    State: AtomStateMut<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
@@ -127,14 +129,14 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     }
 
     impl_traitcast!(
-        dyn ICheckBox => |s| s;
-        dyn AtomState<bool> => |s| &s.state;
-        dyn AtomStateMut<bool> => |s| &s.state;
+        dyn ICheckBox<E> => |s| s;
+        dyn AtomState<E,bool> => |s| &s.state;
+        dyn AtomStateMut<E,bool> => |s| &s.state;
     );
     impl_traitcast_mut!(
-        dyn ICheckBox => |s| s;
-        dyn AtomState<bool> => |s| &mut s.state;
-        dyn AtomStateMut<bool> => |s| &mut s.state;
+        dyn ICheckBox<E> => |s| s;
+        dyn AtomState<E,bool> => |s| &mut s.state;
+        dyn AtomStateMut<E,bool> => |s| &mut s.state;
     );
 }
 
@@ -144,12 +146,12 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: AsHandlerStateful<E>,
-    State: AtomState<bool>+Statize<E>+'w, State::Statur: Sized,
+    State: AtomState<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {
-    pub fn toggle(mut l: Link<E>) {
-        l.mutate(|mut w,_,_|{
-            w.traitcast_mut::<dyn ICheckBox>().unwrap().toggle();
-        });
+    pub fn set(mut l: Link<E>, v: bool) {
+        l.mutate_closure(Box::new(move |mut w,c,_|{
+            w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
+        }));
     }
 }

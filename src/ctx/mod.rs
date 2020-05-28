@@ -48,6 +48,9 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         }
     }
 
+    #[inline] fn state_mut(&mut self) -> &mut ECStateful<E> where Self: AsHandlerStateful<E> {
+        Self::stateful_mut(self)
+    }
     #[inline] fn state(&self) -> &ECStateful<E> where Self: AsHandlerStateful<E> {
         Self::stateful(self)
     }

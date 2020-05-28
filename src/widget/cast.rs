@@ -141,20 +141,6 @@ unsafe impl<'w,E> Statize<E> for dyn WidgetMut<'w,E> where E: Env {
     type Statur = dyn WidgetMut<'static,E>;
 }
 
-/*unsafe impl<'l,'s,E> Statize<E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
-    type Statur = &'static dyn Widget<'static,E>;
-}
-unsafe impl<'l,'s,E> Statize<E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's {
-    type Statur = &'static mut dyn WidgetMut<'static,E>;
-}*/
-
-/*unsafe impl<'w,E> Statize<E> for WidgetRef<'w,E> where E: Env {
-    type Statur = WidgetRef<'static,E>;
-}
-unsafe impl<'w,E> Statize<E> for WidgetRefMut<'w,E> where E: Env {
-    type Statur = WidgetRefMut<'static,E>;
-}*/
-
 mod imp {
     use super::*;
     use std::{borrow::Cow, path::{Path,PathBuf}, sync::Arc, rc::Rc};
@@ -186,18 +172,9 @@ mod imp {
     unsafe impl<'w,T,E> Statize<E> for &'w mut T where T: Statize<E>+?Sized {
         type Statur = &'static mut T::Statur;
     }
-    /*unsafe impl<'w,T,E> Statize<E> for &'w [T] where T: Statize<E>, T::Statur: Sized {
-        type Statur = &'static [T::Statur];
-    }
-    unsafe impl<'w,T,E> Statize<E> for &'w mut [T] where T: Statize<E>, T::Statur: Sized {
-        type Statur = &'static mut [T::Statur];
-    }*/
     unsafe impl<'w,T,E> Statize<E> for [T] where T: Statize<E>, T::Statur: Sized {
         type Statur = [T::Statur];
     }
-    /*unsafe impl<'w,T,E> Statize<E> for Box<[T]> where T: Statize<E>, T::Statur: Sized {
-        type Statur = Box<[T::Statur]>;
-    }*/
 
     macro_rules! impl_statize_static {
         ($t:ty;$($tt:ty);+) => {
@@ -208,12 +185,6 @@ mod imp {
             unsafe impl<E> Statize<E> for $t {
                 type Statur = Self;
             }
-            /*unsafe impl<E> Statize<E> for &$t {
-                type Statur = &'static $t;
-            }
-            unsafe impl<E> Statize<E> for &mut $t {
-                type Statur = &'static $t;
-            }*/
         }
     }
 
@@ -237,18 +208,6 @@ mod imp {
                 $($tt: Statize<E>, $tt::Statur: Sized),+ {
                 type Statur = ($t::Statur,$($tt::Statur),+);
             }
-
-            /*unsafe impl<E,$t,$($tt),+> Statize<E> for &($t,$($tt),+) where
-                $t: Statize<E>, $t::Statur: Sized,
-                $($tt: Statize<E>, $tt::Statur: Sized),+ {
-                type Statur = &'static ($t::Statur,$($tt::Statur),+);
-            }
-
-            unsafe impl<E,$t,$($tt),+> Statize<E> for &mut ($t,$($tt),+) where
-                $t: Statize<E>, $t::Statur: Sized,
-                $($tt: Statize<E>, $tt::Statur: Sized),+ {
-                type Statur = &'static mut ($t::Statur,$($tt::Statur),+);
-            }*/
         };
         ($t:ident) => {}
     }

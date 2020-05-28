@@ -1,5 +1,5 @@
 use super::*;
-use util::{caption::CaptionMut, state::AtomStateX};
+use util::{caption::CaptionMut, state::AtomState};
 use std::ops::{Range, RangeInclusive};
 
 pub struct State<E> where E: Env {
@@ -10,7 +10,7 @@ pub struct State<E> where E: Env {
 }
 
 impl<E> State<E> where E: Env {
-    pub fn retrieve<'a,S,P,C>(s: &S, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a>, P: AtomStateX<E,(u32,u32)>, C: AtomStateX<E,Cursor> {
+    pub fn retrieve<'a,S,P,C>(s: &S, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a>, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
         let off = p.get(ctx);
         let caption = s.caption();
         let glyphs = ESPPText::<E>::generate(caption.as_ref(),(20.0,20.0),ctx);

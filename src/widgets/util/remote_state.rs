@@ -1,46 +1,39 @@
 use super::*;
 use std::{any::TypeId, marker::PhantomData};
-use state::{AtomStateXMut, AtomStateX};
+use state::*;
 
 pub struct RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: AsHandlerStateful<E> {
     id: E::WidgetID,
     _p: PhantomData<T>,
 }
 
-/*impl<E,T> AtomStateX<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: AsHandlerStateful<E> {
-    fn get(&self, c: &mut E::Context) -> T {
-        c.state().remote_states()
-            .entry((self.id.clone(),TypeId::of::<T>()))
-            .or_default()
-            .clone()
+impl<E,T> RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: AsHandlerStateful<E> {
+    pub fn new(id: E::WidgetID) -> Self {
+        Self{
+            id,
+            _p: PhantomData,
+        }
     }
 }
 
-impl<E,T> AtomStateXMut<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: AsHandlerStateful<E> {
-    fn set(&mut self, v: T, c: &mut E::Context) {
-        *c.state().remote_states()
-        .entry((self.id.clone(),TypeId::of::<T>()))
-        .or_default() = v
+impl<E,T> AtomState<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: AsHandlerStateful<E> {
+    fn get(&self, c: &mut E::Context) -> T {
+        c.state().remote_state_or_default(
+            self.id.clone()
+        )
     }
-}*/
+    fn get_direct(&self) -> Result<T,()> {
+        Err(())
+    }
+}
 
-#[macro_export]
-macro_rules! impl_remote_state {
-    ($t:ty,$e:ty) => {
-        impl $crate::widgets::util::state::AtomStateX<$e,$t> for $crate::widgets::util::remote_state::RemoteState<$e,$t> {
-            fn get(&self, c: &mut <$e as $crate::env::Env>::Context) -> $t {
-                $crate::state::handler::HandlerStateful::remote_state_or_default(
-                    c.state(), self.id.clone()
-                )
-            }
-        }
-        
-        impl $crate::widgets::util::state::AtomStateXMut<$e,$t> for $crate::widgets::util::remote_state::RemoteState<$e,$t> {
-            fn set(&mut self, v: $t, c: &mut <$e as $crate::env::Env>::Context) {
-                $crate::state::handler::HandlerStateful::remote_state_or_default(
-                    c.state_mut(), v, self.id.clone()
-                )
-            }
-        }
-    };
+impl<E,T> AtomStateMut<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: AsHandlerStateful<E> {
+    fn set(&mut self, v: T, c: &mut E::Context) {
+        c.state_mut().push_remote_state(
+            self.id.clone(), v
+        )
+    }
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        Err(())
+    }
 }
