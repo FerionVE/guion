@@ -244,6 +244,16 @@ impl From<(u32,u32)> for Offset {
         Self{x: s.0 as i32, y: s.1 as i32}
     }
 }
+impl Into<(i32,i32)> for Offset {
+    fn into(self) -> (i32,i32) {
+        (self.x,self.y)
+    }
+}
+impl AsRef<Offset> for Offset {
+    fn as_ref(&self) -> &Offset {
+        self
+    }
+}
 
 qwutils::opion!(add(Bounds,Offset) |s,r| {
     s.off.x += r.x;

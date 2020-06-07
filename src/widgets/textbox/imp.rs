@@ -111,6 +111,13 @@ impl<'w,E,S,P,C,V> Widget<'w,E> for TextBox<'w,E,S,P,C,V> where
                     cursor = cursor.min(wc.len() as u32);
                     w.traitcast_mut::<dyn AtomStateXMut<E,Cursor>>().unwrap().set(cursor,ctx);
                 }));
+            }else if ee.key == EEKey::<E>::A && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+                l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                    let mut wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
+                    cursor.select = 0;
+                    cursor.caret = wc.len() as u32;
+                    w.traitcast_mut::<dyn AtomStateXMut<E,Cursor>>().unwrap().set(cursor,ctx);
+                }));
             }
         } else if let Some(ee) = e.0.is_mouse_scroll() {
             let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);

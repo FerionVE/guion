@@ -23,6 +23,10 @@ pub trait Key: Clone + PartialEq + Debug {
     const RIGHT: Self;
     const UP: Self;
     const DOWN: Self;
+    const A: Self;
+    const X: Self;
+    const C: Self;
+    const V: Self;
 
     fn origin(&self) -> Self::Origin;
 }
