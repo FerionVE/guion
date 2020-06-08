@@ -82,9 +82,14 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn render(&mut self, r: &mut RenderLink<E>) {
         self.ctx.render(self.widget.reference(),r)
     }
+    #[deprecated]
     #[inline]
-    pub fn event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
+    pub fn event(&mut self, e: (EEvent<E>,&Bounds,u64)) -> bool {
         self.ctx.event(self.widget.reference(),e)
+    }
+    #[inline]
+    pub fn route_event(&mut self, e: (EEvent<E>,&Bounds,u64), child: E::WidgetPath) -> Result<bool,()> {
+        self.ctx.route_event(self.widget.reference(),e,child)
     }
     #[inline]
     pub fn size(&mut self) -> ESize<E> {
@@ -102,7 +107,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// bypasses Context and Handler(s)
     #[inline]
-    pub fn _event(&mut self, e: (EEvent<E>,&Bounds,u64)) {
+    pub fn _event(&mut self, e: (EEvent<E>,&Bounds,u64)) -> bool {
         let mut b = *self.ctx.default_border();
         self.widget.border(&mut b);
         let b = e.1.inside_border(&b); //TODO unify border opt fns into on layer (why tf is border for event done here and border for render done in RenderLink??)
@@ -111,7 +116,14 @@ impl<'c,E> Link<'c,E> where E: Env {
             let e = (ee,&b,e.2);
             let w = self.ctx.link(self.widget.reference());
             (**self.widget)._event(w,e)
+        }else{
+            false
         }
+    }
+    #[inline]
+    pub fn _route_event(&mut self, e: (EEvent<E>,&Bounds,u64), child: E::WidgetPath) -> Result<bool,()> {
+        let w = self.ctx.link(self.widget.reference());
+        (**self.widget)._route_event(w,e,child)
     }
     /// bypasses Context and Handler(s)
     #[inline]
@@ -142,18 +154,9 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     #[inline]
     pub fn for_childs<'s>(&'s mut self, mut f: impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
-        //let wref = self.widget.wref.refc();
-        let path = self.widget.path.refc();
-        let ch = self.widget.childs_ref();
-        let stor = self.widget.stor;
-        for c in ch {
-            let w = c.resolve_widget(stor)?;
-            let w = Resolved{
-                path: w.in_parent_path(path.refc()).into(),
-                wref: w,
-                stor,
-            };
-            Self::_with_link(self.ctx,w,&mut f);
+        for i in 0..self.widget.childs() {
+            let l = self.for_child(i)?;
+            f(l);
         }
         Ok(())
     }

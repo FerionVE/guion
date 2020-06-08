@@ -26,7 +26,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     /// this method should not be called from external, rather [`Link::render`](link/struct.Link.html#method.render)
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>);
     /// this method should not be called from external, rather [`Link::event`](link/struct.Link.html#method.event)
-    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64));
+    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) -> bool;
     /// this method should not be called from external, rather [`Link::size`](link/struct.Link.html#method.size)
     fn _size(&self, l: Link<E>) -> ESize<E>;
 
@@ -48,7 +48,26 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
             .map(|i| self.child(i).unwrap().in_parent_path(own_path.refc()) )
             .collect::<Vec<_>>()
     }
+
+    fn _route_event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64), child: E::WidgetPath) -> Result<bool,()> {
+        let cb = self.child_bounds(e.1)?;
+        {
+            let c = self.resolve_child(child.index(0))?;
+            let mut l = l.for_child(c)?;
+            let b = cb[c];
+            if l._route_event((e.clone(),b,e.2)) {
+                return Ok(true);
+            }
+        }
+        if self._accept_child_events() {
+            self._event(l,e)
+        }else{
+            false
+        }
+    }
     
+    fn _accept_child_events(&self) -> bool;
+
     /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
     #[inline]

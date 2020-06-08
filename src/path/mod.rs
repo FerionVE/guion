@@ -44,31 +44,6 @@ where E: Env {
     fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize>;
     fn index<T>(&self, i: T) -> &Self::SubPath where T: SliceIndex<[Self::SubPath],Output=Self::SubPath>;
 
-    /*#[inline]
-    fn eq_path<F: Env + 'static>(&self, o: &F::WidgetPath) -> bool where Self: 'static/*, for<'a> &'a I: AsPathSlice<'a>*/ {
-        self.tip() == o.tip()
-    }*/
-    
-    #[deprecated]
-    #[allow(deprecated)]
-    #[inline]
-    fn child_paths_of_slice<'a>(&self, c: CtxRefR<'a,E>) -> Result<Vec<E::WidgetPath>,()> {
-        Ok( c.0.widget(self.refc().into())?.child_paths() )
-    }
-
-    #[inline]
-    fn render(&self, c: CtxRef<E>, r: &mut RenderLink<E>) -> Result<(),()> {
-        Ok( c.1.render(c.0.widget(self.refc().into())?,r) )
-    }
-    #[inline]
-    fn event(&self, c: CtxRef<E>, e: (EEvent<E>,&Bounds,u64)) -> Result<(),()> {
-        Ok( c.1.event(c.0.widget(self.refc().into())?,e) )
-    }
-    #[inline]
-    fn size(&self, c: CtxRef<E>) -> Result<ESize<E>,()> {
-        Ok( c.1.size(c.0.widget(self.refc().into())?) )
-    }
-
     #[inline]
     fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> Self where E::WidgetPath: WidgetPath<F> {
         self
