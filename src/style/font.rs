@@ -48,6 +48,7 @@ pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=S
 pub struct PPChar {
     pub bounds: Option<Bounds>,
     pub offset: Offset,
+    pub str_pos: usize,
 }
 
 pub type CrazyWorkaroundPPIter<'a> = Box<dyn Iterator<Item=(Box<dyn Iterator<Item=PPChar>+'a>,Bounds)>+'a>;

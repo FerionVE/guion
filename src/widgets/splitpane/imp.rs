@@ -10,7 +10,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     E::Context: AsHandlerStateful<E>,
     L: AsWidget<'w,E>+Statize<E>+'w, L::Statur: Sized,
     R: AsWidget<'w,E>+Statize<E>+'w, R::Statur: Sized,
-    V: AtomStateX<E,f32>+Statize<E>+'w, V::Statur: Sized,
+    V: AtomState<E,f32>+Statize<E>+'w, V::Statur: Sized,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -90,7 +90,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
                         let fcx = (cx as f32)/(ww as f32);
 
                         l.mutate_closure(Box::new(move |mut w,c,_|{
-                            let w = w.traitcast_mut::<dyn AtomStateXMut<E,f32>>().unwrap();
+                            let w = w.traitcast_mut::<dyn AtomStateMut<E,f32>>().unwrap();
                             w.set(fcx,c);
                         }));
 
@@ -156,7 +156,7 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     E::Context: AsHandlerStateful<E>,
     L: AsWidgetMut<'w,E>+Statize<E>+'w, L::Statur: Sized,
     R: AsWidgetMut<'w,E>+Statize<E>+'w, R::Statur: Sized,
-    V: AtomStateXMut<E,f32>+Statize<E>+'w, V::Statur: Sized,
+    V: AtomStateMut<E,f32>+Statize<E>+'w, V::Statur: Sized,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -176,18 +176,18 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     }
 
     impl_traitcast!(
-        dyn AtomStateX<E,f32> => |s| &s.state;
-        dyn AtomStateXMut<E,f32> => |s| &s.state;
+        dyn AtomState<E,f32> => |s| &s.state;
+        dyn AtomStateMut<E,f32> => |s| &s.state;
     );
     impl_traitcast_mut!(
-        dyn AtomStateX<E,f32> => |s| &mut s.state;
-        dyn AtomStateXMut<E,f32> => |s| &mut s.state;
+        dyn AtomState<E,f32> => |s| &mut s.state;
+        dyn AtomStateMut<E,f32> => |s| &mut s.state;
     );
 }
 
 impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
     E: Env,
-    V: AtomStateX<E,f32>+Statize<E>+'w, V::Statur: Sized,
+    V: AtomState<E,f32>+Statize<E>+'w, V::Statur: Sized,
 {
     fn calc_bounds(&self, b: &Bounds, v: f32) -> Vec<Bounds> {
         let handle_width = self.width.min(b.w());
