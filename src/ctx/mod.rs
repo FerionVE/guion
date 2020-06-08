@@ -2,6 +2,7 @@
 use super::*;
 
 pub mod queue;
+pub mod clipboard;
 
 /// The Context contains the Handlers, the queue and other side data and is also the entry point for most actions.
 /// A Context is regularly referenced in parallel with the widget tree

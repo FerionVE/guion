@@ -19,6 +19,7 @@ pub mod widgets;
 pub(crate) use aliases::*;
 pub(crate) use backend::*;
 pub(crate) use ctx::queue::*;
+pub(crate) use ctx::clipboard::*;
 pub(crate) use ctx::*;
 pub(crate) use env::*;
 pub(crate) use event::imp::*;

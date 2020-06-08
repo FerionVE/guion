@@ -68,6 +68,13 @@ impl Bounds {
     #[inline] pub fn x1(&self) -> i32 { self.off.x + (self.size.w as i32) }
     #[inline] pub fn y1(&self) -> i32 { self.off.y + (self.size.h as i32) }
 
+    #[inline] pub fn center(&self) -> Offset {
+        Offset{
+            x: self.off.x + (self.size.w/2) as i32,
+            y: self.off.y + (self.size.h/2) as i32,
+        }
+    }
+
     /// get the bounds inside this bound (subtract border)
     pub fn inside_border(&self, b: &Border) -> Self {
         let mut s = *self;

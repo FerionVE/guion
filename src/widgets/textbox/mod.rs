@@ -6,11 +6,12 @@ use state::Cursor;
 pub mod imp;
 pub mod state;
 
-pub struct TextBox<'w,E,S,P,C,V> where
+pub struct TextBox<'w,E,S,P,C,X,V> where
     E: Env,
     S: 'w,
     P: 'w,
     C: 'w,
+    X: 'w,
     V: 'w,
 {
     id: E::WidgetID,
@@ -20,11 +21,12 @@ pub struct TextBox<'w,E,S,P,C,V> where
     pub text: S,
     pub scroll: P,
     pub cursor: C,
+    pub cursor_stick_x: X,
     pub validation: V,
     p: PhantomData<&'w mut ()>,
 }
 
-impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,bool> where
+impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool> where
     E: Env,
 {
     pub fn new(id: E::WidgetID) -> Self {
@@ -36,20 +38,22 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,bool> where
             text: "".to_owned(),
             scroll: (0,0),
             cursor: Cursor{select: 0, caret: 0}, //TODO default trait
+            cursor_stick_x: None,
             validation: false, //would work perfectly on owned, for immediate state-stored AtomStateX can be used
             p: PhantomData,
         }
     }
 }
 
-impl<'w,E,S,P,C,V> TextBox<'w,E,S,P,C,V> where
+impl<'w,E,S,P,C,X,V> TextBox<'w,E,S,P,C,X,V> where
     E: Env,
     S: 'w,
     P: 'w,
     C: 'w,
+    X: 'w,
     V: 'w,
 {
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,P,C,V> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,P,C,X,V> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
         TextBox{
             id: self.id,
             size: self.size,
@@ -58,12 +62,14 @@ impl<'w,E,S,P,C,V> TextBox<'w,E,S,P,C,V> where
             text,
             scroll: self.scroll,
             cursor: self.cursor,
+            cursor_stick_x: self.cursor_stick_x,
             validation: self.validation,
             p: PhantomData,
         }
     }
 
-    pub fn with_states<PP,CC>(self, scroll: PP, cursor: CC) -> TextBox<'w,E,S,PP,CC,V> where PP: Statize<E>+'w, CC: Statize<E>+'w {
+    //TODO use a unified state object
+    pub fn with_states<PP,CC,XX>(self, scroll: PP, cursor: CC, cursor_stick_x: XX) -> TextBox<'w,E,S,PP,CC,XX,V> where PP: Statize<E>+'w, CC: Statize<E>+'w, XX: Statize<E>+'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -72,6 +78,7 @@ impl<'w,E,S,P,C,V> TextBox<'w,E,S,P,C,V> where
             text: self.text,
             scroll,
             cursor,
+            cursor_stick_x,
             validation: self.validation,
             p: PhantomData,
         }
@@ -83,12 +90,13 @@ impl<'w,E,S,P,C,V> TextBox<'w,E,S,P,C,V> where
     }
 }
 
-unsafe impl<'w,E,S,P,C,V> Statize<E> for TextBox<'w,E,S,P,C,V> where
+unsafe impl<'w,E,S,P,C,X,V> Statize<E> for TextBox<'w,E,S,P,C,X,V> where
     E: Env,
     S: Statize<E>, S::Statur: Sized,
     P: Statize<E>, P::Statur: Sized,
     C: Statize<E>, C::Statur: Sized,
+    X: Statize<E>, X::Statur: Sized,
     V: Statize<E>, V::Statur: Sized,
 {
-    type Statur = TextBox<'static,E,S::Statur,P::Statur,C::Statur,V::Statur>;
+    type Statur = TextBox<'static,E,S::Statur,P::Statur,C::Statur,X::Statur,V::Statur>;
 }

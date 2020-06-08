@@ -134,6 +134,31 @@ impl<E> State<E> where E: Env {
             .last() // TODO PERF all this seekery will be slow on huge texts
             .unwrap_or(0)
     }
+    pub fn cursor_pos_reverse_line_centric(&self, line: u32, x: i32) -> Option<u32> {
+        fn try_centerx(p: &PPChar) -> i32 {
+            if let Some(o) = p.bounds {
+                o.center().x
+            }else{
+                p.offset.x
+            }
+        }
+
+        self.glyphs.lines()
+            .skip(line as usize)
+            .next()
+            .map(|(l,_)| {
+                let mut last = 0;
+
+                for (i,b) in l.enumerate() {
+                    if try_centerx(&b) >= x {
+                        return i as u32;
+                    }
+                    last = i;
+                }
+
+                return last as u32;
+            })
+    }
 }
 
 #[derive(Copy,Clone,Default)]
@@ -151,6 +176,9 @@ impl Cursor {
     }
     pub fn range(&self) -> Range<u32> {
         self.select.min(self.caret) .. self.select.max(self.caret)
+    }
+    pub fn range_usize(&self) -> Range<usize> {
+        self.select.min(self.caret) as usize .. self.select.max(self.caret) as usize
     }
     pub fn range_incl(&self) -> RangeInclusive<u32> {
         self.select.min(self.caret) ..= self.select.max(self.caret)

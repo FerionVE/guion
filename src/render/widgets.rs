@@ -1,4 +1,5 @@
 use super::*;
+use std::fmt::Display;
 
 //TODO refine standard render functions
 pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<Self>,*/ EStyle<E>: Style<E> {

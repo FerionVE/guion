@@ -40,9 +40,42 @@ pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=S
             .next()
     }
 
+    fn coord_of(&self, i: u32) -> Option<(u32,u32)> {
+        let mut j = 0;
+        
+        for (y,(line,_)) in self.lines().enumerate() {
+            for (x,_) in line.enumerate() {
+                if j == i {
+                    return Some((x as u32,y as u32));
+                }
+                j+=1;
+            }
+        }
+
+        None
+    }
+
+    fn at_coord(&self, xy: (u32,u32)) -> Option<u32> {
+        let mut i = 0;
+
+        for (y,(line,_)) in self.lines().enumerate() {
+            for (x,_) in line.enumerate() {
+                if x == xy.0 as usize && y == xy.1 as usize {
+                    return Some(i as u32);
+                }
+                i+=1;
+            }
+        }
+
+        None
+    }
+
     fn line_ascent(&self) -> u32;
     fn line_height(&self) -> u32;
     fn line_distance(&self) -> u32;
+    fn line_count(&self) -> u32 {
+        self.lines().count() as u32
+    }
 }
 
 pub struct PPChar {
