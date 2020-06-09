@@ -33,16 +33,17 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
         }
         loop {
             if let Some(parent) = current.parent() {
-                let w = s.widget(parent.refc()).expect("Lost Widget");
-                let pc = w.child_paths();
+                if let Ok(w) = s.widget(parent.refc()) {
+                    let pc = w.child_paths();
 
-                let idx = pc.iter().position(|c| c.tip() == current.tip() ).expect("Parent Lost Child Widget");
+                    let idx = pc.iter().position(|c| c.tip() == current.tip() ).expect("Parent Lost Child Widget");
 
-                if idx < pc.len()-1 {
-                    *current = pc[idx+1].clone();
-                }else{
-                    *current = parent;
-                    continue;
+                    if idx < pc.len()-1 {
+                        *current = pc[idx+1].clone();
+                    }else{
+                        *current = parent;
+                        continue;
+                    }
                 }
             }
             break;
@@ -50,16 +51,17 @@ pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) 
     }
     fn walk_reverse<E: Env>(current: &mut E::WidgetPath, s: &E::Storage) {
         if let Some(parent) = current.parent() {
-            let w = s.widget(parent.refc()).expect("Lost Widget");
-            let pc = w.child_paths();
+            if let Ok(w) = s.widget(parent.refc()) {
+                let pc = w.child_paths();
 
-            let idx = pc.iter().position(|c| c.tip() == current.tip() ).expect("Parent Lost Child Widget");
+                let idx = pc.iter().position(|c| c.tip() == current.tip() ).expect("Parent Lost Child Widget");
 
-            if idx > 0 {
-                *current = pc[idx-1].clone();
-            }else{
-                *current = parent;
-                return;
+                if idx > 0 {
+                    *current = pc[idx-1].clone();
+                }else{
+                    *current = parent;
+                    return;
+                }
             }
         }
         loop {

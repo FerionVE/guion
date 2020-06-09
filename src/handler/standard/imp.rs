@@ -109,27 +109,27 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     Self::unfocus(l.ctx,l.widget.stor,e.1,e.2);
 
                     //the currently hovered widget
-                    let pos = l.as_ref().s.mouse.pos.expect("TODO");
-                    let hovered = l.as_ref().s.mouse.hovered.clone().expect("TODO");
+                    if let Some(pos) = l.as_ref().s.mouse.pos {
+                        if let Some(hovered) = l.as_ref().s.mouse.hovered.clone() {
+                            l.as_mut().s.key.down(key.clone(),hovered.clone(),e.2,Some(pos));
 
-                    l.as_mut().s.key.down(key.clone(),hovered.clone(),e.2,Some(pos));
+                            if let Ok(mut w) = l.with_widget(hovered.path) {
+                                let wbounds = w.trace_bounds(e.1,false);
+                                //focus the hovered if it should by mouse down
+                                if w.widget._focus_on_mouse_down() {
+                                    Self::focus(w.reference(),e.2,e.1,&wbounds);
+                                }
 
-                    if let Ok(mut w) = l.with_widget(hovered.path) {
-                        let wbounds = w.trace_bounds(e.1,false);
-                        //focus the hovered if it should by mouse down
-                        if w.widget._focus_on_mouse_down() {
-                            Self::focus(w.reference(),e.2,e.1,&wbounds);
+                                w._event_root((Event::from(MouseDown{key,pos}),&wbounds,e.2))
+                            };
                         }
-
-                        w._event_root((Event::from(MouseDown{key,pos}),&wbounds,e.2))
-                    };
+                    }
                 }
                 RootEvent::MouseUp{key} => {
                     let old = l.as_mut().s.key.up(key);
                     //TODO send up event to the widget which downed it
                     if let Some(p) = old {
                         if let Some(pos) = l.as_ref().s.mouse.pos {
-                            let hovered = l.as_ref().s.mouse.hovered.clone().unwrap();
                             let event = MouseUp{
                                 key: p.key,
                                 pos: pos,
@@ -137,10 +137,12 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                                 down_widget: p.down.refc(),
                                 down_ts: p.ts
                             };
-                            if hovered != p.down {
-                                if let Ok(mut l) = l.with_widget(hovered.path) {
-                                    let wbounds = l.trace_bounds(e.1,false);
-                                    l._event_root((Event::from(event.clone()),&wbounds,e.2));
+                            if let Some(hovered) = l.as_ref().s.mouse.hovered.clone() {
+                                if hovered != p.down {
+                                    if let Ok(mut l) = l.with_widget(hovered.path) {
+                                        let wbounds = l.trace_bounds(e.1,false);
+                                        l._event_root((Event::from(event.clone()),&wbounds,e.2));
+                                    }
                                 }
                             }
                             if let Ok(mut l) = l.with_widget(p.down.refc().path) {
@@ -156,27 +158,27 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     l.as_mut().s.mouse.pos = Some(pos);
                     //previous hovered widget
                     if let Some(p) = l.as_mut().s.mouse.hovered.take() {
-                        let mut l = l.with_widget(p.path)
-                            .expect("Lost Widget");
-                        let wbounds = l.trace_bounds(e.1,false);
-                        l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
+                        if let Ok(mut l) = l.with_widget(p.path) {
+                            let wbounds = l.trace_bounds(e.1,false);
+                            l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
+                        }
                     }
                     //hover state will be updated as the event passes through the widget tree
                     l._event_root((Event::from(MouseMove{pos}),e.1,e.2));
                     if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
-                        let mut l = l.with_widget(p.path)
-                            .expect("Lost Widget");
-                        let wbounds = l.trace_bounds(e.1,false);
-                        l._event_root((Event::from(MouseEnter{}),&wbounds,e.2));
+                        if let Ok(mut l) = l.with_widget(p.path) {
+                            let wbounds = l.trace_bounds(e.1,false);
+                            l._event_root((Event::from(MouseEnter{}),&wbounds,e.2));
+                        }
                     }
                     
                 }
                 RootEvent::MouseLeaveWindow{} => {
                     if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
-                        let mut l = l.with_widget(p.path)
-                            .expect("Lost Widget");
-                        let wbounds = l.trace_bounds(e.1,false);
-                        l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
+                        if let Ok(mut l) = l.with_widget(p.path) {
+                            let wbounds = l.trace_bounds(e.1,false);
+                            l._event_root((Event::from(MouseLeave{}),&wbounds,e.2));
+                        }
                     }
                     let mouse = &mut l.as_mut().s.mouse;
                     mouse.pos = None;
@@ -197,12 +199,12 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     }
                 }
                 RootEvent::MouseScroll{x,y} => {
-                    let hovered = l.as_ref().s.mouse.hovered.clone().expect("TODO");
-                    
-                    if let Ok(mut w) = l.with_widget(hovered.path) {
-                        let wbounds = w.trace_bounds(e.1,false);
-                        w._event_root((Event::from(MouseScroll{x,y}),&wbounds,e.2))
-                    };
+                    if let Some(hovered) = l.as_ref().s.mouse.hovered.clone() {
+                        if let Ok(mut w) = l.with_widget(hovered.path) {
+                            let wbounds = w.trace_bounds(e.1,false);
+                            w._event_root((Event::from(MouseScroll{x,y}),&wbounds,e.2))
+                        };
+                    }
                 }
             }
         }else{

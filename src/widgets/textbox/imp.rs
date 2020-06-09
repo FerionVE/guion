@@ -87,6 +87,8 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                 ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE ||
                 ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
             {
+                let ctrl = l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some();
+
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let mut wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
                     if ee.key == EEKey::<E>::BACKSPACE {
@@ -94,7 +96,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                             cursor.del_selection(&mut wc);
                         }else{
                             wc.pop_left(cursor.caret as usize,1);
-                            cursor.unselect_sub(1);
+                            cursor.unselect_sub(1,false);
                             
                         }
                     }
@@ -103,13 +105,13 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                             cursor.del_selection(&mut wc);
                         }
                         wc.push(cursor.caret as usize,"\n");
-                        cursor.unselect_add(1);
+                        cursor.unselect_add(1,false);
                     }
                     if ee.key == EEKey::<E>::LEFT {
-                        cursor.unselect_sub(1);
+                        cursor.unselect_sub(1,ctrl);
                     }
                     if ee.key == EEKey::<E>::RIGHT {
-                        cursor.unselect_add(1);
+                        cursor.unselect_add(1,ctrl);
                     }
                     cursor = cursor.min(wc.len() as u32);
                     w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
@@ -171,7 +173,9 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                     let i = s.glyphs.at_coord((x,line)).unwrap();
 
                     cursor.caret = i;
-                    cursor.select = i;
+                    if !l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+                        cursor.select = cursor.caret;
+                    }
 
                     cursor = cursor.min(self.text.len() as u32);
                     l.mutate_closure(Box::new(move |mut w,ctx,_| {

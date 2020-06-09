@@ -72,7 +72,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     #[inline]
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
         for c in 0..self.childs() {
-            if self.child(c).unwrap().resolves_to(p) {
+            if self.child(c).unwrap().resolves_by(p) {
                 return Ok(c);
             }
         }

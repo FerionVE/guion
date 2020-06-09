@@ -193,13 +193,17 @@ impl Cursor {
     pub fn unselect(&mut self) {
         self.select = self.caret;
     }
-    pub fn unselect_add(&mut self, o: u32) {
+    pub fn unselect_add(&mut self, o: u32, skip_unselect: bool) {
         self.caret += o;
-        self.select = self.caret;
+        if !skip_unselect {     
+            self.select = self.caret;
+        }
     }
-    pub fn unselect_sub(&mut self, o: u32) {
+    pub fn unselect_sub(&mut self, o: u32, skip_unselect: bool) {
         self.caret = self.caret.saturating_sub(o);
-        self.select = self.caret;
+        if !skip_unselect {
+            self.select = self.caret;
+        }
     }
     pub fn limit(&mut self, min: u32) {
         *self = self.min(min);

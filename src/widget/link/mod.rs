@@ -125,6 +125,12 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
+    pub fn _trace_bounds(&mut self, sub: E::WidgetPath, root_bounds: &Bounds, force: bool) -> Result<Bounds,()> {
+        let w = self.ctx.link(self.widget.reference());
+        (**self.widget).trace_bounds(w,sub,root_bounds,force)
+    }
+
+    #[inline]
     pub fn is_hovered(&self) -> bool where E::Context: AsHandlerStateful<E> {
         self.ctx.state().is_hovered(&self.id())
     }
