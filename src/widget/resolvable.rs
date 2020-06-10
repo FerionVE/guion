@@ -34,7 +34,7 @@ impl<'a,E> Resolvable<'a,E> where E: Env {
     /// if the path particle would resolve to this widget
     #[deprecated]
     #[inline]
-    pub fn resolves_to(&self, p: &EWPSub<E>) -> bool {
+    pub fn resolves_by(&self, p: &EWPSub<E>) -> bool {
         match self {
             Resolvable::Widget(w) => w.resolves_by(p),
             Resolvable::Path(w) => p.resolves_to_path(w.refc()), //TODO WRONG use widget's fns

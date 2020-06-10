@@ -185,6 +185,10 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.for_childs(#[inline] |mut w| dest.push(w.size()) )?;
         Ok(dest)
     }
+    pub fn child_bounds(&self, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+        let w = self.ctx.link(self.widget.reference());
+        (**self.widget).child_bounds(b,force)
+    }
 
     pub fn with_widget<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
         Ok(
