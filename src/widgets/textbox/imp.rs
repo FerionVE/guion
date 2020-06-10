@@ -62,7 +62,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
             ])
                 .render_preprocessed_text(&s.glyphs, s.off2(), &mut l.ctx);
     }
-    fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) {
         //e.0._debug_type_name();
         let mut cursor = self.cursor.get(l.ctx);
         let border = Border::new(4, 4, 4, 4);
@@ -246,6 +246,9 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
     }
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
+    }
+    fn _accept_child_events(&self) -> bool {
+        false
     }
 }
 

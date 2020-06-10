@@ -20,12 +20,16 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         c.render(self.clone(),r)
     }
     #[inline]
-    pub fn event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64)) {
-        c.event(self.clone(),e)
+    pub fn event_direct(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+        c.event_direct(self.clone(),e)
     }
     #[inline]
     pub fn size(&self, c: &mut E::Context) -> ESize<E> {
         c.size(self.clone())
+    }
+    #[inline]
+    fn route_event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
+        c.route_event(self.clone(),e,child)
     }
 
     #[inline]
@@ -33,12 +37,16 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         (***self)._render(c.link(self.clone()),r)
     }
     #[inline]
-    pub fn _event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64)) {
-        (***self)._event(c.link(self.clone()),e)
+    pub fn _event_direct(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+        (***self)._event_direct(c.link(self.clone()),e)
     }
     #[inline]
     pub fn _size(&self, c: &mut E::Context) -> ESize<E> {
         (***self)._size(c.link(self.clone()))
+    }
+    #[inline]
+    fn _route_event(&self, c: &mut E::Context, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
+        (***self)._route_event(c.link(self.clone()),e,child)
     }
     #[inline]
     pub fn link(&self, c: &'a mut E::Context) -> Link<'a,E> {

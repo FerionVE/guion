@@ -54,6 +54,12 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
     fn index<T>(&self, i: T) -> &S where T: SliceIndex<[S],Output=S> {
         &self.v[i] //TODO eventually non-panic refactor
     }
+    fn empty() -> Self {
+        Self{
+            v: ArcSlice::new(),
+            _p: PhantomData,
+        }
+    }
 }
 
 impl<E,S> SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {

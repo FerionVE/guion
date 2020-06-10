@@ -44,6 +44,8 @@ where E: Env {
     fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize>;
     fn index<T>(&self, i: T) -> &Self::SubPath where T: SliceIndex<[Self::SubPath],Output=Self::SubPath>;
 
+    fn empty() -> Self;
+
     #[inline]
     fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> Self where E::WidgetPath: WidgetPath<F> {
         self

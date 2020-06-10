@@ -16,15 +16,22 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
         //todo!()
     }
     #[inline] 
-    fn _event(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) -> bool {
-        if let Some(_) = e.0.is::<MouseMove>() {
+    fn _event_direct(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+        /*if let Some(_) = e.0.is::<MouseMove>() {
             l.as_mut().s.mouse.hovered = Some(l.ident());
-        }
-        S::_event(l,e)
+        }*/
+        S::_event_direct(l,e)
         //todo!()
     }
     #[inline] 
-    fn _event_root(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) -> bool {
+    fn _route_event(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
+        /*if let Some(_) = e.0.is::<MouseMove>() {
+            l.as_mut().s.mouse.hovered = Some(l.ident());
+        }*/
+        S::_route_event(l,e,child)
+    }
+    #[inline] 
+    fn _event_root(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp { //TODO BUG handle sudden invalidation of hovered widget
         //todo!()
         if let Some(ee) = e.0.is::<RootEvent<E>>() {
             match ee {
@@ -213,10 +220,6 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
     fn _size(l: Link<E>) -> ESize<E> {
         //todo!();
         S::_size(l)
-    }
-    #[inline] 
-    fn _route_event(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64), child: E::WidgetPath) -> Result<bool,()> {
-        S::_route_event(l,e,child)
     }
 }
 

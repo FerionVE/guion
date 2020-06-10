@@ -50,7 +50,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
         ])
             .render_text(self.text.caption().as_ref(),l.ctx);
     }
-    fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event_direct(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
         //e.0._debug_type_name();
         //let mut invalid = false;
         if e.0.is_hover_update() || e.0.is_kbd_press().is_some() || e.0.is_kbd_up().is_some() { //TODO catch down and press
@@ -58,13 +58,16 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
         }
         if let Some(ee) = e.0.is_mouse_up() {
             if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
-                (self.trigger)(l)
+                (self.trigger)(l);
+                return true;
             }
         } else if let Some(ee) = e.0.is_kbd_press() {
             if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
-                (self.trigger)(l)
+                (self.trigger)(l);
+                return true;
             }
         }
+        e.0.is_mouse_down().is_some()
     }
     fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()
@@ -89,6 +92,9 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     }
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
+    }
+    fn _accept_child_events(&self) -> bool {
+        false
     }
 }
 

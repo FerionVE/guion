@@ -84,11 +84,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[deprecated]
     #[inline]
-    pub fn event(&mut self, e: (EEvent<E>,&Bounds,u64)) -> bool {
-        self.ctx.event(self.widget.reference(),e)
+    pub fn event_direct(&mut self, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+        self.ctx.event_direct(self.widget.reference(),e)
     }
     #[inline]
-    pub fn route_event(&mut self, e: (EEvent<E>,&Bounds,u64), child: E::WidgetPath) -> Result<bool,()> {
+    pub fn route_event(&mut self, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
         self.ctx.route_event(self.widget.reference(),e,child)
     }
     #[inline]
@@ -96,7 +96,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.size(self.widget.reference())
     }
     #[inline]
-    pub fn _event_root(&mut self, e: (EEvent<E>,&Bounds,u64)) {
+    pub fn _event_root(&mut self, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
         self.ctx._event_root(self.widget.reference(),e)
     }
     /// bypasses Context and Handler(s)
@@ -107,21 +107,12 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// bypasses Context and Handler(s)
     #[inline]
-    pub fn _event(&mut self, e: (EEvent<E>,&Bounds,u64)) -> bool {
-        let mut b = *self.ctx.default_border();
-        self.widget.border(&mut b);
-        let b = e.1.inside_border(&b); //TODO unify border opt fns into on layer (why tf is border for event done here and border for render done in RenderLink??)
-
-        if let Some(ee) = e.0.filter(&b) {
-            let e = (ee,&b,e.2);
-            let w = self.ctx.link(self.widget.reference());
-            (**self.widget)._event(w,e)
-        }else{
-            false
-        }
+    pub fn _event_direct(&mut self, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+        let w = self.ctx.link(self.widget.reference());
+        (**self.widget)._event_direct(w,e)
     }
     #[inline]
-    pub fn _route_event(&mut self, e: (EEvent<E>,&Bounds,u64), child: E::WidgetPath) -> Result<bool,()> {
+    pub fn _route_event(&mut self, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
         let w = self.ctx.link(self.widget.reference());
         (**self.widget)._route_event(w,e,child)
     }

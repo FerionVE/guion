@@ -44,9 +44,11 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
             //TODO render center
         }
     }
-    fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event_direct(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
         let o = self.orientation;
         let mut bounds = self.calc_bounds(e.1,self.state.get(l.ctx)); 
+
+        let mut passed = false;
 
         {
             let sliced = e.1.slice(&bounds[1]);
@@ -146,6 +148,9 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     }
     fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
         self.childs.into_child(i)
+    }
+    fn _accept_child_events(&self) -> bool {
+        false //TODO true if we want to catch scroll etc.
     }
 }
 impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where

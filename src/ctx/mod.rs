@@ -30,11 +30,11 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         Self::Handler::_render(self.link(w),r)
     }
     #[inline] 
-    fn event(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64)) -> bool {
-        Self::Handler::_event(self.link(w),e)
+    fn event_direct(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+        Self::Handler::_event_direct(self.link(w),e)
     }
     #[inline]
-    fn route_event(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64), child: E::WidgetPath) -> Result<bool,()> {
+    fn route_event(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
         Self::Handler::_route_event(self.link(w),e,child)
     }
     #[inline] 
@@ -42,7 +42,7 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         Self::Handler::_size(self.link(w))
     }
     #[inline] 
-    fn _event_root(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event_root(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
         Self::Handler::_event_root(self.link(w),e)
     }
 

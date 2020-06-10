@@ -26,7 +26,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     /// this method should not be called from external, rather [`Link::render`](link/struct.Link.html#method.render)
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>);
     /// this method should not be called from external, rather [`Link::event`](link/struct.Link.html#method.event)
-    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) -> bool;
+    fn _event_direct(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp;
     /// this method should not be called from external, rather [`Link::size`](link/struct.Link.html#method.size)
     fn _size(&self, l: Link<E>) -> ESize<E>;
 
@@ -49,21 +49,21 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
             .collect::<Vec<_>>()
     }
 
-    fn _route_event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64), child: E::WidgetPath) -> Result<bool,()> {
-        let cb = self.child_bounds(e.1)?;
+    fn _route_event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
+        let cb = self.child_bounds(l,e.1,false)?;
         {
             let c = self.resolve_child(child.index(0))?;
             let mut l = l.for_child(c)?;
             let b = cb[c];
-            if l._route_event((e.clone(),b,e.2)) {
+            if l._route_event((e.0.clone(),&b,e.2,e.3),child.slice(1..))? {
                 return Ok(true);
             }
         }
-        if self._accept_child_events() {
-            self._event(l,e)
+        Ok(if self._accept_child_events() {
+            self._event_direct(l,e)
         }else{
             false
-        }
+        })
     }
     
     fn _accept_child_events(&self) -> bool;

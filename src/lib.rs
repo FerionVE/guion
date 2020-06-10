@@ -58,3 +58,5 @@ pub(crate) use widget::resolved::*;
 pub(crate) use widget::root::*;
 pub(crate) use widget::ident::*;
 pub(crate) use widget::*;
+
+pub type EventResp = bool;

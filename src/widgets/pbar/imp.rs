@@ -23,8 +23,8 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
         ])
             .border_rect(2);
     }
-    fn _event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
-        
+    fn _event_direct(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+        false
     }
     fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()
@@ -58,6 +58,9 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     }
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
+    }
+    fn _accept_child_events(&self) -> bool {
+        false
     }
 }
 

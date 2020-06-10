@@ -34,8 +34,8 @@ impl<'w,E> Widget<'w,E> for Null<E> where
     fn _render(&self, _: Link<E>, r: &mut RenderLink<E>) {
         r.fill_rect();
     }
-    fn _event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
-        
+    fn _event_direct(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+        false
     }
     fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()
@@ -69,6 +69,9 @@ impl<'w,E> Widget<'w,E> for Null<E> where
     }
     fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
+    }
+    fn _accept_child_events(&self) -> bool {
+        false
     }
 }
 

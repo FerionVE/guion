@@ -9,7 +9,6 @@ pub struct RenderLink<'a,E> where E: Env {
     pub b: Bounds,
     /// current slice, but including last border
     pub br: Bounds,
-    pub last_border: Border,
     pub v: ESVariant<E>,
     pub s: EStyle<E>,
     /// whether rendering is enforced (e.g. if invalidation from outside occured)
@@ -21,7 +20,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         Self{
             r,
             br: b.clone(),
-            last_border: Border::empty(),
             b,
             v,
             s,
@@ -47,7 +45,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.clone(),
-            last_border: self.last_border.clone(),
             br: self.br.clone(),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -66,7 +63,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.inside_border(s),
-            last_border: s.clone(),
             br: self.b.clone(),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -79,7 +75,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.slice(s),
-            last_border: Border::empty(),
             br: self.b.slice(s),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -92,7 +87,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b & s,
-            last_border: Border::empty(),
             br: self.b & s,
             v: self.v.clone(),
             s: self.s.clone(),
@@ -105,7 +99,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.inner_centered(size),
-            last_border: Border::empty(),
             br: self.b.inner_centered(size),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -118,7 +111,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         RenderLink{
             r: self.r,
             b: self.b.inner_aligned(size,align),
-            last_border: Border::empty(),
             br: self.b.inner_aligned(size,align),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -132,7 +124,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             force: self.force(),
             r: self.r,
             b: self.b.clone(),
-            last_border: Border::empty(),
             br: self.br.clone(),
             v: self.v.with(verbs),
             s: self.s.clone(),
@@ -145,7 +136,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             force: self.force(),
             r: self.r,
             b: self.br.clone(),
-            last_border: Border::empty(),
             br: self.br.clone(),
             v: self.v.clone(),
             s: self.s.clone(),
@@ -170,26 +160,23 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     pub fn render_widget(&mut self, w: Link<E>) {
         self._render_widget(
             w,
-            #[inline] |_,_| {},
-            #[inline] |_,_| {},
+            #[inline] |_| {},
+            #[inline] |_| {},
         )
     }
     #[inline]
-    pub fn _render_widget(&mut self, mut w: Link<E>, pre: impl FnOnce(&mut ESVariant<E>,&mut Border), post: impl FnOnce(&mut ESVariant<E>,&mut Border)) {
-        let mut border = w.default_border().clone();
+    pub fn _render_widget(&mut self, mut w: Link<E>, pre: impl FnOnce(&mut ESVariant<E>), post: impl FnOnce(&mut ESVariant<E>)) {
         let mut style = self.v.clone();
 
-        pre(&mut style, &mut border);
+        pre(&mut style);
 
-        w.widget.border(&mut border);
         w.widget.style(&mut style);
 
-        post(&mut style, &mut border);
+        post(&mut style);
 
         let mut fork = RenderLink{
             r: self.r,
-            b: self.b.inside_border(&border),
-            last_border: border.clone(),
+            b: self.b,
             br: self.b.clone(),
             v: style,
             s: self.s.clone(),
