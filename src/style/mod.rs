@@ -17,6 +17,7 @@ pub trait Style<E>: Clone where E: Env, E::Backend: Backend<E,Style=Self> {
     fn font(&self, v: &Self::Variant) -> Option<&Self::Font>;
     fn cursor(&self, v: &Self::Variant) -> Self::Cursor;
     fn color(&self, v: &Self::Variant) -> Self::Color;
+    fn border(&self, v: &Self::Variant) -> Border;
     
     fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::PreprocessedText;
     //TODO fix partial eq impl

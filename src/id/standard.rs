@@ -17,11 +17,11 @@ impl StdID {
     }
 }
 
-/// currently broken
 #[macro_export]
-macro_rules! const_id {
-    () => {
-        {
+macro_rules! define_const_id {
+    ($n:ident) => {
+        #[inline]
+        pub fn $n() -> $crate::id::standard::StdID {
             struct Ident;
             $crate::id::standard::Const(std::any::TypeId::of::<Ident>())
         }

@@ -8,7 +8,8 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, _: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         r.with(&[
             StdVerb::ObjBackground,
         ])
@@ -23,8 +24,8 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
         ])
             .border_rect(2);
     }
-    fn _event(&self, _: Link<E>, _: (EEvent<E>,&Bounds,u64)) {
-        
+    fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
+        false
     }
     fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()

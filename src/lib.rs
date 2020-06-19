@@ -26,6 +26,8 @@ pub(crate) use event::imp::*;
 pub(crate) use event::key::*;
 pub(crate) use event::variant::*;
 pub(crate) use event::variants::*;
+pub(crate) use event::filter::*;
+pub(crate) use event::compound::*;
 pub(crate) use event::*;
 pub(crate) use handler::*;
 pub(crate) use id::standard::*;
@@ -58,3 +60,5 @@ pub(crate) use widget::resolved::*;
 pub(crate) use widget::root::*;
 pub(crate) use widget::ident::*;
 pub(crate) use widget::*;
+
+pub type EventResp = bool;

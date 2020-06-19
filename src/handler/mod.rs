@@ -6,9 +6,10 @@ pub mod standard;
 /// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
 pub trait Handler<E>: Sized + 'static where E: Env {
     fn _render(l: Link<E>, r: &mut RenderLink<E>);
-    fn _event(l: Link<E>, e: (EEvent<E>,&Bounds,u64));
-    fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds,u64));
+    fn _event_direct(l: Link<E>, e: &EventCompound<E>) -> EventResp;
+    fn _event_root(l: Link<E>, e: &EventCompound<E>) -> EventResp;
     fn _size(l: Link<E>) -> ESize<E>;
+    fn _send_event(l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()>;
 }
 
 impl<E> Handler<E> for () where E: Env {
@@ -17,17 +18,23 @@ impl<E> Handler<E> for () where E: Env {
         l._render(r)
     }
     #[inline] 
-    fn _event(mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
-        l._event(e)
+    fn _event_direct(mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        l._event_direct(e)
     }
     #[inline] 
-    fn _event_root(l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event_root(l: Link<E>, e: &EventCompound<E>) -> EventResp {
         if !e.0._root_only() {//TODO warn eprint??
-            l.ctx.event(l.widget,e)
+            l.ctx.event_direct(l.widget,e)
+        }else{
+            false
         }
     }
     #[inline] 
     fn _size(mut l: Link<E>) -> ESize<E> {
         l._size()
+    }
+    #[inline]
+    fn _send_event(mut l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
+        l._send_event(e,child)
     }
 }

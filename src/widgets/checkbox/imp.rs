@@ -27,6 +27,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         let size = r.b.size.h;
         {
             let rect = Bounds::from_wh(size,size);
@@ -49,7 +50,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
                 .border_rect(2);
         }
         {
-            let text_border = Border::new(size+r.last_border.left*2,0,0,0);
+            let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
             r.inside_border(&text_border)
                 .with(&[
                     StdVerb::ObjForeground,
@@ -61,7 +62,17 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
                 .render_text_aligned(self.text.caption().as_ref(),(0.0,0.5),l.ctx);
         }
     }
-    fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
+    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        let e = 
+            if let Some(e) =
+                e.inside_border( self.border.as_ref()
+                    .unwrap_or(l.default_border())
+                ).filter_bounds()
+            {
+                e
+            }else{
+                return false;
+            };
         //let mut invalid = false;
         if e.0.is_hover_update() || e.0.is_kbd_down().is_some() || e.0.is_kbd_up().is_some() {
             l.enqueue_invalidate()
@@ -70,15 +81,18 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
             if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
                 let new = !self.state.get(l.ctx);
                 (self.trigger)(l.reference(),new);
-                Self::set(l,new)
+                Self::set(l,new);
+                return true;
             }
         } else if let Some(ee) = e.0.is_kbd_press() {
             if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
                 let new = !self.state.get(l.ctx);
                 (self.trigger)(l.reference(),new);
-                Self::set(l,new)
+                Self::set(l,new);
+                return true;
             }
         }
+        e.0.is_mouse_down().is_some()
     }
     fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()

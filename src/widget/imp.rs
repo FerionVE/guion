@@ -8,8 +8,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         (**self)._render(l,r)
     }
-    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
-        (**self)._event(l,e)
+    fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        (**self)._event_direct(l,e)
     }
     fn _size(&self, l: Link<E>) -> ESize<E> {
         (**self)._size(l)
@@ -87,8 +87,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         (**self)._render(l,r)
     }
-    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
-        (**self)._event(l,e)
+    fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        (**self)._event_direct(l,e)
     }
     fn _size(&self, l: Link<E>) -> ESize<E> {
         (**self)._size(l)
@@ -195,8 +195,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         (**self)._render(l,r)
     }
-    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
-        (**self)._event(l,e)
+    fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        (**self)._event_direct(l,e)
     }
     fn _size(&self, l: Link<E>) -> ESize<E> {
         (**self)._size(l)
@@ -273,8 +273,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         (**self)._render(l,r)
     }
-    fn _event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64)) {
-        (**self)._event(l,e)
+    fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        (**self)._event_direct(l,e)
     }
     fn _size(&self, l: Link<E>) -> ESize<E> {
         (**self)._size(l)

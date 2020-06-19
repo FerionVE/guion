@@ -5,14 +5,10 @@ pub trait VariantSupport<V,E>: Event<E> where E: Env, E::Backend: Backend<E,Even
     fn to_variant(&self) -> Option<V>;
 }
 
-pub trait Variant<E>: VariantDerive<E> where E: Env {
+pub trait Variant<E>: VariantDerive<E> + Debug where E: Env {
     #[inline]
-    fn position(&self) -> Option<Offset> {
-        None
-    }
-    #[inline]
-    fn filter(&self, bounds: &Bounds) -> bool {
-        self.position().map_or(true, |p| p.is_inside(bounds) )
+    fn in_bounds(&self, _: &Bounds) -> bool {
+        true
     }
     // both own_bounds and subbounds are absolute
 
