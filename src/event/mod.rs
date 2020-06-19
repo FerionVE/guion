@@ -1,7 +1,7 @@
 //! Event container and variants
 use crate::event::key::Key;
 use super::*;
-use std::any::Any;
+use std::{fmt::Debug, any::Any};
 
 pub mod variants;
 pub mod key;
@@ -11,20 +11,14 @@ pub mod dyn_evt;
 
 pub mod variant;
 
-pub mod routing;
+pub mod filter;
 pub mod compound;
 
 /// an Event holds one of the support Variant and can be downcasted to a specific Variant
-pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self> {
+pub trait Event<E>: Sized + Clone + Debug where E: Env, E::Backend: Backend<E,Event=Self> {
     type Dest: Destination;
     type Key: Key;
-    type Routing: Routing<E>;
 
-    fn filter(self, bounds: &Bounds) -> Option<Self>;
-    #[inline]
-    fn filter_cloned(&self, bounds: &Bounds) -> Option<Self> {
-        self.clone().filter(bounds)
-    }
     /// True if container widgets should sent this to only one widget  
     fn consuming(&self) -> bool;
     /// Where there Event should be initially injected into the context
@@ -41,7 +35,9 @@ pub trait Event<E>: Sized + Clone where E: Env, E::Backend: Backend<E,Event=Self
         VariantSupport::<V,E>::to_variant(self)
     }
 
-    fn position(&self) -> Option<Offset>;
+    fn in_bounds(&self, _: &Bounds) -> bool {
+        true
+    }
 
     fn _root_only(&self) -> bool;
 

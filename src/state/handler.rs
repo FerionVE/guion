@@ -1,5 +1,4 @@
 use super::*;
-use std::{collections::HashMap, any::TypeId};
 //move state trait to standard state trait. state is not a core feature!
 
 pub trait AsHandlerStateful<E>: Context<E> + Sized where E: Env<Context=Self> {

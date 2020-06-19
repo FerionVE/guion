@@ -30,6 +30,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
+        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         r.with(&[
             StdVerb::ObjBorder,
             StdVerb::Focused(l.is_focused()),
@@ -62,11 +63,23 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
             ])
                 .render_preprocessed_text(&s.glyphs, s.off2(), &mut l.ctx);
     }
-    fn _event(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) {
+    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        let e = 
+            if let Some(e) =
+                e.inside_border( self.border.as_ref()
+                    .unwrap_or(l.default_border())
+                ).filter_bounds()
+            {
+                e
+            }else{
+                return false;
+            };
         //e.0._debug_type_name();
         let mut cursor = self.cursor.get(l.ctx);
         let border = Border::new(4, 4, 4, 4);
         let b = e.1.inside_border(&border);
+
+        let mut passed = false;
 
         if let Some(ee) = e.0.is_text_input() {
             let s = ee.text;
@@ -82,6 +95,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                 w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
                 w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
             }));
+            passed = true;
         } else if let Some(ee) = e.0.is_kbd_press() {
             if
                 ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE ||
@@ -115,6 +129,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                     w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
                     w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
                 }));
+                passed = true;
             }else if ee.key == EEKey::<E>::A && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
@@ -123,10 +138,12 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                     w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
                     w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
                 }));
+                passed = true;
             }else if ee.key == EEKey::<E>::V && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
                 if let Some(text) = l.clipboard_get_text() {
-                    self._event(l,(Event::from(TextInput{text}),e.1,e.2));
+                    self._event_direct(l,&EventCompound(Event::from(TextInput{text}),e.1,e.2,Default::default(),e.4));
                 }
+                passed = true;
             }else if (ee.key == EEKey::<E>::C || ee.key == EEKey::<E>::X) && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
                 if cursor.is_selection() {
                     let range = cursor.range_usize();
@@ -146,6 +163,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                         }));
                     }
                 }
+                passed = true;
             }else if ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN {
                 let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
 
@@ -180,6 +198,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                     }));
                 }
             }
+            passed = true;
         } else if let Some(ee) = e.0.is_mouse_scroll() {
             let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
             
@@ -192,6 +211,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                 let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
                 w.set(off,ctx);
             }));
+            passed = true;
         } else {
             if let Some(mouse) = l.state().cursor_pos() { //TODO strange event handling
                 let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
@@ -220,7 +240,9 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                     }));
                 }
             }
+            passed = true;
         }
+        passed
     }
     fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()
@@ -246,9 +268,6 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
     }
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
-    }
-    fn _accept_child_events(&self) -> bool {
-        false
     }
 }
 

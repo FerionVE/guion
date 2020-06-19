@@ -1,4 +1,46 @@
 use super::*;
+use std::ops::BitAnd;
 
-pub struct EventCompound<E>(EEvent<E>,Bounds,u64,bool) where E: Env;
+#[derive(Clone)]
+pub struct EventCompound<E>(pub EEvent<E>,pub Bounds,pub u64,pub EEFilter<E>,pub bool) where E: Env;
 
+impl<E> EventCompound<E> where E: Env {
+    /// filter event by integrated filter
+    pub fn filter(&self, dest: &Link<'_,E>) -> Option<Self> {
+        self.3._filter(dest,self)
+    }
+
+    pub fn slice_bounds(&self, inner_relative: &Bounds) -> Self {
+        Self(self.0.clone(),self.1.slice(inner_relative),self.2,self.3.clone(),self.4)
+    }
+    pub fn inside_border(&self, b: &Border) -> Self {
+        Self(self.0.clone(),self.1.inside_border(b),self.2,self.3.clone(),self.4)
+    }
+
+    pub fn with_event(&self, e: EEvent<E>) -> Self {
+        Self(e,self.1,self.2,self.3.clone(),self.4)
+    }
+    pub fn with_bounds(&self, b: Bounds) -> Self {
+        Self(self.0.clone(),b,self.2,self.3.clone(),self.4)
+    }
+    pub fn with_filter(&self, f: EEFilter<E>) -> Self {
+        Self(self.0.clone(),self.1,self.2,f,self.4)
+    }
+    pub fn default_filter(&self) -> Self {
+        self.with_filter(Default::default())
+    }
+
+    /// filter event just by bounds
+    pub fn filter_bounds(&self) -> Option<Self> {
+        self.0.in_bounds(&self.1)
+            .map(|| self.clone() )
+    }
+}
+
+//TODO opion
+impl<E> BitAnd<&Bounds> for &EventCompound<E> where E: Env {
+    type Output = EventCompound<E>;
+    fn bitand(self, rhs: &Bounds) -> EventCompound<E> {
+        EventCompound(self.0.clone(),self.1 & rhs,self.2,self.3.clone(),self.4)
+    }
+}

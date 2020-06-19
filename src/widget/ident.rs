@@ -1,5 +1,5 @@
 use super::*;
-use std::ops::Deref;
+use std::{fmt::Debug, ops::Deref};
 
 /// WidgetIdent is combined WidgetID and Path, and can be found in event to make it comparable by the ID and resolvable by the Path
 #[derive(Clone)]
@@ -43,5 +43,11 @@ impl<E> RefClonable for WidgetIdent<E> where E: Env {
             id: self.id.clone(),
             path: self.path.refc(),
         }
+    }
+}
+
+impl<E> Debug for WidgetIdent<E> where E: Env {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
     }
 }

@@ -4,14 +4,14 @@ use std::borrow::Cow;
 
 /// Simple atomic type state
 pub trait AtomState<E,T> where E: Env {
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, _: &mut E::Context) -> T {
         self.get_direct().unwrap()
     }
     fn get_direct(&self) -> Result<T,()>;
 }
 /// Simple atomic type state
 pub trait AtomStateMut<E,T>: AtomState<E,T> where E: Env {
-    fn set(&mut self, v: T, c: &mut E::Context) {
+    fn set(&mut self, v: T, _: &mut E::Context) {
         self.set_direct(v).unwrap()
     }
     fn set_direct(&mut self, v: T) -> Result<(),()>;

@@ -1,33 +1,33 @@
 //! standard variants
 use super::*;
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct KbdDown<E> where E: Env {
     pub key: EEKey<E>,
 }
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct KbdUp<E> where E: Env {
     pub key: EEKey<E>,
     pub down_widget: WidgetIdent<E>,
     pub down_ts: u64,
 }
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct KbdPress<E> where E: Env {
     pub key: EEKey<E>,
     pub down_widget: WidgetIdent<E>,
     pub down_ts: u64,
 }
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct TextInput {
     pub text: String, //TODO Arc<str> for less clonery
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct MouseDown<E> where E: Env {
     pub key: EEKey<E>,
     pub pos: Offset,
 }
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct MouseUp<E> where E: Env {
     pub key: EEKey<E>,
     pub pos: Offset,
@@ -36,44 +36,44 @@ pub struct MouseUp<E> where E: Env {
     pub down_ts: u64,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct MouseScroll {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct MouseMove {
     pub pos: Offset,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct MouseEnter;
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct MouseLeave;
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct WindowMove {
     pub pos: Offset,
     pub size: Dims,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct WindowResize {
     pub size: Dims,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct Focus;
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct Unfocus;
 
 macro_rules! pos {
     ($field:ident) => {
         #[inline]
-        fn position(&self) -> Option<Offset> {
-            Some(self.$field.clone())
+        fn in_bounds(&self, b: &Bounds) -> bool {
+            self.$field.is_inside(b)
         }
     };
 }
@@ -141,7 +141,7 @@ impl<E> Variant<E> for WindowResize where E: Env {consuming!();invalid!();}
 impl<E> Variant<E> for Focus where E: Env {consuming!();invalid!();}
 impl<E> Variant<E> for Unfocus where E: Env {consuming!();invalid!();}
 #[non_exhaustive]
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub enum RootEvent<E> where E: Env {
     KbdDown{key: EEKey<E>},
     KbdPress{key: EEKey<E>},
@@ -157,14 +157,6 @@ pub enum RootEvent<E> where E: Env {
 }
 
 impl<E> Variant<E> for RootEvent<E> where E: Env {
-    #[inline]
-    fn position(&self) -> Option<Offset> {
-        None
-    }
-    #[inline]
-    fn filter(&self, _: &Bounds) -> bool {
-        false
-    }
     #[inline]
     fn consuming(&self) -> bool {
         true

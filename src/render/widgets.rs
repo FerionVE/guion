@@ -1,5 +1,4 @@
 use super::*;
-use std::fmt::Display;
 
 //TODO refine standard render functions
 pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<Self>,*/ EStyle<E>: Style<E> {
@@ -8,7 +7,7 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<
     #[deprecated = "avoid this because stuff is not cached"]
     #[inline]
     fn render_text(&mut self, b: &Bounds, text: &str, align: (f32,f32), style: &EStyle<E>, variant: &ESVariant<E>, c: &mut E::Context) {
-        let pp = ESPPText::<E>::generate(text,(24.0,24.0),c); //style.preprocess_text(text,c);
+        let pp = ESPPText::<E>::generate(text,(20.0,20.0),c); //style.preprocess_text(text,c);
         let b = b.inner_aligned(pp.size(),align);
         self.render_preprocessed_text(&b,&pp,Offset::default(),style,variant,c);
     }

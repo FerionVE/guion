@@ -23,14 +23,6 @@ impl<E,K,D> Event<E> for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Eve
     type Key = K;
 
     #[inline]
-    fn filter(self, bounds: &Bounds) -> Option<Self> {
-        if self.event.filter(bounds) {
-            Some(self)
-        }else{
-            None
-        }
-    }
-    #[inline]
     fn consuming(&self) -> bool {
         self.event.consuming()
     }
@@ -39,8 +31,8 @@ impl<E,K,D> Event<E> for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Eve
         self.event.destination()
     }
     #[inline]
-    fn position(&self) -> Option<Offset> {
-        self.event.position()
+    fn in_bounds(&self, b: &Bounds) -> bool {
+        self.event.in_bounds(b)
     }
     #[inline]
     fn _root_only(&self) -> bool {
@@ -64,5 +56,11 @@ impl<V,E,K,D> VariantSupport<V,E> for DynEvent<E,K,D> where V: Variant<E>, E: En
     fn to_variant(&self) -> Option<V> {
         Any::downcast_ref(self.event._as_any())
             .map(|e: &V| e.clon() )
+    }
+}
+
+impl<E,K,D> Debug for DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.event.fmt(f)
     }
 }

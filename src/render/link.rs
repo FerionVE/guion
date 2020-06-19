@@ -59,7 +59,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
 
     /// fork with area inside the border
     #[inline]
-    pub fn inside_border<'s>(&'s mut self, s: &'s Border) -> RenderLink<'s,E> where 'a: 's {
+    pub fn inside_border<'s>(&'s mut self, s: &Border) -> RenderLink<'s,E> where 'a: 's {
         RenderLink{
             r: self.r,
             b: self.b.inside_border(s),
@@ -71,7 +71,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with area inside the bounds
     #[inline]
-    pub fn slice<'s>(&'s mut self, s: &'s Bounds) -> RenderLink<'s,E> where 'a: 's {
+    pub fn slice<'s>(&'s mut self, s: &Bounds) -> RenderLink<'s,E> where 'a: 's {
         RenderLink{
             r: self.r,
             b: self.b.slice(s),
@@ -83,7 +83,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with area inside the bounds
     #[inline]
-    pub fn slice_abs<'s>(&'s mut self, s: &'s Bounds) -> RenderLink<'s,E> where 'a: 's {
+    pub fn slice_abs<'s>(&'s mut self, s: &Bounds) -> RenderLink<'s,E> where 'a: 's {
         RenderLink{
             r: self.r,
             b: self.b & s,

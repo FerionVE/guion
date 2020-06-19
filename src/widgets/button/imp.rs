@@ -24,6 +24,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         r.with(&[
             StdVerb::ObjForeground,
             StdVerb::Hovered(l.is_hovered()),
@@ -50,7 +51,19 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
         ])
             .render_text(self.text.caption().as_ref(),l.ctx);
     }
-    fn _event_direct(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        let e = 
+            if let Some(e) =
+                e.inside_border( self.border.as_ref()
+                    .unwrap_or(l.default_border())
+                ).filter_bounds()
+            {
+                //eprintln!("E");
+                e
+            }else{
+                //eprintln!("X");
+                return false;
+            };
         //e.0._debug_type_name();
         //let mut invalid = false;
         if e.0.is_hover_update() || e.0.is_kbd_press().is_some() || e.0.is_kbd_up().is_some() { //TODO catch down and press
@@ -92,9 +105,6 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     }
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
-    }
-    fn _accept_child_events(&self) -> bool {
-        false
     }
 }
 

@@ -10,7 +10,7 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         self._render_impl(l,r)
     }
-    fn _event_direct(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+    fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
         self._event_direct_impl(l,e)
     }
     fn _size(&self, l: Link<E>) -> ESize<E> {
@@ -45,9 +45,6 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where
     fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
         self.childs.into_child(i)
     }
-    fn _accept_child_events(&self) -> bool {
-        false
-    }
 }
 impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where 
     E: Env,
@@ -78,31 +75,42 @@ impl<'w,T,E> Pane<'w,T,E> where
     pub fn _render_impl(&self, mut l: Link<E>, r: &mut RenderLink<E>) where
         E: Env,
     {
+        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         let sizes = l.child_sizes().expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&r.b.size,&sizes,self.orientation); 
-        
-        let mut i = 0usize;
 
-        l.for_childs(|c| {
+        for i in 0..self.childs() {
+            let l = l.for_child(i).expect("Dead Path Inside Pane");
             let mut r = r.slice(&bounds[i]);
-            r.render_widget(c);
-            i+=1;
-        }).expect("Dead Path inside Pane");
+            r.render_widget(l);
+        }
     }
 
-    pub fn _event_direct_impl(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp where
+    pub fn _event_direct_impl(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp where
         E: Env,
     {
+        let e = 
+            if let Some(e) =
+                e.inside_border( self.border.as_ref()
+                    .unwrap_or(l.default_border())
+                ).filter_bounds()
+            {
+                //eprintln!("_E");
+                e
+            }else{
+                //eprintln!("_X {:?}",e.0);
+                return false;
+            };
         let sizes = l.child_sizes().expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&e.1.size,&sizes,self.orientation);
 
         let mut passed = false;
 
         for i in 0..self.childs() {
-            let l = l.for_child(i).expect("Dead Path Inside Pane");
-            let sliced = e.1.slice(&bounds[i]);
-            if let Some(ee) = e.0.filter_cloned(&sliced) {
-                passed != l.event_direct((ee,&sliced,e.2,e.3));
+            let mut l = l.for_child(i).expect("Dead Path Inside Pane");
+            let sliced = e.slice_bounds(&bounds[i]);
+            if let Some(ee) = sliced.filter(&l) {
+                passed |= l.event_direct(&ee);
             }
         }
 

@@ -22,15 +22,17 @@ pub trait WidgetPath<E>:
 where E: Env {
     type SubPath: SubPath<E>;
     
+    // TODO rename to attach_sub
     fn attach(&mut self, sub: Self::SubPath);
     fn attached(mut self, sub: Self::SubPath) -> Self {
         self.attach(sub);
         self
     }
 
-    fn attach_subpath(&mut self, sub: &Self);
-    fn attached_subpath(mut self, sub: &Self) -> Self {
-        self.attach_subpath(sub);
+    // TODO rename to attach_path
+    fn attach_path(&mut self, sub: &Self);
+    fn attached_path(mut self, sub: &Self) -> Self {
+        self.attach_path(sub);
         self
     }
 

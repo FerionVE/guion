@@ -1,5 +1,5 @@
 use super::*;
-use std::{any::TypeId, marker::PhantomData};
+use std::marker::PhantomData;
 use state::*;
 
 pub struct RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: AsHandlerStateful<E> {

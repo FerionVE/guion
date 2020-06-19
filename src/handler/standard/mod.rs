@@ -22,18 +22,23 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self
         }
     }
 
-    pub fn unfocus(ctx: &mut E::Context, root: &E::Storage, root_bounds: &Bounds, ts: u64) {
-        if let Some(p) = ctx.as_mut().s.kbd.focused.take() {
-            if let Ok(w) = root.widget(p.refc().path) {
-                let bounds = root.trace_bounds(ctx,p.path,root_bounds,false).unwrap();
-                ctx.link(w)._event_root((Event::from(Unfocus{}),&bounds,ts,false));
-            }
+    pub fn unfocus(mut root: Link<E>, root_bounds: Bounds, ts: u64) -> EventResp {
+        if let Some(p) = root.ctx.as_mut().s.kbd.focused.take() {
+            root.send_event(
+                &EventCompound(Event::from(Unfocus{}),root_bounds,ts,Default::default(),false),
+                p.refc().path,
+            ).unwrap_or(false)
+        }else{
+            false
         }
     }
 
-    pub fn focus(mut l: Link<E>, ts: u64, root_bounds: &Bounds, widget_bounds: &Bounds) {
-        Self::unfocus(l.ctx,l.widget.stor,root_bounds,ts);
-        l.as_mut().s.kbd.focused = Some(l.ident());
-        l._event_root((Event::from(Focus{}),widget_bounds,ts,false));
+    pub fn focus(mut root: Link<E>, p: E::WidgetPath, root_bounds: Bounds, ts: u64) -> Result<EventResp,()> {
+        Self::unfocus(root.reference(),root_bounds,ts);
+        root.as_mut().s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),root.widget.stor)?);
+        root.send_event(
+            &EventCompound(Event::from(Focus{}),root_bounds,ts,Default::default(),false),
+            p,
+        )
     }
 }

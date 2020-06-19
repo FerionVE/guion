@@ -30,19 +30,19 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         Self::Handler::_render(self.link(w),r)
     }
     #[inline] 
-    fn event_direct(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+    fn event_direct(&mut self, w: Resolved<E>, e: &EventCompound<E>) -> EventResp {
         Self::Handler::_event_direct(self.link(w),e)
     }
     #[inline]
-    fn route_event(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
-        Self::Handler::_route_event(self.link(w),e,child)
+    fn send_event(&mut self, w: Resolved<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
+        Self::Handler::_send_event(self.link(w),e,child)
     }
     #[inline] 
     fn size(&mut self, w: Resolved<E>) -> ESize<E> {
         Self::Handler::_size(self.link(w))
     }
     #[inline] 
-    fn _event_root(&mut self, w: Resolved<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+    fn _event_root(&mut self, w: Resolved<E>, e: &EventCompound<E>) -> EventResp {
         Self::Handler::_event_root(self.link(w),e)
     }
 

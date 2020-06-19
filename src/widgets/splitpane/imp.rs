@@ -16,6 +16,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
+        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         let bounds = self.calc_bounds(&r.b,self.state.get(l.ctx)); 
 
         {
@@ -44,25 +45,23 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
             //TODO render center
         }
     }
-    fn _event_direct(&self, mut l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp {
+    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
+        let e = 
+            if let Some(e) =
+                e.inside_border( self.border.as_ref()
+                    .unwrap_or(l.default_border())
+                ).filter_bounds()
+            {
+                e
+            }else{
+                return false;
+            };
         let o = self.orientation;
-        let mut bounds = self.calc_bounds(e.1,self.state.get(l.ctx)); 
+        let mut bounds = self.calc_bounds(&e.1,self.state.get(l.ctx)); 
 
         let mut passed = false;
 
-        {
-            let sliced = e.1.slice(&bounds[1]);
-            if let Some(ee) = e.0.filter_cloned(&sliced) {
-                //event hits the center
-                //TODO receive mousemove here and let update f32
-                //mousemove should also be sent to mousedown initiating widget with flag receive_outer_mousemove or such
-                //get x/y of curser
-                //subtract min constraints of left/right widget from left/right of widget's bounds (including self.handle_width/2)
-                //limit (min/max) curser x to the shrinked bounds
-                //into relative f32
-                //enqueue mutate setting the AtomStateMut
-            }
-
+        //if let Some(e) = e.slice_bounds(&bounds[1]).filter(&l) {
             if let Some(mm) = e.0.is_mouse_move() {
                 //if mouse is down and was pressed on us
                 if let Some(_) = l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()) {
@@ -96,25 +95,26 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
                             w.set(fcx,c);
                         }));
 
-                        bounds = self.calc_bounds(e.1,fcx);
+                        bounds = self.calc_bounds(&e.1,fcx);
                     }
                 }
             }
-        }
+        //}
         {
             let mut left = l.for_child(0).expect("Dead Path inside Pane");
-            let sliced = e.1 & &bounds[0];
-            if let Some(ee) = e.0.filter_cloned(&sliced) {
-                left.event((ee,&sliced,e.2));
+            let sliced = &e & &bounds[0]; //TODO opion impl
+            if let Some(ee) = sliced.filter(&left) {
+                passed |= left.event_direct(&ee);
             }
         }
         {
             let mut right = l.for_child(1).expect("Dead Path inside Pane");
-            let sliced = e.1 & &bounds[2];
-            if let Some(ee) = e.0.filter_cloned(&sliced) {
-                right.event((ee,&sliced,e.2));
+            let sliced = &e & &bounds[2];
+            if let Some(ee) = sliced.filter(&right) {
+                passed |= right.event_direct(&ee);
             }
         }
+        passed
     }
     fn _size(&self, mut l: Link<E>) -> ESize<E> {
         let mut s = ESize::<E>::empty();
@@ -148,9 +148,6 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     }
     fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
         self.childs.into_child(i)
-    }
-    fn _accept_child_events(&self) -> bool {
-        false //TODO true if we want to catch scroll etc.
     }
 }
 impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where

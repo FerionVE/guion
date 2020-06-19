@@ -23,11 +23,11 @@ pub mod ident;
 pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
-    /// this method should not be called from external, rather [`Link::render`](link/struct.Link.html#method.render)
+    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) this method should not be called from external, rather [`Link::render`](link/struct.Link.html#method.render)
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>);
-    /// this method should not be called from external, rather [`Link::event`](link/struct.Link.html#method.event)
-    fn _event_direct(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool)) -> EventResp;
-    /// this method should not be called from external, rather [`Link::size`](link/struct.Link.html#method.size)
+    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) this method should not be called from external, rather [`Link::event`](link/struct.Link.html#method.event)
+    fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp;
+    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) this method should not be called from external, rather [`Link::size`](link/struct.Link.html#method.size)
     fn _size(&self, l: Link<E>) -> ESize<E>;
 
     fn childs(&self) -> usize;
@@ -49,13 +49,15 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
             .collect::<Vec<_>>()
     }
 
-    fn _route_event(&self, l: Link<E>, e: (EEvent<E>,&Bounds,u64,bool), child: E::WidgetPath) -> Result<EventResp,()> {
-        let cb = self.child_bounds(l,e.1,false)?;
+    /*#[deprecated="Merge the shit into normal evention"]
+    fn _route_event(&self, mut l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
+        let cb = self.child_bounds(l.reference(),&e.1,false)?;
         {
             let c = self.resolve_child(child.index(0))?;
             let mut l = l.for_child(c)?;
             let b = cb[c];
-            if l._route_event((e.0.clone(),&b,e.2,e.3),child.slice(1..))? {
+            //TODO FIX corrent compound filter use
+            if l._route_event(&EventCompound(e.0.clone(),b,e.2,e.3.clone())/*TODO compounds.with_bounds(b)*/,child.slice(1..))? {
                 return Ok(true);
             }
         }
@@ -64,9 +66,9 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         }else{
             false
         })
-    }
+    }*/
     
-    fn _accept_child_events(&self) -> bool;
+    //fn _accept_child_events(&self) -> bool;
 
     /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget

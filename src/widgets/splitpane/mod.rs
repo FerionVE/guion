@@ -1,8 +1,6 @@
 use super::*;
 use std::{marker::PhantomData};
 
-use calc::calc_bounds;
-
 pub mod imp;
 
 pub struct SplitPane<'w,L,R,V,E> where
@@ -12,6 +10,7 @@ pub struct SplitPane<'w,L,R,V,E> where
     V: 'w,
 {
     id: E::WidgetID,
+    pub border: Option<Border>,
     pub childs: (L,R),
     pub state: V,
     pub orientation: Orientation,
@@ -28,6 +27,7 @@ impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
     pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,L,R,V,E> {
         SplitPane{
             id,
+            border: None,
             childs,
             state,
             orientation,

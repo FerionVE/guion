@@ -1,8 +1,10 @@
 //! The Env type defines a compound over any generic types
 use super::*;
+use std::fmt::Debug;
 
 /// Type compound
-pub trait Env: Sized + Clone + PartialEq + Send + Sync + 'static {
+/// Note the Trait bounds Clone, Default, PartialEq are not used and just for simplifying derives
+pub trait Env: Sized + Clone + PartialEq + Debug + Send + Sync + 'static {
     type Backend: Backend<Self>;
     type Context: Context<Self>;
     type Storage: Widgets<Self>;

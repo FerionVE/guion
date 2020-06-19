@@ -24,7 +24,7 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
         self.attach(sub);
         self
     }
-    fn attach_subpath(&mut self, sub: &Self) {
+    fn attach_path(&mut self, sub: &Self) {
         self.v.extend_from_slice(&sub.v);
     }
     fn tip(&self) -> Option<&S> {
