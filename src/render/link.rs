@@ -36,7 +36,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         )
     }
     #[inline]
-    pub fn force(&mut self) -> bool {
+    pub fn force(&self) -> bool {
         self.force || self.r.force(&self.b)
     }
     /// fork with force set
@@ -126,18 +126,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             b: self.b.clone(),
             br: self.br.clone(),
             v: self.v.with(verbs),
-            s: self.s.clone(),
-        }
-    }
-    #[deprecated="Unstable"]
-    #[inline]
-    pub fn inter_border<'s,V>(&'s mut self) -> RenderLink<'s,E> where 'a: 's {
-        RenderLink{
-            force: self.force(),
-            r: self.r,
-            b: self.br.clone(),
-            br: self.br.clone(),
-            v: self.v.clone(),
             s: self.s.clone(),
         }
     }

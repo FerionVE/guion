@@ -12,11 +12,11 @@ pub trait WidgetID: Clone + PartialEq + Eq + Sized + Hash + 'static {
     }
 
     #[inline]
-    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: AsHandlerStateful<E>, EPressedKey<E>: PressedKey<E> {
+    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E> {
         c.state().is_hovered(self)
     }
     #[inline]
-    fn is_focused<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: AsHandlerStateful<E>, EPressedKey<E>: PressedKey<E> {
+    fn is_focused<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E> {
         c.state().is_focused(self)
     }
 }

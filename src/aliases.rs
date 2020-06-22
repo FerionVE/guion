@@ -18,8 +18,8 @@ pub type ESVariant<E: Env> = <EStyle<E> as Style<E>>::Variant;
 pub type ECHandler<E: Env> = <E::Context as Context<E>>::Handler;
 pub type ECQueue<E: Env> = <E::Context as Context<E>>::Queue;
 
-pub type ECStateful<E: Env> = <E::Context as AsHandlerStateful<E>>::T;
-pub type EPressedKey<E: Env> = <ECStateful<E> as HandlerStateful<E>>::K;
+pub type ECStdState<E: Env> = <E::Context as CtxStdState<E>>::T;
+pub type EPressedKey<E: Env> = <ECStdState<E> as StdState<E>>::K;
 
 pub type EWPSub<E: Env> = <E::WidgetPath as WidgetPath<E>>::SubPath;
 

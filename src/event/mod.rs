@@ -59,3 +59,5 @@ pub trait Destination: Clone + Sized {
         Self::ROOT
     }
 }
+
+pub type EventResp = bool;

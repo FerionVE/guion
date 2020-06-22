@@ -2,14 +2,14 @@
 use crate::*;
 use std::marker::PhantomData;
 use event::variants::{Focus, Unfocus};
-use state::standard::StdState;
+use state::standard::StdStdState;
 
 pub mod imp;
 pub mod imps;
 
 pub struct StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self>, EEvent<E>: StdVarSup<E> {
     pub sup: S,
-    pub s: StdState<E>,
+    pub s: StdStdState<E>,
     _c: PhantomData<E>,
 }
 
@@ -17,7 +17,7 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self
     pub fn new(sup: S) -> Self {
         Self{
             sup,
-            s: StdState::new(),
+            s: StdStdState::new(),
             _c: PhantomData,
         }
     }

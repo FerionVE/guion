@@ -2,10 +2,10 @@ use super::*;
 use state::standard::key::StdPressedKey;
 use std::any::TypeId;
 
-impl<S,E> HandlerStateful<E> for StdHandler<S,E> where
+impl<S,E> StdState<E> for StdHandler<S,E> where
     S: Handler<E>,
     E: Env,
-    E::Context: AsRefMut<Self> + AsHandlerStateful<E> + 'static,
+    E::Context: AsRefMut<Self> + CtxStdState<E> + 'static,
     EEvent<E>: StdVarSup<E>
 {
     type K = StdPressedKey<E>;
@@ -21,6 +21,15 @@ impl<S,E> HandlerStateful<E> for StdHandler<S,E> where
     fn cursor_pos(&self) -> Option<Offset> {
         self.s.mouse.pos
     }
+    
+}
+
+impl<S,E> DynState<E> for StdHandler<S,E> where
+    S: Handler<E>,
+    E: Env,
+    E::Context: AsRefMut<Self> + CtxStdState<E> + 'static,
+    EEvent<E>: StdVarSup<E>
+{
     fn remote_state_or_default<T>(&self, i: E::WidgetID) -> T where T: Default + Clone + 'static {
         self.s.remote_states
             .get(&(i,TypeId::of::<T>()))

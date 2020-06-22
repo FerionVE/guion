@@ -7,7 +7,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E>,
+    E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {
@@ -125,7 +125,7 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E>,
+    E::Context: CtxStdState<E>,
     State: AtomStateMut<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {
@@ -159,7 +159,7 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E>,
+    E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
 {

@@ -7,7 +7,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     S: Caption<'w>+Statize<E>, S::Statur: Sized,
     P: AtomState<E,(u32,u32)>+Statize<E>, P::Statur: Sized,
     C: AtomState<E,Cursor>+Statize<E>, C::Statur: Sized,
@@ -280,7 +280,7 @@ impl<'w,E,S,P,C,X,V> WidgetMut<'w,E> for TextBox<'w,E,S,P,C,X,V> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E> + CtxClipboardAccess<E>,
+    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     S: CaptionMut<'w>+Statize<E>, S::Statur: Sized,
     P: AtomStateMut<E,(u32,u32)>+Statize<E>, P::Statur: Sized,
     C: AtomStateMut<E,Cursor>+Statize<E>, C::Statur: Sized,

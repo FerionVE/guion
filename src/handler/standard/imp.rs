@@ -6,7 +6,7 @@ use state::standard::kbd::tabulate::tabulate;
 impl<S,E> Handler<E> for StdHandler<S,E> where
     S: Handler<E>,
     E: Env,
-    E::Context: AsRefMut<Self> + AsHandlerStateful<E> + 'static,
+    E::Context: AsRefMut<Self> + CtxStdState<E> + 'static,
     EEvent<E>: StdVarSup<E>
 {
     #[inline] 

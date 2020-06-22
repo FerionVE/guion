@@ -7,7 +7,7 @@ pub mod link;
 pub trait Render<E>: Sized where E: Env, /*ERenderer<E>: AsRefMut<Self>*/ {
     /// if widgets should be rendered even if the don't require to
     #[inline]
-    fn force(&mut self, _b: &Bounds) -> bool {
+    fn force(&self, _b: &Bounds) -> bool {
         false
     }
     /// return false if rendered widgets should not be set rendered

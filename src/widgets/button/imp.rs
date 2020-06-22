@@ -5,7 +5,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E>,
+    E::Context: CtxStdState<E>,
     Text: Caption<'w>+Statize<E>, Text::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -113,7 +113,7 @@ impl<'w,E,Text> WidgetMut<'w,E> for Button<'w,E,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E>,
+    E::Context: CtxStdState<E>,
     Text: Caption<'w>+Statize<E>, Text::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
@@ -135,7 +135,7 @@ impl<'w,E,S> Button<'w,E,S> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: AsHandlerStateful<E>,
+    E::Context: CtxStdState<E>,
     S: Caption<'w>+Statize<E>, S::Statur: Sized,
 {
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {

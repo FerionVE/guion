@@ -145,11 +145,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn is_hovered(&self) -> bool where E::Context: AsHandlerStateful<E> {
+    pub fn is_hovered(&self) -> bool where E::Context: CtxStdState<E> {
         self.ctx.state().is_hovered(&self.id())
     }
     #[inline]
-    pub fn is_focused(&self) -> bool where E::Context: AsHandlerStateful<E> {
+    pub fn is_focused(&self) -> bool where E::Context: CtxStdState<E> {
         self.ctx.state().is_focused(&self.id())
     }
 
