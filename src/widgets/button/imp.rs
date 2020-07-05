@@ -40,7 +40,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
             StdVerb::Locked(self.locked),
             StdVerb::Pressed(Self::pressed(&l).is_some())
         ])
-            .border_rect(2);
+            .border_rect(l.default_thicc());
         r.with(&[
             StdVerb::ObjForeground,
             StdVerb::ObjText,

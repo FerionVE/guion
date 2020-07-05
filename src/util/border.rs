@@ -19,6 +19,10 @@ impl Border {
         }
     }
     #[inline]
+    pub const fn uniform(side: u32) -> Self {
+        Self::new(side,side,side,side)
+    }
+    #[inline]
     pub const fn empty() -> Self {
         Self::new(0,0,0,0)
     }

@@ -22,7 +22,7 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
         r.with(&[
             StdVerb::ObjBorder,
         ])
-            .border_rect(2);
+            .border_rect(l.default_thicc());
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false

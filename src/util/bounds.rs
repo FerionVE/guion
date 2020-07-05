@@ -56,20 +56,20 @@ impl Bounds {
         Self::from_xywh(0,0,size.w,size.h)
     }
 
-    #[inline] pub fn x(&self) -> i32 { self.off.x }
-    #[inline] pub fn y(&self) -> i32 { self.off.y }
-    #[inline] pub fn w(&self) -> u32 { self.size.w }
-    #[inline] pub fn h(&self) -> u32 { self.size.h }
+    #[inline] pub const fn x(&self) -> i32 { self.off.x }
+    #[inline] pub const fn y(&self) -> i32 { self.off.y }
+    #[inline] pub const fn w(&self) -> u32 { self.size.w }
+    #[inline] pub const fn h(&self) -> u32 { self.size.h }
 
     #[inline] pub fn x_mut(&mut self) -> &mut i32 { &mut self.off.x }
     #[inline] pub fn y_mut(&mut self) -> &mut i32 { &mut self.off.y }
     #[inline] pub fn w_mut(&mut self) -> &mut u32 { &mut self.size.w }
     #[inline] pub fn h_mut(&mut self) -> &mut u32 { &mut self.size.h }
 
-    #[inline] pub fn x1(&self) -> i32 { self.off.x + (self.size.w as i32) }
-    #[inline] pub fn y1(&self) -> i32 { self.off.y + (self.size.h as i32) }
+    #[inline] pub const fn x1(&self) -> i32 { self.off.x + (self.size.w as i32) }
+    #[inline] pub const fn y1(&self) -> i32 { self.off.y + (self.size.h as i32) }
 
-    #[inline] pub fn center(&self) -> Offset {
+    #[inline] pub const fn center(&self) -> Offset {
         Offset{
             x: self.off.x + (self.size.w/2) as i32,
             y: self.off.y + (self.size.h/2) as i32,
@@ -88,14 +88,8 @@ impl Bounds {
     /// 
     /// Use the BitAnd operator if the inner bound is absolute
     pub fn slice(&self, inner_relative: &Bounds) -> Self {
-        let b = inner_relative;
-        Self{
-            off: &self.off + &b.off,
-            size: Dims{
-                w: b.size.w .min( (self.size.w as i32).saturating_sub(b.off.x) as u32 ),
-                h: b.size.h .min( (self.size.h as i32).saturating_sub(b.off.y) as u32 ),
-            }
-        }
+        let inner_abs = inner_relative + self.off;
+        self & inner_abs
     }
     //TODO doc
     pub fn step(&self, step: i32) -> Self {
@@ -107,7 +101,7 @@ impl Bounds {
         senf
     }
     /// get bound with size s and centered relative to self
-    pub fn inner_centered(&self, size: Dims) -> Self {
+    pub const fn inner_centered(&self, size: Dims) -> Self {
         let nx = (self.size.w as i32 - size.w as i32)/2;
         let ny = (self.size.h as i32 - size.h as i32)/2;
         Self{
@@ -303,14 +297,16 @@ qwutils::opion!(sub(Bounds,Border) |s,r| {
 qwutils::opion!(bitand(Bounds,Bounds) |s,r| {
     let nx = s.off.x.max(r.off.x);
     let ny = s.off.y.max(r.off.y);
+    let nx1 = s.x1().min(r.x1());
+    let ny1 = s.y1().min(r.y1());
     *s = Bounds{
         off: Offset{
             x: nx,
             y: ny,
         },
         size: Dims{
-            w: (s.x1().min(r.x1()) - nx).max(0) as u32,
-            h: (s.y1().min(r.y1()) - ny).max(0) as u32,
+            w: (nx1 - nx).max(0) as u32,
+            h: (ny1 - ny).max(0) as u32,
         }
     }
 });

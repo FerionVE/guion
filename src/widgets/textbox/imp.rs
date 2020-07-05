@@ -35,8 +35,8 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
             StdVerb::ObjBorder,
             StdVerb::Focused(l.is_focused()),
         ])
-            .border_rect(2);
-        let border = Border::new(4, 4, 4, 4);
+            .border_rect(l.default_thicc());
+        let border = Border::new(l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2);
         let mut r = r.inside_border(&border);
         let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&r.b);
         for b in s.selection_box() {
@@ -48,7 +48,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
                 .fill_rect();
         }
         if let Some(c) = s.cursor_display_pos(s.cursor.caret) { //TODO fix as it should work if cursor is at end
-            let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, 20);
+            let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
             let b = b - s.off2();
             r.slice(&b)
                 .with(&[
@@ -76,7 +76,7 @@ impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
             };
         //e.0._debug_type_name();
         let mut cursor = self.cursor.get(l.ctx);
-        let border = Border::new(4, 4, 4, 4);
+        let border = Border::new(l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2);
         let b = e.1.inside_border(&border);
 
         let mut passed = false;

@@ -34,6 +34,11 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
             let mut r = r.slice(&rect);
             r.with(&[
                     StdVerb::ObjForeground,
+                ])
+                .fill_rect();
+            r.inside_border(&Border::uniform(l.default_thicc()*3))
+                .with(&[
+                    StdVerb::ObjForeground,
                     StdVerb::Hovered(l.is_hovered()),
                     StdVerb::Focused(l.is_focused()),
                     StdVerb::Locked(self.locked),
@@ -47,7 +52,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
                     StdVerb::Locked(self.locked),
                     //StdVerb::Pressed(self.state.get())
                 ])
-                .border_rect(2);
+                .border_rect(l.default_thicc());
         }
         {
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
