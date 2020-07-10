@@ -2,14 +2,14 @@ use super::*;
 use util::{caption::CaptionMut, state::AtomState};
 use std::ops::{Range, RangeInclusive};
 
-pub struct State<E> where E: Env {
+pub struct TBState<E> where E: Env {
     pub off: (u32,u32), //TODO fix pub
     pub max_off: (u32,u32),
     pub cursor: Cursor,
     pub glyphs: ESPPText<E>,
 }
 
-impl<E> State<E> where E: Env {
+impl<E> TBState<E> where E: Env {
     pub fn retrieve<'a,S,P,C>(s: &S, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a>, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
         let off = p.get(ctx);
         let caption = s.caption();
@@ -201,6 +201,12 @@ impl Cursor {
     }
     pub fn unselect_sub(&mut self, o: u32, skip_unselect: bool) {
         self.caret = self.caret.saturating_sub(o);
+        if !skip_unselect {
+            self.select = self.caret;
+        }
+    }
+    pub fn unselect_addi(&mut self, o: i32, skip_unselect: bool) {
+        self.caret = (self.caret as i32 +o).max(0) as u32;
         if !skip_unselect {
             self.select = self.caret;
         }

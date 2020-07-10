@@ -3,25 +3,26 @@ use std::marker::PhantomData;
 use util::caption::Caption;
 use state::Cursor;
 
-pub mod imp;
+pub mod widget;
 pub mod state;
+pub mod imp;
 
-pub struct TextBox<'w,E,S,P,C,X,V> where
+pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
     E: Env,
-    S: 'w,
-    P: 'w,
-    C: 'w,
-    X: 'w,
+    Text: 'w,
+    Scroll: 'w,
+    Curs: 'w,
+    CursorStickX: 'w,
     V: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: Vec<StdVerb>,
     pub border: Option<Border>,
-    pub text: S,
-    pub scroll: P,
-    pub cursor: C,
-    pub cursor_stick_x: X,
+    pub text: Text,
+    pub scroll: Scroll,
+    pub cursor: Curs,
+    pub cursor_stick_x: CursorStickX,
     pub validation: V,
     p: PhantomData<&'w mut ()>,
 }
@@ -45,15 +46,15 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool> where
     }
 }
 
-impl<'w,E,S,P,C,X,V> TextBox<'w,E,S,P,C,X,V> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,V> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
     E: Env,
-    S: 'w,
-    P: 'w,
-    C: 'w,
-    X: 'w,
+    Text: 'w,
+    Scroll: 'w,
+    Curs: 'w,
+    CursorStickX: 'w,
     V: 'w,
 {
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,P,C,X,V> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,V> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
         TextBox{
             id: self.id,
             size: self.size,
@@ -69,7 +70,7 @@ impl<'w,E,S,P,C,X,V> TextBox<'w,E,S,P,C,X,V> where
     }
 
     //TODO use a unified state object
-    pub fn with_states<PP,CC,XX>(self, scroll: PP, cursor: CC, cursor_stick_x: XX) -> TextBox<'w,E,S,PP,CC,XX,V> where PP: Statize<E>+'w, CC: Statize<E>+'w, XX: Statize<E>+'w {
+    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,V> where PScroll: Statize<E>+'w, CCurs: Statize<E>+'w, XCursorStickX: Statize<E>+'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -90,13 +91,13 @@ impl<'w,E,S,P,C,X,V> TextBox<'w,E,S,P,C,X,V> where
     }
 }
 
-unsafe impl<'w,E,S,P,C,X,V> Statize<E> for TextBox<'w,E,S,P,C,X,V> where
+unsafe impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Statize<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
     E: Env,
-    S: Statize<E>, S::Statur: Sized,
-    P: Statize<E>, P::Statur: Sized,
-    C: Statize<E>, C::Statur: Sized,
-    X: Statize<E>, X::Statur: Sized,
+    Text: Statize<E>, Text::Statur: Sized,
+    Scroll: Statize<E>, Scroll::Statur: Sized,
+    Curs: Statize<E>, Curs::Statur: Sized,
+    CursorStickX: Statize<E>, CursorStickX::Statur: Sized,
     V: Statize<E>, V::Statur: Sized,
 {
-    type Statur = TextBox<'static,E,S::Statur,P::Statur,C::Statur,X::Statur,V::Statur>;
+    type Statur = TextBox<'static,E,Text::Statur,Scroll::Statur,Curs::Statur,CursorStickX::Statur,V::Statur>;
 }

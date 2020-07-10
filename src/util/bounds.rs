@@ -166,6 +166,25 @@ impl Bounds {
     pub fn not_empty(&self) -> bool {
         self.size.not_empty()
     }
+
+    pub fn shift_to_fit(&mut self, inner_abs: &Bounds) {
+        fn shift_to_fit_axis(axis: &mut (i32,i32), inner_abs: (i32,i32)) {
+            if axis.1 < inner_abs.1 {
+                axis.0 += inner_abs.1 - axis.1;
+                axis.1 += inner_abs.1 - axis.1;
+            }
+            if axis.0 > inner_abs.0 {
+                axis.0 -= axis.0 - inner_abs.0;
+                axis.1 -= axis.0 - inner_abs.0;
+            }
+        }
+        let mut xx = (self.off.x,self.x1());
+        let mut yy = (self.off.y,self.y1());
+        shift_to_fit_axis(&mut xx, (inner_abs.off.x,inner_abs.x1()) );
+        shift_to_fit_axis(&mut yy, (inner_abs.off.y,inner_abs.y1()) );
+        self.off.x = xx.0; self.size.w = (xx.1-xx.0) as u32;
+        self.off.y = yy.0; self.size.h = (yy.1-yy.0) as u32;
+    }
 }
 
 impl Offset {

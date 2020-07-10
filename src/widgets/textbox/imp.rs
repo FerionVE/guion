@@ -1,315 +1,132 @@
 use super::*;
-use util::{state::*, caption::CaptionMut};
-use state::{Cursor, State};
+use util::{state::{AtomState, AtomStateMut}, caption::CaptionMut};
+use state::TBState;
 
-impl<'w,E,S,P,C,X,V> Widget<'w,E> for TextBox<'w,E,S,P,C,X,V> where
-    E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    S: Caption<'w>+Statize<E>, S::Statur: Sized,
-    P: AtomState<E,(u32,u32)>+Statize<E>, P::Statur: Sized,
-    C: AtomState<E,Cursor>+Statize<E>, C::Statur: Sized,
-    X: AtomState<E,Option<u32>>+Statize<E>, X::Statur: Sized,
-    V: AtomState<E,bool>+Statize<E>, V::Statur: Sized,
-{
-    fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
-        vec![]
-    }
-    fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjText]);
-        s.attach(&self.style[..]);
-    }
-    fn border(&self, b: &mut Border) {
-        if let Some(senf) = &self.border {
-            *b = *senf;
-        }
-    }
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
-    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
-        r.with(&[
-            StdVerb::ObjBorder,
-            StdVerb::Focused(l.is_focused()),
-        ])
-            .border_rect(l.default_thicc());
-        let border = Border::new(l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2);
-        let mut r = r.inside_border(&border);
-        let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&r.b);
-        for b in s.selection_box() {
-            let b = b - s.off2();
-            r.slice(&b)
-                .with(&[
-                    StdVerb::ObjForeground,
-                ])
-                .fill_rect();
-        }
-        if let Some(c) = s.cursor_display_pos(s.cursor.caret) { //TODO fix as it should work if cursor is at end
-            let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
-            let b = b - s.off2();
-            r.slice(&b)
-                .with(&[
-                    StdVerb::ObjActive,
-                ])
-                .fill_rect();
-        }
-
-        r.with(&[
-                StdVerb::ObjForeground,
-                StdVerb::ObjText,
-            ])
-                .render_preprocessed_text(&s.glyphs, s.off2(), &mut l.ctx);
-    }
-    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = 
-            if let Some(e) =
-                e.inside_border( self.border.as_ref()
-                    .unwrap_or(l.default_border())
-                ).filter_bounds()
-            {
-                e
-            }else{
-                return false;
-            };
-        //e.0._debug_type_name();
-        let mut cursor = self.cursor.get(l.ctx);
-        let border = Border::new(l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2);
-        let b = e.1.inside_border(&border);
-
-        let mut passed = false;
-
-        if let Some(ee) = e.0.is_text_input() {
-            let s = ee.text;
-            l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                let mut wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
-                if cursor.is_selection() {
-                    cursor.del_selection(&mut wc);
-                }
-                wc.push(cursor.caret as usize,&s);
-                cursor.caret += s.len() as u32;
-                cursor.limit(wc.len() as u32);
-                cursor.unselect();
-                w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
-            }));
-            passed = true;
-        } else if let Some(ee) = e.0.is_kbd_press() {
-            if
-                ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE ||
-                ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
-            {
-                let ctrl = l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some();
-
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let mut wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
-                    if ee.key == EEKey::<E>::BACKSPACE {
-                        if cursor.is_selection() {
-                            cursor.del_selection(&mut wc);
-                        }else{
-                            wc.pop_left(cursor.caret as usize,1);
-                            cursor.unselect_sub(1,false);
-                            
-                        }
-                    }
-                    if ee.key == EEKey::<E>::ENTER {
-                        if cursor.is_selection() {
-                            cursor.del_selection(&mut wc);
-                        }
-                        wc.push(cursor.caret as usize,"\n");
-                        cursor.unselect_add(1,false);
-                    }
-                    if ee.key == EEKey::<E>::LEFT {
-                        cursor.unselect_sub(1,ctrl);
-                    }
-                    if ee.key == EEKey::<E>::RIGHT {
-                        cursor.unselect_add(1,ctrl);
-                    }
-                    cursor = cursor.min(wc.len() as u32);
-                    w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                    w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
-                }));
-                passed = true;
-            }else if ee.key == EEKey::<E>::A && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
-                    cursor.select = 0;
-                    cursor.caret = wc.len() as u32;
-                    w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                    w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
-                }));
-                passed = true;
-            }else if ee.key == EEKey::<E>::V && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
-                if let Some(text) = l.clipboard_get_text() {
-                    self._event_direct(l,&EventCompound(Event::from(TextInput{text}),e.1,e.2,Default::default(),e.4));
-                }
-                passed = true;
-            }else if (ee.key == EEKey::<E>::C || ee.key == EEKey::<E>::X) && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
-                if cursor.is_selection() {
-                    let range = cursor.range_usize();
-                    let text = self.text.caption();
-                    let text = &text.as_ref()[range];
-                    l.clipboard_set_text(text);
-
-                    if ee.key == EEKey::<E>::X {
-                        l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                            let mut wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
-                            if cursor.is_selection() {
-                                cursor.del_selection(&mut wc);
-                            }
-                            cursor = cursor.min(wc.len() as u32);
-                            w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                            w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
-                        }));
-                    }
-                }
-                passed = true;
-            }else if ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN {
-                let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
-
-                if s.glyphs.line_count() != 0 {
-                    let (_,mut line) = s.glyphs.coord_of(s.cursor.caret).unwrap();
-                    let (mut dx,_) = s.cursor_display_pos(s.cursor.caret).unwrap();
-
-                    let mut new_stick_x = self.cursor_stick_x.get(l.ctx);
-                    if new_stick_x.is_none() {
-                        new_stick_x = Some(dx);
-                    }
-                    dx = dx.max(new_stick_x.unwrap());
-
-                    if ee.key == EEKey::<E>::UP {
-                        line = line.saturating_sub(1);
-                    }
-                    if ee.key == EEKey::<E>::DOWN {
-                        line = (line+1).min(s.glyphs.line_count()-1);
-                    }
-
-                    let x = s.cursor_pos_reverse_line_centric(line,dx as i32).unwrap();
-
-                    let i = s.glyphs.at_coord((x,line)).unwrap();
-
-                    cursor.caret = i;
-                    if !l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
-                        cursor.select = cursor.caret;
-                    }
-
-                    cursor = cursor.min(self.text.len() as u32);
-                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                        w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                        w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(new_stick_x,ctx);
-                    }));
-                }
-            }
-            passed = true;
-        } else if let Some(ee) = e.0.is_mouse_scroll() {
-            let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
-            
-            let off = (
-                s.off.0 as i32 + ee.x,
-                s.off.1 as i32 + ee.y,
-            );
-            let off = s.bound_off((off.0.max(0) as u32, off.1.max(0) as u32));
-            l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
-                w.set(off,ctx);
-            }));
-            passed = true;
-        } else {
-            if let Some(mouse) = l.state().cursor_pos() { //TODO strange event handling
-                let s = State::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
-
-                let mut tpos = mouse - b.off + Offset::from(s.off);
-                tpos.y += s.glyphs.line_ascent() as i32; //TODO FIX boundary precision all over the place
-                
-                if let Some(ee) = e.0.is_mouse_down() {
-                    cursor.select = s.cursor_pos_reverse(tpos);
-                    cursor.caret = cursor.select;
-                    //cursor.unselect();
-                    assert!(cursor.select < s.glyphs.chars());
-
-                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                        w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                        w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
-                    }));
-                } else if l.is_hovered() && l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()).is_some() {
-                    cursor.caret = s.cursor_pos_reverse(tpos);
-                    //cursor.unselect();
-                    assert!(cursor.caret < s.glyphs.chars());
-
-                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                        w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                        w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
-                    }));
-                }
-            }
-            passed = true;
-        }
-        passed
-    }
-    fn _size(&self, _: Link<E>) -> ESize<E> {
-        self.size.clone()
-    }
-    fn childs(&self) -> usize {
-        0
-    }
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
-        vec![]
-    }
-    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
-        vec![]
-    }
-    
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
-        Ok(vec![])
-    }
-    fn focusable(&self) -> bool {
-        true
-    }
-    fn child<'a>(&'a self, _: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
-        Err(())
-    }
-    fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
-        Err(())
-    }
+pub trait ITextBoxMut<'w,E> where E: Env {
+    fn insert_text(&mut self, t: &str, ctx: &mut E::Context);
+    fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context);
+    fn remove_selection(&mut self, ctx: &mut E::Context) -> bool;
+    fn move_cursor_x(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context);
+    fn move_cursor_y(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context, widget_bounds: &Bounds);
+    fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context);
+    fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
 }
 
-impl<'w,E,S,P,C,X,V> WidgetMut<'w,E> for TextBox<'w,E,S,P,C,X,V> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,V> ITextBoxMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdVerb>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    S: CaptionMut<'w>+Statize<E>, S::Statur: Sized,
-    P: AtomStateMut<E,(u32,u32)>+Statize<E>, P::Statur: Sized,
-    C: AtomStateMut<E,Cursor>+Statize<E>, C::Statur: Sized,
-    X: AtomStateMut<E,Option<u32>>+Statize<E>, X::Statur: Sized,
+    Text: CaptionMut<'w>+Statize<E>, Text::Statur: Sized,
+    Scroll: AtomStateMut<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,
+    Curs: AtomStateMut<E,Cursor>+Statize<E>, Curs::Statur: Sized,
+    CursorStickX: AtomStateMut<E,Option<u32>>+Statize<E>, CursorStickX::Statur: Sized,
     V: AtomState<E,bool>+Statize<E>, V::Statur: Sized,
 {
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
-        vec![]
+    fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
+        let mut cursor = self.cursor.get(ctx);
+        if cursor.is_selection() {
+            cursor.del_selection(&mut self.text);
+        }
+        self.text.push(cursor.caret as usize,&s);
+        cursor.unselect_add(s.len() as u32,false);
+        cursor.limit(self.text.len() as u32);
+        self.cursor.set(cursor,ctx);
+        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
-        vec![]
+    fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context) {
+        if self.remove_selection(ctx) {return;}
+        let mut cursor = self.cursor.get(ctx);
+        self.text.pop_left(cursor.caret as usize,n as usize);
+        cursor.unselect_sub(n,false);
+        self.cursor.set(cursor,ctx);
+        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn child_mut<'a>(&'a mut self, _: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
-        Err(())
+    fn remove_selection(&mut self, ctx: &mut E::Context) -> bool {
+        let mut cursor = self.cursor.get(ctx);
+        if cursor.is_selection() {
+            cursor.del_selection(&mut self.text);
+            self.cursor.set(cursor,ctx);
+            self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
+            true
+        }else{
+            false
+        }
     }
-    fn into_child_mut(self: Box<Self>, _: usize) -> Result<ResolvableMut<'w,E>,()> {
-        Err(())
+    fn move_cursor_x(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context) {
+        let mut cursor = self.cursor.get(ctx);
+        cursor.unselect_addi(o,skip_unselect);
+        self.cursor.set(cursor,ctx);
+        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
+    fn move_cursor_y(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context, b: &Bounds) {
+        let mut s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,ctx,&b);
 
-    impl_traitcast!(
-        dyn CaptionMut => |s| &s.text;
-        dyn AtomStateMut<E,(u32,u32)> => |s| &s.scroll;
-        dyn AtomStateMut<E,Cursor> => |s| &s.cursor;
-        dyn AtomStateMut<E,Option<u32>> => |s| &s.cursor_stick_x;
-    );
-    impl_traitcast_mut!(
-        dyn CaptionMut => |s| &mut s.text;
-        dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
-        dyn AtomStateMut<E,Cursor> => |s| &mut s.cursor;
-        dyn AtomStateMut<E,Option<u32>> => |s| &mut s.cursor_stick_x;
-    );
+        if s.glyphs.line_count() != 0 {
+            let (_,mut line) = s.glyphs.coord_of(s.cursor.caret).unwrap();
+            let (mut dx,_) = s.cursor_display_pos(s.cursor.caret).unwrap();
+
+            let mut new_stick_x = self.cursor_stick_x.get(ctx);
+            if new_stick_x.is_none() {
+                new_stick_x = Some(dx);
+            }
+            dx = dx.max(new_stick_x.unwrap());
+
+            line = (line as i32 +o).max(0).min(s.glyphs.line_count() as i32 -1) as u32;
+
+            let x = s.cursor_pos_reverse_line_centric(line,dx as i32).unwrap();
+
+            let i = s.glyphs.at_coord((x,line)).unwrap();
+
+            s.cursor.caret = i;
+            if !ctx.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+                s.cursor.select = s.cursor.caret;
+            }
+
+            //cursor = cursor.min(self.text.len() as u32);
+
+            self.cursor.set(s.cursor,ctx);
+            self.cursor_stick_x.set(new_stick_x,ctx);
+        }
+    }
+    fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context) {
+        let mut s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,ctx,&b);
+
+        let mut tpos = mouse - b.off + Offset::from(s.off);
+        tpos.y += s.glyphs.line_ascent() as i32; //TODO FIX boundary precision all over the place
+                    
+        if let Some(ee) = mouse_down {
+            s.cursor.select = s.cursor_pos_reverse(tpos);
+            s.cursor.caret = s.cursor.select;
+            //cursor.unselect();
+        } else if mouse_pressed {
+            s.cursor.caret = s.cursor_pos_reverse(tpos);
+            //cursor.unselect();
+        }
+        assert!(s.cursor.caret < s.glyphs.chars());
+        self.cursor.set(s.cursor,ctx);
+        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
+    }
+    fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds) {
+        let s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,ctx,&b);
+        
+        if let Some(c) = s.cursor_display_pos(s.cursor.caret) { //TODO fix as it should work if cursor is at end
+            let cb = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
+            
+            let mut vb = Bounds{
+                off: s.off.into(),
+                size: b.size,
+            };
+
+            vb.shift_to_fit(&cb);
+
+            let off = (vb.off.x as u32, vb.off.y as u32);
+            self.scroll.set(off,ctx);
+        }
+    }
+}
+
+unsafe impl<'w,E> Statize<E> for dyn ITextBoxMut<'w,E> where E: 'static {
+    type Statur = dyn ITextBoxMut<'static,E>;
 }
