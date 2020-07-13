@@ -6,14 +6,14 @@ pub struct TBState<E> where E: Env {
     pub off: (u32,u32), //TODO fix pub
     pub max_off: (u32,u32),
     pub cursor: Cursor,
-    pub glyphs: ESPPText<E>,
+    pub glyphs: ESGlyphs<E>,
 }
 
 impl<E> TBState<E> where E: Env {
     pub fn retrieve<'a,S,P,C>(s: &S, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a>, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
         let off = p.get(ctx);
         let caption = s.caption();
-        let glyphs = ESPPText::<E>::generate(caption.as_ref(),(20.0,20.0),ctx);
+        let glyphs = ESGlyphs::<E>::generate(caption.as_ref(),(20.0,20.0),ctx);
         //assert_eq!(glyphs.chars() as usize,caption.len()+1);
         let siz = glyphs.size();
         let max_off = (
@@ -53,8 +53,8 @@ impl<E> TBState<E> where E: Env {
         self.glyphs.char_at(i)
         .map(|i| 
             (
-                i.offset.x as u32,
-                i.offset.y as u32,
+                i.offset().x as u32,
+                i.offset().y as u32,
             )
         )
     }
@@ -66,8 +66,8 @@ impl<E> TBState<E> where E: Env {
                 if i == j {
                     return Some((
                         (
-                            c.offset.x as u32,
-                            (c.offset.y as u32).saturating_sub(self.glyphs.line_ascent()),
+                            c.offset().x as u32,
+                            (c.offset().y as u32).saturating_sub(self.glyphs.line_ascent()),
                         ),
                         l.1,
                         k
@@ -129,17 +129,17 @@ impl<E> TBState<E> where E: Env {
     pub fn cursor_pos_reverse(&self, pos: Offset) -> u32 {
         self.glyphs.glyphs()
             .enumerate()
-            .filter(|(_,b)| b.offset.y <= pos.y && b.offset.x <= pos.x )
+            .filter(|(_,b)| b.offset().y <= pos.y && b.offset().x <= pos.x )
             .map(|(i,_)| i as u32 )
             .last() // TODO PERF all this seekery will be slow on huge texts
             .unwrap_or(0)
     }
     pub fn cursor_pos_reverse_line_centric(&self, line: u32, x: i32) -> Option<u32> {
-        fn try_centerx(p: &PPChar) -> i32 {
-            if let Some(o) = p.bounds {
+        fn try_centerx<E>(p: &ESGlyph<E>) -> i32 where E: Env {
+            if let Some(o) = p.bounds() {
                 o.center().x
             }else{
-                p.offset.x
+                p.offset().x
             }
         }
 
@@ -150,7 +150,7 @@ impl<E> TBState<E> where E: Env {
                 let mut last = 0;
 
                 for (i,b) in l.enumerate() {
-                    if try_centerx(&b) >= x {
+                    if try_centerx::<E>(&b) >= x {
                         return i as u32;
                     }
                     last = i;

@@ -7,11 +7,11 @@ pub mod color;
 
 use std::ops::Deref;
 
-pub trait Style<E>: Clone where E: Env, E::Backend: Backend<E,Style=Self> {
+pub trait StyleProvider<E>: Clone where E: Env {
     type Font;
     type Cursor: From<StdCursor>;
     type Color: Color;
-    type PreprocessedText: PreprocessedText<E>;
+    type Glyphs: Glyphs<E>;
     type Variant: StyleVariant;
 
     fn font(&self, v: &Self::Variant) -> Option<&Self::Font>;
@@ -19,9 +19,9 @@ pub trait Style<E>: Clone where E: Env, E::Backend: Backend<E,Style=Self> {
     fn color(&self, v: &Self::Variant) -> Self::Color;
     fn border(&self, v: &Self::Variant) -> Border;
     
-    fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::PreprocessedText;
+    fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::Glyphs;
     //TODO fix partial eq impl
-    fn is_cached_valid(&self, s: &Self::PreprocessedText, _c: &mut E::Context) -> bool;
+    fn is_cached_valid(&self, s: &Self::Glyphs, _c: &mut E::Context) -> bool;
 
     fn static_default() -> Self;
 }

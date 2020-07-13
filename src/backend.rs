@@ -7,6 +7,6 @@ pub trait Backend<E>: Sized + 'static where E: Env<Backend=Self> {
     type Event: Event<E>;
     ///TODO move tree'd back to Event
     type EventFilter: Filter<E>;
-    type Style: Style<E>;
+    type Style: StyleProvider<E>;
     type Size: ISize;
 }

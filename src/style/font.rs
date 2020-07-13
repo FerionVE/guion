@@ -1,16 +1,18 @@
 use super::*;
 
-pub trait Font<E>: Sized where EStyle<E>: Style<E,Font=Self>, E: Env {
+pub trait Font<E>: Sized where E: Env {
     
 }
 
 /// Text in a optimized form for faster frequent rendering and iterating
-pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=Self>, E: Env {
+pub trait Glyphs<E>: Sized where E: Env {
+    type Glyph: Glyph;
+
     //type LineIter: Iterator<Item=(Self::CharIter,Bounds)>;
     //type CharIter: Iterator<Item=Bounds>;
 
     fn size(&self) -> Dims;
-    fn lines<'s>(&'s self) -> CrazyWorkaroundPPIter<'s>;
+    fn lines<'s>(&'s self) -> CrazyWorkaroundPPIter<'s,Self::Glyph>;
 
     fn generate(s: &str, size: (f32,f32), ctx: &mut E::Context) -> Self;
 
@@ -26,14 +28,14 @@ pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=S
         i
     }
 
-    fn glyphs<'s>(&'s self) -> Box<dyn Iterator<Item=PPChar>+'s> {
+    fn glyphs<'s>(&'s self) -> Box<dyn Iterator<Item=Self::Glyph>+'s> {
         Box::new( //TODO OPTI use ext trait to avoid boxing
             self.lines()
             .flat_map(|(c,_)| c )
         )
     }
 
-    fn char_at(&self, i: u32) -> Option<PPChar> {
+    fn char_at(&self, i: u32) -> Option<Self::Glyph> {
         self.lines()
             .flat_map(|(c,_)| c )
             .skip(i as usize)
@@ -78,10 +80,29 @@ pub trait PreprocessedText<E>: Sized where EStyle<E>: Style<E,PreprocessedText=S
     }
 }
 
-pub struct PPChar {
+/// Provides informations over a glyph
+pub trait Glyph {
+    fn bounds(&self) -> Option<Bounds>;
+    fn offset(&self) -> Offset;
+    fn str_pos(&self) -> usize;
+}
+
+pub struct GlyphInfo {
     pub bounds: Option<Bounds>,
     pub offset: Offset,
     pub str_pos: usize,
 }
 
-pub type CrazyWorkaroundPPIter<'a> = Box<dyn Iterator<Item=(Box<dyn Iterator<Item=PPChar>+'a>,Bounds)>+'a>;
+impl Glyph for GlyphInfo {
+    fn bounds(&self) -> Option<Bounds> {
+        self.bounds.clone()
+    }
+    fn offset(&self) -> Offset {
+        self.offset.clone()
+    }
+    fn str_pos(&self) -> usize {
+        self.str_pos
+    }
+}
+
+pub type CrazyWorkaroundPPIter<'a,G: Glyph> = Box<dyn Iterator<Item=(Box<dyn Iterator<Item=G>+'a>,Bounds)>+'a>;
