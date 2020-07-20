@@ -5,7 +5,7 @@ pub mod imp;
 pub struct ProgressBar<E> where E: Env {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdVerb>,
+    pub style: Vec<StdTag>,
     pub border: Option<Border>,
     pub value: f32,
     pub orientation: Orientation,

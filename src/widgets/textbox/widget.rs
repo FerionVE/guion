@@ -7,7 +7,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Sc
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: Caption<'w>+Statize<E>, Text::Statur: Sized,
     Scroll: AtomState<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,
@@ -19,7 +19,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Sc
         vec![]
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjText]);
+        s.attach(&[StdTag::ObjText]);
         s.attach(&self.style[..]);
     }
     fn border(&self, b: &mut Border) {
@@ -33,8 +33,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Sc
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         r.with(&[
-            StdVerb::ObjBorder,
-            StdVerb::Focused(l.is_focused()),
+            StdTag::ObjBorder,
+            StdTag::Focused(l.is_focused()),
         ])
             .border_rect(l.default_thicc());
         let border = Border::new(l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2, l.default_thicc()*2);
@@ -44,7 +44,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Sc
             let b = b - s.off2();
             r.slice(&b)
                 .with(&[
-                    StdVerb::ObjForeground,
+                    StdTag::ObjForeground,
                 ])
                 .fill_rect();
         }
@@ -53,14 +53,14 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Sc
             let b = b - s.off2();
             r.slice(&b)
                 .with(&[
-                    StdVerb::ObjActive,
+                    StdTag::ObjActive,
                 ])
                 .fill_rect();
         }
 
         r.with(&[
-                StdVerb::ObjForeground,
-                StdVerb::ObjText,
+                StdTag::ObjForeground,
+                StdTag::ObjText,
             ])
                 .render_preprocessed_text(&s.glyphs, s.off2(), &mut l.ctx);
     }
@@ -222,7 +222,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> WidgetMut<'w,E> for TextBox<'w,E,Text
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: CaptionMut<'w>+Statize<E>, Text::Statur: Sized,
     Scroll: AtomStateMut<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,

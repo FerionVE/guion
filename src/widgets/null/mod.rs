@@ -3,7 +3,7 @@ use super::*;
 pub struct Null<E> where E: Env {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdVerb>,
+    pub style: Vec<StdTag>,
     pub border: Option<Border>,
 }
 
@@ -26,7 +26,7 @@ impl<E> Null<E> where E: Env {
 impl<'w,E> Widget<'w,E> for Null<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -61,7 +61,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
         }
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjDefault]);
+        s.attach(&[StdTag::ObjDefault]);
         s.attach(&self.style[..]);
     }
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
@@ -75,7 +75,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
 impl<'w,E> WidgetMut<'w,E> for Null<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

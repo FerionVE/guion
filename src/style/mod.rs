@@ -1,4 +1,4 @@
-//! Style handler, Style specifier and verbs
+//! Style handler, Style specifier and tags
 use super::*;
 
 pub mod font;

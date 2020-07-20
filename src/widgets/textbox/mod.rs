@@ -17,7 +17,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
 {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdVerb>,
+    pub style: Vec<StdTag>,
     pub border: Option<Border>,
     pub text: Text,
     pub scroll: Scroll,

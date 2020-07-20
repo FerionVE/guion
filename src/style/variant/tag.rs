@@ -1,10 +1,11 @@
 use std::iter::once;
 use std::iter::Once;
-/// verbs enable/disable specific parts of styles.  
-/// Style implementations may ignore verbs.  
+use crate::border::Border;
+/// tags enable/disable specific parts of styles.  
+/// Style implementations may ignore tags.  
 #[non_exhaustive]
 #[derive(Copy,Clone)]
-pub enum StdVerb {
+pub enum StdTag {
     ObjDefault,
     ObjBackground,
     ObjForeground,
@@ -22,6 +23,13 @@ pub enum StdVerb {
     DesignDefault,
     DesignNormal,
     DesignFlat,
+
+    BorderDefault,
+    /// pick the widget outer border for requesting border size
+    BorderOuter,
+    /// pick the visual border for requesting border size
+    BorderVisual,
+    BorderSpecific(Border),
 
     Accent(u32),
 
@@ -51,9 +59,9 @@ pub enum StdVerb {
     CursorHand,
 }
 
-impl IntoIterator for StdVerb {
-    type Item = StdVerb;
-    type IntoIter = Once<StdVerb>;
+impl IntoIterator for StdTag {
+    type Item = StdTag;
+    type IntoIter = Once<StdTag>;
 
     fn into_iter(self) -> Self::IntoIter {
         once(self)

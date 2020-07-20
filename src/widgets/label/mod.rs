@@ -10,7 +10,7 @@ pub struct Label<'w,E,S> where
 {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdVerb>,
+    pub style: Vec<StdTag>,
     pub border: Option<Border>,
     pub text: S,
     p: PhantomData<&'w mut ()>,

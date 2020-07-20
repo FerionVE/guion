@@ -31,7 +31,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             r,
             Bounds::from_xywh(0,0,dim.0,dim.1),
             ESVariant::<E>::default(),
-            c.default_style().clone(),
+            c.style_provider().clone(),
             false,
         )
     }
@@ -59,7 +59,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
 
     /// fork with area inside the border
     #[inline]
-    pub fn inside_border<'s>(&'s mut self, s: &Border) -> RenderLink<'s,E> where 'a: 's {
+    pub fn inside_border_specific<'s>(&'s mut self, s: &Border) -> RenderLink<'s,E> where 'a: 's {
         RenderLink{
             r: self.r,
             b: self.b.inside_border(s),
@@ -68,6 +68,17 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             s: self.s.clone(),
             force: self.force,
         }
+    }
+    /// fork with area inside the border defined by the style
+    #[inline]
+    pub fn inside_border<'s>(&'s mut self) -> RenderLink<'s,E> where 'a: 's {
+        self.inside_border_specific(&self.s.border(&self.v))
+    }
+    /// fork with area inside the border defined by the style  
+    /// default style border is determined by the attached tags which **won't** be present on the forked RenderLink
+    #[inline]
+    pub fn inside_border_by<'s,V>(&'s mut self, tags: impl IntoIterator<Item=impl Deref<Target=V>>) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Copy, 'a: 's {
+        self.inside_border_specific(&self.s.border(&self.v.with(tags)))
     }
     /// fork with area inside the bounds
     #[inline]
@@ -117,15 +128,27 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             force: self.force,
         }
     }
-    /// fork with attached style variant verbs
+    /// fork with attached style variant tags
     #[inline]
-    pub fn with<'s,V>(&'s mut self, verbs: impl IntoIterator<Item=impl Deref<Target=V>>) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Copy, 'a: 's {
+    pub fn with<'s,V>(&'s mut self, tags: impl IntoIterator<Item=impl Deref<Target=V>>) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Copy, 'a: 's {
         RenderLink{
             force: self.force(),
             r: self.r,
             b: self.b.clone(),
             br: self.br.clone(),
-            v: self.v.with(verbs),
+            v: self.v.with(tags),
+            s: self.s.clone(),
+        }
+    }
+    /// fork with default style and attache tags
+    #[inline]
+    pub fn with_default_style<'s,V>(&'s mut self, tags: impl IntoIterator<Item=impl Deref<Target=V>>) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Copy, 'a: 's {
+        RenderLink{
+            force: self.force(),
+            r: self.r,
+            b: self.b.clone(),
+            br: self.br.clone(),
+            v: ESVariant::<E>::default().with(tags),
             s: self.s.clone(),
         }
     }
@@ -206,6 +229,14 @@ impl<'a,E> RenderLink<'a,E> where E: Env, ERenderer<E>: RenderStdWidgets<E> {
     #[inline]
     pub fn border_rect(&mut self, thickness: u32) {
         self.r.border_rect(&self.b,self.color(),thickness)
+    }
+    #[inline]
+    pub fn draw_inner_border_specific(&mut self, b: &Border) {
+        todo!()
+    }
+    #[inline]
+    pub fn draw_inner_border(&mut self) {
+        self.draw_inner_border_specific(&self.s.border(&self.v))
     }
     #[deprecated = "avoid this because stuff is not cached"]
     #[allow(deprecated)]

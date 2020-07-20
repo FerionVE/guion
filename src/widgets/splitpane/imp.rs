@@ -6,7 +6,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
     L: AsWidget<'w,E>+Statize<E>+'w, L::Statur: Sized,
     R: AsWidget<'w,E>+Statize<E>+'w, R::Statur: Sized,
@@ -27,7 +27,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
                 }.into());
             }
             r.slice_abs(&bounds[1])
-                .with(&[StdVerb::ObjForeground])
+                .with(&[StdTag::ObjForeground])
                 .fill_rect();
         }
 
@@ -154,7 +154,7 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
     L: AsWidgetMut<'w,E>+Statize<E>+'w, L::Statur: Sized,
     R: AsWidgetMut<'w,E>+Statize<E>+'w, R::Statur: Sized,

@@ -14,7 +14,7 @@ pub struct CheckBox<'w,E,State,Text> where
     pub trigger: for<'a> fn(Link<'a,E>,bool),
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdVerb>,
+    pub style: Vec<StdTag>,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub border: Option<Border>,

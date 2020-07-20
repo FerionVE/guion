@@ -4,14 +4,14 @@ impl<'w,E,S> Widget<'w,E> for Label<'w,E,S> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     S: Caption<'w>+Statize<E>, S::Statur: Sized,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjText]);
+        s.attach(&[StdTag::ObjText]);
         s.attach(&self.style[..]);
     }
     fn border(&self, b: &mut Border) {
@@ -24,8 +24,8 @@ impl<'w,E,S> Widget<'w,E> for Label<'w,E,S> where
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         r.with(&[
-            StdVerb::ObjForeground,
-            StdVerb::ObjText,
+            StdTag::ObjForeground,
+            StdTag::ObjText,
         ])
             .render_text(self.text.caption().as_ref(),l.ctx);
     }
@@ -63,7 +63,7 @@ impl<'w,E,S> WidgetMut<'w,E> for Label<'w,E,S> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     S: Caption<'w>+Statize<E>, S::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {

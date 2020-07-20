@@ -1,7 +1,7 @@
 use super::*;
 
-pub mod verb;
-pub use verb::*;
+pub mod tag;
+pub use tag::*;
 
 pub mod standard;
 
@@ -13,14 +13,14 @@ pub trait StyleVariant: Clone + Default {
 
 pub trait StyleVariantSupport<V>: StyleVariant where V: Copy {
     #[inline]
-    fn with(&self, verbs: impl IntoIterator<Item=impl Deref<Target=V>>) -> Self where Self: Sized {
+    fn with(&self, tags: impl IntoIterator<Item=impl Deref<Target=V>>) -> Self where Self: Sized {
         let mut s = self.clone();
-        s.attach(verbs);
+        s.attach(tags);
         s
     }
     #[inline]
-    fn attach(&mut self, verbs: impl IntoIterator<Item=impl Deref<Target=V>>) {
-        for v in verbs {
+    fn attach(&mut self, tags: impl IntoIterator<Item=impl Deref<Target=V>>) {
+        for v in tags {
             self._with(*v.deref());
         }
     }

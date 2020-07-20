@@ -53,9 +53,5 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         }
     }
 
-    fn default_style(&self) -> &EStyle<E>;
-    fn default_border(&self) -> &Border;
-    fn default_thicc(&self) -> u32 {
-        1
-    }
+    fn style_provider(&self) -> &EStyle<E>;
 }

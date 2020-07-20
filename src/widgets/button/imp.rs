@@ -4,7 +4,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
     Text: Caption<'w>+Statize<E>, Text::Statur: Sized,
 {
@@ -12,7 +12,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
         vec![]
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjButton]);
+        s.attach(&[StdTag::ObjButton]);
         s.attach(&self.style[..]);
     }
     fn border(&self, b: &mut Border) {
@@ -26,28 +26,28 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         r.with(&[
-            StdVerb::ObjForeground,
-            StdVerb::Hovered(l.is_hovered()),
-            StdVerb::Focused(l.is_focused()),
-            StdVerb::Locked(self.locked),
-            StdVerb::Pressed(Self::pressed(&l).is_some())
+            StdTag::ObjForeground,
+            StdTag::Hovered(l.is_hovered()),
+            StdTag::Focused(l.is_focused()),
+            StdTag::Locked(self.locked),
+            StdTag::Pressed(Self::pressed(&l).is_some())
         ])
             .fill_rect();
         r.with(&[
-            StdVerb::ObjBorder,
-            StdVerb::Hovered(l.is_hovered()),
-            StdVerb::Focused(l.is_focused()),
-            StdVerb::Locked(self.locked),
-            StdVerb::Pressed(Self::pressed(&l).is_some())
+            StdTag::ObjBorder,
+            StdTag::Hovered(l.is_hovered()),
+            StdTag::Focused(l.is_focused()),
+            StdTag::Locked(self.locked),
+            StdTag::Pressed(Self::pressed(&l).is_some())
         ])
             .border_rect(l.default_thicc());
         r.with(&[
-            StdVerb::ObjForeground,
-            StdVerb::ObjText,
-            StdVerb::Hovered(l.is_hovered()),
-            StdVerb::Focused(l.is_focused()),
-            StdVerb::Locked(self.locked),
-            StdVerb::Pressed(Self::pressed(&l).is_some())
+            StdTag::ObjForeground,
+            StdTag::ObjText,
+            StdTag::Hovered(l.is_hovered()),
+            StdTag::Focused(l.is_focused()),
+            StdTag::Locked(self.locked),
+            StdTag::Pressed(Self::pressed(&l).is_some())
         ])
             .render_text(self.text.caption().as_ref(),l.ctx);
     }
@@ -112,7 +112,7 @@ impl<'w,E,Text> WidgetMut<'w,E> for Button<'w,E,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
     Text: Caption<'w>+Statize<E>, Text::Statur: Sized,
 {
@@ -134,7 +134,7 @@ impl<'w,E,S> Button<'w,E,S> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
     S: Caption<'w>+Statize<E>, S::Statur: Sized,
 {

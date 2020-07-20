@@ -1,13 +1,11 @@
 use super::*;
 use util::{state::*, caption::CaptionMut};
-use state::{Cursor, TBState};
-use super::imp::IAreaMut;
 
 impl<'w,E,W,Scroll> Widget<'w,E> for Area<'w,E,W,Scroll> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<'w,E>+Statize<E>+'w, W::Statur: Sized,
     Scroll: AtomState<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,
@@ -16,7 +14,7 @@ impl<'w,E,W,Scroll> Widget<'w,E> for Area<'w,E,W,Scroll> where
         vec![]
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjText]);
+        s.attach(&[StdTag::ObjText]);
         s.attach(&self.style[..]);
     }
     fn border(&self, b: &mut Border) {
@@ -28,20 +26,23 @@ impl<'w,E,W,Scroll> Widget<'w,E> for Area<'w,E,W,Scroll> where
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
+        let mut r = r.inside_border_by(&[StdTag::BorderOuter]);
         r.with(&[
-            StdVerb::ObjBorder,
-            StdVerb::Focused(l.is_focused()),
+            StdTag::ObjBorder,
+            StdTag::Focused(l.is_focused()),
+            StdTag::BorderVisual,
         ])
-            .border_rect(l.default_thicc());
-        
+            .draw_inner_border();
+        r.inside_border_by(&[StdTag::BorderVisual])
+            .render_widget(l.for_child(0).unwrap());
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = 
             if let Some(e) =
                 e.inside_border( self.border.as_ref()
                     .unwrap_or(l.default_border())
-                ).filter_bounds()
+                ).inside_border(&Border::uniform(l.default_thicc()))
+                .filter_bounds()
             {
                 e
             }else{
@@ -57,23 +58,25 @@ impl<'w,E,W,Scroll> Widget<'w,E> for Area<'w,E,W,Scroll> where
         1
     }
     fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
-        vec![&self.inner]
+        vec![self.inner.as_ref()]
     }
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
-        vec![self.inner]
+        vec![self.inner.into_ref()]
     }
     
     fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
-        todo!()
+        todo!() // TODO complete inner bounds or just view
     }
     fn focusable(&self) -> bool {
         todo!()
     }
-    fn child<'a>(&'a self, _: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
-        todo!()
+    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+        if i != 0 {return Err(());}
+        Ok(self.inner.as_ref())
     }
-    fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
-        todo!()
+    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+        if i != 0 {return Err(());}
+        Ok(self.inner.into_ref())
     }
 }
 
@@ -81,22 +84,24 @@ impl<'w,E,W,Scroll> WidgetMut<'w,E> for Area<'w,E,W,Scroll> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidgetMut<'w,E>+Statize<E>+'w, W::Statur: Sized,
     Scroll: AtomStateMut<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
-        vec![&mut self.inner]
+        vec![self.inner.as_mut()]
     }
     fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
-        vec![self.inner]
+        vec![self.inner.into_mut()]
     }
-    fn child_mut<'a>(&'a mut self, _: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
-        todo!()
+    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+        if i != 0 {return Err(());}
+        Ok(self.inner.as_mut())
     }
-    fn into_child_mut(self: Box<Self>, _: usize) -> Result<ResolvableMut<'w,E>,()> {
-        todo!()
+    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+        if i != 0 {return Err(());}
+        Ok(self.inner.into_mut())
     }
 
     impl_traitcast!(

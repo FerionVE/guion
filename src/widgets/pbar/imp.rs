@@ -3,7 +3,7 @@ use super::*;
 impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -11,16 +11,16 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         r.with(&[
-            StdVerb::ObjBackground,
+            StdTag::ObjBackground,
         ])
             .fill_rect();
         r.slice_abs(&crop(&r.b, self.value, self.orientation))
             .with(&[
-                StdVerb::ObjActive,
+                StdTag::ObjActive,
             ])
             .fill_rect();
         r.with(&[
-            StdVerb::ObjBorder,
+            StdTag::ObjBorder,
         ])
             .border_rect(l.default_thicc());
     }
@@ -51,7 +51,7 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
         }
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdVerb::ObjDefault]);
+        s.attach(&[StdTag::ObjDefault]);
         s.attach(&self.style[..]);
     }
     fn child<'a>(&'a self, _: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
@@ -65,7 +65,7 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
 impl<'w,E> WidgetMut<'w,E> for ProgressBar<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

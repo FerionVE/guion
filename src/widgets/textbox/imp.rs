@@ -16,7 +16,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> ITextBoxMut<'w,E> for TextBox<'w,E,Te
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: CaptionMut<'w>+Statize<E>, Text::Statur: Sized,
     Scroll: AtomStateMut<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,

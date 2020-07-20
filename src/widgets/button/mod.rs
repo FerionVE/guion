@@ -12,7 +12,7 @@ pub struct Button<'w,E,Text> where
     pub trigger: for<'a> fn(Link<'a,E>),
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdVerb>,
+    pub style: Vec<StdTag>,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub border: Option<Border>,

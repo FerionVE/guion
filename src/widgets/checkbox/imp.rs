@@ -6,7 +6,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
@@ -15,7 +15,7 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
         vec![]
     }
     fn style(&self, s: &mut ESVariant<E>) {
-        //s.attach(&[StdVerb::ObjCheckBox]);
+        //s.attach(&[StdTag::ObjCheckBox]);
         s.attach(&self.style[..]);
     }
     fn border(&self, b: &mut Border) {
@@ -33,24 +33,24 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
             let rect = Bounds::from_wh(size,size);
             let mut r = r.slice(&rect);
             r.with(&[
-                    StdVerb::ObjForeground,
+                    StdTag::ObjForeground,
                 ])
                 .fill_rect();
             r.inside_border(&Border::uniform(l.default_thicc()*3))
                 .with(&[
-                    StdVerb::ObjForeground,
-                    StdVerb::Hovered(l.is_hovered()),
-                    StdVerb::Focused(l.is_focused()),
-                    StdVerb::Locked(self.locked),
-                    StdVerb::Pressed(self.state.get(l.ctx))
+                    StdTag::ObjForeground,
+                    StdTag::Hovered(l.is_hovered()),
+                    StdTag::Focused(l.is_focused()),
+                    StdTag::Locked(self.locked),
+                    StdTag::Pressed(self.state.get(l.ctx))
                 ])
                 .fill_rect();
             r.with(&[
-                    StdVerb::ObjBorder,
-                    StdVerb::Hovered(l.is_hovered()),
-                    StdVerb::Focused(l.is_focused()),
-                    StdVerb::Locked(self.locked),
-                    //StdVerb::Pressed(self.state.get())
+                    StdTag::ObjBorder,
+                    StdTag::Hovered(l.is_hovered()),
+                    StdTag::Focused(l.is_focused()),
+                    StdTag::Locked(self.locked),
+                    //StdTag::Pressed(self.state.get())
                 ])
                 .border_rect(l.default_thicc());
         }
@@ -58,11 +58,11 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
             r.inside_border(&text_border)
                 .with(&[
-                    StdVerb::ObjForeground,
-                    StdVerb::ObjText,
-                    StdVerb::Hovered(l.is_hovered()),
-                    StdVerb::Focused(l.is_focused()),
-                    StdVerb::Locked(self.locked),
+                    StdTag::ObjForeground,
+                    StdTag::ObjText,
+                    StdTag::Hovered(l.is_hovered()),
+                    StdTag::Focused(l.is_focused()),
+                    StdTag::Locked(self.locked),
                 ])
                 .render_text_aligned(self.text.caption().as_ref(),(0.0,0.5),l.ctx);
         }
@@ -129,7 +129,7 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
     State: AtomStateMut<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
@@ -163,7 +163,7 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdVerb>,
+    ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+Statize<E>+'w, State::Statur: Sized,
     Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
