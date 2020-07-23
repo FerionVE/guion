@@ -60,12 +60,6 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
     fn _tabulate_by_tab(&self) -> bool {
         (**self)._tabulate_by_tab()
     }
-    fn style(&self, s: &mut ESVariant<E>) {
-        (**self).style(s)
-    }
-    fn border(&self, b: &mut Border) {
-        (**self).border(b)
-    }
     fn debug_type_name(&self) {
         eprintln!("\t{}",self.type_name());
         (**self).debug_type_name();
@@ -138,12 +132,6 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
     }
     fn _tabulate_by_tab(&self) -> bool {
         (**self)._tabulate_by_tab()
-    }
-    fn style(&self, s: &mut ESVariant<E>) {
-        (**self).style(s)
-    }
-    fn border(&self, b: &mut Border) {
-        (**self).border(b)
     }
     fn debug_type_name(&self) {
         eprintln!("\t{}",self.type_name());
@@ -246,12 +234,6 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
     fn _tabulate_by_tab(&self) -> bool {
         (**self)._tabulate_by_tab()
     }
-    fn style(&self, s: &mut ESVariant<E>) {
-        (**self).style(s)
-    }
-    fn border(&self, b: &mut Border) {
-        (**self).border(b)
-    }
     fn debug_type_name(&self) {
         eprintln!("\t{}",self.type_name());
         (**self).debug_type_name();
@@ -323,12 +305,6 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     }
     fn _tabulate_by_tab(&self) -> bool {
         (**self)._tabulate_by_tab()
-    }
-    fn style(&self, s: &mut ESVariant<E>) {
-        (**self).style(s)
-    }
-    fn border(&self, b: &mut Border) {
-        (**self).border(b)
     }
     fn debug_type_name(&self) {
         eprintln!("\t{}",self.type_name());

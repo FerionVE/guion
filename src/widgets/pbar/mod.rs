@@ -1,23 +1,21 @@
 use super::*;
 
-pub mod imp;
+pub mod widget;
 
-pub struct ProgressBar<E> where E: Env {
+pub struct ProgressBar<E,Stil> where E: Env {
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: Vec<StdTag>,
-    pub border: Option<Border>,
     pub value: f32,
     pub orientation: Orientation,
 }
 
-impl<E> ProgressBar<E> where E: Env {
+impl<E,Stil> ProgressBar<E,Stil> where E: Env {
     pub fn new(id: E::WidgetID, o: Orientation) -> Self {
         Self {
             id,
             size: Size::empty().into(),
             style: vec![],
-            border: None,
             value: 0.0,
             orientation: o,
         }
@@ -34,7 +32,7 @@ impl<E> ProgressBar<E> where E: Env {
     }
 }
 
-unsafe impl<E> Statize<E> for ProgressBar<E> where E: Env {
+unsafe impl<E,Stil> Statize<E> for ProgressBar<E,Stil> where E: Env {
     type Statur = Self;
 }
 

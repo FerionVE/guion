@@ -3,17 +3,17 @@ use std::{marker::PhantomData};
 
 use calc::calc_bounds;
 
-pub mod imp;
+pub mod widget;
 
-pub struct Pane<'w,T,E> where E: Env, T: 'w {
+pub struct Pane<'w,T,E,Stil> where E: Env, T: 'w {
     id: E::WidgetID,
     pub childs: T,
     pub orientation: Orientation,
     pub border: Option<Border>,
-    p: PhantomData<&'w mut ()>,
+    p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,T,E> Pane<'w,T,E> where E: Env, T: 'w {
+impl<'w,T,E> Pane<'w,T,E,()> where E: Env, T: 'w {
     pub fn new(id: E::WidgetID, orientation: Orientation, childs: T) -> Pane<'w,T,E> {
         Pane{
             id,
@@ -25,6 +25,6 @@ impl<'w,T,E> Pane<'w,T,E> where E: Env, T: 'w {
     }
 }
 
-unsafe impl<'w,T,E> Statize<E> for Pane<'w,T,E> where T: StatizeSized<E>, E: Env {
+unsafe impl<'w,T,E,Stil> Statize<E> for Pane<'w,T,E,Stil> where T: StatizeSized<E>, E: Env {
     type Statur = Pane<'static,T::StaturSized,E>;
 }

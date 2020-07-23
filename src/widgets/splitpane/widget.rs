@@ -2,7 +2,7 @@ use super::*;
 use util::state::*;
 use crate::event::key::Key; //TODO fix req of this import
 
-impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
+impl<'w,L,R,V,E,Stil> Widget<'w,E> for SplitPane<'w,L,R,V,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -139,10 +139,6 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
         false
     }
 
-    fn border(&self, b: &mut Border) {
-        *b = Border::empty();
-    }
-
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         self.childs.child(i)
     }
@@ -150,7 +146,7 @@ impl<'w,L,R,V,E> Widget<'w,E> for SplitPane<'w,L,R,V,E> where
         self.childs.into_child(i)
     }
 }
-impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
+impl<'w,L,R,V,E,Stil> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -187,7 +183,7 @@ impl<'w,L,R,V,E> WidgetMut<'w,E> for SplitPane<'w,L,R,V,E> where
     );
 }
 
-impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
+impl<'w,L,R,V,E,Stil> SplitPane<'w,L,R,V,E,Stil> where
     E: Env,
     V: AtomState<E,f32>+StatizeSized<E>+'w,
 {

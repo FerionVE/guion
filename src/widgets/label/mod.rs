@@ -2,9 +2,9 @@ use super::*;
 use std::marker::PhantomData;
 use util::caption::Caption;
 
-pub mod imp;
+pub mod widget;
 
-pub struct Label<'w,E,S> where
+pub struct Label<'w,E,S,Stil> where
     E: Env,
     S: 'w,
 {
@@ -13,10 +13,10 @@ pub struct Label<'w,E,S> where
     pub style: Vec<StdTag>,
     pub border: Option<Border>,
     pub text: S,
-    p: PhantomData<&'w mut ()>,
+    p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> Label<'w,E,&'static str> where
+impl<'w,E> Label<'w,E,&'static str,()> where
     E: Env,
 {
     pub fn new(id: E::WidgetID) -> Self {
@@ -31,11 +31,11 @@ impl<'w,E> Label<'w,E,&'static str> where
     }
 }
 
-impl<'w,E,S> Label<'w,E,S> where
+impl<'w,E,S,Stil> Label<'w,E,S,Stil> where
     E: Env,
     S: 'w,
 {
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,Stil> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
         Label{
             id: self.id,
             size: self.size,
@@ -52,7 +52,7 @@ impl<'w,E,S> Label<'w,E,S> where
     }
 }
 
-unsafe impl<'w,E,S> Statize<E> for Label<'w,E,S> where
+unsafe impl<'w,E,S,Stil> Statize<E> for Label<'w,E,S,Stil> where
     E: Env,
     S: StatizeSized<E>,
 {

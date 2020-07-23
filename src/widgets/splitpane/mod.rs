@@ -1,24 +1,23 @@
 use super::*;
 use std::{marker::PhantomData};
 
-pub mod imp;
+pub mod widget;
 
-pub struct SplitPane<'w,L,R,V,E> where
+pub struct SplitPane<'w,L,R,V,E,Stil> where
     E: Env,
     L: 'w,
     R: 'w,
     V: 'w,
 {
     id: E::WidgetID,
-    pub border: Option<Border>,
     pub childs: (L,R),
     pub state: V,
     pub orientation: Orientation,
     pub width: u32,
-    p: PhantomData<&'w mut ()>,
+    p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
+impl<'w,L,R,V,E,Stil> SplitPane<'w,L,R,V,E,Stil> where
     E: Env,
     L: 'w,
     R: 'w,
@@ -27,7 +26,6 @@ impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
     pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,L,R,V,E> {
         SplitPane{
             id,
-            border: None,
             childs,
             state,
             orientation,

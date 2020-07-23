@@ -131,18 +131,6 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     fn _tabulate_by_tab(&self) -> bool {
         true
     }
-
-    /// attach widget's style
-    #[allow(unused)]
-    #[inline]
-    fn style(&self, s: &mut ESVariant<E>) {
-        
-    }
-    #[allow(unused)]
-    #[inline]
-    fn border(&self, b: &mut Border) {
-        
-    }
     
     fn inner<'s>(&'s self) -> Option<&'s dyn Widget<'w,E>> {
         None

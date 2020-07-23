@@ -3,9 +3,9 @@ use crate::event::key::Key;
 use std::marker::PhantomData;
 use util::caption::Caption;
 
-pub mod imp;
+pub mod widget;
 
-pub struct Button<'w,E,Text> where
+pub struct Button<'w,E,Text,Stil> where
     E: Env,
     Text: 'w,
 {
@@ -17,10 +17,10 @@ pub struct Button<'w,E,Text> where
     //pressed: Option<EEKey<E>>,
     pub border: Option<Border>,
     pub text: Text,
-    p: PhantomData<&'w mut ()>,
+    p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> Button<'w,E,&'static str> where
+impl<'w,E> Button<'w,E,&'static str,()> where
     E: Env,
 {
     pub fn new(id: E::WidgetID) -> Self {
@@ -37,7 +37,7 @@ impl<'w,E> Button<'w,E,&'static str> where
     }
 }
 
-impl<'w,E,Text> Button<'w,E,Text> where
+impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
     E: Env,
     Text: 'w,
 {
@@ -47,7 +47,7 @@ impl<'w,E,Text> Button<'w,E,Text> where
         self.trigger = fun;
         self
     }
-    pub fn with_text<T>(self, text: T) -> Button<'w,E,T> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> Button<'w,E,T,Stil> where T: 'w {
         Button{
             id: self.id,
             size: self.size,
@@ -66,9 +66,9 @@ impl<'w,E,Text> Button<'w,E,Text> where
     }
 }
 
-unsafe impl<'w,E,Text> Statize<E> for Button<'w,E,Text> where
+unsafe impl<'w,E,Text,Stil> Statize<E> for Button<'w,E,Text,Stil> where
     E: Env,
-    Text: Caption<'w>+StatizeSized<E>
+    Text: Caption<'w>+StatizeSized<E>,
 {
     type Statur = Button<'static,E,Text::StaturSized>;
 }

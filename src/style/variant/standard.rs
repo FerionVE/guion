@@ -100,7 +100,7 @@ impl StyleVariant for StdStyleVariant {
 }
 
 impl StyleVariantSupport<StdTag> for StdStyleVariant {
-    fn _with(&mut self, v: StdTag) {
+    fn attach(&mut self, v: StdTag) {
         match v {
             StdTag::ObjDefault => self.obj = Obj::Default,
             StdTag::ObjBackground => self.obj = Obj::Background,
@@ -148,9 +148,17 @@ impl StyleVariantSupport<StdTag> for StdStyleVariant {
     }
 }
 
-impl<T> AddAssign<T> for StdStyleVariant where Self: StyleVariantSupport<T>, T: Copy {
+impl<T> AddAssign<T> for StdStyleVariant where Self: StyleVariantSupport<T>, T: Clone {
     fn add_assign(&mut self, v: T) {
-        self._with(v)
+        self.attach(v)
+    }
+}
+
+impl<T> StyleVariantSupport<&[T]> for StdStyleVariant where Self: StyleVariantSupport<T>, T: Clone {
+    fn attach(&mut self, tags: &[T]) {
+        for t in tags {
+            self.attach(*t);
+        }
     }
 }
 

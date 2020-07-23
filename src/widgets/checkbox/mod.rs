@@ -3,10 +3,10 @@ use crate::event::key::Key;
 use std::marker::PhantomData;
 use util::{state::*, caption::Caption};
 
+pub mod widget;
 pub mod imp;
-pub mod trayt;
 
-pub struct CheckBox<'w,E,State,Text> where
+pub struct CheckBox<'w,E,State,Text,Stil> where
     E: Env,
     State: 'w,
     Text: 'w,
@@ -20,10 +20,10 @@ pub struct CheckBox<'w,E,State,Text> where
     pub border: Option<Border>,
     pub text: Text,
     pub state: State,
-    p: PhantomData<&'w mut ()>,
+    p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,State,E> CheckBox<'w,E,State,&'static str> where
+impl<'w,State,E> CheckBox<'w,E,State,&'static str,()> where
     E: Env,
 {
     pub fn new(id: E::WidgetID, state: State) -> Self {
@@ -41,7 +41,7 @@ impl<'w,State,E> CheckBox<'w,E,State,&'static str> where
     }
 }
 
-impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
+impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
     E: Env,
     Text: 'w,
 {
@@ -51,7 +51,7 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
         self.trigger = fun;
         self
     }
-    pub fn with_text<T>(self, text: T) -> CheckBox<'w,E,State,T> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> CheckBox<'w,E,State,T,Stil> where T: Caption<'w>+StatizeSized<E> {
         CheckBox{
             id: self.id,
             size: self.size,
@@ -71,7 +71,7 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     }
 }
 
-unsafe impl<'w,E,State,Text> Statize<E> for CheckBox<'w,E,State,Text> where
+unsafe impl<'w,E,State,Text,Stil> Statize<E> for CheckBox<'w,E,State,Text,Stil> where
     E: Env,
     State: StatizeSized<E>+'w,
     Text: StatizeSized<E>+'w,

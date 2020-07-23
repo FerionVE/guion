@@ -1,28 +1,24 @@
 use super::*;
 
-impl<'w,E> Widget<'w,E> for ProgressBar<E> where
+impl<'w,E,S,Stil> Widget<'w,E> for Label<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
+    EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag>,
+    S: Caption<'w>+StatizeSized<E>,
 {
+    fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
+        vec![]
+    }
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
         r.with(&[
-            StdTag::ObjBackground,
+            StdTag::ObjForeground,
+            StdTag::ObjText,
         ])
-            .fill_rect();
-        r.slice_abs(&crop(&r.b, self.value, self.orientation))
-            .with(&[
-                StdTag::ObjActive,
-            ])
-            .fill_rect();
-        r.with(&[
-            StdTag::ObjBorder,
-        ])
-            .border_rect(l.default_thicc());
+            .render_text(self.text.caption().as_ref(),l.ctx);
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
@@ -39,20 +35,12 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         vec![]
     }
+    
     fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {
         false
-    }
-    fn border(&self, b: &mut Border) {
-        if let Some(senf) = &self.border {
-            *b = *senf;
-        }
-    }
-    fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdTag::ObjDefault]);
-        s.attach(&self.style[..]);
     }
     fn child<'a>(&'a self, _: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         Err(())
@@ -62,10 +50,12 @@ impl<'w,E> Widget<'w,E> for ProgressBar<E> where
     }
 }
 
-impl<'w,E> WidgetMut<'w,E> for ProgressBar<E> where
+impl<'w,E,S,Stil> WidgetMut<'w,E> for Label<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
+    EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag>,
+    S: Caption<'w>+StatizeSized<E>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
@@ -81,11 +71,3 @@ impl<'w,E> WidgetMut<'w,E> for ProgressBar<E> where
     }
 }
 
-pub fn crop(i: &Bounds, v: f32, o: Orientation) -> Bounds {
-    let (x, w) = i.par(o);
-    let (y, h) = i.unpar(o);
-
-    let w = ((w as f32) * v.max(0.0).min(1.0) ) as u32;
-
-    Bounds::from_ori(x, y, w, h, o)
-}

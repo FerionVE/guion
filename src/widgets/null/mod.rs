@@ -4,7 +4,6 @@ pub struct Null<E> where E: Env {
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: Vec<StdTag>,
-    pub border: Option<Border>,
 }
 
 impl<E> Null<E> where E: Env {
@@ -13,7 +12,6 @@ impl<E> Null<E> where E: Env {
             id,
             size: Size::empty().into(),
             style: vec![],
-            border: None,
         }
     }
 

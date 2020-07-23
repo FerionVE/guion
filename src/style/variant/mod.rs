@@ -11,21 +11,14 @@ pub trait StyleVariant: Clone + Default {
     
 }
 
-pub trait StyleVariantSupport<V>: StyleVariant where V: Copy {
+pub trait StyleVariantSupport<V>: StyleVariant where V: Clone {
     #[inline]
-    fn with(&self, tags: impl IntoIterator<Item=impl Deref<Target=V>>) -> Self where Self: Sized {
+    fn with(&self, tags: V) -> Self where Self: Sized {
         let mut s = self.clone();
         s.attach(tags);
         s
     }
-    #[inline]
-    fn attach(&mut self, tags: impl IntoIterator<Item=impl Deref<Target=V>>) {
-        for v in tags {
-            self._with(*v.deref());
-        }
-    }
-    #[doc(hidden)]
-    fn _with(&mut self, v: V);
+    fn attach(&mut self, tags: V);
 }
 
 pub trait StyleVariantGetStdCursor: StyleVariant {

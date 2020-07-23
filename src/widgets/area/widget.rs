@@ -1,26 +1,18 @@
 use super::*;
 use util::{state::*, caption::CaptionMut};
 
-impl<'w,E,W,Scroll> Widget<'w,E> for Area<'w,E,W,Scroll> where
+impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<'w,E>+StatizeSized<E>+'w,
-    Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>
+    Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
+    Stil: Clone + StatizeSized<E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
-    }
-    fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdTag::ObjText]);
-        s.attach(&self.style[..]);
-    }
-    fn border(&self, b: &mut Border) {
-        if let Some(senf) = &self.border {
-            *b = *senf;
-        }
     }
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -80,14 +72,15 @@ impl<'w,E,W,Scroll> Widget<'w,E> for Area<'w,E,W,Scroll> where
     }
 }
 
-impl<'w,E,W,Scroll> WidgetMut<'w,E> for Area<'w,E,W,Scroll> where
+impl<'w,E,W,Scroll,Stil> WidgetMut<'w,E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidgetMut<'w,E>+StatizeSized<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
+    Stil: Clone + StatizeSized<E>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![self.inner.as_mut()]

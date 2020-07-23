@@ -1,6 +1,6 @@
 use super::*;
 
-impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where
+impl<'w,T,E,Stil> Widget<'w,E> for Pane<'w,T,E,Stil> where
     E: Env,
     T: WidgetArray<'w,E>+StatizeSized<E>,
 {
@@ -33,12 +33,6 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where
         false
     }
 
-    fn border(&self, b: &mut Border) {
-        if let Some(senf) = &self.border {
-            *b = *senf;
-        }
-    }
-
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         self.childs.child(i)
     }
@@ -46,7 +40,7 @@ impl<'w,T,E> Widget<'w,E> for Pane<'w,T,E> where
         self.childs.into_child(i)
     }
 }
-impl<'w,T,E> WidgetMut<'w,E> for Pane<'w,T,E> where 
+impl<'w,T,E,Stil> WidgetMut<'w,E> for Pane<'w,T,E,Stil> where 
     E: Env,
     T: WidgetArrayMut<'w,E>+StatizeSized<E>,
 {

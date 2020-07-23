@@ -1,6 +1,6 @@
 use super::*;
 
-impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
+impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -108,7 +108,7 @@ impl<'w,E,Text> Widget<'w,E> for Button<'w,E,Text> where
     }
 }
 
-impl<'w,E,Text> WidgetMut<'w,E> for Button<'w,E,Text> where
+impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -130,7 +130,7 @@ impl<'w,E,Text> WidgetMut<'w,E> for Button<'w,E,Text> where
     }
 }
 
-impl<'w,E,S> Button<'w,E,S> where
+impl<'w,E,S,Stil> Button<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,

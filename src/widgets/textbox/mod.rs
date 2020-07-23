@@ -24,7 +24,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
     pub cursor: Curs,
     pub cursor_stick_x: CursorStickX,
     pub validation: V,
-    p: PhantomData<&'w mut ()>,
+    p: PhantomData<&'w mut &'w ()>,
 }
 
 impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool> where
