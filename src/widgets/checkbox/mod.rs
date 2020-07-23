@@ -73,8 +73,8 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
 
 unsafe impl<'w,E,State,Text> Statize<E> for CheckBox<'w,E,State,Text> where
     E: Env,
-    State: Statize<E>+'w, State::Statur: Sized,
-    Text: Statize<E>+'w, Text::Statur: Sized,
+    State: StatizeSized<E>+'w,
+    Text: StatizeSized<E>+'w,
 {
-    type Statur = CheckBox<'static,E,State::Statur,Text::Statur>;
+    type Statur = CheckBox<'static,E,State::StaturSized,Text::StaturSized>;
 }

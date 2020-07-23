@@ -54,7 +54,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> TextBox<'w,E,Text,Scroll,Curs,CursorS
     CursorStickX: 'w,
     V: 'w,
 {
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,V> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,V> where T: 'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -70,7 +70,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> TextBox<'w,E,Text,Scroll,Curs,CursorS
     }
 
     //TODO use a unified state object
-    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,V> where PScroll: Statize<E>+'w, CCurs: Statize<E>+'w, XCursorStickX: Statize<E>+'w {
+    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,V> where PScroll: 'w, CCurs: 'w, XCursorStickX: 'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -93,11 +93,11 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> TextBox<'w,E,Text,Scroll,Curs,CursorS
 
 unsafe impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Statize<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
     E: Env,
-    Text: Statize<E>, Text::Statur: Sized,
-    Scroll: Statize<E>, Scroll::Statur: Sized,
-    Curs: Statize<E>, Curs::Statur: Sized,
-    CursorStickX: Statize<E>, CursorStickX::Statur: Sized,
-    V: Statize<E>, V::Statur: Sized,
+    Text: StatizeSized<E>,
+    Scroll: StatizeSized<E>,
+    Curs: StatizeSized<E>,
+    CursorStickX: StatizeSized<E>,
+    V: StatizeSized<E>,
 {
-    type Statur = TextBox<'static,E,Text::Statur,Scroll::Statur,Curs::Statur,CursorStickX::Statur,V::Statur>;
+    type Statur = TextBox<'static,E,Text::StaturSized,Scroll::StaturSized,Curs::StaturSized,CursorStickX::StaturSized,V::StaturSized>;
 }

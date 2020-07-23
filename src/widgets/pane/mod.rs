@@ -25,6 +25,6 @@ impl<'w,T,E> Pane<'w,T,E> where E: Env, T: 'w {
     }
 }
 
-unsafe impl<'w,T,E> Statize<E> for Pane<'w,T,E> where T: Statize<E>, T::Statur: Sized, E: Env {
-    type Statur = Pane<'static,T::Statur,E>;
+unsafe impl<'w,T,E> Statize<E> for Pane<'w,T,E> where T: StatizeSized<E>, E: Env {
+    type Statur = Pane<'static,T::StaturSized,E>;
 }

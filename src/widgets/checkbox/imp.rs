@@ -8,8 +8,8 @@ impl<'w,E,State,Text> Widget<'w,E> for CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
-    State: AtomState<E,bool>+Statize<E>+'w, State::Statur: Sized,
-    Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
+    State: AtomState<E,bool>+StatizeSized<E>+'w,
+    Text: Caption<'w>+StatizeSized<E>+'w,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -131,8 +131,8 @@ impl<'w,E,State,Text> WidgetMut<'w,E> for CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
-    State: AtomStateMut<E,bool>+Statize<E>+'w, State::Statur: Sized,
-    Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
+    State: AtomStateMut<E,bool>+StatizeSized<E>+'w,
+    Text: Caption<'w>+StatizeSized<E>+'w,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
@@ -165,8 +165,8 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E>,
-    State: AtomState<E,bool>+Statize<E>+'w, State::Statur: Sized,
-    Text: Caption<'w>+Statize<E>+'w, Text::Statur: Sized,
+    State: AtomState<E,bool>+StatizeSized<E>+'w,
+    Text: Caption<'w>+StatizeSized<E>+'w,
 {
     pub fn set(mut l: Link<E>, v: bool) {
         l.mutate_closure(Box::new(move |mut w,c,_|{

@@ -9,11 +9,11 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Sc
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: Caption<'w>+Statize<E>, Text::Statur: Sized,
-    Scroll: AtomState<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,
-    Curs: AtomState<E,Cursor>+Statize<E>, Curs::Statur: Sized,
-    CursorStickX: AtomState<E,Option<u32>>+Statize<E>, CursorStickX::Statur: Sized,
-    V: AtomState<E,bool>+Statize<E>, V::Statur: Sized,
+    Text: Caption<'w>+StatizeSized<E>,
+    Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
+    Curs: AtomState<E,Cursor>+StatizeSized<E>,
+    CursorStickX: AtomState<E,Option<u32>>+StatizeSized<E>,
+    V: AtomState<E,bool>+StatizeSized<E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -224,11 +224,11 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> WidgetMut<'w,E> for TextBox<'w,E,Text
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<'w>+Statize<E>, Text::Statur: Sized,
-    Scroll: AtomStateMut<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,
-    Curs: AtomStateMut<E,Cursor>+Statize<E>, Curs::Statur: Sized,
-    CursorStickX: AtomStateMut<E,Option<u32>>+Statize<E>, CursorStickX::Statur: Sized,
-    V: AtomState<E,bool>+Statize<E>, V::Statur: Sized,
+    Text: CaptionMut<'w>+StatizeSized<E>,
+    Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
+    Curs: AtomStateMut<E,Cursor>+StatizeSized<E>,
+    CursorStickX: AtomStateMut<E,Option<u32>>+StatizeSized<E>,
+    V: AtomState<E,bool>+StatizeSized<E>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

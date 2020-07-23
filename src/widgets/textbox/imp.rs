@@ -18,11 +18,11 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> ITextBoxMut<'w,E> for TextBox<'w,E,Te
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<'w>+Statize<E>, Text::Statur: Sized,
-    Scroll: AtomStateMut<E,(u32,u32)>+Statize<E>, Scroll::Statur: Sized,
-    Curs: AtomStateMut<E,Cursor>+Statize<E>, Curs::Statur: Sized,
-    CursorStickX: AtomStateMut<E,Option<u32>>+Statize<E>, CursorStickX::Statur: Sized,
-    V: AtomState<E,bool>+Statize<E>, V::Statur: Sized,
+    Text: CaptionMut<'w>+StatizeSized<E>,
+    Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
+    Curs: AtomStateMut<E,Cursor>+StatizeSized<E>,
+    CursorStickX: AtomStateMut<E,Option<u32>>+StatizeSized<E>,
+    V: AtomState<E,bool>+StatizeSized<E>,
 {
     fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
         let mut cursor = self.cursor.get(ctx);

@@ -68,7 +68,7 @@ impl<'w,E,Text> Button<'w,E,Text> where
 
 unsafe impl<'w,E,Text> Statize<E> for Button<'w,E,Text> where
     E: Env,
-    Text: Caption<'w>+Statize<E>, Text::Statur: Sized,
+    Text: Caption<'w>+StatizeSized<E>
 {
-    type Statur = Button<'static,E,Text::Statur>;
+    type Statur = Button<'static,E,Text::StaturSized>;
 }

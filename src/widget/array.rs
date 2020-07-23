@@ -15,7 +15,7 @@ pub trait WidgetArrayMut<'w,E>: WidgetArray<'w,E> where E: Env {
     fn into_childs_mut(self) -> Vec<ResolvableMut<'w,E>>;
 }
 
-impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+Statize<E>, T::Statur: Sized, E: Env {
+impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+StatizeSized<E>, E: Env {
     fn len(&self) -> usize {
         self.len()
     }
@@ -40,7 +40,7 @@ impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+Statize<E>, T:
             .collect::<Vec<_>>()
     }
 }
-impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+Statize<E>, T::Statur: Sized, E: Env {
+impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+StatizeSized<E>, E: Env {
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
@@ -63,7 +63,7 @@ impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+Statize<
     }
 }
 
-impl<'w,'l,T,E> WidgetArray<'w,E> for &'w [T] where T: AsWidget<'l,E>+Statize<E>, T::Statur: Sized, E: Env, 'l: 'w {
+impl<'w,'l,T,E> WidgetArray<'w,E> for &'w [T] where T: AsWidget<'l,E>+StatizeSized<E>, E: Env, 'l: 'w {
     fn len(&self) -> usize {
         (**self).len()
     }
@@ -85,7 +85,7 @@ impl<'w,'l,T,E> WidgetArray<'w,E> for &'w [T] where T: AsWidget<'l,E>+Statize<E>
     }
 }
 
-impl<'w,'l,T,E> WidgetArray<'w,E> for &'w mut [T] where T: AsWidget<'l,E>+Statize<E>, T::Statur: Sized, E: Env, 'l: 'w {
+impl<'w,'l,T,E> WidgetArray<'w,E> for &'w mut [T] where T: AsWidget<'l,E>+StatizeSized<E>, E: Env, 'l: 'w {
     fn len(&self) -> usize {
         (**self).len()
     }
@@ -106,7 +106,7 @@ impl<'w,'l,T,E> WidgetArray<'w,E> for &'w mut [T] where T: AsWidget<'l,E>+Statiz
             .collect::<Vec<_>>()
     }
 }
-impl<'w,'l,T,E> WidgetArrayMut<'w,E> for &'w mut [T] where T: AsWidgetMut<'l,E>+Statize<E>, T::Statur: Sized, E: Env, 'l: 'w {
+impl<'w,'l,T,E> WidgetArrayMut<'w,E> for &'w mut [T] where T: AsWidgetMut<'l,E>+StatizeSized<E>, E: Env, 'l: 'w {
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
@@ -131,8 +131,8 @@ macro_rules! impl_wpps_tuple {
 
         impl<'w,E,$t,$($tt),+> WidgetArray<'w,E> for ($t,$($tt),+) where
             E: Env,
-            $t: AsWidget<'w,E>+Statize<E>, $t::Statur: Sized,
-            $($tt: AsWidget<'w,E>+Statize<E>, $tt::Statur: Sized),+ 
+            $t: AsWidget<'w,E>+StatizeSized<E>,
+            $($tt: AsWidget<'w,E>+StatizeSized<E>),+ 
         {
                 fn len(&self) -> usize {
                     $n
@@ -163,8 +163,8 @@ macro_rules! impl_wpps_tuple {
 
         impl<'w,E,$t,$($tt),+> WidgetArrayMut<'w,E> for ($t,$($tt),+) where
             E: Env,
-            $t: AsWidgetMut<'w,E>+Statize<E>, $t::Statur: Sized,
-            $($tt: AsWidgetMut<'w,E>+Statize<E>, $tt::Statur: Sized),+ 
+            $t: AsWidgetMut<'w,E>+StatizeSized<E>,
+            $($tt: AsWidgetMut<'w,E>+StatizeSized<E>),+ 
         {
             fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's {
                 if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)

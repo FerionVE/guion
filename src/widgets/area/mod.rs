@@ -63,8 +63,8 @@ impl<'w,E,W,Scroll> Area<'w,E,W,Scroll> where
 
 unsafe impl<'w,E,W,Scroll> Statize<E> for Area<'w,E,W,Scroll> where
     E: Env,
-    W: Statize<E>, W::Statur: Sized,
-    Scroll: Statize<E>, Scroll::Statur: Sized,
+    W: StatizeSized<E>,
+    Scroll: StatizeSized<E>,
 {
-    type Statur = Area<'static,E,W::Statur,Scroll::Statur>;
+    type Statur = Area<'static,E,W::StaturSized,Scroll::StaturSized>;
 }

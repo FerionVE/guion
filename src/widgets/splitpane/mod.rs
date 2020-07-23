@@ -39,9 +39,9 @@ impl<'w,L,R,V,E> SplitPane<'w,L,R,V,E> where
 
 unsafe impl<'w,L,R,V,E> Statize<E> for SplitPane<'w,L,R,V,E> where 
     E: Env,
-    L: Statize<E>+'w, L::Statur: Sized,
-    R: Statize<E>+'w, R::Statur: Sized,
-    V: Statize<E>+'w, V::Statur: Sized,
+    L: StatizeSized<E>+'w,
+    R: StatizeSized<E>+'w,
+    V: StatizeSized<E>+'w,
 {
-    type Statur = SplitPane<'static,L::Statur,R::Statur,V::Statur,E>;
+    type Statur = SplitPane<'static,L::StaturSized,R::StaturSized,V::StaturSized,E>;
 }

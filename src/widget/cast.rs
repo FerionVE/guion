@@ -2,8 +2,9 @@
 use super::*;
 
 //TODO simplify Statize and downcast impls into AnyLt struct
-/// Trait for retrieving the TypeId of a non-'static type by providing the 'static variant of the type  
-/// [RFC 1849](https://github.com/rust-lang/rust/issues/41875)
+/// Trait for retrieving the TypeId of a non-'static type by providing the 'static variant of the type
+/// 
+/// See [RFC 1849](https://github.com/rust-lang/rust/issues/41875)
 pub unsafe trait Statize<E> {
     /// Must be `Self`, but with all lifetimes 'static
     type Statur: ?Sized + 'static;
@@ -11,6 +12,21 @@ pub unsafe trait Statize<E> {
     fn _typeid() -> TypeId {
         TypeId::of::<Self::Statur>()
     }
+}
+
+/// StatizeSized is Statize but with Statur: Sized
+///
+/// StatizeSized is implemented on all Statize where Statur: Sized
+pub unsafe trait StatizeSized<E> {
+    type StaturSized: Sized + 'static; //TODO rename to Statur
+
+    fn _typeid() -> TypeId {
+        TypeId::of::<Self::StaturSized>()
+    }
+}
+
+unsafe impl<T,E> StatizeSized<E> for T where T: Statize<E>, T::Statur: Sized {
+    type StaturSized = T::Statur;
 }
 
 impl<'w,E> dyn Widget<'w,E> where E: Env {
@@ -154,14 +170,14 @@ mod imp {
     unsafe impl<'w,T,E> Statize<E> for Arc<T> where T: Statize<E>+?Sized {
         type Statur = Arc<T::Statur>;
     }
-    unsafe impl<'w,T,E> Statize<E> for Vec<T> where T: Statize<E>, T::Statur: Sized {
-        type Statur = Vec<T::Statur>;
+    unsafe impl<'w,T,E> Statize<E> for Vec<T> where T: StatizeSized<E> {
+        type Statur = Vec<T::StaturSized>;
     }
-    unsafe impl<'w,T,E> Statize<E> for Option<T> where T: Statize<E>, T::Statur: Sized {
-        type Statur = Option<T::Statur>;
+    unsafe impl<'w,T,E> Statize<E> for Option<T> where T: StatizeSized<E> {
+        type Statur = Option<T::StaturSized>;
     }
-    unsafe impl<'w,T,U,E> Statize<E> for Result<T,U> where T: Statize<E>, T::Statur: Sized, U: Statize<E>, U::Statur: Sized {
-        type Statur = Result<T::Statur,U::Statur>;
+    unsafe impl<'w,T,U,E> Statize<E> for Result<T,U> where T: StatizeSized<E>, U: StatizeSized<E> {
+        type Statur = Result<T::StaturSized,U::StaturSized>;
     }
     unsafe impl<'w,T,E> Statize<E> for Cow<'w,T> where T: Statize<E>+Clone+?Sized, T::Statur: Clone {
         type Statur = Cow<'static,T::Statur>;
@@ -172,8 +188,8 @@ mod imp {
     unsafe impl<'w,T,E> Statize<E> for &'w mut T where T: Statize<E>+?Sized {
         type Statur = &'static mut T::Statur;
     }
-    unsafe impl<'w,T,E> Statize<E> for [T] where T: Statize<E>, T::Statur: Sized {
-        type Statur = [T::Statur];
+    unsafe impl<'w,T,E> Statize<E> for [T] where T: StatizeSized<E> {
+        type Statur = [T::StaturSized];
     }
 
     macro_rules! impl_statize_static {
@@ -204,9 +220,9 @@ mod imp {
             impl_statize_tuple!($($tt)+);
 
             unsafe impl<E,$t,$($tt),+> Statize<E> for ($t,$($tt),+) where
-                $t: Statize<E>, $t::Statur: Sized,
-                $($tt: Statize<E>, $tt::Statur: Sized),+ {
-                type Statur = ($t::Statur,$($tt::Statur),+);
+                $t: StatizeSized<E>,
+                $($tt: StatizeSized<E>),+ {
+                type Statur = ($t::StaturSized,$($tt::StaturSized),+);
             }
         };
         ($t:ident) => {}
