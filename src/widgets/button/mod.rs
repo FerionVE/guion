@@ -8,11 +8,12 @@ pub mod widget;
 pub struct Button<'w,E,Text,Stil> where
     E: Env,
     Text: 'w,
+    Stil: 'w,
 {
     pub trigger: for<'a> fn(Link<'a,E>),
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdTag>,
+    pub style: Stil,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub border: Option<Border>,
@@ -68,7 +69,8 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
 
 unsafe impl<'w,E,Text,Stil> Statize<E> for Button<'w,E,Text,Stil> where
     E: Env,
-    Text: Caption<'w>+StatizeSized<E>,
+    Text: StatizeSized<E>+'w,
+    Stil: StatizeSized<E>+'w,
 {
-    type Statur = Button<'static,E,Text::StaturSized>;
+    type Statur = Button<'static,E,Text::StaturSized,Stil::StaturSized>;
 }

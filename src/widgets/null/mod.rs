@@ -3,7 +3,7 @@ use super::*;
 pub struct Null<E> where E: Env {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdTag>,
+    pub style: Stil,
 }
 
 impl<E> Null<E> where E: Env {

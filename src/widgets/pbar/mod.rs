@@ -2,15 +2,15 @@ use super::*;
 
 pub mod widget;
 
-pub struct ProgressBar<E,Stil> where E: Env {
+pub struct ProgressBar<'w,E,Stil> where E: Env {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdTag>,
+    pub style: Stil,
     pub value: f32,
     pub orientation: Orientation,
 }
 
-impl<E,Stil> ProgressBar<E,Stil> where E: Env {
+impl<'w,E,Stil> ProgressBar<'w,E,Stil> where E: Env {
     pub fn new(id: E::WidgetID, o: Orientation) -> Self {
         Self {
             id,
@@ -32,7 +32,7 @@ impl<E,Stil> ProgressBar<E,Stil> where E: Env {
     }
 }
 
-unsafe impl<E,Stil> Statize<E> for ProgressBar<E,Stil> where E: Env {
-    type Statur = Self;
+unsafe impl<'w,E,Stil> Statize<E> for ProgressBar<'w,E,Stil> where E: Env, Stil: StatizeSized<E>+'w, {
+    type Statur = ProgressBar<'static,E,Stil::StaturSized>;
 }
 

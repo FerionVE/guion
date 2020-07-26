@@ -3,7 +3,7 @@ use std::{marker::PhantomData};
 
 pub mod widget;
 
-pub struct SplitPane<'w,L,R,V,E,Stil> where
+pub struct SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
     L: 'w,
     R: 'w,
@@ -17,13 +17,13 @@ pub struct SplitPane<'w,L,R,V,E,Stil> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,L,R,V,E,Stil> SplitPane<'w,L,R,V,E,Stil> where
+impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
     E: Env,
     L: 'w,
     R: 'w,
     V: 'w,
 {
-    pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,L,R,V,E> {
+    pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,L,R,V,E,()> {
         SplitPane{
             id,
             childs,
@@ -35,11 +35,12 @@ impl<'w,L,R,V,E,Stil> SplitPane<'w,L,R,V,E,Stil> where
     }
 }
 
-unsafe impl<'w,L,R,V,E> Statize<E> for SplitPane<'w,L,R,V,E> where 
+unsafe impl<'w,E,L,R,V,Stil> Statize<E> for SplitPane<'w,E,L,R,V,Stil> where 
     E: Env,
     L: StatizeSized<E>+'w,
     R: StatizeSized<E>+'w,
     V: StatizeSized<E>+'w,
+    Stil: StatizeSized<E>+'w,
 {
-    type Statur = SplitPane<'static,L::StaturSized,R::StaturSized,V::StaturSized,E>;
+    type Statur = SplitPane<'static,E,L::StaturSized,R::StaturSized,V::StaturSized,Stil::StaturSized>;
 }

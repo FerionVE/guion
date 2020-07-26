@@ -4,21 +4,13 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
     E::Context: CtxStdState<E>,
-    Text: Caption<'w>+StatizeSized<E>
+    Text: Caption<'w>+StatizeSized<E>,
+    Stil: StatizeSized<E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
-    }
-    fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdTag::ObjButton]);
-        s.attach(&self.style[..]);
-    }
-    fn border(&self, b: &mut Border) {
-        if let Some(senf) = &self.border {
-            *b = *senf;
-        }
     }
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -112,9 +104,10 @@ impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
     E::Context: CtxStdState<E>,
-    Text: Caption<'w>+StatizeSized<E>
+    Text: Caption<'w>+StatizeSized<E>,
+    Stil: StatizeSized<E>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

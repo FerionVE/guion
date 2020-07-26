@@ -3,7 +3,7 @@ use util::{state::*, caption::CaptionMut};
 use state::{Cursor, TBState};
 use super::imp::ITextBoxMut;
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -17,15 +17,6 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Sc
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
-    }
-    fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdTag::ObjText]);
-        s.attach(&self.style[..]);
-    }
-    fn border(&self, b: &mut Border) {
-        if let Some(senf) = &self.border {
-            *b = *senf;
-        }
     }
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -218,7 +209,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Widget<'w,E> for TextBox<'w,E,Text,Sc
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,V> WidgetMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> WidgetMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,

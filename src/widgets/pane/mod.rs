@@ -14,7 +14,7 @@ pub struct Pane<'w,T,E,Stil> where E: Env, T: 'w {
 }
 
 impl<'w,T,E> Pane<'w,T,E,()> where E: Env, T: 'w {
-    pub fn new(id: E::WidgetID, orientation: Orientation, childs: T) -> Pane<'w,T,E> {
+    pub fn new(id: E::WidgetID, orientation: Orientation, childs: T) -> Pane<'w,T,E,()> {
         Pane{
             id,
             childs,
@@ -25,6 +25,10 @@ impl<'w,T,E> Pane<'w,T,E,()> where E: Env, T: 'w {
     }
 }
 
-unsafe impl<'w,T,E,Stil> Statize<E> for Pane<'w,T,E,Stil> where T: StatizeSized<E>, E: Env {
-    type Statur = Pane<'static,T::StaturSized,E>;
+unsafe impl<'w,T,E,Stil> Statize<E> for Pane<'w,T,E,Stil> where
+    E: Env,
+    T: StatizeSized<E>+'w,
+    Stil: StatizeSized<E>+'w,
+{
+    type Statur = Pane<'static,T::StaturSized,E,Stil::StaturSized>;
 }

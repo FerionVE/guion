@@ -62,7 +62,7 @@ impl<'w,T,E,Stil> WidgetMut<'w,E> for Pane<'w,T,E,Stil> where
     }
 }
 
-impl<'w,T,E> Pane<'w,T,E> where
+impl<'w,T,E,Stil> Pane<'w,T,E,Stil> where
     E: Env,
     T: WidgetArray<'w,E>+StatizeSized<E>,
 {

@@ -5,10 +5,11 @@ pub trait ICheckBox<'w,E>: 'w where E: Env {
     fn toggle(&mut self, c: &mut E::Context);
 }
 
-impl<'w,E,State,Text> ICheckBox<'w,E> for CheckBox<'w,E,State,Text> where
+impl<'w,E,State,Text,Stil> ICheckBox<'w,E> for CheckBox<'w,E,State,Text,Stil> where
     E: Env,
     State: AtomStateMut<E,bool>,
     Text: 'w,
+    Stil: 'w,
 {
     fn set(&mut self, v: bool, c: &mut E::Context) {
         self.state.set(v,c);

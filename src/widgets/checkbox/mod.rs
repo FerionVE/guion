@@ -14,7 +14,7 @@ pub struct CheckBox<'w,E,State,Text,Stil> where
     pub trigger: for<'a> fn(Link<'a,E>,bool),
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdTag>,
+    pub style: Stil,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub border: Option<Border>,
@@ -75,6 +75,7 @@ unsafe impl<'w,E,State,Text,Stil> Statize<E> for CheckBox<'w,E,State,Text,Stil> 
     E: Env,
     State: StatizeSized<E>+'w,
     Text: StatizeSized<E>+'w,
+    Stil: StatizeSized<E>+'w,
 {
-    type Statur = CheckBox<'static,E,State::StaturSized,Text::StaturSized>;
+    type Statur = CheckBox<'static,E,State::StaturSized,Text::StaturSized,Stil::StaturSized>;
 }

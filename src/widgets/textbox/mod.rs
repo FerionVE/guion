@@ -7,7 +7,7 @@ pub mod widget;
 pub mod state;
 pub mod imp;
 
-pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
+pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
     E: Env,
     Text: 'w,
     Scroll: 'w,
@@ -17,8 +17,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
 {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdTag>,
-    pub border: Option<Border>,
+    pub style: Stil,
     pub text: Text,
     pub scroll: Scroll,
     pub cursor: Curs,
@@ -27,7 +26,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool> where
+impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool,()> where
     E: Env,
 {
     pub fn new(id: E::WidgetID) -> Self {
@@ -35,7 +34,6 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool> where
             id,
             size: Size::empty().into(),
             style: vec![],
-            border: None,
             text: "".to_owned(),
             scroll: (0,0),
             cursor: Cursor{select: 0, caret: 0}, //TODO default trait
@@ -46,7 +44,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool> where
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,V> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
     E: Env,
     Text: 'w,
     Scroll: 'w,
@@ -54,12 +52,11 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> TextBox<'w,E,Text,Scroll,Curs,CursorS
     CursorStickX: 'w,
     V: 'w,
 {
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,V> where T: 'w {
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,V,Stil> where T: 'w {
         TextBox{
             id: self.id,
             size: self.size,
             style: self.style,
-            border: self.border,
             text,
             scroll: self.scroll,
             cursor: self.cursor,
@@ -70,12 +67,11 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> TextBox<'w,E,Text,Scroll,Curs,CursorS
     }
 
     //TODO use a unified state object
-    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,V> where PScroll: 'w, CCurs: 'w, XCursorStickX: 'w {
+    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,V,Stil> where PScroll: 'w, CCurs: 'w, XCursorStickX: 'w {
         TextBox{
             id: self.id,
             size: self.size,
             style: self.style,
-            border: self.border,
             text: self.text,
             scroll,
             cursor,
@@ -91,13 +87,14 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V> TextBox<'w,E,Text,Scroll,Curs,CursorS
     }
 }
 
-unsafe impl<'w,E,Text,Scroll,Curs,CursorStickX,V> Statize<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
+unsafe impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Statize<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
     E: Env,
     Text: StatizeSized<E>,
     Scroll: StatizeSized<E>,
     Curs: StatizeSized<E>,
     CursorStickX: StatizeSized<E>,
     V: StatizeSized<E>,
+    Stil: StatizeSized<E>+'w,
 {
-    type Statur = TextBox<'static,E,Text::StaturSized,Scroll::StaturSized,Curs::StaturSized,CursorStickX::StaturSized,V::StaturSized>;
+    type Statur = TextBox<'static,E,Text::StaturSized,Scroll::StaturSized,Curs::StaturSized,CursorStickX::StaturSized,V::StaturSized,Stil::StaturSized>;
 }

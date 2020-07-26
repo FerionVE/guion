@@ -12,7 +12,7 @@ pub trait ITextBoxMut<'w,E> where E: Env {
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,V> ITextBoxMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> ITextBoxMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,

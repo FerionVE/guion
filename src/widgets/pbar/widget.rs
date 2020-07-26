@@ -1,9 +1,9 @@
 use super::*;
 
-impl<'w,E,Stil> Widget<'w,E> for ProgressBar<E,Stil> where
+impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -53,10 +53,10 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<E,Stil> where
     }
 }
 
-impl<'w,E,Stil> WidgetMut<'w,E> for ProgressBar<E,Stil> where
+impl<'w,E,Stil> WidgetMut<'w,E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

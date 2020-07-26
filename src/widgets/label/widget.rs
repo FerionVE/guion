@@ -4,7 +4,7 @@ impl<'w,E,S,Stil> Widget<'w,E> for Label<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
     S: Caption<'w>+StatizeSized<E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -54,7 +54,7 @@ impl<'w,E,S,Stil> WidgetMut<'w,E> for Label<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
     S: Caption<'w>+StatizeSized<E>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {

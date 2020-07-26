@@ -10,7 +10,7 @@ pub struct Label<'w,E,S,Stil> where
 {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Vec<StdTag>,
+    pub style: Stil,
     pub border: Option<Border>,
     pub text: S,
     p: PhantomData<&'w mut &'w ()>,
@@ -55,6 +55,7 @@ impl<'w,E,S,Stil> Label<'w,E,S,Stil> where
 unsafe impl<'w,E,S,Stil> Statize<E> for Label<'w,E,S,Stil> where
     E: Env,
     S: StatizeSized<E>,
+    Stil: StatizeSized<E>+'w,
 {
-    type Statur = Label<'static,E,S::StaturSized>;
+    type Statur = Label<'static,E,S::StaturSized,Stil::StaturSized>;
 }
