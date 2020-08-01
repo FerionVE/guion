@@ -6,17 +6,19 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    L: AsWidget<'w,E>+StatizeSized<E>+'w,
-    R: AsWidget<'w,E>+StatizeSized<E>+'w,
-    V: AtomState<E,f32>+StatizeSized<E>+'w,
+    L: AsWidget<'w,E>+StatizeSized<E>,
+    R: AsWidget<'w,E>+StatizeSized<E>,
+    V: AtomState<E,f32>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
+        let mut r = r.with(&self.style);
+        let mut r = r.inside_border_by(StdTag::BorderOuter);
         let bounds = self.calc_bounds(&r.b,self.state.get(l.ctx)); 
 
         {
@@ -27,7 +29,7 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
                 }.into());
             }
             r.slice_abs(&bounds[1])
-                .with(&[StdTag::ObjForeground])
+                .with(StdTag::ObjForeground)
                 .fill_rect();
         }
 
@@ -46,16 +48,8 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
         }
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = 
-            if let Some(e) =
-                e.inside_border( self.border.as_ref()
-                    .unwrap_or(l.default_border())
-                ).filter_bounds()
-            {
-                e
-            }else{
-                return false;
-            };
+        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
+
         let o = self.orientation;
         let mut bounds = self.calc_bounds(&e.1,self.state.get(l.ctx)); 
 
@@ -150,11 +144,12 @@ impl<'w,E,L,R,V,Stil> WidgetMut<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    L: AsWidgetMut<'w,E>+StatizeSized<E>+'w,
-    R: AsWidgetMut<'w,E>+StatizeSized<E>+'w,
-    V: AtomStateMut<E,f32>+StatizeSized<E>+'w,
+    L: AsWidgetMut<'w,E>+StatizeSized<E>,
+    R: AsWidgetMut<'w,E>+StatizeSized<E>,
+    V: AtomStateMut<E,f32>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;

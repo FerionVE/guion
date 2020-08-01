@@ -10,6 +10,7 @@ pub struct CheckBox<'w,E,State,Text,Stil> where
     E: Env,
     State: 'w,
     Text: 'w,
+    Stil: 'w,
 {
     pub trigger: for<'a> fn(Link<'a,E>,bool),
     id: E::WidgetID,
@@ -30,7 +31,7 @@ impl<'w,State,E> CheckBox<'w,E,State,&'static str,()> where
         Self{
             id,
             size: ESize::<E>::empty(),
-            style: vec![],
+            style: (),
             trigger: |_,_|{},
             locked: false,
             border: None,

@@ -4,8 +4,9 @@ impl<'w,E,S,Stil> Widget<'w,E> for Label<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     S: Caption<'w>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -14,10 +15,11 @@ impl<'w,E,S,Stil> Widget<'w,E> for Label<'w,E,S,Stil> where
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+        let mut r = r.with(&self.style);
         r.with(&[
             StdTag::ObjForeground,
             StdTag::ObjText,
-        ])
+        ][..])
             .render_text(self.text.caption().as_ref(),l.ctx);
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
@@ -54,8 +56,9 @@ impl<'w,E,S,Stil> WidgetMut<'w,E> for Label<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     S: Caption<'w>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

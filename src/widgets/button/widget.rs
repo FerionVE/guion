@@ -4,10 +4,10 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     Text: Caption<'w>+StatizeSized<E>,
-    Stil: StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -16,46 +16,37 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
+        let mut r = r.with(&self.style);
+        let mut r = r.inside_border_by(StdTag::BorderOuter);
         r.with(&[
             StdTag::ObjForeground,
             StdTag::Hovered(l.is_hovered()),
             StdTag::Focused(l.is_focused()),
             StdTag::Locked(self.locked),
-            StdTag::Pressed(Self::pressed(&l).is_some())
-        ])
+            StdTag::Pressed(Self::pressed(&l).is_some()),
+        ][..])
             .fill_rect();
         r.with(&[
             StdTag::ObjBorder,
             StdTag::Hovered(l.is_hovered()),
             StdTag::Focused(l.is_focused()),
             StdTag::Locked(self.locked),
-            StdTag::Pressed(Self::pressed(&l).is_some())
-        ])
-            .border_rect(l.default_thicc());
+            StdTag::Pressed(Self::pressed(&l).is_some()),
+            StdTag::BorderVisual,
+        ][..])
+            .fill_border_inner();
         r.with(&[
             StdTag::ObjForeground,
             StdTag::ObjText,
             StdTag::Hovered(l.is_hovered()),
             StdTag::Focused(l.is_focused()),
             StdTag::Locked(self.locked),
-            StdTag::Pressed(Self::pressed(&l).is_some())
-        ])
+            StdTag::Pressed(Self::pressed(&l).is_some()),
+        ][..])
             .render_text(self.text.caption().as_ref(),l.ctx);
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = 
-            if let Some(e) =
-                e.inside_border( self.border.as_ref()
-                    .unwrap_or(l.default_border())
-                ).filter_bounds()
-            {
-                //eprintln!("E");
-                e
-            }else{
-                //eprintln!("X");
-                return false;
-            };
+        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
         //e.0._debug_type_name();
         //let mut invalid = false;
         if e.0.is_hover_update() || e.0.is_kbd_press().is_some() || e.0.is_kbd_up().is_some() { //TODO catch down and press
@@ -104,10 +95,10 @@ impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     Text: Caption<'w>+StatizeSized<E>,
-    Stil: StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

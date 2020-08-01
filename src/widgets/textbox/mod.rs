@@ -14,6 +14,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
     Curs: 'w,
     CursorStickX: 'w,
     V: 'w,
+    Stil: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
@@ -33,7 +34,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool,()> where
         Self{
             id,
             size: Size::empty().into(),
-            style: vec![],
+            style: (),
             text: "".to_owned(),
             scroll: (0,0),
             cursor: Cursor{select: 0, caret: 0}, //TODO default trait
@@ -94,7 +95,7 @@ unsafe impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Statize<E> for TextBox<'w
     Curs: StatizeSized<E>,
     CursorStickX: StatizeSized<E>,
     V: StatizeSized<E>,
-    Stil: StatizeSized<E>+'w,
+    Stil: StatizeSized<E>,
 {
     type Statur = TextBox<'static,E,Text::StaturSized,Scroll::StaturSized,Curs::StaturSized,CursorStickX::StaturSized,V::StaturSized,Stil::StaturSized>;
 }

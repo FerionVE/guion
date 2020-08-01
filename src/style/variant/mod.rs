@@ -18,9 +18,12 @@ pub trait StyleVariantSupport<V>: StyleVariant where V: Clone {
         s.attach(tags);
         s
     }
+    fn new_with(tags: V) -> Self where Self: Sized {
+        Self::default().with(tags)
+    }
     fn attach(&mut self, tags: V);
 }
 
 pub trait StyleVariantGetStdCursor: StyleVariant {
     fn cursor(&self) -> StdCursor;
-} 
+}

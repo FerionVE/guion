@@ -31,6 +31,9 @@ pub enum StdTag {
     BorderVisual,
     BorderSpecific(Border),
 
+    BorderMultiplierDefault,
+    BorderMultiplier(u32),
+
     Accent(u32),
 
     VariantDefault,

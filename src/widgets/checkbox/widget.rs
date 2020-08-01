@@ -6,10 +6,11 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    State: AtomState<E,bool>+StatizeSized<E>+'w,
-    Text: Caption<'w>+StatizeSized<E>+'w,
+    State: AtomState<E,bool>+StatizeSized<E>,
+    Text: Caption<'w>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -18,57 +19,50 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
+        let mut r = r.with(&self.style);
+        let mut r = r.inside_border_by(StdTag::BorderOuter);
         let size = r.b.size.h;
         {
             let rect = Bounds::from_wh(size,size);
             let mut r = r.slice(&rect);
             r.with(&[
                     StdTag::ObjForeground,
-                ])
+                ][..])
                 .fill_rect();
-            r.inside_border(&Border::uniform(l.default_thicc()*3))
+            r.inside_border_by(&[StdTag::BorderVisual,StdTag::BorderMultiplier(3)][..])
                 .with(&[
                     StdTag::ObjForeground,
                     StdTag::Hovered(l.is_hovered()),
                     StdTag::Focused(l.is_focused()),
                     StdTag::Locked(self.locked),
                     StdTag::Pressed(self.state.get(l.ctx))
-                ])
+                ][..])
                 .fill_rect();
             r.with(&[
                     StdTag::ObjBorder,
                     StdTag::Hovered(l.is_hovered()),
                     StdTag::Focused(l.is_focused()),
                     StdTag::Locked(self.locked),
+                    StdTag::BorderVisual,
                     //StdTag::Pressed(self.state.get())
-                ])
-                .border_rect(l.default_thicc());
+                ][..])
+                .fill_border_inner();
         }
         {
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
-            r.inside_border(&text_border)
+            r.inside_border_specific(&text_border)
                 .with(&[
                     StdTag::ObjForeground,
                     StdTag::ObjText,
                     StdTag::Hovered(l.is_hovered()),
                     StdTag::Focused(l.is_focused()),
                     StdTag::Locked(self.locked),
-                ])
+                ][..])
                 .render_text_aligned(self.text.caption().as_ref(),(0.0,0.5),l.ctx);
         }
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = 
-            if let Some(e) =
-                e.inside_border( self.border.as_ref()
-                    .unwrap_or(l.default_border())
-                ).filter_bounds()
-            {
-                e
-            }else{
-                return false;
-            };
+        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
         //let mut invalid = false;
         if e.0.is_hover_update() || e.0.is_kbd_down().is_some() || e.0.is_kbd_up().is_some() {
             l.enqueue_invalidate()
@@ -120,10 +114,11 @@ impl<'w,E,State,Text,Stil> WidgetMut<'w,E> for CheckBox<'w,E,State,Text,Stil> wh
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    State: AtomStateMut<E,bool>+StatizeSized<E>+'w,
-    Text: Caption<'w>+StatizeSized<E>+'w,
+    State: AtomStateMut<E,bool>+StatizeSized<E>,
+    Text: Caption<'w>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

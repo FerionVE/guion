@@ -5,7 +5,7 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<'w,E>+StatizeSized<E>+'w,
     Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
@@ -18,30 +18,21 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.inside_border_by(&[StdTag::BorderOuter]);
+        let mut r = r.with(&self.style);
+        let mut r = r.inside_border_by(StdTag::BorderOuter);
         r.with(&[
             StdTag::ObjBorder,
             StdTag::Focused(l.is_focused()),
             StdTag::BorderVisual,
-        ])
-            .draw_inner_border();
-        r.inside_border_by(&[StdTag::BorderVisual])
+        ] as &[StdTag])
+            .fill_border_inner();
+        r.inside_border_by(StdTag::BorderVisual)
             .render_widget(l.for_child(0).unwrap());
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = 
-            if let Some(e) =
-                e.inside_border( self.border.as_ref()
-                    .unwrap_or(l.default_border())
-                ).inside_border(&Border::uniform(l.default_thicc()))
-                .filter_bounds()
-            {
-                e
-            }else{
-                return false;
-            };
-        //e.0._debug_type_name();
-        
+        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
+        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderVisual));
+        todo!()
     }
     fn _size(&self, _: Link<E>) -> ESize<E> {
         self.size.clone()
@@ -76,7 +67,7 @@ impl<'w,E,W,Scroll,Stil> WidgetMut<'w,E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidgetMut<'w,E>+StatizeSized<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,

@@ -3,26 +3,22 @@ use super::*;
 impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
-        r.with(&[
-            StdTag::ObjBackground,
-        ])
+        let mut r = r.with(&self.style);
+        let mut r = r.inside_border_by(StdTag::BorderOuter);
+        r.with(StdTag::ObjBackground)
             .fill_rect();
         r.slice_abs(&crop(&r.b, self.value, self.orientation))
-            .with(&[
-                StdTag::ObjActive,
-            ])
+            .with(StdTag::ObjActive)
             .fill_rect();
-        r.with(&[
-            StdTag::ObjBorder,
-        ])
-            .border_rect(l.default_thicc());
+        r.with(&[StdTag::ObjBorder,StdTag::BorderVisual][..])
+            .fill_border_inner();
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
@@ -56,7 +52,8 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
 impl<'w,E,Stil> WidgetMut<'w,E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + StyleVariantSupport<Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

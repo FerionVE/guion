@@ -90,6 +90,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         let c = self.resolve_child(i.index(0))?;
         self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..))
     }
+    /// child widget by path segment
     #[inline]
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
         for c in 0..self.childs() {
@@ -111,16 +112,19 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     }
     fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()>;
     
+    /// attach widget's id to the given parent path
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         parent.attached(SubPath::from_id(self.id()))
     }
+    /// if the path segment would resolve to this widget
     #[inline]
     fn resolves_by(&self, p: &EWPSub<E>) -> bool {
         p.resolves_to_id(self.id())
     }
 
-    /// should the widget be focusable, regularly true for interactive widgets, false for layouts
+    /// if the widget should be focusable.  
+    /// regularly true for interactive widgets, false for layouts.
     fn focusable(&self) -> bool;
     #[inline]
     fn _focus_on_mouse_down(&self) -> bool {

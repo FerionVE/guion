@@ -1,25 +1,39 @@
 use super::*;
+use std::marker::PhantomData;
 
 pub mod widget;
 
-pub struct ProgressBar<'w,E,Stil> where E: Env {
+pub struct ProgressBar<'w,E,Stil> where 
+    E: Env,
+    Stil: 'w,
+{
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: Stil,
     pub value: f32,
     pub orientation: Orientation,
+    p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E,Stil> ProgressBar<'w,E,Stil> where E: Env {
+impl<'w,E> ProgressBar<'w,E,()> where 
+    E: Env,
+{
     pub fn new(id: E::WidgetID, o: Orientation) -> Self {
         Self {
             id,
             size: Size::empty().into(),
-            style: vec![],
+            style: (),
             value: 0.0,
             orientation: o,
+            p: PhantomData,
         }
     }
+}
+
+impl<'w,E,Stil> ProgressBar<'w,E,Stil> where 
+    E: Env,
+    Stil: 'w,
+{
 
     pub fn with_size(mut self, s: ESize<E>) -> Self {
         self.size = s;

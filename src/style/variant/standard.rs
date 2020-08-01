@@ -14,6 +14,7 @@ pub struct StdStyleVariant {
     pub locked: bool,
     pub cursor: StdCursor,
     pub border_ptr: BorderPtr, 
+    pub border_mul: u32,
 }
 
 #[non_exhaustive]
@@ -91,6 +92,7 @@ impl Default for StdStyleVariant {
             locked: false,
             cursor: StdCursor::Default,
             border_ptr: BorderPtr::Default,
+            border_mul: 1,
         }
     }
 }
@@ -144,6 +146,8 @@ impl StyleVariantSupport<StdTag> for StdStyleVariant {
             StdTag::BorderOuter => self.border_ptr = BorderPtr::Outer,
             StdTag::BorderVisual => self.border_ptr = BorderPtr::Visual,
             StdTag::BorderSpecific(v) => self.border_ptr = BorderPtr::Specific(v),
+            StdTag::BorderMultiplierDefault => self.border_mul = 1,
+            StdTag::BorderMultiplier(v) => self.border_mul = v,
         }        
     }
 }
@@ -157,9 +161,16 @@ impl<T> AddAssign<T> for StdStyleVariant where Self: StyleVariantSupport<T>, T: 
 impl<T> StyleVariantSupport<&[T]> for StdStyleVariant where Self: StyleVariantSupport<T>, T: Clone {
     fn attach(&mut self, tags: &[T]) {
         for t in tags {
-            self.attach(*t);
+            self.attach(t.clone());
         }
     }
+}
+
+impl StyleVariantSupport<()> for StdStyleVariant {
+    fn attach(&mut self, tags: ()) {}
+}
+impl StyleVariantSupport<&()> for StdStyleVariant {
+    fn attach(&mut self, tags: &()) {}
 }
 
 impl StyleVariantGetStdCursor for StdStyleVariant {

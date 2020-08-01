@@ -27,7 +27,8 @@ impl<E> Filter<E> for StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
                         filter_path: self.filter_path.slice(1..),
                         filter_bounds: self.filter_bounds,
                     }.into(),
-                    e.4
+                    e.4.clone(),
+                    e.5,
                 ) )
         }else if self.filter_bounds {
             //eprintln!("{:?} in bounds {:?}: {}",e.0,e.1,e.0.in_bounds(&e.1));

@@ -8,12 +8,14 @@ pub struct SplitPane<'w,E,L,R,V,Stil> where
     L: 'w,
     R: 'w,
     V: 'w,
+    Stil: 'w,
 {
     id: E::WidgetID,
     pub childs: (L,R),
     pub state: V,
     pub orientation: Orientation,
     pub width: u32,
+    pub style: Stil,
     p: PhantomData<&'w mut &'w ()>,
 }
 
@@ -23,13 +25,14 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
     R: 'w,
     V: 'w,
 {
-    pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,L,R,V,E,()> {
+    pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,E,L,R,V,()> {
         SplitPane{
             id,
             childs,
             state,
             orientation,
             width: 8,
+            style: (),
             p: PhantomData,
         }
     }

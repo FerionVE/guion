@@ -1,8 +1,10 @@
 use super::*;
 
-impl<'w,T,E,Stil> Widget<'w,E> for Pane<'w,T,E,Stil> where
+impl<'w,E,T,Stil> Widget<'w,E> for Pane<'w,E,T,Stil> where
     E: Env,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArray<'w,E>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -40,9 +42,11 @@ impl<'w,T,E,Stil> Widget<'w,E> for Pane<'w,T,E,Stil> where
         self.childs.into_child(i)
     }
 }
-impl<'w,T,E,Stil> WidgetMut<'w,E> for Pane<'w,T,E,Stil> where 
+impl<'w,E,T,Stil> WidgetMut<'w,E> for Pane<'w,E,T,Stil> where 
     E: Env,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArrayMut<'w,E>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -62,14 +66,17 @@ impl<'w,T,E,Stil> WidgetMut<'w,E> for Pane<'w,T,E,Stil> where
     }
 }
 
-impl<'w,T,E,Stil> Pane<'w,T,E,Stil> where
+impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
     E: Env,
+    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArray<'w,E>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
 {
     pub fn _render_impl(&self, mut l: Link<E>, r: &mut RenderLink<E>) where
         E: Env,
     {
-        let mut r = r.inside_border(self.border.as_ref().unwrap_or(l.default_border()));
+        let mut r = r.with(&self.style);
+        let mut r = r.inside_border_by(StdTag::BorderOuter);
         let sizes = l.child_sizes().expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&r.b.size,&sizes,self.orientation); 
 
@@ -83,18 +90,8 @@ impl<'w,T,E,Stil> Pane<'w,T,E,Stil> where
     pub fn _event_direct_impl(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp where
         E: Env,
     {
-        let e = 
-            if let Some(e) =
-                e.inside_border( self.border.as_ref()
-                    .unwrap_or(l.default_border())
-                ).filter_bounds()
-            {
-                //eprintln!("_E");
-                e
-            }else{
-                //eprintln!("_X {:?}",e.0);
-                return false;
-            };
+        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
+        
         let sizes = l.child_sizes().expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&e.1.size,&sizes,self.orientation);
 

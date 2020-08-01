@@ -119,7 +119,8 @@ impl<'c,E> Link<'c,E> where E: Env {
             e.1,
             e.2,
             e.3.clone().attach_path_prefix(child.clone()),
-            e.4,
+            e.4.clone(),
+            e.5,
         );
         let _ = self.widget.resolve(child)?;
         let w = self.ctx.link(self.widget.reference());

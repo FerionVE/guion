@@ -7,11 +7,11 @@ pub mod widget;
 pub struct Label<'w,E,S,Stil> where
     E: Env,
     S: 'w,
+    Stil: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: Stil,
-    pub border: Option<Border>,
     pub text: S,
     p: PhantomData<&'w mut &'w ()>,
 }
@@ -23,8 +23,7 @@ impl<'w,E> Label<'w,E,&'static str,()> where
         Self{
             id,
             size: Size::empty().into(),
-            style: vec![],
-            border: None,
+            style: (),
             text: "",
             p: PhantomData,
         }
@@ -40,7 +39,6 @@ impl<'w,E,S,Stil> Label<'w,E,S,Stil> where
             id: self.id,
             size: self.size,
             style: self.style,
-            border: self.border,
             text,
             p: PhantomData,
         }

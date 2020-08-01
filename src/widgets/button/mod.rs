@@ -28,7 +28,7 @@ impl<'w,E> Button<'w,E,&'static str,()> where
         Self{
             id,
             size: ESize::<E>::empty(),
-            style: vec![],
+            style: (),
             trigger: |_|{},
             locked: false,
             border: None,
