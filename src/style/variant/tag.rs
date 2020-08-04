@@ -1,11 +1,11 @@
 use std::iter::once;
 use std::iter::Once;
-use crate::border::Border;
+use crate::{env::Env, border::Border, aliases::ESColor};
 /// tags enable/disable specific parts of styles.  
 /// Style implementations may ignore tags.  
 #[non_exhaustive]
-#[derive(Copy,Clone)]
-pub enum StdTag {
+#[derive(Clone)]
+pub enum StdTag<E> where E: Env {
     ObjDefault,
     ObjBackground,
     ObjForeground,
@@ -33,6 +33,9 @@ pub enum StdTag {
 
     BorderMultiplierDefault,
     BorderMultiplier(u32),
+
+    ColorDefault,
+    ColorSpecific(ESColor<E>),
 
     Accent(u32),
 
@@ -62,9 +65,9 @@ pub enum StdTag {
     CursorHand,
 }
 
-impl IntoIterator for StdTag {
-    type Item = StdTag;
-    type IntoIter = Once<StdTag>;
+impl<E> IntoIterator for StdTag<E> where E: Env {
+    type Item = StdTag<E>;
+    type IntoIter = Once<StdTag<E>>;
 
     fn into_iter(self) -> Self::IntoIter {
         once(self)

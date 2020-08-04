@@ -1,55 +1,72 @@
 use super::*;
-use std::ops::Deref;
+use std::ops::{DerefMut, Deref};
 
 /// reference-compound of renderer, current bounds and style
 pub struct RenderLink<'a,E> where E: Env {
-    /// the underlying renderer
     pub r: &'a mut ERenderer<E>,
-    /// current slice
-    pub b: Bounds,
-    /// current slice, but including last border
-    pub br: Bounds,
-    pub v: ESVariant<E>,
-    pub s: EStyle<E>,
+
+    bounds: Bounds,
+    prev_bounds: Option<&'a Bounds>,
+    viewport: Bounds,
+    prev_viewport: Option<&'a Bounds>,
+    style: ESVariant<E>,
+    prev_style: Option<&'a ESVariant<E>>,
+
     /// whether rendering is enforced (e.g. if invalidation from outside occured)
     pub force: bool,
+    prev_force: bool,
 }
 
 impl<'a,E> RenderLink<'a,E> where E: Env {
-    pub fn new(r: &'a mut ERenderer<E>, b: Bounds, v: ESVariant<E>, s: EStyle<E>, force: bool) -> Self {
+    pub fn new(r: &'a mut ERenderer<E>, bounds: Bounds, viewport: Bounds, style: ESVariant<E>, force: bool) -> Self {
         Self{
             r,
-            br: b.clone(),
-            b,
-            v,
-            s,
-            force,
+            bounds: bounds,
+            prev_bounds: None,
+            viewport: viewport,
+            prev_viewport: None,
+            style: style,
+            prev_style: None,
+            force: force,
+            prev_force: force,
         }
+            ._set_bounds()
+            ._set_style()
+            ._set_viewport()
     }
     pub fn simple(r: &'a mut ERenderer<E>, dim: (u32,u32), c: &E::Context) -> Self {
         Self::new(
             r,
             Bounds::from_xywh(0,0,dim.0,dim.1),
+            Bounds::from_xywh(0,0,dim.0,dim.1),
             ESVariant::<E>::default(),
-            c.style_provider().clone(),
             false,
         )
     }
+
+    #[inline]
+    pub fn bounds(&self) -> &Bounds {
+        &self.bounds
+    }
+    #[inline]
+    pub fn viewport(&self) -> &Bounds {
+        &self.viewport
+    }
+    #[inline]
+    pub fn style(&self) -> &ESVariant<E> {
+        &self.style
+    }
+
     #[inline]
     pub fn force(&self) -> bool {
-        self.force || self.r.force(&self.b)
+        self.force || self.r.force(&self.bounds)
     }
     /// fork with force set
     #[inline]
     pub fn with_force<'s>(&'s mut self, force: bool) -> RenderLink<'s,E> where 'a: 's {
-        RenderLink{
-            r: self.r,
-            b: self.b.clone(),
-            br: self.br.clone(),
-            v: self.v.clone(),
-            s: self.s.clone(),
-            force,
-        }
+        let mut f = self.forked(false,false,false);
+        f.force = force;
+        f
     }
     /// fork with force set to true
     #[inline]
@@ -60,102 +77,87 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     /// fork with area inside the border
     #[inline]
     pub fn inside_border_specific<'s>(&'s mut self, s: &Border) -> RenderLink<'s,E> where 'a: 's {
-        RenderLink{
-            r: self.r,
-            b: self.b.inside_border(s),
-            br: self.b.clone(),
-            v: self.v.clone(),
-            s: self.s.clone(),
-            force: self.force,
-        }
+        let bounds = self.bounds.inside_border(s);
+        let mut f = self.forked(true,false,false);
+        f.bounds = bounds;
+        f._set_bounds()
     }
     /// fork with area inside the border defined by the style
     #[inline]
-    pub fn inside_border<'s>(&'s mut self) -> RenderLink<'s,E> where 'a: 's {
-        self.inside_border_specific(&self.s.border(&self.v))
+    pub fn inside_border<'s>(&'s mut self, c: &E::Context) -> RenderLink<'s,E> where 'a: 's {
+        self.inside_border_specific(&c.style_provider().border(&self.style))
     }
     /// fork with area inside the border defined by the style  
     /// default style border is determined by the attached tags which **won't** be present on the forked RenderLink
     #[inline]
-    pub fn inside_border_by<'s,V>(&'s mut self, tags: V) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Copy, 'a: 's {
-        self.inside_border_specific(&self.s.border(&self.v.with(tags)))
+    pub fn inside_border_by<'s,V>(&'s mut self, tags: V, c: &E::Context) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone, 'a: 's {
+        self.inside_border_specific(&c.style_provider().border(&self.style.with(tags)))
     }
     /// fork with area inside the bounds
     #[inline]
     pub fn slice<'s>(&'s mut self, s: &Bounds) -> RenderLink<'s,E> where 'a: 's {
-        RenderLink{
-            r: self.r,
-            b: self.b.slice(s),
-            br: self.b.slice(s),
-            v: self.v.clone(),
-            s: self.s.clone(),
-            force: self.force,
-        }
+        let bounds = self.bounds.slice(s);
+        let mut f = self.forked(true,false,false);
+        f.bounds = bounds;
+        f._set_bounds()
     }
     /// fork with area inside the bounds
     #[inline]
     pub fn slice_abs<'s>(&'s mut self, s: &Bounds) -> RenderLink<'s,E> where 'a: 's {
-        RenderLink{
-            r: self.r,
-            b: self.b & s,
-            br: self.b & s,
-            v: self.v.clone(),
-            s: self.s.clone(),
-            force: self.force,
-        }
+        let bounds = self.bounds & s;
+        let mut f = self.forked(true,false,false);
+        f.bounds = bounds;
+        f._set_bounds()
     }
     /// fork with area inside the bounds
     #[inline]
     pub fn inner_centered<'s>(&'s mut self, size: Dims) -> RenderLink<'s,E> where 'a: 's {
-        RenderLink{
-            r: self.r,
-            b: self.b.inner_centered(size),
-            br: self.b.inner_centered(size),
-            v: self.v.clone(),
-            s: self.s.clone(),
-            force: self.force,
-        }
+        let bounds = self.bounds.inner_centered(size);
+        let mut f = self.forked(true,false,false);
+        f.bounds = bounds;
+        f._set_bounds()
     }
     /// fork with area inside the bounds
     #[inline]
     pub fn inner_aligned<'s>(&'s mut self, size: Dims, align: (f32,f32)) -> RenderLink<'s,E> where 'a: 's {
-        RenderLink{
-            r: self.r,
-            b: self.b.inner_aligned(size,align),
-            br: self.b.inner_aligned(size,align),
-            v: self.v.clone(),
-            s: self.s.clone(),
-            force: self.force,
-        }
+        let bounds = self.bounds.inner_aligned(size,align);
+        let mut f = self.forked(true,false,false);
+        f.bounds = bounds;
+        f._set_bounds()
     }
     /// fork with attached style variant tags
     #[inline]
     pub fn with<'s,V>(&'s mut self, tags: V) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone, 'a: 's {
-        RenderLink{
-            force: self.force(),
-            r: self.r,
-            b: self.b.clone(),
-            br: self.br.clone(),
-            v: self.v.with(tags),
-            s: self.s.clone(),
-        }
+        let style = self.style.with(tags);
+        let mut f = self.forked(false,false,true);
+        f.style = style;
+        f._set_style()
     }
     /// fork with default style and attache tags
     #[inline]
     pub fn with_default_style<'s,V>(&'s mut self, tags: V) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone, 'a: 's {
-        RenderLink{
-            force: self.force(),
-            r: self.r,
-            b: self.b.clone(),
-            br: self.br.clone(),
-            v: ESVariant::<E>::default().with(tags),
-            s: self.s.clone(),
-        }
+        let mut f = self.forked(false,false,true);
+        f.style = ESVariant::<E>::default().with(tags);
+        f._set_style()
     }
     /// get the current color defined by the style variant
     #[inline]
-    pub fn color(&self) -> ESColor<E> {
-        self.s.color(&self.v)
+    pub fn color(&self, c: &E::Context) -> ESColor<E> {
+        c.style_provider().color(&self.style)
+    }
+
+    #[inline]
+    pub fn with_bounds<'s>(&'s mut self, bounds: Bounds) -> RenderLink<'s,E> where 'a: 's {
+        let mut f = self.forked(true,false,false);
+        f.bounds = bounds;
+        f._set_bounds()
+    }
+
+    #[inline]
+    pub fn with_viewport<'s>(&'s mut self, viewport: Bounds) -> RenderLink<'s,E> where 'a: 's {
+        let mut f = self.forked(false,true,true);
+        f.viewport = viewport;
+        f._set_viewport()
     }
 
     /*#[inline]
@@ -168,17 +170,9 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }*/
 
     #[inline]
+    #[deprecated]
     pub fn render_widget(&mut self, mut w: Link<E>) {
-        let mut fork = RenderLink{
-            r: self.r,
-            b: self.b,
-            br: self.b.clone(),
-            v: self.v.clone(),
-            s: self.s.clone(),
-            force: self.force,
-        };
-
-        w.render(&mut fork)
+        w.render(self)
     }
 
     /*#[deprecated]
@@ -203,51 +197,77 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         }*/
         todo!()
     }*/
+    
+    pub fn fork_with<'s>(&'s mut self, bounds: Option<Bounds>, viewport: Option<Bounds>, style: Option<ESVariant<E>>) -> RenderLink<'s,E> where 'a: 's {
+        let mut r = self.forked(bounds.is_some(),viewport.is_some(),style.is_some());
+        if let Some(b) = bounds {
+            r.bounds = b;
+            r=r._set_bounds();
+        }
+        if let Some(b) = viewport {
+            r.viewport = b;
+            r=r._set_viewport();
+        }
+        if let Some(b) = style {
+            r.style = b;
+            r=r._set_style();
+        }
+        r
+    }
+    #[inline]
+    fn forked<'s>(&'s mut self, prev_bounds: bool, prev_viewport: bool, prev_style: bool) -> RenderLink<'s,E> where 'a: 's {
+        let mut r = RenderLink{
+            r: self.r,
+            bounds: self.bounds.clone(),
+            prev_bounds: Some(&self.bounds),
+            viewport: self.viewport.clone(),
+            prev_viewport: Some(&self.viewport),
+            style: self.style.clone(),
+            prev_style: Some(&self.style),
+            force: self.force,
+            prev_force: self.force,
+        };
+        if !prev_bounds { r.prev_bounds = None; }
+        if !prev_viewport { r.prev_viewport = None; }
+        if !prev_style { r.prev_style = None; }
+        r
+    }
+    fn _set_bounds(self) -> Self {
+        self.r._set_bounds(&self.bounds);
+        self
+    }
+    fn _set_viewport(self) -> Self {
+        self.r._set_viewport(&self.viewport);
+        self
+    }
+    fn _set_style(self) -> Self {
+        self.r._set_style(&self.style);
+        self
+    }
 }
 
-impl<'a,E> RenderLink<'a,E> where E: Env, ERenderer<E>: RenderStdWidgets<E> {
-    #[inline]
-    pub fn fill_rect(&mut self) {
-        self.r.fill_rect(&self.b,self.color())
+impl<'a,E> Deref for RenderLink<'a,E> where E: Env {
+    type Target = ERenderer<E>;
+    fn deref(&self) -> &Self::Target {
+        &self.r
     }
-    #[inline]
-    pub fn border_rect(&mut self, thickness: u32) {
-        self.r.border_rect(&self.b,self.color(),thickness)
+}
+impl<'a,E> DerefMut for RenderLink<'a,E> where E: Env {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.r
     }
-    #[inline]
-    pub fn  fill_border_inner_specific(&mut self, b: &Border) {
-        self.border_rect(b.top) //TODO IMPL real impl
-    }
-    #[inline]
-    pub fn fill_border_inner(&mut self) {
-        self.fill_border_inner_specific(&self.s.border(&self.v))
-    }
-    #[deprecated = "avoid this because stuff is not cached"]
-    #[allow(deprecated)]
-    #[inline]
-    pub fn render_text(&mut self, text: &str, c: &mut E::Context) {
-        self.render_text_aligned(text,(0.5,0.5),c)
-    }
-    #[deprecated = "avoid this because stuff is not cached"]
-    #[allow(deprecated)]
-    #[inline]
-    pub fn render_text_aligned(&mut self, text: &str, align: (f32,f32), c: &mut E::Context) {
-        self.r.render_text(&self.b,text,align,&self.s,&self.v,c)
-    }
-    #[inline]
-    pub fn render_preprocessed_text(&mut self, text: &ESGlyphs<E>, inner_offset: Offset, c: &mut E::Context) {
-        self.r.render_preprocessed_text(&self.b,text,inner_offset,&self.s,&self.v,c) //TODO we should not always give ctx through the render, for example the text/font can be inside the render head
-    }
-    #[inline]
-    pub fn set_cursor(&mut self, cursor: ESCursor<E>) {
-        self.r.set_cursor(&self.b,cursor)
-    }
-    #[inline]
-    pub fn draw_text_button(&mut self, pressed: bool, caption: &str) {
-        self.r.draw_text_button(&self.b,pressed,caption,&self.s,&self.v)
-    }
-    #[inline]
-    pub fn draw_selected(&mut self) {
-        self.r.draw_selected(&self.b,&self.s,&self.v)
+}
+
+impl<'a,E> Drop for RenderLink<'a,E> where E: Env {
+    fn drop(&mut self) {
+        if let Some(v) = &self.prev_bounds {
+            self.r._set_bounds(v);
+        }
+        if let Some(v) = &self.prev_viewport {
+            self.r._set_viewport(v);
+        }
+        if let Some(v) = &self.prev_style {
+            self.r._set_style(v);
+        }
     }
 }

@@ -6,7 +6,7 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+StatizeSized<E>,
     Text: Caption<'w>+StatizeSized<E>,
@@ -20,16 +20,16 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter);
-        let size = r.b.size.h;
+        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        let size = r.bounds().size.h;
         {
             let rect = Bounds::from_wh(size,size);
             let mut r = r.slice(&rect);
             r.with(&[
                     StdTag::ObjForeground,
                 ][..])
-                .fill_rect();
-            r.inside_border_by(&[StdTag::BorderVisual,StdTag::BorderMultiplier(3)][..])
+                .fill_rect(l.ctx);
+            r.inside_border_by(&[StdTag::BorderVisual,StdTag::BorderMultiplier(3)][..],l.ctx)
                 .with(&[
                     StdTag::ObjForeground,
                     StdTag::Hovered(l.is_hovered()),
@@ -37,7 +37,7 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
                     StdTag::Locked(self.locked),
                     StdTag::Pressed(self.state.get(l.ctx))
                 ][..])
-                .fill_rect();
+                .fill_rect(l.ctx);
             r.with(&[
                     StdTag::ObjBorder,
                     StdTag::Hovered(l.is_hovered()),
@@ -46,7 +46,7 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
                     StdTag::BorderVisual,
                     //StdTag::Pressed(self.state.get())
                 ][..])
-                .fill_border_inner();
+                .fill_border_inner(l.ctx);
         }
         {
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
@@ -58,7 +58,7 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
                     StdTag::Focused(l.is_focused()),
                     StdTag::Locked(self.locked),
                 ][..])
-                .render_text_aligned(self.text.caption().as_ref(),(0.0,0.5),l.ctx);
+                .render_text(self.text.caption().as_ref(),(0.0,0.5),l.ctx);
         }
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
@@ -114,7 +114,7 @@ impl<'w,E,State,Text,Stil> WidgetMut<'w,E> for CheckBox<'w,E,State,Text,Stil> wh
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     State: AtomStateMut<E,bool>+StatizeSized<E>,
     Text: Caption<'w>+StatizeSized<E>,
@@ -149,7 +149,7 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+StatizeSized<E>+'w,
     Text: Caption<'w>+StatizeSized<E>+'w,

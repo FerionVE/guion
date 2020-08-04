@@ -7,7 +7,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Te
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: Caption<'w>+StatizeSized<E>,
     Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
@@ -24,27 +24,27 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Te
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter);
+        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
         r.with(&[
             StdTag::ObjBorder,
             StdTag::Focused(l.is_focused()),
             StdTag::BorderVisual,
         ][..])
-            .fill_border_inner();
-        let mut r = r.inside_border_by(&[StdTag::BorderVisual,StdTag::BorderMultiplier(2)][..]);
-        let s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&r.b);
+            .fill_border_inner(l.ctx);
+        let mut r = r.inside_border_by(&[StdTag::BorderVisual,StdTag::BorderMultiplier(2)][..],l.ctx);
+        let s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
         for b in s.selection_box() {
             let b = b - s.off2();
             r.slice(&b)
                 .with(StdTag::ObjForeground)
-                .fill_rect();
+                .fill_rect(l.ctx);
         }
         if let Some(c) = s.cursor_display_pos(s.cursor.caret) { //TODO fix as it should work if cursor is at end
             let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
             let b = b - s.off2();
             r.slice(&b)
                 .with(StdTag::ObjActive)
-                .fill_rect();
+                .fill_rect(l.ctx);
         }
 
         r.with(&[
@@ -207,7 +207,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> WidgetMut<'w,E> for TextBox<'w,E
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: CaptionMut<'w>+StatizeSized<E>,
     Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,

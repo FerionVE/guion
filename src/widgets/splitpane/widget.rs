@@ -6,7 +6,7 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     L: AsWidget<'w,E>+StatizeSized<E>,
     R: AsWidget<'w,E>+StatizeSized<E>,
@@ -18,19 +18,23 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter);
-        let bounds = self.calc_bounds(&r.b,self.state.get(l.ctx)); 
+        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        let bounds = self.calc_bounds(r.bounds(),self.state.get(l.ctx)); 
 
         {
             if l.state().is_hovered(&self.id) {
-                r.set_cursor(match self.orientation {
-                    Orientation::Horizontal => StdCursor::SizeWE,
-                    Orientation::Vertical => StdCursor::SizeNS,
-                }.into());
+                let cursor = match self.orientation {
+                    Orientation::Horizontal => StdTag::CursorSizeWE,
+                    Orientation::Vertical => StdTag::CursorSizeNS,
+                };
+
+                r.with(cursor)
+                    .set_cursor(l.ctx);
             }
+
             r.slice_abs(&bounds[1])
                 .with(StdTag::ObjForeground)
-                .fill_rect();
+                .fill_rect(l.ctx);
         }
 
         {
@@ -46,6 +50,7 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
         {
             //TODO render center
         }
+        //TODO FIX viewport
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
@@ -144,7 +149,7 @@ impl<'w,E,L,R,V,Stil> WidgetMut<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     L: AsWidgetMut<'w,E>+StatizeSized<E>,
     R: AsWidgetMut<'w,E>+StatizeSized<E>,

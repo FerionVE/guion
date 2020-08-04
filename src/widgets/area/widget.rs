@@ -5,7 +5,7 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<'w,E>+StatizeSized<E>+'w,
     Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
@@ -19,14 +19,14 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter);
+        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
         r.with(&[
             StdTag::ObjBorder,
             StdTag::Focused(l.is_focused()),
             StdTag::BorderVisual,
-        ] as &[StdTag])
-            .fill_border_inner();
-        r.inside_border_by(StdTag::BorderVisual)
+        ][..])
+            .fill_border_inner(l.ctx);
+        r.inside_border_by(StdTag::BorderVisual,l.ctx)
             .render_widget(l.for_child(0).unwrap());
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
@@ -67,7 +67,7 @@ impl<'w,E,W,Scroll,Stil> WidgetMut<'w,E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidgetMut<'w,E>+StatizeSized<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,

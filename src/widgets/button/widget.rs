@@ -4,7 +4,7 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     Text: Caption<'w>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
@@ -17,7 +17,7 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter);
+        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
         r.with(&[
             StdTag::ObjForeground,
             StdTag::Hovered(l.is_hovered()),
@@ -25,7 +25,7 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
             StdTag::Locked(self.locked),
             StdTag::Pressed(Self::pressed(&l).is_some()),
         ][..])
-            .fill_rect();
+            .fill_rect(l.ctx);
         r.with(&[
             StdTag::ObjBorder,
             StdTag::Hovered(l.is_hovered()),
@@ -34,7 +34,7 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
             StdTag::Pressed(Self::pressed(&l).is_some()),
             StdTag::BorderVisual,
         ][..])
-            .fill_border_inner();
+            .fill_border_inner(l.ctx);
         r.with(&[
             StdTag::ObjForeground,
             StdTag::ObjText,
@@ -43,7 +43,7 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
             StdTag::Locked(self.locked),
             StdTag::Pressed(Self::pressed(&l).is_some()),
         ][..])
-            .render_text(self.text.caption().as_ref(),l.ctx);
+            .render_text(self.text.caption().as_ref(),(0.5,0.5),l.ctx);
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
@@ -95,7 +95,7 @@ impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     Text: Caption<'w>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
@@ -118,7 +118,7 @@ impl<'w,E,S,Stil> Button<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>>,
     E::Context: CtxStdState<E>,
     S: Caption<'w>+StatizeSized<E>
 {

@@ -2,7 +2,7 @@ use super::*;
 
 impl<'w,E,T,Stil> Widget<'w,E> for Pane<'w,E,T,Stil> where
     E: Env,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArray<'w,E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
@@ -44,7 +44,7 @@ impl<'w,E,T,Stil> Widget<'w,E> for Pane<'w,E,T,Stil> where
 }
 impl<'w,E,T,Stil> WidgetMut<'w,E> for Pane<'w,E,T,Stil> where 
     E: Env,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArrayMut<'w,E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
@@ -68,7 +68,7 @@ impl<'w,E,T,Stil> WidgetMut<'w,E> for Pane<'w,E,T,Stil> where
 
 impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
     E: Env,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArray<'w,E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
@@ -76,15 +76,16 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
         E: Env,
     {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter);
+        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
         let sizes = l.child_sizes().expect("Dead Path Inside Pane");
-        let bounds = calc_bounds(&r.b.size,&sizes,self.orientation); 
+        let bounds = calc_bounds(&r.bounds().size,&sizes,self.orientation); 
 
         for i in 0..self.childs() {
             let l = l.for_child(i).expect("Dead Path Inside Pane");
             let mut r = r.slice(&bounds[i]);
             r.render_widget(l);
         }
+        //TODO FIX viewport
     }
 
     pub fn _event_direct_impl(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp where

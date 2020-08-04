@@ -4,7 +4,7 @@ impl<'w,E,S,Stil> Widget<'w,E> for Label<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     S: Caption<'w>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
@@ -20,7 +20,7 @@ impl<'w,E,S,Stil> Widget<'w,E> for Label<'w,E,S,Stil> where
             StdTag::ObjForeground,
             StdTag::ObjText,
         ][..])
-            .render_text(self.text.caption().as_ref(),l.ctx);
+            .render_text(self.text.caption().as_ref(),(0.5,0.5),l.ctx);
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
@@ -56,7 +56,7 @@ impl<'w,E,S,Stil> WidgetMut<'w,E> for Label<'w,E,S,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     S: Caption<'w>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {

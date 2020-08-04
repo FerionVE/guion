@@ -3,7 +3,7 @@ use super::*;
 impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     Stil: StatizeSized<E>+Clone,
 {
     fn id(&self) -> E::WidgetID {
@@ -11,14 +11,14 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter);
+        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
         r.with(StdTag::ObjBackground)
-            .fill_rect();
-        r.slice_abs(&crop(&r.b, self.value, self.orientation))
+            .fill_rect(l.ctx);
+        r.slice_abs(&crop(r.bounds(), self.value, self.orientation))
             .with(StdTag::ObjActive)
-            .fill_rect();
+            .fill_rect(l.ctx);
         r.with(&[StdTag::ObjBorder,StdTag::BorderVisual][..])
-            .fill_border_inner();
+            .fill_border_inner(l.ctx);
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
@@ -52,7 +52,7 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
 impl<'w,E,Stil> WidgetMut<'w,E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag> + for<'z> StyleVariantSupport<&'z [StdTag]> + for<'z> StyleVariantSupport<&'z Stil>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     Stil: StatizeSized<E>+Clone,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
