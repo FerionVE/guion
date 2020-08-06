@@ -35,6 +35,7 @@ pub trait Event<E>: Sized + Clone + Debug where E: Env, E::Backend: Backend<E,Ev
         VariantSupport::<V,E>::to_variant(self)
     }
 
+    #[inline]
     fn in_bounds(&self, _: &Bounds) -> bool {
         true
     }

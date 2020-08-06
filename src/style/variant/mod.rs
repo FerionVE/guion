@@ -18,6 +18,7 @@ pub trait StyleVariantSupport<V>: StyleVariant where V: Clone {
         s.attach(tags);
         s
     }
+    #[inline]
     fn new_with(tags: V) -> Self where Self: Sized {
         Self::default().with(tags)
     }

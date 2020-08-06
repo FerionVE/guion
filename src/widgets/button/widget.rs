@@ -1,4 +1,5 @@
 use super::*;
+use util::caption::CaptionMut;
 
 impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     E: Env,
@@ -89,6 +90,10 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
     }
+
+    impl_traitcast!(
+        dyn Caption => |s| &s.text;
+    );
 }
 
 impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
@@ -97,7 +102,7 @@ impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    Text: Caption<'w>+StatizeSized<E>,
+    Text: CaptionMut<'w>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
@@ -112,6 +117,13 @@ impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
     fn into_child_mut(self: Box<Self>, _: usize) -> Result<ResolvableMut<'w,E>,()> {
         Err(())
     }
+
+    impl_traitcast!(
+        dyn CaptionMut => |s| &s.text;
+    );
+    impl_traitcast_mut!(
+        dyn CaptionMut => |s| &mut s.text;
+    );
 }
 
 impl<'w,E,S,Stil> Button<'w,E,S,Stil> where

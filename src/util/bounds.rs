@@ -19,6 +19,7 @@ pub struct Bounds {
 }
 
 impl Bounds {
+    #[inline]
     pub const fn from_xywh(x: i32, y: i32, w: u32, h: u32) -> Self {
         Self{
             off: Offset{
@@ -31,6 +32,7 @@ impl Bounds {
             }
         }
     }
+    #[inline]
     pub fn from_xyxy(x0: i32, y0: i32, x1: i32, y1: i32) -> Self {
         Self{
             off: Offset{
@@ -43,15 +45,19 @@ impl Bounds {
             }
         }
     }
+    #[inline]
     pub const fn from_xy(x: i32, y: i32) -> Self {
         Self::from_xywh(x,y,0,0)
     }
+    #[inline]
     pub const fn from_wh(w: u32, h: u32) -> Self {
         Self::from_xywh(0,0,w,h)
     }
+    #[inline]
     pub const fn from_off(off: Offset) -> Self {
         Self::from_xywh(off.x,off.y,0,0)
     }
+    #[inline]
     pub const fn from_size(size: Dims) -> Self {
         Self::from_xywh(0,0,size.w,size.h)
     }
@@ -69,7 +75,8 @@ impl Bounds {
     #[inline] pub const fn x1(&self) -> i32 { self.off.x + (self.size.w as i32) }
     #[inline] pub const fn y1(&self) -> i32 { self.off.y + (self.size.h as i32) }
 
-    #[inline] pub const fn center(&self) -> Offset {
+    #[inline]
+    pub const fn center(&self) -> Offset {
         Offset{
             x: self.off.x + (self.size.w/2) as i32,
             y: self.off.y + (self.size.h/2) as i32,
@@ -77,6 +84,7 @@ impl Bounds {
     }
 
     /// get the bounds inside this bound (subtract border)
+    #[inline]
     pub fn inside_border(&self, b: &Border) -> Self {
         let mut s = *self;
         s.off += b.inner();
@@ -87,11 +95,13 @@ impl Bounds {
     /// get the part of the inner which also is inside this bound
     /// 
     /// Use the BitAnd operator if the inner bound is absolute
+    #[inline]
     pub fn slice(&self, inner_relative: &Bounds) -> Self {
         let inner_abs = inner_relative + self.off;
         self & inner_abs
     }
     //TODO doc
+    #[inline]
     pub fn step(&self, step: i32) -> Self {
         let mut senf = *self;
         senf.off.x += step;
@@ -101,6 +111,7 @@ impl Bounds {
         senf
     }
     /// get bound with size s and centered relative to self
+    #[inline]
     pub const fn inner_centered(&self, size: Dims) -> Self {
         let nx = (self.size.w as i32 - size.w as i32)/2;
         let ny = (self.size.h as i32 - size.h as i32)/2;
@@ -114,6 +125,7 @@ impl Bounds {
     }
     /// inner_centered but advanced
     /// align is the start-to-end relative position (0.0 - 1.0)
+    #[inline]
     pub fn inner_aligned(&self, size: Dims, align: (f32,f32)) -> Self {
         //let align = (align.0.min(1.0).max(0.0), align.1.min(1.0).max(0.0));
         let nx = (self.size.w as f32 - size.w as f32)*align.0;
@@ -128,6 +140,7 @@ impl Bounds {
     }
     /// inner_centered but advanced
     /// align is the start-to-end relative position (0.0 - 1.0)
+    #[inline]
     pub fn inner_aligned_f(&self, size: (f32,f32), align: (f32,f32)) -> Self {
         let align = (align.0.min(1.0).max(0.0), align.1.min(1.0).max(0.0));
         let nx = (self.size.w as f32 - size.0)*align.0;
@@ -143,6 +156,7 @@ impl Bounds {
         }
     }
 
+    #[inline]
     pub fn from_ori(par_off: i32, unpar_off: i32, par_size: u32, unpar_size: u32, o: Orientation) -> Self {
         match o {
             Orientation::Horizontal => Self::from_xywh(par_off,unpar_off,par_size,unpar_size),
@@ -150,12 +164,14 @@ impl Bounds {
         }
     }
 
+    #[inline]
     pub fn par(&self, o: Orientation) -> (i32,u32) { //TODO improve with negate orientation
         match o {
             Orientation::Horizontal => (self.off.x,self.size.w),
             Orientation::Vertical => (self.off.y,self.size.h),
         }
     }
+    #[inline]
     pub fn unpar(&self, o: Orientation) -> (i32,u32) {
         match o {
             Orientation::Horizontal => (self.off.y,self.size.h),
@@ -163,12 +179,15 @@ impl Bounds {
         }
     }
 
+    #[inline]
     pub fn not_empty(&self) -> bool {
         self.size.not_empty()
     }
 
+    #[inline]
     pub fn shift_to_fit(&mut self, inner_abs: &Bounds) {
-        fn shift_to_fit_axis(axis: &mut (i32,i32), inner_abs: (i32,i32)) {
+        #[inline]
+    fn shift_to_fit_axis(axis: &mut (i32,i32), inner_abs: (i32,i32)) {
             if axis.1 < inner_abs.1 {
                 axis.0 += inner_abs.1 - axis.1;
                 axis.1 += inner_abs.1 - axis.1;
@@ -189,17 +208,20 @@ impl Bounds {
 
 impl Offset {
     /// if the offset is inside the bound b
+    #[inline]
     pub fn is_inside(&self, b: &Bounds) -> bool {
         self.x >= b.x() && self.x < b.x1() &&
         self.y >= b.y() && self.y < b.y1()
     }
 
+    #[inline]
     pub fn par(&self, o: Orientation) -> i32 {
         match o {
             Orientation::Horizontal => self.x,
             Orientation::Vertical => self.y,
         }
     }
+    #[inline]
     pub fn unpar(&self, o: Orientation) -> i32 {
         match o {
             Orientation::Horizontal => self.y,
@@ -207,6 +229,7 @@ impl Offset {
         }
     }
 
+    #[inline]
     pub fn from_ori(par: i32, unpar: i32, o: Orientation) -> Self {
         match o {
             Orientation::Horizontal => Self{x: par, y: unpar},
@@ -216,12 +239,14 @@ impl Offset {
 }
 
 impl Dims {
+    #[inline]
     pub fn par(&self, o: Orientation) -> u32 {
         match o {
             Orientation::Horizontal => self.w,
             Orientation::Vertical => self.h,
         }
     }
+    #[inline]
     pub fn unpar(&self, o: Orientation) -> u32 {
         match o {
             Orientation::Horizontal => self.h,
@@ -229,6 +254,7 @@ impl Dims {
         }
     }
 
+    #[inline]
     pub fn from_ori(par: u32, unpar: u32, o: Orientation) -> Self {
         match o {
             Orientation::Horizontal => Self{w: par, h: unpar},
@@ -236,12 +262,14 @@ impl Dims {
         }
     }
 
+    #[inline]
     pub fn not_empty(&self) -> bool {
         self.w > 0 && self.h > 0
     }
 }
 
 impl<T,U> From<(T,U)> for Dims where T: Into<u32>, U: Into<u32> {
+    #[inline]
     fn from(s: (T,U)) -> Self {
         Self{w: s.0.into(), h: s.1.into()}
     }
@@ -256,21 +284,25 @@ impl<T,U> From<(T,U)> for Dims where T: Into<u32>, U: Into<u32> {
 // TODO richer casting over num trait, also reverse impl
 
 impl From<(i32,i32)> for Offset {
+    #[inline]
     fn from(s: (i32,i32)) -> Self {
         Self{x: s.0, y: s.1}
     }
 }
 impl From<(u32,u32)> for Offset {
+    #[inline]
     fn from(s: (u32,u32)) -> Self {
         Self{x: s.0 as i32, y: s.1 as i32}
     }
 }
 impl Into<(i32,i32)> for Offset {
+    #[inline]
     fn into(self) -> (i32,i32) {
         (self.x,self.y)
     }
 }
 impl AsRef<Offset> for Offset {
+    #[inline]
     fn as_ref(&self) -> &Offset {
         self
     }

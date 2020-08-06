@@ -94,12 +94,15 @@ pub struct GlyphInfo {
 }
 
 impl Glyph for GlyphInfo {
+    #[inline]
     fn bounds(&self) -> Option<Bounds> {
         self.bounds.clone()
     }
+    #[inline]
     fn offset(&self) -> Offset {
         self.offset.clone()
     }
+    #[inline]
     fn str_pos(&self) -> usize {
         self.str_pos
     }

@@ -18,7 +18,6 @@ pub struct CheckBox<'w,E,State,Text,Stil> where
     pub style: Stil,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
-    pub border: Option<Border>,
     pub text: Text,
     pub state: State,
     p: PhantomData<&'w mut &'w ()>,
@@ -27,6 +26,7 @@ pub struct CheckBox<'w,E,State,Text,Stil> where
 impl<'w,State,E> CheckBox<'w,E,State,&'static str,()> where
     E: Env,
 {
+    #[inline]
     pub fn new(id: E::WidgetID, state: State) -> Self {
         Self{
             id,
@@ -34,7 +34,6 @@ impl<'w,State,E> CheckBox<'w,E,State,&'static str,()> where
             style: (),
             trigger: |_,_|{},
             locked: false,
-            border: None,
             text: "",
             state,
             p: PhantomData,
@@ -48,10 +47,12 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
 {
     
 
+    #[inline]
     pub fn with_trigger(mut self, fun: for<'a> fn(Link<E>,bool)) -> Self {
         self.trigger = fun;
         self
     }
+    #[inline]
     pub fn with_text<T>(self, text: T) -> CheckBox<'w,E,State,T,Stil> where T: Caption<'w>+StatizeSized<E> {
         CheckBox{
             id: self.id,
@@ -59,16 +60,29 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
             style: self.style,
             trigger: self.trigger,
             locked: self.locked,
-            border: self.border,
             text,
             state: self.state,
             p: PhantomData,
         }
     }
 
+    #[inline]
     pub fn with_size(mut self, s: ESize<E>) -> Self {
         self.size = s;
         self
+    }
+    #[inline]
+    pub fn with_style<SStil>(self, style: SStil) -> CheckBox<'w,E,State,Text,SStil> where SStil: 'w {
+        CheckBox{
+            trigger: self.trigger,
+            id: self.id,
+            size: self.size,
+            style,
+            locked: self.locked,
+            text: self.text,
+            state: self.state,
+            p: PhantomData,
+        }
     }
 }
 

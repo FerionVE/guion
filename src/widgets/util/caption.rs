@@ -4,50 +4,59 @@ use std::{ffi::{OsStr,OsString}, path::*};
 
 pub trait Caption<'w> {
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's;
+    #[inline]
     fn len<'s>(&'s self) -> usize where 'w: 's {
         self.caption().len()
     }
 }
 
 impl<'w> Caption<'w> for str {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         Cow::Borrowed(self)
     }
 }
 impl<'w> Caption<'w> for String {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         Cow::Borrowed(self)
     }
 }
 
 impl<'w> Caption<'w> for Path {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         self.to_string_lossy()
     }
 }
 impl<'w> Caption<'w> for PathBuf {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         self.to_string_lossy()
     }
 }
 
 impl<'w> Caption<'w> for OsStr {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         self.to_string_lossy()
     }
 }
 impl<'w> Caption<'w> for OsString {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         self.to_string_lossy()
     }
 }
 
 impl<'w,'l,T> Caption<'w> for &'w T where T: Caption<'l>+?Sized, 'l: 'w {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         (**self).caption()
     }
 }
 impl<'w,'l,T> Caption<'w> for &'w mut T where T: Caption<'l>+?Sized, 'l: 'w {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
         (**self).caption()
     }
@@ -60,6 +69,7 @@ macro_rules! impl_caption_gen {
     };
     ($t:ty) => {
         impl<'w> Caption<'w> for $t {
+            #[inline]
             fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
                 Cow::Owned(self.to_string())
             }
@@ -77,6 +87,7 @@ impl_caption_gen!(
 pub trait CaptionMut<'w>: Caption<'w> {
     fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's;
     fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's;
+    fn replace<'s>(&'s mut self, s: &str) where 'w: 's;
 }
 
 impl<'w> CaptionMut<'w> for String {
@@ -90,6 +101,9 @@ impl<'w> CaptionMut<'w> for String {
             self.remove(pop_start);
         }
     }
+    fn replace<'s>(&'s mut self, s: &str) where 'w: 's {
+        *self = s.to_owned(); //TODO more efficient alloc-keeping replace
+    }
 }
 
 impl<'w,'l,T> CaptionMut<'w> for &'w mut T where T: CaptionMut<'l>+?Sized, 'l: 'w {
@@ -98,6 +112,9 @@ impl<'w,'l,T> CaptionMut<'w> for &'w mut T where T: CaptionMut<'l>+?Sized, 'l: '
     }
     fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's {
         (**self).pop_left(off,n)
+    }
+    fn replace<'s>(&'s mut self, s: &str) where 'w: 's {
+        (**self).replace(s)
     }
 }
 

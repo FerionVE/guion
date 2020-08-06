@@ -16,7 +16,6 @@ pub struct Button<'w,E,Text,Stil> where
     pub style: Stil,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
-    pub border: Option<Border>,
     pub text: Text,
     p: PhantomData<&'w mut &'w ()>,
 }
@@ -24,6 +23,7 @@ pub struct Button<'w,E,Text,Stil> where
 impl<'w,E> Button<'w,E,&'static str,()> where
     E: Env,
 {
+    #[inline]
     pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
@@ -31,7 +31,6 @@ impl<'w,E> Button<'w,E,&'static str,()> where
             style: (),
             trigger: |_|{},
             locked: false,
-            border: None,
             text: "",
             p: PhantomData,
         }
@@ -44,10 +43,12 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
 {
     
 
+    #[inline]
     pub fn with_trigger(mut self, fun: for<'a> fn(Link<E>)) -> Self {
         self.trigger = fun;
         self
     }
+    #[inline]
     pub fn with_text<T>(self, text: T) -> Button<'w,E,T,Stil> where T: 'w {
         Button{
             id: self.id,
@@ -55,15 +56,27 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
             style: self.style,
             trigger: self.trigger,
             locked: self.locked,
-            border: self.border,
             text,
             p: PhantomData,
         }
     }
 
+    #[inline]
     pub fn with_size(mut self, s: ESize<E>) -> Self {
         self.size = s;
         self
+    }
+    #[inline]
+    pub fn with_style<SStil>(self, style: SStil) -> Button<'w,E,Text,SStil> where SStil: 'w {
+        Button{
+            trigger: self.trigger,
+            id: self.id,
+            size: self.size,
+            style: style,
+            locked: self.locked,
+            text: self.text,
+            p: PhantomData,
+        }
     }
 }
 

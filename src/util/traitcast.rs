@@ -20,6 +20,7 @@ pub struct TraitObject {
 #[macro_export]
 macro_rules! impl_traitcast {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
+        #[inline]
         unsafe fn _as_trait_ref(&self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
                 if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
@@ -44,6 +45,7 @@ macro_rules! impl_traitcast {
 #[macro_export]
 macro_rules! impl_traitcast_mut {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
+        #[inline]
         unsafe fn _as_trait_mut(&mut self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
                 if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {

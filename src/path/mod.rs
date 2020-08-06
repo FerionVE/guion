@@ -24,6 +24,7 @@ where E: Env {
     
     // TODO rename to attach_sub
     fn attach(&mut self, sub: Self::SubPath);
+    #[inline]
     fn attached(mut self, sub: Self::SubPath) -> Self {
         self.attach(sub);
         self
@@ -31,6 +32,7 @@ where E: Env {
 
     // TODO rename to attach_path
     fn attach_path(&mut self, sub: &Self);
+    #[inline]
     fn attached_path(mut self, sub: &Self) -> Self {
         self.attach_path(sub);
         self

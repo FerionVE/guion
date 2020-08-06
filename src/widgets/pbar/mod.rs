@@ -18,6 +18,7 @@ pub struct ProgressBar<'w,E,Stil> where
 impl<'w,E> ProgressBar<'w,E,()> where 
     E: Env,
 {
+    #[inline]
     pub fn new(id: E::WidgetID, o: Orientation) -> Self {
         Self {
             id,
@@ -34,15 +35,27 @@ impl<'w,E,Stil> ProgressBar<'w,E,Stil> where
     E: Env,
     Stil: 'w,
 {
+    #[inline]
+    pub fn with_value(mut self, v: f32) -> Self {
+        self.value = v;
+        self
+    }
 
+    #[inline]
     pub fn with_size(mut self, s: ESize<E>) -> Self {
         self.size = s;
         self
     }
-
-    pub fn with_value(mut self, v: f32) -> Self {
-        self.value = v;
-        self
+    #[inline]
+    pub fn with_style<SStil>(self, style: SStil) -> ProgressBar<'w,E,SStil> where SStil: 'w {
+        ProgressBar{
+            id: self.id,
+            value: self.value,
+            orientation: self.orientation,
+            size: self.size,
+            style,
+            p: PhantomData,
+        }
     }
 }
 

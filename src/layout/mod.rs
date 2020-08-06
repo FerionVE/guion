@@ -35,18 +35,23 @@ pub trait ISize: From<Size> + Into<Size> + Clone {
 }
 
 impl ISize for Size {
+    #[inline]
     fn add_x(&mut self, o: &Self) {
         Size::add_x(self,o)
     }
+    #[inline]
     fn add_y(&mut self, o: &Self) {
         Size::add_y(self,o)
     }
+    #[inline]
     fn flip(&mut self) {
         Size::flip(self)
     }
+    #[inline]
     fn as_std(&self) -> Size {
         self.clone()
     }
+    #[inline]
     fn add_space(&mut self, v: u32, dir: Orientation) {
         match dir {
             Orientation::Horizontal => self.x += v,

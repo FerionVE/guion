@@ -81,6 +81,7 @@ pub enum BorderPtr {
 }
 
 impl<E> Default for StdStyleVariant<E> where E: Env {
+    #[inline]
     fn default() -> Self {
         Self{
             obj: Obj::Default,
@@ -104,6 +105,7 @@ impl<E> StyleVariant for StdStyleVariant<E> where E: Env {
 }
 
 impl<E> StyleVariantSupport<StdTag<E>> for StdStyleVariant<E> where E: Env {
+    #[inline]
     fn attach(&mut self, v: StdTag<E>) {
         match v {
             StdTag::ObjDefault => self.obj = Obj::Default,
@@ -150,6 +152,7 @@ impl<E> StyleVariantSupport<StdTag<E>> for StdStyleVariant<E> where E: Env {
             StdTag::BorderSpecific(v) => self.border_ptr = BorderPtr::Specific(v),
             StdTag::BorderMultiplierDefault => self.border_mul = 1,
             StdTag::BorderMultiplier(v) => self.border_mul = v,
+            StdTag::BorderMultiply(v) => self.border_mul *= v,
             StdTag::ColorDefault => self.color_specific = None,
             StdTag::ColorSpecific(v) => self.color_specific = Some(v),
         }        
@@ -157,12 +160,14 @@ impl<E> StyleVariantSupport<StdTag<E>> for StdStyleVariant<E> where E: Env {
 }
 
 impl<E,T> AddAssign<T> for StdStyleVariant<E> where Self: StyleVariantSupport<T>, T: Clone, E: Env {
+    #[inline]
     fn add_assign(&mut self, v: T) {
         self.attach(v)
     }
 }
 
 impl<E,T> StyleVariantSupport<&[T]> for StdStyleVariant<E> where Self: StyleVariantSupport<T>, T: Clone, E: Env {
+    #[inline]
     fn attach(&mut self, tags: &[T]) {
         for t in tags {
             self.attach(t.clone());
@@ -171,10 +176,12 @@ impl<E,T> StyleVariantSupport<&[T]> for StdStyleVariant<E> where Self: StyleVari
 }
 
 impl<E> StyleVariantSupport<()> for StdStyleVariant<E> where E: Env {
-    fn attach(&mut self, tags: ()) {}
+    #[inline]
+    fn attach(&mut self, _: ()) {}
 }
 impl<E> StyleVariantSupport<&()> for StdStyleVariant<E> where E: Env {
-    fn attach(&mut self, tags: &()) {}
+    #[inline]
+    fn attach(&mut self, _: &()) {}
 }
 
 impl<E> StyleVariantGetStdCursor for StdStyleVariant<E> where E: Env {
@@ -184,3 +191,21 @@ impl<E> StyleVariantGetStdCursor for StdStyleVariant<E> where E: Env {
     }
 }
 
+/*impl<E> Clone for StdStyleVariant<E> where E: Env {
+    fn clone(&self) -> Self {
+        Self{
+            obj: self.obj.clone(),
+            design: self.design.clone(),
+            accent: self.accent.clone(),
+            variance: self.variance.clone(),
+            hovered: self.hovered.clone(),
+            focused: self.focused.clone(),
+            pressed: self.pressed.clone(),
+            locked: self.locked.clone(),
+            cursor: self.cursor.clone(),
+            border_ptr: self.border_ptr.clone(),
+            border_mul: self.border_mul.clone(),
+            color_specific: self.color_specific.clone(),
+        }
+    }
+}*/

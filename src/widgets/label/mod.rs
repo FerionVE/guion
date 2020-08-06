@@ -19,6 +19,7 @@ pub struct Label<'w,E,S,Stil> where
 impl<'w,E> Label<'w,E,&'static str,()> where
     E: Env,
 {
+    #[inline]
     pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
@@ -34,6 +35,7 @@ impl<'w,E,S,Stil> Label<'w,E,S,Stil> where
     E: Env,
     S: 'w,
 {
+    #[inline]
     pub fn with_text<T>(self, text: T) -> Label<'w,E,T,Stil> where T: Caption<'w>+Statize<E>, T::Statur: Sized {
         Label{
             id: self.id,
@@ -44,9 +46,20 @@ impl<'w,E,S,Stil> Label<'w,E,S,Stil> where
         }
     }
 
+    #[inline]
     pub fn with_size(mut self, s: ESize<E>) -> Self {
         self.size = s;
         self
+    }
+    #[inline]
+    pub fn with_style<SStil>(self, style: SStil) -> Label<'w,E,S,SStil> where SStil: 'w {
+        Label{
+            id: self.id,
+            size: self.size,
+            style,
+            text: self.text,
+            p: PhantomData,
+        }
     }
 }
 

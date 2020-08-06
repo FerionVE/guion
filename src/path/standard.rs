@@ -17,22 +17,28 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
     Self: From<E::WidgetPath>+Into<E::WidgetPath>
 {
     type SubPath = S;
+    #[inline]
     fn attach(&mut self, sub: S) {
         self.v.push(sub);
     }
+    #[inline]
     fn attached(mut self, sub: S) -> Self { //TODO can be default impl
         self.attach(sub);
         self
     }
+    #[inline]
     fn attach_path(&mut self, sub: &Self) {
         self.v.extend_from_slice(&sub.v);
     }
+    #[inline]
     fn tip(&self) -> Option<&S> {
         self.v.get(self.v.len()-1)
     }
+    #[inline]
     fn exact_eq(&self, o: &Self) -> bool {
         self.v[..] == o.v[..]
     }
+    #[inline]
     fn parent(&self) -> Option<Self> {
         if self.is_empty() {return None;}
         let mut parent = self.v.refc();
@@ -42,18 +48,22 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
             _p: PhantomData,
         })
     }
+    #[inline]
     fn is_empty(&self) -> bool {
         self.v.is_empty()
     }
+    #[inline]
     fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize> {
         Self{
             v: self.v.slice(range),
             _p: PhantomData,
         }
     }
+    #[inline]
     fn index<T>(&self, i: T) -> &S where T: SliceIndex<[S],Output=S> {
         &self.v[i] //TODO eventually non-panic refactor
     }
+    #[inline]
     fn empty() -> Self {
         Self{
             v: ArcSlice::new(),
@@ -63,6 +73,7 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
 }
 
 impl<E,S> SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
+    #[inline]
     pub fn new(range: &[S]) -> Self {
         Self{
             v: ArcSlice::from(range),
@@ -72,6 +83,7 @@ impl<E,S> SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
 }
 
 impl<E,S> RefClonable for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
+    #[inline]
     fn refc(&self) -> Self {
         self.clone()
     }

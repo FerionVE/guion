@@ -86,6 +86,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         (***self).child_paths(self.path.refc())
     }
 
+    #[inline]
     pub fn with_env<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self) -> Resolved<'a,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
         let stor = self.stor.with_env::<F>();
         let path = rc_path_with_env::<E,F>(self.path.refc());
@@ -96,6 +97,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
 impl<'a,E> Deref for Resolved<'a,E> where E: Env {
     type Target = WidgetRef<'a,E>;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.wref
     }
@@ -104,24 +106,27 @@ impl<'a,E> Deref for Resolved<'a,E> where E: Env {
 impl<'a,E> ResolvedMut<'a,E> where E: Env {
     #[inline]
     pub fn widget<'s>(&'s mut self) -> &'s mut (dyn WidgetMut<'s,E>+'s) where 'a: 's {
-        (&mut (*self.wref)).short_lt()
+        unsafe{(&mut (*self.wref)).short_lt()}
     }
 }
 
 impl<'a,E> Deref for ResolvedMut<'a,E> where E: Env {
     type Target = WidgetRefMut<'a,E>;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.wref
     }
 }
 impl<'a,E> DerefMut for ResolvedMut<'a,E> where E: Env {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.wref
     }
 }
 
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
+    #[inline]
     fn clone(&self) -> Self {
         self.stor.widget(self.path.refc()).unwrap()
     }

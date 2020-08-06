@@ -51,15 +51,19 @@ pub trait StdVarSup<E>:
     VariantSupport<Unfocus,E> +
     VariantSupport<RootEvent<E>,E>
 where E: Env, E::Backend: Backend<E,Event=Self> {
+    #[inline]
     fn is_kbd_down(&self) -> Option<KbdDown<E>> {
         self.is::<KbdDown<E>>()
     }
+    #[inline]
     fn is_kbd_press(&self) -> Option<KbdPress<E>> {
         self.is::<KbdPress<E>>()
     }
+    #[inline]
     fn is_kbd_up(&self) -> Option<KbdUp<E>> {
         self.is::<KbdUp<E>>()
     }
+    #[inline]
     fn is_kbd_down_or_press(&self) -> Option<KbdDown<E>> {
         if let Some(ee) = self.is_kbd_down() {
             Some(ee)
@@ -69,42 +73,55 @@ where E: Env, E::Backend: Backend<E,Event=Self> {
             None
         }
     }
+    #[inline]
     fn is_text_input(&self) -> Option<TextInput> {
         self.is::<TextInput>()
     }
+    #[inline]
     fn is_mouse_down(&self) -> Option<MouseDown<E>> {
         self.is::<MouseDown<E>>()
     }
+    #[inline]
     fn is_mouse_up(&self) -> Option<MouseUp<E>> {
         self.is::<MouseUp<E>>()
     }
+    #[inline]
     fn is_mouse_scroll(&self) -> Option<MouseScroll> {
         self.is::<MouseScroll>()
     }
+    #[inline]
     fn is_mouse_move(&self) -> Option<MouseMove> {
         self.is::<MouseMove>()
     }
+    #[inline]
     fn is_mouse_enter(&self) -> Option<MouseEnter> {
         self.is::<MouseEnter>()
     }
+    #[inline]
     fn is_mouse_leave(&self) -> Option<MouseLeave> {
         self.is::<MouseLeave>()
     }
+    #[inline]
     fn is_window_move(&self) -> Option<WindowMove> {
         self.is::<WindowMove>()
     }
+    #[inline]
     fn is_window_reset(&self) -> Option<WindowResize> {
         self.is::<WindowResize>()
     }
+    #[inline]
     fn is_focus(&self) -> Option<Focus> {
         self.is::<Focus>()
     }
+    #[inline]
     fn is_unfocus(&self) -> Option<Unfocus> {
         self.is::<Unfocus>()
     }
-    /*fn _is_root_event(&self) -> Option<RootEvent<E>> {
+    /*#[inline]
+    fn _is_root_event(&self) -> Option<RootEvent<E>> {
         self.is::<RootEvent<E>>()
     }*/
+    #[inline]
     fn is_hover_update(&self) -> bool {
         self.is_mouse_enter().is_some() || self.is_mouse_leave().is_some()
     }

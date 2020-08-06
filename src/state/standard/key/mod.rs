@@ -55,15 +55,19 @@ impl<E> KeyState<E> where E: Env {
 }
 
 impl<E> PressedKey<E> for StdPressedKey<E> where E: Env {
+    #[inline]
     fn key(&self) -> EEKey<E> {
         self.key.clone()
     }
+    #[inline]
     fn widget(&self) -> WidgetIdent<E> {
         self.down.clone()
     }
+    #[inline]
     fn timestamp(&self) -> u64 {
         self.ts
     }
+    #[inline]
     fn cursor(&self) -> Option<Offset> {
         self.cursor.clone()
     }

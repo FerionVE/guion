@@ -33,6 +33,7 @@ impl<E> EventCompound<E> where E: Env {
         Self(self.0.clone(),self.1,self.2,f,self.4.clone(),self.5)
     }
 
+    #[inline]
     pub fn with<V>(&mut self, tags: V) -> Self where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
         Self(self.0.clone(),self.1,self.2,self.3.clone(),self.4.with(tags),self.5)
     }

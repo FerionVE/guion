@@ -29,7 +29,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
         }*/
         S::_send_event(l,e,child)
     }
-    #[inline] 
+    //#[inline] 
     fn _event_root(mut l: Link<E>, e: &EventCompound<E>) -> EventResp { //TODO BUG handle sudden invalidation of hovered widget
         assert!(l.path().is_empty());
         if let Some(ee) = e.0.is::<RootEvent<E>>() {

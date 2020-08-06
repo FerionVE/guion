@@ -30,6 +30,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
 impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,bool,()> where
     E: Env,
 {
+    #[inline]
     pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
@@ -53,6 +54,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> TextBox<'w,E,Text,Scroll,Curs,Cu
     CursorStickX: 'w,
     V: 'w,
 {
+    #[inline]
     pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,V,Stil> where T: 'w {
         TextBox{
             id: self.id,
@@ -68,6 +70,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> TextBox<'w,E,Text,Scroll,Curs,Cu
     }
 
     //TODO use a unified state object
+    #[inline]
     pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,V,Stil> where PScroll: 'w, CCurs: 'w, XCursorStickX: 'w {
         TextBox{
             id: self.id,
@@ -82,9 +85,24 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> TextBox<'w,E,Text,Scroll,Curs,Cu
         }
     }
 
+    #[inline]
     pub fn with_size(mut self, s: ESize<E>) -> Self {
         self.size = s;
         self
+    }
+    #[inline]
+    pub fn with_style<SStil>(self, style: SStil) -> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,SStil> where SStil: 'w {
+        TextBox{
+            id: self.id,
+            size: self.size,
+            style,
+            text: self.text,
+            cursor: self.cursor,
+            cursor_stick_x: self.cursor_stick_x,
+            scroll: self.scroll,
+            validation: self.validation,
+            p: PhantomData,
+        }
     }
 }
 

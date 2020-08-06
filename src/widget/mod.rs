@@ -136,6 +136,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         true
     }
     
+    #[inline]
     fn inner<'s>(&'s self) -> Option<&'s dyn Widget<'w,E>> {
         None
     }
@@ -147,6 +148,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     /// The impl_traitcast! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
+    #[inline]
     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
         None
     }
@@ -154,6 +156,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
 
 pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static {
     #[allow(unused)]
+    #[inline]
     fn _set_invalid(&mut self, v: bool) {
         
     }
@@ -178,6 +181,7 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
 
     /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget
+    #[inline]
     fn into_resolve_mut(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
@@ -186,6 +190,7 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..))
     }
 
+    #[inline]
     fn inner_mut<'s>(&'s mut self) -> Option<&'s mut dyn WidgetMut<'w,E>> {
         None
     }
@@ -193,12 +198,14 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
     /// The impl_traitcast! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
+    #[inline]
     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
         Widget::_as_trait_ref(self,t)
     }
     /// The impl_traitcast_mut! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
+    #[inline]
     unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
         None
     }
@@ -215,21 +222,27 @@ pub trait WBase<'w,E> where E: Env {
     fn boxed_ref(self) -> WidgetRef<'w,E> where Self: Sized;
 }
 impl<'w,T,E> WBase<'w,E> for T where T: Widget<'w,E>+Statize<E>, E: Env {
+    #[inline]
     fn typeid(&self) -> TypeId {
         <Self as Statize<E>>::_typeid()
     }
+    #[inline]
     fn type_name(&self) -> &'static str {
         type_name::<Self>()
     }
+    #[inline]
     fn erase<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's {
         self
     }
+    #[inline]
     fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> where 'w: 's {
         Box::new(self.erase())
     }
+    #[inline]
     fn box_box(self: Box<Self>) -> WidgetRef<'w,E> {
         self
     }
+    #[inline]
     fn boxed_ref(self) -> WidgetRef<'w,E> where Self: Sized {
         Box::new(self)
     }
@@ -245,18 +258,23 @@ pub trait WBaseMut<'w,E> where E: Env {
     fn boxed(self) -> WidgetRefMut<'w,E> where Self: Sized;
 }
 impl<'w,T,E> WBaseMut<'w,E> for T where T: WidgetMut<'w,E>+Statize<E>, E: Env {
+    #[inline]
     fn base<'s>(&'s self) -> &'s dyn Widget<'w,E> where 'w: 's {
         self
     }
+    #[inline]
     fn erase_mut<'s>(&'s mut self) -> &'s mut dyn WidgetMut<'w,E> where 'w: 's {
         self
     }
+    #[inline]
     fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> where 'w: 's {
         Box::new(self.erase_mut())
     }
+    #[inline]
     fn box_box_mut(self: Box<Self>) -> WidgetRefMut<'w,E> {
         self
     }
+    #[inline]
     fn boxed(self) -> WidgetRefMut<'w,E> where Self: Sized {
         Box::new(self)
     }

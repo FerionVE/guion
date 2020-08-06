@@ -10,20 +10,8 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     type Handler: Handler<E>;
     type Queue: Queue<StdEnqueueable<E>,StdOrder>;
 
-    #[inline] 
-    fn handler_mut<H: Handler<E>>(&mut self) -> &mut H where Self: AsRefMut<H> {
-        Self::as_mut(self)
-    }
-    #[inline] 
-    fn handler<H: Handler<E>>(&self) -> &H where Self: AsRefMut<H> {
-        Self::as_ref(self)
-    }
-
     fn queue_mut(&mut self) -> &mut Self::Queue;
     fn queue(&self) -> &Self::Queue;
-
-    fn _handler_mut(&mut self) -> &mut Self::Handler;
-    fn _handler(&self) -> &Self::Handler;
 
     #[inline] 
     fn render(&mut self, w: Resolved<E>, r: &mut RenderLink<E>) {
@@ -46,10 +34,11 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         Self::Handler::_event_root(self.link(w),e)
     }
 
-    #[inline] fn link<'l: 's,'s>(&'s mut self, w: Resolved<'l,E>) -> Link<'s,E> {
+    #[inline]
+    fn link<'l: 's,'s>(&'s mut self, w: Resolved<'l,E>) -> Link<'s,E> {
         Link{
             ctx: self,
-            widget: w.short_lt(),
+            widget: unsafe{w.short_lt()},
         }
     }
 

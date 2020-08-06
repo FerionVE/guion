@@ -23,6 +23,7 @@ impl<'w,E,W> Area<'w,E,W,(u32,u32),()> where
     E: Env,
     W: 'w,
 {
+    #[inline]
     pub fn new(id: E::WidgetID, inner: W) -> Self {
         Self{
             id,
@@ -42,6 +43,7 @@ impl<'w,E,W,Scroll,Stil> Area<'w,E,W,Scroll,Stil> where
     Stil: 'w,
 {
     //TODO use a unified state object
+    #[inline]
     pub fn with_state<PScroll>(self, scroll: PScroll) -> Area<'w,E,W,PScroll,Stil> where PScroll: Statize<E>+'w {
         Area{
             id: self.id,
@@ -53,10 +55,12 @@ impl<'w,E,W,Scroll,Stil> Area<'w,E,W,Scroll,Stil> where
         }
     }
 
+    #[inline]
     pub fn with_size(mut self, s: ESize<E>) -> Self {
         self.size = s;
         self
     }
+    #[inline]
     pub fn with_style<SStil>(mut self, style: SStil) -> Area<'w,E,W,Scroll,SStil> where SStil: Statize<E>+'w {
         Area{
             id: self.id,

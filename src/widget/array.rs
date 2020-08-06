@@ -16,12 +16,15 @@ pub trait WidgetArrayMut<'w,E>: WidgetArray<'w,E> where E: Env {
 }
 
 impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+StatizeSized<E>, E: Env {
+    #[inline]
     fn len(&self) -> usize {
         self.len()
     }
+    #[inline]
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's {
         Ok(self.get(i).ok_or(())?.as_ref())
     }
+    #[inline]
     fn into_child(mut self, i: usize) -> Result<Resolvable<'w,E>,()> {
         if self.len() > i {
             Ok(self.swap_remove(i).into_ref())
@@ -29,11 +32,13 @@ impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+StatizeSized<E
             Err(())
         }
     }
+    #[inline]
     fn childs<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         self.iter()
             .map(|w| w.as_ref() )
             .collect::<Vec<_>>()
     }
+    #[inline]
     fn into_childs(self) -> Vec<Resolvable<'w,E>> {
         self.into_iter()
             .map(|w| w.into_ref() )
@@ -41,9 +46,11 @@ impl<'w,T,E> WidgetArray<'w,E> for Vec<T> where T: AsWidget<'w,E>+StatizeSized<E
     }
 }
 impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+StatizeSized<E>, E: Env {
+    #[inline]
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
+    #[inline]
     fn into_child_mut(mut self, i: usize) -> Result<ResolvableMut<'w,E>,()> {
         if self.len() > i {
             Ok(self.swap_remove(i).into_mut())
@@ -51,11 +58,13 @@ impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+StatizeS
             Err(())
         }
     }
+    #[inline]
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         self.iter_mut()
             .map(|w| w.as_mut() )
             .collect::<Vec<_>>()
     }
+    #[inline]
     fn into_childs_mut(self) -> Vec<ResolvableMut<'w,E>> {
         self.into_iter()
             .map(|w| w.into_mut() )
@@ -64,20 +73,25 @@ impl<'w,T,E> WidgetArrayMut<'w,E> for Vec<T> where T: AsWidgetMut<'w,E>+StatizeS
 }
 
 impl<'w,'l,T,E> WidgetArray<'w,E> for &'w [T] where T: AsWidget<'l,E>+StatizeSized<E>, E: Env, 'l: 'w {
+    #[inline]
     fn len(&self) -> usize {
         (**self).len()
     }
+    #[inline]
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's {
         Ok(self.get(i).ok_or(())?.as_ref())
     }
+    #[inline]
     fn into_child(self, i: usize) -> Result<Resolvable<'w,E>,()> {
         Ok(self.get(i).ok_or(())?.as_ref())
     }
+    #[inline]
     fn childs<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         self.iter()
             .map(|w| w.as_ref() )
             .collect::<Vec<_>>()
     }
+    #[inline]
     fn into_childs(self) -> Vec<Resolvable<'w,E>> {
         self.into_iter()
             .map(|w: &'w T| w.as_ref() )
@@ -86,20 +100,25 @@ impl<'w,'l,T,E> WidgetArray<'w,E> for &'w [T] where T: AsWidget<'l,E>+StatizeSiz
 }
 
 impl<'w,'l,T,E> WidgetArray<'w,E> for &'w mut [T] where T: AsWidget<'l,E>+StatizeSized<E>, E: Env, 'l: 'w {
+    #[inline]
     fn len(&self) -> usize {
         (**self).len()
     }
+    #[inline]
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's {
         Ok(self.get(i).ok_or(())?.as_ref())
     }
+    #[inline]
     fn into_child(self, i: usize) -> Result<Resolvable<'w,E>,()> {
         Ok(self.get(i).ok_or(())?.as_ref())
     }
+    #[inline]
     fn childs<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         self.iter()
             .map(|w| w.as_ref() )
             .collect::<Vec<_>>()
     }
+    #[inline]
     fn into_childs(self) -> Vec<Resolvable<'w,E>> {
         self.into_iter()
             .map(|w: &'w mut T| w.as_ref() )
@@ -107,17 +126,21 @@ impl<'w,'l,T,E> WidgetArray<'w,E> for &'w mut [T] where T: AsWidget<'l,E>+Statiz
     }
 }
 impl<'w,'l,T,E> WidgetArrayMut<'w,E> for &'w mut [T] where T: AsWidgetMut<'l,E>+StatizeSized<E>, E: Env, 'l: 'w {
+    #[inline]
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
+    #[inline]
     fn into_child_mut(self, i: usize) -> Result<ResolvableMut<'w,E>,()> {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
+    #[inline]
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         self.iter_mut()
             .map(|w| w.as_mut() )
             .collect::<Vec<_>>()
     }
+    #[inline]
     fn into_childs_mut(self) -> Vec<ResolvableMut<'w,E>> {
         self.into_iter()
             .map(|w: &'w mut T| w.as_mut() )
@@ -134,31 +157,36 @@ macro_rules! impl_wpps_tuple {
             $t: AsWidget<'w,E>+StatizeSized<E>,
             $($tt: AsWidget<'w,E>+StatizeSized<E>),+ 
         {
-                fn len(&self) -> usize {
-                    $n
+            #[inline]
+            fn len(&self) -> usize {
+                $n
+            }
+            #[inline]
+            fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's {
+                if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
+                    Ok(self.childs().swap_remove(i))
+                }else{
+                    Err(())
                 }
-                fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's {
-                    if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
-                        Ok(self.childs().swap_remove(i))
-                    }else{
-                        Err(())
-                    }
+            }
+            #[inline]
+            fn into_child(self, i: usize) -> Result<Resolvable<'w,E>,()> {
+                if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
+                    Ok(self.into_childs().swap_remove(i))
+                }else{
+                    Err(())
                 }
-                fn into_child(self, i: usize) -> Result<Resolvable<'w,E>,()> {
-                    if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
-                        Ok(self.into_childs().swap_remove(i))
-                    }else{
-                        Err(())
-                    }
-                }
-                fn childs<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
-                    let ($l,$($ll),*) = self;
-                    vec![$l.as_ref(), $( $ll .as_ref() ),* ]
-                }
-                fn into_childs(self) -> Vec<Resolvable<'w,E>> {
-                    let ($l,$($ll),*) = self;
-                    vec![$l.into_ref(), $( $ll .into_ref() ),* ]
-                }
+            }
+            #[inline]
+            fn childs<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
+                let ($l,$($ll),*) = self;
+                vec![$l.as_ref(), $( $ll .as_ref() ),* ]
+            }
+            #[inline]
+            fn into_childs(self) -> Vec<Resolvable<'w,E>> {
+                let ($l,$($ll),*) = self;
+                vec![$l.into_ref(), $( $ll .into_ref() ),* ]
+            }
         }
 
         impl<'w,E,$t,$($tt),+> WidgetArrayMut<'w,E> for ($t,$($tt),+) where
@@ -166,6 +194,7 @@ macro_rules! impl_wpps_tuple {
             $t: AsWidgetMut<'w,E>+StatizeSized<E>,
             $($tt: AsWidgetMut<'w,E>+StatizeSized<E>),+ 
         {
+            #[inline]
             fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> where 'w: 's {
                 if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
                     Ok(self.childs_mut().swap_remove(i))
@@ -173,6 +202,7 @@ macro_rules! impl_wpps_tuple {
                     Err(())
                 }
             }
+            #[inline]
             fn into_child_mut(self, i: usize) -> Result<ResolvableMut<'w,E>,()> {
                 if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
                     Ok(self.into_childs_mut().swap_remove(i))
@@ -180,10 +210,12 @@ macro_rules! impl_wpps_tuple {
                     Err(())
                 }
             }
+            #[inline]
             fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
                 let ($l,$($ll),*) = self;
                 vec![$l.as_mut(), $( $ll .as_mut() ),* ]
             }
+            #[inline]
             fn into_childs_mut(self) -> Vec<ResolvableMut<'w,E>> {
                 let ($l,$($ll),*) = self;
                 vec![$l.into_mut(), $( $ll .into_mut() ),* ]

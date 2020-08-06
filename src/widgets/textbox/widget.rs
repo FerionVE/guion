@@ -201,6 +201,13 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Te
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
     }
+
+    impl_traitcast!(
+        dyn Caption => |s| &s.text;
+        dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
+        dyn AtomState<E,Cursor> => |s| &s.cursor;
+        dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
+    );
 }
 
 impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> WidgetMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where

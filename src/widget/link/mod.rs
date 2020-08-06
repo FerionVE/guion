@@ -70,10 +70,12 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.widget.id()
     }
 
+    #[inline]
     pub fn path(&self) -> E::WidgetPath {
         self.widget.path.refc()
     }
 
+    #[inline]
     pub fn ident(&self) -> WidgetIdent<E> {
         self.widget.ident()
     }
@@ -183,7 +185,7 @@ impl<'c,E> Link<'c,E> where E: Env {
             stor,
         };
         let l = Link{
-            widget: w.short_lt(),
+            widget: unsafe{w.short_lt()},
             ctx: self.ctx,
         };
 
@@ -192,7 +194,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn _with_link<'s>(ctx: &mut E::Context, w: Resolved<'s,E>, f: impl FnOnce(Link<E>)) where 'c: 's {
         let l = Link{
-            widget: w.short_lt(),
+            widget: unsafe{w.short_lt()},
             ctx,
         };
         f(l);
@@ -208,6 +210,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         (**self.widget).child_bounds(w,b,force)
     }
 
+    #[inline]
     pub fn with_widget<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
         Ok(
             Link{
@@ -217,6 +220,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         )
     }
 
+    #[inline]
     pub fn with_root<'s>(&'s mut self) -> Result<Link<'s,E>,()> where 'c: 's {
         self.with_widget(WidgetPath::empty())
     }
@@ -239,7 +243,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         )
     }
 
-
+    #[inline]
     pub fn reference<'s>(&'s mut self) -> Link<'s,E> where 'c: 's {
         Link{
             widget: self.widget.reference(),
@@ -247,8 +251,9 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
     }
 
+    #[inline]
     pub fn childs<'s>(&'s self) -> impl Iterator<Item=Resolvable<'s,E>>+'s where 'c: 's {
-        let w = (&self.widget).short_lt(); //TODO this looks like a fkn move and ref
+        let w = unsafe{(&self.widget).short_lt()}; //TODO this looks like a fkn move and ref
         (0..w.childs())
             .map(move |i| w.child(i).unwrap() )
     }
@@ -263,6 +268,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
     }
     
+    #[inline]
     pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
         Link{
             widget: self.widget.with_env::<F>(),

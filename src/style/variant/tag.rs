@@ -33,6 +33,7 @@ pub enum StdTag<E> where E: Env {
 
     BorderMultiplierDefault,
     BorderMultiplier(u32),
+    BorderMultiply(u32),
 
     ColorDefault,
     ColorSpecific(ESColor<E>),
@@ -69,6 +70,7 @@ impl<E> IntoIterator for StdTag<E> where E: Env {
     type Item = StdTag<E>;
     type IntoIter = Once<StdTag<E>>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         once(self)
     }

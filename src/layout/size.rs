@@ -18,6 +18,7 @@ pub struct SizeAxis {
 }
 
 impl Size {
+    #[inline]
     pub const fn fixed(w: u32, h: u32) -> Self {
         Self{
             x: SizeAxis{
@@ -35,6 +36,7 @@ impl Size {
         }
     }
 
+    #[inline]
     pub fn add(&mut self, o: &Self, dir: Orientation) {
         match dir {
             Orientation::Horizontal => self.add_x(o),
@@ -42,16 +44,19 @@ impl Size {
         }
     }
 
+    #[inline]
     pub fn add_x(&mut self, o: &Self) {
         self.x += &o.x;
         self.y &= &o.y;
     }
 
+    #[inline]
     pub fn add_y(&mut self, o: &Self) {
         self.x &= &o.x;
         self.y += &o.y;
     }
 
+    #[inline]
     pub const fn empty() -> Self {
         Size {
             x: SizeAxis::empty(),
@@ -59,16 +64,19 @@ impl Size {
         }
     }
 
+    #[inline]
     pub fn flip(&mut self) {
         std::mem::swap(&mut self.x, &mut self.y)
     }
 
+    #[inline]
     pub fn par(&self, dir: Orientation) -> &SizeAxis {
         match dir {
             Orientation::Horizontal => &self.x,
             Orientation::Vertical => &self.y,
         }
     }
+    #[inline]
     pub fn unpar(&self, dir: Orientation) -> &SizeAxis {
         match dir {
             Orientation::Horizontal => &self.y,
@@ -76,6 +84,7 @@ impl Size {
         }
     }
 
+    #[inline]
     pub fn from_parallel(par: SizeAxis, unpar: SizeAxis, dir: Orientation) -> Self {
         match dir {
             Orientation::Horizontal => Self{x: par, y: unpar},
@@ -85,6 +94,7 @@ impl Size {
 }
 
 impl SizeAxis {
+    #[inline]
     pub const fn empty() -> Self {
         SizeAxis {
             min: 0,
@@ -94,6 +104,7 @@ impl SizeAxis {
         }
     }
 
+    #[inline]
     pub const fn fixed(s: u32) -> Self {
         SizeAxis {
             min: s,

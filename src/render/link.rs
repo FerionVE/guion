@@ -198,6 +198,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         todo!()
     }*/
     
+    #[inline]
     pub fn fork_with<'s>(&'s mut self, bounds: Option<Bounds>, viewport: Option<Bounds>, style: Option<ESVariant<E>>) -> RenderLink<'s,E> where 'a: 's {
         let mut r = self.forked(bounds.is_some(),viewport.is_some(),style.is_some());
         if let Some(b) = bounds {
@@ -232,14 +233,17 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         if !prev_style { r.prev_style = None; }
         r
     }
+    #[inline]
     fn _set_bounds(self) -> Self {
         self.r._set_bounds(&self.bounds);
         self
     }
+    #[inline]
     fn _set_viewport(self) -> Self {
         self.r._set_viewport(&self.viewport);
         self
     }
+    #[inline]
     fn _set_style(self) -> Self {
         self.r._set_style(&self.style);
         self
@@ -248,17 +252,20 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
 
 impl<'a,E> Deref for RenderLink<'a,E> where E: Env {
     type Target = ERenderer<E>;
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.r
     }
 }
 impl<'a,E> DerefMut for RenderLink<'a,E> where E: Env {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.r
     }
 }
 
 impl<'a,E> Drop for RenderLink<'a,E> where E: Env {
+    #[inline(never)]
     fn drop(&mut self) {
         if let Some(v) = &self.prev_bounds {
             self.r._set_bounds(v);

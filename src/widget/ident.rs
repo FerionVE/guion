@@ -9,22 +9,26 @@ pub struct WidgetIdent<E> where E: Env {
 }
 
 impl<E> WidgetIdent<E> where E: Env {
+    #[inline]
     pub fn is(&self, w: E::WidgetID) -> bool {
         self.id == w //TODO AsID trait
     }
     #[deprecated]
+    #[inline]
     pub fn from_path(path: E::WidgetPath, stor: &E::Storage) -> Result<Self,()> {
         stor.widget(path).map(|r| r.ident() )
     }
 }
 
 impl<E> PartialEq for WidgetIdent<E> where E: Env {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
 
 impl<E> AsRef<E::WidgetPath> for WidgetIdent<E> where E: Env {
+    #[inline]
     fn as_ref(&self) -> &E::WidgetPath {
         &self.path
     }
@@ -32,12 +36,14 @@ impl<E> AsRef<E::WidgetPath> for WidgetIdent<E> where E: Env {
 
 impl<E> Deref for WidgetIdent<E> where E: Env {
     type Target = E::WidgetPath;
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.path
     }
 }
 
 impl<E> RefClonable for WidgetIdent<E> where E: Env {
+    #[inline]
     fn refc(&self) -> Self {
         Self {
             id: self.id.clone(),
@@ -47,6 +53,7 @@ impl<E> RefClonable for WidgetIdent<E> where E: Env {
 }
 
 impl<E> Debug for WidgetIdent<E> where E: Env {
+    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }

@@ -11,9 +11,11 @@ impl<'w,E,State,Text,Stil> ICheckBox<'w,E> for CheckBox<'w,E,State,Text,Stil> wh
     Text: 'w,
     Stil: 'w,
 {
+    #[inline]
     fn set(&mut self, v: bool, c: &mut E::Context) {
         self.state.set(v,c);
     }
+    #[inline]
     fn toggle(&mut self, c: &mut E::Context) {
         self.state.set(!self.state.get(c),c);
     }

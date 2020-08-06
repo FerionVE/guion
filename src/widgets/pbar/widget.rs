@@ -1,4 +1,5 @@
 use super::*;
+use super::super::util::state::*;
 
 impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     E: Env,
@@ -47,6 +48,10 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
     }
+
+    impl_traitcast!(
+        dyn AtomState<E,f32> => |s| &s.value;
+    );
 }
 
 impl<'w,E,Stil> WidgetMut<'w,E> for ProgressBar<'w,E,Stil> where
@@ -67,6 +72,13 @@ impl<'w,E,Stil> WidgetMut<'w,E> for ProgressBar<'w,E,Stil> where
     fn into_child_mut(self: Box<Self>, _: usize) -> Result<ResolvableMut<'w,E>,()> {
         Err(())
     }
+
+    impl_traitcast!(
+        dyn AtomStateMut<E,f32> => |s| &s.value;
+    );
+    impl_traitcast_mut!(
+        dyn AtomStateMut<E,f32> => |s| &mut s.value;
+    );
 }
 
 pub fn crop(i: &Bounds, v: f32, o: Orientation) -> Bounds {

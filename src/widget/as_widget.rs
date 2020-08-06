@@ -12,17 +12,21 @@ pub trait AsWidgetMut<'w,E>: AsWidget<'w,E> where E: Env {
 }
 
 impl<'w,E,T> AsWidget<'w,E> for T where T: Widget<'w,E>, E: Env {
+    #[inline]
     fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'w: 's {
         Resolvable::Widget(self.box_ref())
     }
+    #[inline]
     fn into_ref(self) -> Resolvable<'w,E> {
         Resolvable::Widget(Box::new(self))
     }
 }
 impl<'w,E,T> AsWidgetMut<'w,E> for T where T: WidgetMut<'w,E>, E: Env {
+    #[inline]
     fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'w: 's {
         ResolvableMut::Widget(self.box_mut())
     }
+    #[inline]
     fn into_mut(self) -> ResolvableMut<'w,E> {
         ResolvableMut::Widget(Box::new(self))
     }

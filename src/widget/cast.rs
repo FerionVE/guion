@@ -9,6 +9,7 @@ pub unsafe trait Statize<E> {
     /// Must be `Self`, but with all lifetimes 'static
     type Statur: ?Sized + 'static;
     
+    #[inline(always)]
     fn _typeid() -> TypeId {
         TypeId::of::<Self::Statur>()
     }
@@ -20,6 +21,7 @@ pub unsafe trait Statize<E> {
 pub unsafe trait StatizeSized<E> {
     type StaturSized: Sized + 'static; //TODO rename to Statur
 
+    #[inline(always)]
     fn _typeid() -> TypeId {
         TypeId::of::<Self::StaturSized>()
     }
@@ -30,10 +32,12 @@ unsafe impl<T,E> StatizeSized<E> for T where T: Statize<E>, T::Statur: Sized {
 }
 
 impl<'w,E> dyn Widget<'w,E> where E: Env {
+    #[inline]
     pub fn is_type<T>(&self) -> bool where T: Statize<E> {
         self.typeid() == T::_typeid()
     }
 
+    #[inline]
     pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&*(self as *const dyn Widget<'w,E> as *const T)) }
@@ -42,6 +46,7 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
         }
     }
     /// downcast the current widget to a specific implementation
+    #[inline]
     pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_downcast_ref::<T>(self) {
             Some(v)
@@ -51,6 +56,7 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
             None
         }
     }
+    #[inline]
     pub fn _traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
         let t = unsafe{self._as_trait_ref(T::_typeid())};
         if let Some(v) = t {
@@ -60,6 +66,7 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
         }
     }
     /// this will definetly cause UB and delet ur computer
+    #[inline]
     pub fn traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_traitcast_ref::<T>(self) {
             Some(v)
@@ -71,10 +78,12 @@ impl<'w,E> dyn Widget<'w,E> where E: Env {
     }
 }
 impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
+    #[inline]
     pub fn is_type<T>(&self) -> bool where T: Statize<E> {
         self.typeid() == T::_typeid()
     }
     
+    #[inline]
     pub fn _downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize<E>+'d, 'w: 's, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&mut *(self as *mut dyn WidgetMut<'w,E> as *mut T)) }
@@ -83,6 +92,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
     /// downcast the current widget to a specific implementation
+    #[inline]
     pub fn downcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize<E>+'d, 'w: 's, 'd: 's {
         if self.is_type::<T>() {
             self._downcast_mut::<T>()
@@ -92,6 +102,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
             None
         }
     }
+    #[inline]
     pub fn _traitcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize<E>+?Sized+'d, 'w: 's, 'd: 's {
         let t = unsafe{self._as_trait_mut(T::_typeid())};
         if let Some(v) = t {
@@ -101,6 +112,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
     /// this will definetly cause UB and delet ur computer
+    #[inline]
     pub fn traitcast_mut<'s,'d,T>(&'s mut self) -> Option<&'s mut T> where T: Statize<E>+?Sized+'d, 'w: 's, 'd: 's {
         // god plz fix https://github.com/rust-lang/rust/issues/51826
         let t = unsafe{self._as_trait_mut(T::_typeid())};
@@ -113,6 +125,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
 
+    #[inline]
     pub fn _downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
         if self.is_type::<T>() {
             unsafe { Some(&*(self as *const dyn WidgetMut<'w,E> as *const T)) }
@@ -121,6 +134,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
     /// downcast the current widget to a specific implementation
+    #[inline]
     pub fn downcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+'d, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_downcast_ref::<T>(self) {
             Some(v)
@@ -130,6 +144,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
             None
         }
     }
+    #[inline]
     pub fn _traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
         let t = unsafe{WidgetMut::_as_trait_ref(self,T::_typeid())};
         if let Some(v) = t {
@@ -139,6 +154,7 @@ impl<'w,E> dyn WidgetMut<'w,E> where E: Env {
         }
     }
     /// this will definetly cause UB and delet ur computer
+    #[inline]
     pub fn traitcast_ref<'s,'d,T>(&'s self) -> Option<&'s T> where T: Statize<E>+?Sized+'d, 'w: 's, 'w: 'd, 'd: 's {
         if let Some(v) = Self::_traitcast_ref::<T>(self) {
             Some(v)

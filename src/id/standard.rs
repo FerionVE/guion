@@ -12,19 +12,25 @@ pub enum StdID {
 }
 
 impl StdID {
+    #[inline]
     pub fn new() -> Self {
         StdID::Dyn(ID_ITER.fetch_add(1,Ordering::Relaxed))
     }
 }
 
+/// Macro for defining const StdIDs
 #[macro_export]
-macro_rules! define_const_id {
+macro_rules! const_std_id {
     ($n:ident) => {
         #[inline]
         pub fn $n() -> $crate::id::standard::StdID {
             struct Ident;
-            $crate::id::standard::Const(std::any::TypeId::of::<Ident>())
+            $crate::id::standard::StdID::Const(std::any::TypeId::of::<Ident>())
         }
+    };
+    ($n:ident $($nn:ident)+) => {
+        $crate::const_std_id!($n);
+        $crate::const_std_id!($($nn)+);
     };
 }
 
@@ -33,19 +39,24 @@ impl WidgetID for StdID {
 }
 
 impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> {
+    #[inline]
     fn from_id(id: E::WidgetID) -> Self {
         id.into()
     }
+    #[inline]
     fn _eq_id(&self, id: E::WidgetID) -> bool {
         self == &id.into()
     }
+    #[inline]
     fn into_id(self) -> E::WidgetID {
         self.into()
     }
 
+    #[inline]
     fn resolves_to_id(&self, id: E::WidgetID) -> bool {
         self == &id.into()
     }
+    #[inline]
     fn resolves_to_path(&self, p: E::WidgetPath) -> bool {
         p.tip().map_or(false,|tip| { //TODO verify correctness of None => false
             *self == tip.clone().into_id().into()
@@ -65,4 +76,8 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> 
         todo!()
     }
     
+}
+
+mod const_id_test {
+    const_std_id!(Foo Bar);
 }

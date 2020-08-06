@@ -58,6 +58,7 @@ pub enum ResolvableMut<'a,E> where E: Env {
 
 impl<'a,E> ResolvableMut<'a,E> where E: Env {
     /// unwrap widget
+    #[inline]
     pub fn as_widget(self) -> Result<WidgetRefMut<'a,E>,E::WidgetPath> {
         match self {
             ResolvableMut::Widget(w) => Ok(w),
