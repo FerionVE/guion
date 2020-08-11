@@ -1,8 +1,10 @@
 use super::*;
+use std::sync::Arc;
 
 pub mod caption;
 pub mod state;
 pub mod remote_state;
+pub mod validation;
 
 pub trait Data<T> {
     fn with<R>(f: impl FnOnce(T)->R)->R;
@@ -26,3 +28,5 @@ impl<E> SizeCache<E> where E: Env {
         self.c = None;
     }
 }
+
+pub type LocalGlyphCache<E: Env> = Option<(Arc<ESGlyphs<E>>,Arc<dyn Any>)>;

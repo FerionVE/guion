@@ -1,6 +1,9 @@
 use super::*;
-use util::{state::{AtomState, AtomStateMut}, caption::CaptionMut};
+use util::{state::{AtomState, AtomStateMut}, caption::CaptionMut, LocalGlyphCache};
 use state::TBState;
+use std::sync::Arc;
+use validation::*;
+
 
 pub trait ITextBoxMut<'w,E> where E: Env {
     fn insert_text(&mut self, t: &str, ctx: &mut E::Context);
@@ -12,17 +15,18 @@ pub trait ITextBoxMut<'w,E> where E: Env {
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> ITextBoxMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBoxMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<'w>+StatizeSized<E>,
+    Text: CaptionMut<'w,E>+ValidationMut<E>+StatizeSized<E>,
     Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
     Curs: AtomStateMut<E,Cursor>+StatizeSized<E>,
     CursorStickX: AtomStateMut<E,Option<u32>>+StatizeSized<E>,
-    V: AtomState<E,bool>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
 {
     fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
         let mut cursor = self.cursor.get(ctx);
@@ -61,7 +65,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> ITextBoxMut<'w,E> for TextBox<'w
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
     fn move_cursor_y(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context, b: &Bounds) {
-        let mut s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,ctx,&b);
+        let g = self.glyphs2(ctx);
+        let mut s = TBState::<E>::retrieve(&self.text,g,&self.scroll,&self.cursor,ctx,&b);
 
         if s.glyphs.line_count() != 0 {
             let (_,mut line) = s.glyphs.coord_of(s.cursor.caret).unwrap();
@@ -91,7 +96,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> ITextBoxMut<'w,E> for TextBox<'w
         }
     }
     fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context) {
-        let mut s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,ctx,&b);
+        let g = self.glyphs2(ctx);
+        let mut s = TBState::<E>::retrieve(&self.text,g,&self.scroll,&self.cursor,ctx,&b);
 
         let mut tpos = mouse - b.off + Offset::from(s.off);
         tpos.y += s.glyphs.line_ascent() as i32; //TODO FIX boundary precision all over the place
@@ -109,7 +115,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> ITextBoxMut<'w,E> for TextBox<'w
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds) {
-        let s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,ctx,&b);
+        let g = self.glyphs2(ctx);
+        let s = TBState::<E>::retrieve(&self.text,g,&self.scroll,&self.cursor,ctx,&b);
         
         if let Some(c) = s.cursor_display_pos(s.cursor.caret) { //TODO fix as it should work if cursor is at end
             let cb = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
@@ -129,4 +136,69 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> ITextBoxMut<'w,E> for TextBox<'w
 
 unsafe impl<'w,E> Statize<E> for dyn ITextBoxMut<'w,E> where E: 'static {
     type Statur = dyn ITextBoxMut<'static,E>;
+}
+
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+    E: Env,
+    ERenderer<E>: RenderStdWidgets<E>,
+    EEvent<E>: StdVarSup<E>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
+    E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    Text: Caption<'w,E>+Validation<E>+StatizeSized<E>,
+    Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
+    Curs: AtomState<E,Cursor>+StatizeSized<E>,
+    CursorStickX: AtomState<E,Option<u32>>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+{
+    pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<ESGlyphs<E>> {
+        if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
+            if self.text.valid(&c) {
+                return v;
+            }
+        }
+
+        let text = self.text.caption();
+        let glyphs = Arc::new(ESGlyphs::<E>::generate(text.as_ref(),(20.0,20.0),l.ctx));
+
+        let g = glyphs.refc();
+        l.mutate_closure(Box::new(move |mut w,ctx,_| {
+            let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
+            let key = vali.validate();
+            let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();
+            cache.set( Some((g,key)) ,ctx);
+        }));
+
+        glyphs
+    }
+}
+
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+    E: Env,
+    ERenderer<E>: RenderStdWidgets<E>,
+    EEvent<E>: StdVarSup<E>,
+    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
+    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
+    Text: CaptionMut<'w,E>+ValidationMut<E>+StatizeSized<E>,
+    Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
+    Curs: AtomStateMut<E,Cursor>+StatizeSized<E>,
+    CursorStickX: AtomStateMut<E,Option<u32>>+StatizeSized<E>,
+    Stil: StatizeSized<E>+Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+{
+    pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<ESGlyphs<E>> {
+        if let Some((v,c)) = self.glyph_cache.get(ctx) {
+            if self.text.valid(&c) {
+                return v;
+            }
+        }
+
+        let text = self.text.caption();
+        let glyphs = Arc::new(ESGlyphs::<E>::generate(text.as_ref(),(20.0,20.0),ctx));
+
+        let key = self.text.validate();
+        self.glyph_cache.set( Some((glyphs.refc(),key)),ctx);
+
+        glyphs
+    }
 }

@@ -57,6 +57,14 @@ impl Size {
     }
 
     #[inline]
+    pub fn max(&self, o: &Self) -> Self {
+        Self{
+            x: self.x.max(&o.x),
+            y: self.y.max(&o.y),
+        }
+    }
+
+    #[inline]
     pub const fn empty() -> Self {
         Size {
             x: SizeAxis::empty(),
@@ -113,4 +121,54 @@ impl SizeAxis {
             pressure: 0.0,
         }
     }
+
+    #[inline]
+    pub fn max(&self, r: &SizeAxis) -> Self {
+        let mut s = self.clone();
+
+        s.min = s.min.max(r.min);
+        s.preferred = s.preferred.max(r.preferred);
+        s.max = s.max.with_if( &r.max, #[inline] |s,r| (*s).max(*r) );
+
+        s.max.map(#[inline] |m| s.preferred = s.preferred.min(m) );
+        s.preferred = s.preferred.max(s.min);
+        
+        s.pressure = s.pressure.max(r.pressure);
+
+        s
+    }
+}
+
+#[macro_export]
+macro_rules! constraint {
+    (# $min:literal ~ $pref:literal - $max:tt @ $p:literal | $($m:tt)*) => {
+        $crate::layout::size::Size{
+            x: $crate::constraint!(#$min ~ $pref - $max @ $p),
+            y: $crate::constraint!($($m)*),
+        }
+    };
+    (# $min:literal ~ $pref:literal - None @ $p:literal) => {
+        SizeAxis{min:$min,preferred:$pref,max:None,pressure:$p}
+    };
+    (# $min:literal ~ $pref:literal - $max:literal @ $p:literal) => {
+        $crate::layout::size::SizeAxis{min:$min,preferred:$pref,max:Some($max),pressure:$p}
+    };
+    (# $min:literal ~ $pref:literal - $max:tt $($m:tt)*) => {
+        $crate::constraint!(#$min ~ $pref - $max @ 1.0 $($m)*)
+    };
+    ($min:literal ~ $pref:literal - $max:literal $($m:tt)*) => {
+        $crate::constraint!(#$min ~ $pref - $max $($m)*)
+    };
+    ($min:literal ~ $pref:literal - $($m:tt)*) => {
+        $crate::constraint!(#$min ~ $pref - None $($m)*)
+    };
+    ($min:literal ~ $pref:literal $($m:tt)*) => {
+        $crate::constraint!(#$min ~ $pref - $pref $($m)*)
+    };
+    (~ $pref:literal $($m:tt)*) => {
+        $crate::constraint!(0 ~ $pref $($m)*)
+    };
+    ($pref:literal $($m:tt)*) => {
+        $crate::constraint!($pref ~ $pref $($m)*)
+    };
 }

@@ -44,10 +44,18 @@ impl Border {
     }
 }
 
+qwutils::opion!(mul(Border,u32) |s,r| {
+    let r = r.clone();
+    s.left *= r;
+    s.right *= r;
+    s.top *= r;
+    s.bottom *= r;
+});
+
 qwutils::opion!(div(Border,u32) |s,r| {
     let r = r.clone();
     s.left /= r;
     s.right /= r;
     s.top /= r;
-    s.top /= r;
+    s.bottom /= r;
 });

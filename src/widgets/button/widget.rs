@@ -7,7 +7,7 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    Text: Caption<'w>+StatizeSized<E>,
+    Text: Caption<'w,E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -92,7 +92,7 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     }
 
     impl_traitcast!(
-        dyn Caption => |s| &s.text;
+        dyn Caption<E> => |s| &s.text;
     );
 }
 
@@ -102,7 +102,7 @@ impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    Text: CaptionMut<'w>+StatizeSized<E>,
+    Text: CaptionMut<'w,E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
@@ -119,10 +119,10 @@ impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
     }
 
     impl_traitcast!(
-        dyn CaptionMut => |s| &s.text;
+        dyn CaptionMut<E> => |s| &s.text;
     );
     impl_traitcast_mut!(
-        dyn CaptionMut => |s| &mut s.text;
+        dyn CaptionMut<E> => |s| &mut s.text;
     );
 }
 
@@ -132,7 +132,7 @@ impl<'w,E,S,Stil> Button<'w,E,S,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>>,
     E::Context: CtxStdState<E>,
-    S: Caption<'w>+StatizeSized<E>
+    S: Caption<'w,E>+StatizeSized<E>
 {
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
         let id = l.id();

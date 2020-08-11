@@ -195,6 +195,11 @@ pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static 
         None
     }
 
+    #[inline]
+    fn pass(self) -> Self where Self: Sized {
+        self
+    }
+
     /// The impl_traitcast! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]

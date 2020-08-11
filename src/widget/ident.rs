@@ -13,7 +13,7 @@ impl<E> WidgetIdent<E> where E: Env {
     pub fn is(&self, w: E::WidgetID) -> bool {
         self.id == w //TODO AsID trait
     }
-    #[deprecated]
+    #[deprecated="this resolves the widget"]
     #[inline]
     pub fn from_path(path: E::WidgetPath, stor: &E::Storage) -> Result<Self,()> {
         stor.widget(path).map(|r| r.ident() )
@@ -54,7 +54,7 @@ impl<E> RefClonable for WidgetIdent<E> where E: Env {
 
 impl<E> Debug for WidgetIdent<E> where E: Env {
     #[inline]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
 }

@@ -1,19 +1,17 @@
 use super::*;
 use util::{caption::CaptionMut, state::AtomState};
-use std::ops::{Range, RangeInclusive};
+use std::{sync::Arc, ops::{Range, RangeInclusive}};
 
 pub struct TBState<E> where E: Env {
     pub off: (u32,u32), //TODO fix pub
     pub max_off: (u32,u32),
     pub cursor: Cursor,
-    pub glyphs: ESGlyphs<E>,
+    pub glyphs: Arc<ESGlyphs<E>>,
 }
 
 impl<E> TBState<E> where E: Env {
-    pub fn retrieve<'a,S,P,C>(s: &S, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a>, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
+    pub fn retrieve<'a,S,P,C>(caption: &S, glyphs: Arc<ESGlyphs<E>>, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a,E>, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
         let off = p.get(ctx);
-        let caption = s.caption();
-        let glyphs = ESGlyphs::<E>::generate(caption.as_ref(),(20.0,20.0),ctx);
         //assert_eq!(glyphs.chars() as usize,caption.len()+1);
         let siz = glyphs.size();
         let max_off = (
@@ -214,7 +212,7 @@ impl Cursor {
     pub fn limit(&mut self, min: u32) {
         *self = self.min(min);
     }
-    pub fn del_selection<'a,S>(&mut self, c: &mut S) where S: CaptionMut<'a> {
+    pub fn del_selection<'a,S,E>(&mut self, c: &mut S) where S: CaptionMut<'a,E> {
         let (start,len) = self.start_len();
         c.pop_left((start+len) as usize, len as usize);
         self.caret = start;

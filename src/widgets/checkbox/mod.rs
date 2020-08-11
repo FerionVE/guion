@@ -53,7 +53,7 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
         self
     }
     #[inline]
-    pub fn with_text<T>(self, text: T) -> CheckBox<'w,E,State,T,Stil> where T: Caption<'w>+StatizeSized<E> {
+    pub fn with_text<T>(self, text: T) -> CheckBox<'w,E,State,T,Stil> where T: 'w {
         CheckBox{
             id: self.id,
             size: self.size,

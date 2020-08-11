@@ -1,5 +1,5 @@
 use super::*;
-use util::{state::*, caption::CaptionMut};
+use util::{state::*};
 
 impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,

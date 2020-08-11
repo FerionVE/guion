@@ -38,7 +38,7 @@ impl<E,T> AtomStateMut<E,T> for RemoteState<E,T> where E: Env, T: Clone + Defaul
         )
     }
     #[inline]
-    fn set_direct(&mut self, v: T) -> Result<(),()> {
+    fn set_direct(&mut self, _: T) -> Result<(),()> {
         Err(())
     }
 }

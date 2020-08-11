@@ -1,6 +1,5 @@
 use super::*;
 use std::marker::PhantomData;
-use util::caption::Caption;
 
 pub mod widget;
 pub mod imp;
@@ -61,7 +60,7 @@ impl<'w,E,W,Scroll,Stil> Area<'w,E,W,Scroll,Stil> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(mut self, style: SStil) -> Area<'w,E,W,Scroll,SStil> where SStil: Statize<E>+'w {
+    pub fn with_style<SStil>(self, style: SStil) -> Area<'w,E,W,Scroll,SStil> where SStil: Statize<E>+'w {
         Area{
             id: self.id,
             size: self.size,

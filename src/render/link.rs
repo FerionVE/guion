@@ -14,7 +14,6 @@ pub struct RenderLink<'a,E> where E: Env {
 
     /// whether rendering is enforced (e.g. if invalidation from outside occured)
     pub force: bool,
-    prev_force: bool,
 }
 
 impl<'a,E> RenderLink<'a,E> where E: Env {
@@ -28,7 +27,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             style: style,
             prev_style: None,
             force: force,
-            prev_force: force,
         }
             ._set_bounds()
             ._set_style()
@@ -226,7 +224,6 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             style: self.style.clone(),
             prev_style: Some(&self.style),
             force: self.force,
-            prev_force: self.force,
         };
         if !prev_bounds { r.prev_bounds = None; }
         if !prev_viewport { r.prev_viewport = None; }

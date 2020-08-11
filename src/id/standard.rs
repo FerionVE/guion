@@ -78,6 +78,7 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> 
     
 }
 
+#[allow(unused)]
 mod const_id_test {
-    const_std_id!(Foo Bar);
+    const_std_id!(foo bar);
 }

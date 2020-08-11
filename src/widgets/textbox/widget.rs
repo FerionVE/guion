@@ -1,20 +1,21 @@
 use super::*;
-use util::{state::*, caption::CaptionMut};
+use util::{state::*, caption::CaptionMut, LocalGlyphCache};
 use state::{Cursor, TBState};
 use super::imp::ITextBoxMut;
+use validation::*;
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: Caption<'w>+StatizeSized<E>,
+    Text: Caption<'w,E>+Validation<E>+StatizeSized<E>,
     Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
     Curs: AtomState<E,Cursor>+StatizeSized<E>,
     CursorStickX: AtomState<E,Option<u32>>+StatizeSized<E>,
-    V: AtomState<E,bool>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -32,7 +33,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Te
         ][..])
             .fill_border_inner(l.ctx);
         let mut r = r.inside_border_by(&[StdTag::BorderVisual,StdTag::BorderMultiplier(2)][..],l.ctx);
-        let s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
+        let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
         for b in s.selection_box() {
             let b = b - s.off2();
             r.slice(&b)
@@ -101,7 +102,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Te
                 passed = true;
             }else if ee.key == EEKey::<E>::A && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let wc = w.traitcast_mut::<dyn CaptionMut>().unwrap();
+                    let wc = w.traitcast_mut::<dyn CaptionMut<E>>().unwrap();
                     cursor.select = 0;
                     cursor.caret = wc.len() as u32;
                     w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
@@ -145,7 +146,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Te
             }
             passed = true;
         } else if let Some(ee) = e.0.is_mouse_scroll() {
-            let s = TBState::<E>::retrieve(&self.text,&self.scroll,&self.cursor,&mut l.ctx,&b);
+            let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
             
             let off = (
                 s.off.0 as i32 + ee.x,
@@ -203,25 +204,25 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> Widget<'w,E> for TextBox<'w,E,Te
     }
 
     impl_traitcast!(
-        dyn Caption => |s| &s.text;
+        dyn Caption<E> => |s| &s.text;
         dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
         dyn AtomState<E,Cursor> => |s| &s.cursor;
         dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
     );
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> WidgetMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> WidgetMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<'w>+StatizeSized<E>,
+    Text: CaptionMut<'w,E>+ValidationMut<E>+StatizeSized<E>,
     Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
     Curs: AtomStateMut<E,Cursor>+StatizeSized<E>,
     CursorStickX: AtomStateMut<E,Option<u32>>+StatizeSized<E>,
-    V: AtomState<E,bool>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]
@@ -237,18 +238,20 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,V,Stil> WidgetMut<'w,E> for TextBox<'w,E
     }
 
     impl_traitcast!(
-        dyn CaptionMut => |s| &s.text;
+        dyn CaptionMut<E> => |s| &s.text;
         dyn AtomStateMut<E,(u32,u32)> => |s| &s.scroll;
         dyn AtomStateMut<E,Cursor> => |s| &s.cursor;
         dyn AtomStateMut<E,Option<u32>> => |s| &s.cursor_stick_x;
         dyn ITextBoxMut<'w,E> => |s| s;
     );
     impl_traitcast_mut!(
-        dyn CaptionMut => |s| &mut s.text;
+        dyn CaptionMut<E> => |s| &mut s.text;
         dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
         dyn AtomStateMut<E,Cursor> => |s| &mut s.cursor;
         dyn AtomStateMut<E,Option<u32>> => |s| &mut s.cursor_stick_x;
         dyn ITextBoxMut<'w,E> => |s| s;
+        dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
+        dyn ValidationMut<E> => |s| &mut s.text;
     );
 }
 

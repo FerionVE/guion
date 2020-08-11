@@ -56,9 +56,7 @@ pub trait ShortResolvableRef<'l,'s,'y,E> where 'l: 's, 'l: 'y, 's: 'y, E: Env {
 impl<'l,'s,'y,E> ShortResolvableRef<'l,'s,'y,E> for &'y Resolvable<'l,E> where 'l: 's, 'l: 'y, 's: 'y, E: Env {
     #[inline]
     unsafe fn short_lt(self) -> &'y Resolvable<'s,E> {
-        unsafe{
-            std::mem::transmute::<&'y Resolvable<'l,E>,&'y Resolvable<'s,E>>(self)
-        }
+        std::mem::transmute::<&'y Resolvable<'l,E>,&'y Resolvable<'s,E>>(self)
     }
 }
 impl<'l:'s,'s,E: Env> ResolvableMut<'l,E> {
@@ -77,9 +75,7 @@ pub trait ShortResolvableVec<'l,'s,E> where 'l: 's, E: Env {
 impl<'l,'s,E> ShortResolvableVec<'l,'s,E> for Vec<Resolvable<'l,E>> where 'l: 's, E: Env {
     #[inline]
     unsafe fn short_lt(self) -> Vec<Resolvable<'s,E>> {
-        unsafe{
-            std::mem::transmute::<Vec<Resolvable<'l,E>>,Vec<Resolvable<'s,E>>>(self)
-        }
+        std::mem::transmute::<Vec<Resolvable<'l,E>>,Vec<Resolvable<'s,E>>>(self)
     }
 }
 
@@ -108,9 +104,7 @@ pub trait ShortResolvedRef<'l,'s,'y,E> where 'l: 's, 'l: 'y, 's: 'y, E: Env {
 impl<'l,'s,'y,E> ShortResolvedRef<'l,'s,'y,E> for &'y Resolved<'l,E> where 'l: 's, 'l: 'y, 's: 'y, E: Env {
     #[inline]
     unsafe fn short_lt(self) -> &'y Resolved<'s,E> {
-        unsafe{
-            std::mem::transmute::<&'y Resolved<'l,E>,&'y Resolved<'s,E>>(self)
-        }
+        std::mem::transmute::<&'y Resolved<'l,E>,&'y Resolved<'s,E>>(self)
     }
 }
 
@@ -120,9 +114,7 @@ pub trait ShortWidgetRef<'l,'s,E> where 'l: 's, E: Env {
 impl<'l,'s,E> ShortWidgetRef<'l,'s,E> for WidgetRef<'l,E> where 'l: 's, E: Env {
     #[inline]
     unsafe fn short_lt(self) -> WidgetRef<'s,E> {
-        unsafe{
-            std::mem::transmute::<WidgetRef<'l,E>,WidgetRef<'s,E>>(self)
-        }
+        std::mem::transmute::<WidgetRef<'l,E>,WidgetRef<'s,E>>(self)
     }
 }
 pub trait ShortWidgetRefMut<'l,'s,E> where 'l: 's, E: Env {
@@ -131,9 +123,7 @@ pub trait ShortWidgetRefMut<'l,'s,E> where 'l: 's, E: Env {
 impl<'l,'s,E> ShortWidgetRefMut<'l,'s,E> for WidgetRefMut<'l,E> where 'l: 's, E: Env {
     #[inline]
     unsafe fn short_lt(self) -> WidgetRefMut<'s,E> {
-        unsafe{
-            std::mem::transmute::<WidgetRefMut<'l,E>,WidgetRefMut<'s,E>>(self)
-        }
+        std::mem::transmute::<WidgetRefMut<'l,E>,WidgetRefMut<'s,E>>(self)
     }
 }
 
@@ -143,9 +133,7 @@ pub trait ShortRefWidgetRef<'l,'s,'y,E> where 'l: 's, 's: 'y, 'l: 'y, E: Env {
 impl<'l,'s,'y,E> ShortRefWidgetRef<'l,'s,'y,E> for &'y dyn Widget<'l,E> where 'l: 's, 's: 'y, 'l: 'y, E: Env {
     #[inline]
     unsafe fn short_lt(self) -> &'y dyn Widget<'s,E> {
-        unsafe{
-            std::mem::transmute::<&'y dyn Widget<'l,E>,&'y dyn Widget<'s,E>>(self)
-        }
+        std::mem::transmute::<&'y dyn Widget<'l,E>,&'y dyn Widget<'s,E>>(self)
     }
 }
 pub trait ShortRefWidgetMut<'l,'s,'y,E> where 'l: 's, 's: 'y, 'l: 'y, E: Env {
@@ -154,8 +142,6 @@ pub trait ShortRefWidgetMut<'l,'s,'y,E> where 'l: 's, 's: 'y, 'l: 'y, E: Env {
 impl<'l,'s,'y,E> ShortRefWidgetMut<'l,'s,'y,E> for &'y mut dyn WidgetMut<'l,E> where 'l: 's, 's: 'y, 'l: 'y, E: Env {
     #[inline]
     unsafe fn short_lt(self) -> &'y mut dyn WidgetMut<'s,E> {
-        unsafe{
-            std::mem::transmute::<&'y mut dyn WidgetMut<'l,E>,&'y mut dyn WidgetMut<'s,E>>(self)
-        }
+        std::mem::transmute::<&'y mut dyn WidgetMut<'l,E>,&'y mut dyn WidgetMut<'s,E>>(self)
     }
 }

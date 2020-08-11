@@ -172,6 +172,9 @@ unsafe impl<'w,E> Statize<E> for dyn Widget<'w,E> where E: Env {
 unsafe impl<'w,E> Statize<E> for dyn WidgetMut<'w,E> where E: Env {
     type Statur = dyn WidgetMut<'static,E>;
 }
+unsafe impl<E> Statize<E> for dyn Any {
+    type Statur = dyn Any;
+}
 
 mod imp {
     use super::*;
@@ -228,7 +231,8 @@ mod imp {
         str;String;//&'static str;
         Path;PathBuf;
         crate::widgets::textbox::state::Cursor;
-        StdID
+        StdID;
+        Size;SizeAxis
     );
 
     macro_rules! impl_statize_tuple {
