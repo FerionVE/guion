@@ -1,6 +1,6 @@
 use super::*;
 use std::marker::PhantomData;
-use util::{LocalGlyphCache, caption::Caption};
+use util::{LocalGlyphCache, caption::Caption, remote_state::RemoteState};
 
 pub mod widget;
 
@@ -26,11 +26,30 @@ impl<'w,E> Label<'w,E,&'static str,(),LocalGlyphCache<E>> where
     pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
-            size: Size::empty().into(),
+            size: constraint!(0|0).into(),
             style: (),
             text: "",
             align: (0.5,0.5),
             glyph_cache: None,
+            p: PhantomData,
+        }
+    }
+}
+
+impl<'w,E,Text> Label<'w,E,Text,(),RemoteState<E,LocalGlyphCache<E>>> where
+    E: Env,
+    E::Context: DynState<E>,
+    Text: 'w,
+{
+    #[inline]
+    pub fn immediate(id: E::WidgetID, text: Text) -> Self {
+        Self{
+            id: id.clone(),
+            size: constraint!(0|0).into(),
+            style: (),
+            text,
+            align: (0.5,0.5),
+            glyph_cache: RemoteState::for_widget(id),
             p: PhantomData,
         }
     }

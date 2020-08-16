@@ -34,7 +34,7 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderVisual));
         todo!()
     }
-    fn _size(&self, _: Link<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -47,7 +47,7 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
         vec![self.inner.into_ref()]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
         todo!() // TODO complete inner bounds or just view
     }
     fn focusable(&self) -> bool {

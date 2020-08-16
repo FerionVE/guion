@@ -9,7 +9,7 @@ pub struct RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Conte
 
 impl<E,T> RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: DynState<E> {
     #[inline]
-    pub fn new(id: E::WidgetID) -> Self {
+    pub fn for_widget(id: E::WidgetID) -> Self {
         Self{
             id,
             _p: PhantomData,

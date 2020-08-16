@@ -6,8 +6,6 @@ mod imp;
 
 pub use size::*;
 
-///Layouting with Lazout (qwertz intensifies)
-
 #[derive(Clone,Copy)]
 pub enum Orientation {
     Horizontal,
@@ -30,6 +28,7 @@ pub trait ISize: From<Size> + Into<Size> + Clone {
     fn add_x(&mut self, o: &Self);
     fn add_y(&mut self, o: &Self);
     fn flip(&mut self);
+    //TODO fully trait SizeConstraint features
     fn as_std(&self) -> Size;
     fn add_space(&mut self, v: u32, dir: Orientation);
 }

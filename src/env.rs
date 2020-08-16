@@ -11,6 +11,7 @@ pub trait Env: Sized + Clone + PartialEq + Debug + Send + Sync + 'static {
     type WidgetID: WidgetID;
     type WidgetPath: WidgetPath<Self>;
     type ValidState: ValidState;
+    type Message: 'static;
     //type Commit: Eq + Ord;
 }
 

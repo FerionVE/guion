@@ -28,7 +28,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) this method should not be called from external, rather [`Link::event`](link/struct.Link.html#method.event)
     fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp;
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) this method should not be called from external, rather [`Link::size`](link/struct.Link.html#method.size)
-    fn _size(&self, l: Link<E>) -> ESize<E>;
+    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E>;
 
     fn childs(&self) -> usize;
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> where 'w: 's;
@@ -101,16 +101,16 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
         Err(())
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
         if i.is_empty() {
             return Ok(*b)
         }
         let child = self.resolve_child(i.index(0))?;
-        let bounds = self.child_bounds(l,b,force)?;
+        let bounds = self.child_bounds(l,b,e,force)?;
         
         Ok(bounds[child])
     }
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()>;
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()>;
     
     /// attach widget's id to the given parent path
     #[inline]
@@ -138,7 +138,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     
     #[inline]
     fn inner<'s>(&'s self) -> Option<&'s dyn Widget<'w,E>> {
-        None
+        None //TODO fix inner mechanism AsWidget
     }
 
     fn debug_type_name(&self) {
@@ -155,6 +155,13 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
 }
 
 pub trait WidgetMut<'w,E>: Widget<'w,E> + WBaseMut<'w,E> where E: Env + 'static {
+    /// an alternative way to pass mutations. See [Link::Message]
+    #[allow(unused)]
+    #[inline]
+    fn message(&mut self, m: E::Message) {
+
+    }
+
     #[allow(unused)]
     #[inline]
     fn _set_invalid(&mut self, v: bool) {

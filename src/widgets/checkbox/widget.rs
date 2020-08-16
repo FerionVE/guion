@@ -84,7 +84,7 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
         }
         e.0.is_mouse_down().is_some()
     }
-    fn _size(&self, _: Link<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -97,7 +97,7 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
         vec![]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool { true }

@@ -1,6 +1,6 @@
 use super::*;
 use std::sync::Arc;
-use util::state::{AtomStateMut, AtomState};
+use util::{caption::CaptionMut, state::{AtomStateMut, AtomState}};
 use validation::{ValidationMut, Validation};
 
 impl<'w,E,Text,Stil,GlyphCache> Widget<'w,E> for Label<'w,E,Text,Stil,GlyphCache> where
@@ -29,7 +29,7 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<'w,E> for Label<'w,E,Text,Stil,GlyphCache
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
     }
-    fn _size(&self, l: Link<E>) -> ESize<E> {
+    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         let ms = self.glyphs(l).size();
         let ms = Size::fixed(ms.w, ms.h);
         ms.max( &self.size.as_std() ).into()
@@ -44,7 +44,7 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<'w,E> for Label<'w,E,Text,Stil,GlyphCache
         vec![]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {
@@ -56,6 +56,10 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<'w,E> for Label<'w,E,Text,Stil,GlyphCache
     fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
     }
+
+    impl_traitcast!(
+        dyn Caption<E> => |s| &s.text;
+    );
 }
 
 impl<'w,E,Text,Stil,GlyphCache> WidgetMut<'w,E> for Label<'w,E,Text,Stil,GlyphCache> where
@@ -63,7 +67,7 @@ impl<'w,E,Text,Stil,GlyphCache> WidgetMut<'w,E> for Label<'w,E,Text,Stil,GlyphCa
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Text: Caption<'w,E>+ValidationMut<E>+StatizeSized<E>,
+    Text: CaptionMut<'w,E>+ValidationMut<E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
 {
@@ -80,9 +84,13 @@ impl<'w,E,Text,Stil,GlyphCache> WidgetMut<'w,E> for Label<'w,E,Text,Stil,GlyphCa
         Err(())
     }
 
+    impl_traitcast!(
+        dyn CaptionMut<E> => |s| &s.text;
+    );
     impl_traitcast_mut!(
         dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
         dyn ValidationMut<E> => |s| &mut s.text;
+        dyn CaptionMut<E> => |s| &mut s.text;
     );
 }
 

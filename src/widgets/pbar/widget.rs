@@ -24,7 +24,7 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
     }
-    fn _size(&self, _: Link<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -36,7 +36,7 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         vec![]
     }
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {

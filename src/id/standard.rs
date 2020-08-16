@@ -38,6 +38,13 @@ impl WidgetID for StdID {
     
 }
 
+impl WidgetIDAlloc for StdID {
+    #[inline]
+    fn new_id() -> Self where Self: Sized {
+        Self::new()
+    }
+}
+
 impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> {
     #[inline]
     fn from_id(id: E::WidgetID) -> Self {

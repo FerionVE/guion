@@ -70,10 +70,10 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
                     let mut wx1 = wx0 + ww as i32;
 
                     let l_min = l.for_child(0)
-                        .expect("Dead Path inside Pane").size()
+                        .expect("Dead Path inside Pane").size(&e.4)
                         .as_std().par(o).min;
                     let r_min = l.for_child(1)
-                        .expect("Dead Path inside Pane").size()
+                        .expect("Dead Path inside Pane").size(&e.4)
                         .as_std().par(o).min;
 
                     wx0 += (self.width/2) as i32;
@@ -115,13 +115,13 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
         }
         passed
     }
-    fn _size(&self, mut l: Link<E>) -> ESize<E> {
+    fn _size(&self, mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         let mut s = ESize::<E>::empty();
-        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(), self.orientation) ).expect("Dead Path inside Pane");
+        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(e), self.orientation) ).expect("Dead Path inside Pane");
         s.add_space(self.width,self.orientation);
         s
     }
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
         Ok(self.calc_bounds(b,self.state.get(l.ctx)))
     }
     fn childs(&self) -> usize {

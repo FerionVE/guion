@@ -32,6 +32,16 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f},o,p)
     }
+    /// enqueue message-style invoking of [WidgetMut::message]
+    #[inline]
+    pub fn message_mut(&mut self, m: E::Message) {
+        self.message_mut_at(m,StdOrder::PostCurrent,0)
+    }
+    /// enqueue message-style invoking of [WidgetMut::message]
+    #[inline]
+    pub fn message_mut_at<O>(&mut self, m: E::Message, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::MutMessage{path: self.widget.path.refc(),msg:m},o,p)
+    }
     /// enqueue immutable access to this widget
     #[inline] 
     pub fn later(&mut self, f: fn(WidgetRef<E>,&mut E::Context)) {
@@ -93,8 +103,8 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.ctx.send_event(self.widget.reference(),e,child)
     }
     #[inline]
-    pub fn size(&mut self) -> ESize<E> {
-        self.ctx.size(self.widget.reference())
+    pub fn size(&mut self, e: &ESVariant<E>) -> ESize<E> {
+        self.ctx.size(self.widget.reference(),e)
     }
     #[inline]
     #[deprecated="Non-root link is panic"]
@@ -130,21 +140,21 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// bypasses Context and Handler(s)
     #[inline]
-    pub fn _size(&mut self) -> ESize<E> {
+    pub fn _size(&mut self, e: &ESVariant<E>) -> ESize<E> {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget)._size(w)
+        (**self.widget)._size(w,e)
     }
 
     #[deprecated="Not needed in OOF anymore"]
-    pub fn trace_bounds(&mut self, root_bounds: &Bounds, force: bool) -> Bounds {
-        self.widget.stor.trace_bounds(self.ctx,self.widget.path.refc(),root_bounds,force).unwrap()
+    pub fn trace_bounds(&mut self, root_bounds: &Bounds, e: &ESVariant<E>, force: bool) -> Bounds {
+        self.widget.stor.trace_bounds(self.ctx,self.widget.path.refc(),root_bounds,e,force).unwrap()
     }
 
     #[inline]
     #[deprecated="Not needed in OOF anymore"]
-    pub fn _trace_bounds(&mut self, sub: E::WidgetPath, root_bounds: &Bounds, force: bool) -> Result<Bounds,()> {
+    pub fn _trace_bounds(&mut self, sub: E::WidgetPath, root_bounds: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget).trace_bounds(w,sub,root_bounds,force)
+        (**self.widget).trace_bounds(w,sub,root_bounds,e,force)
     }
 
     #[inline]
@@ -200,14 +210,14 @@ impl<'c,E> Link<'c,E> where E: Env {
         f(l);
     }
 
-    pub fn child_sizes(&mut self) -> Result<Vec<ESize<E>>,()> {
+    pub fn child_sizes(&mut self, e: &ESVariant<E>) -> Result<Vec<ESize<E>>,()> {
         let mut dest = Vec::with_capacity(self.widget.childs());
-        self.for_childs(#[inline] |mut w| dest.push(w.size()) )?;
+        self.for_childs(#[inline] |mut w| dest.push(w.size(e)) )?;
         Ok(dest)
     }
-    pub fn child_bounds(&mut self, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
+    pub fn child_bounds(&mut self, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget).child_bounds(w,b,force)
+        (**self.widget).child_bounds(w,b,e,force)
     }
 
     #[inline]
@@ -216,6 +226,29 @@ impl<'c,E> Link<'c,E> where E: Env {
             Link{
                 widget: self.widget.stor.widget(p)?,
                 ctx: self.ctx
+            }
+        )
+    }
+
+    /// current widget must be parent of rw
+    #[inline]
+    pub fn with_child_specific<'s>(&'s mut self, rw: Resolvable<'s,E>) -> Result<Link<'s,E>,()> where 'c: 's {
+        let path = rw.in_parent_path(self.path());
+        self.with_resolvable(rw,path)
+    }
+
+    #[inline]
+    pub fn with_resolvable<'s>(&'s mut self, rw: Resolvable<'s,E>, path: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
+        let rw = rw.resolve_widget(&self.widget.stor)?;
+        let w = Resolved{
+            path,
+            wref: rw,
+            stor: self.widget.stor,
+        };
+        Ok(
+            Link{
+                widget: w,
+                ctx: self.ctx,
             }
         )
     }

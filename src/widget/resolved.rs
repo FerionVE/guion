@@ -28,8 +28,8 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         c.send_event(self.clone(),e,child)
     }
     #[inline]
-    pub fn size(&self, c: &mut E::Context) -> ESize<E> {
-        c.size(self.clone())
+    pub fn size(&self, c: &mut E::Context, e: &ESVariant<E>) -> ESize<E> {
+        c.size(self.clone(),e)
     }
 
     #[inline]
@@ -41,8 +41,8 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         (***self)._event_direct(c.link(self.clone()),e)
     }
     #[inline]
-    pub fn _size(&self, c: &mut E::Context) -> ESize<E> {
-        (***self)._size(c.link(self.clone()))
+    pub fn _size(&self, c: &mut E::Context, e: &ESVariant<E>) -> ESize<E> {
+        (***self)._size(c.link(self.clone()),e)
     }
     #[inline]
     pub fn link(&self, c: &'a mut E::Context) -> Link<'a,E> {
@@ -50,8 +50,8 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn trace_bounds(&mut self, c: &mut E::Context, root_bounds: &Bounds, force: bool) -> Bounds {
-        self.stor.trace_bounds(c,self.path.refc(),root_bounds,force).unwrap()
+    pub fn trace_bounds(&mut self, c: &mut E::Context, root_bounds: &Bounds, e: &ESVariant<E>, force: bool) -> Bounds {
+        self.stor.trace_bounds(c,self.path.refc(),root_bounds,e,force).unwrap()
     }
 
     #[inline]

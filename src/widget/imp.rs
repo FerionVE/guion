@@ -15,8 +15,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
         (**self)._event_direct(l,e)
     }
     #[inline]
-    fn _size(&self, l: Link<E>) -> ESize<E> {
-        (**self)._size(l)
+    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+        (**self)._size(l,e)
     }
     #[inline]
     fn childs(&self) -> usize {
@@ -33,8 +33,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
         (**self).childs_ref()
     }
     #[inline]
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
-        (**self).child_bounds(l, b, force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+        (**self).child_bounds(l, b,e, force)
     }
     #[inline]
     fn focusable(&self) -> bool {
@@ -59,8 +59,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s dyn Widget<'l,E> where E: Env, 'l: 's {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        (**self).trace_bounds(l, i, b, force)
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+        (**self).trace_bounds(l, i, b,e, force)
     }
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
@@ -109,8 +109,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
         (**self)._event_direct(l,e)
     }
     #[inline]
-    fn _size(&self, l: Link<E>) -> ESize<E> {
-        (**self)._size(l)
+    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+        (**self)._size(l,e)
     }
     #[inline]
     fn childs(&self) -> usize {
@@ -127,8 +127,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
         (**self).childs_ref()
     }
     #[inline]
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
-        (**self).child_bounds(l, b, force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+        (**self).child_bounds(l, b,e, force)
     }
     #[inline]
     fn focusable(&self) -> bool {
@@ -153,8 +153,8 @@ impl<'s,'l,E> Widget<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 's 
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        (**self).trace_bounds(l, i, b, force)
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+        (**self).trace_bounds(l, i, b,e, force)
     }
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
@@ -225,6 +225,10 @@ impl<'s,'l,E> WidgetMut<'s,E> for &'s mut dyn WidgetMut<'l,E> where E: Env, 'l: 
     fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'s,E>,()> {
         (**self).child_mut(i)
     }
+    #[inline]
+    fn message(&mut self, m: E::Message) {
+        (**self).message(m)
+    }
 }
 impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
     #[inline]
@@ -240,8 +244,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
         (**self)._event_direct(l,e)
     }
     #[inline]
-    fn _size(&self, l: Link<E>) -> ESize<E> {
-        (**self)._size(l)
+    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+        (**self)._size(l,e)
     }
     #[inline]
     fn childs(&self) -> usize {
@@ -257,8 +261,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
         unsafe{Widget::into_childs(*self).short_lt()}
     }
     #[inline]
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
-        (**self).child_bounds(l, b, force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+        (**self).child_bounds(l, b,e, force)
     }
     #[inline]
     fn focusable(&self) -> bool {
@@ -283,8 +287,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn Widget<'w,E>> where E: Env {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        (**self).trace_bounds(l, i, b, force)
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+        (**self).trace_bounds(l, i, b,e, force)
     }
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
@@ -333,8 +337,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
         (**self)._event_direct(l,e)
     }
     #[inline]
-    fn _size(&self, l: Link<E>) -> ESize<E> {
-        (**self)._size(l)
+    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+        (**self)._size(l,e)
     }
     #[inline]
     fn childs(&self) -> usize {
@@ -350,8 +354,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
         unsafe{Widget::into_childs(*self).short_lt()}
     }
     #[inline]
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
-        (**self).child_bounds(l, b, force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+        (**self).child_bounds(l, b,e, force)
     }
     #[inline]
     fn focusable(&self) -> bool {
@@ -376,8 +380,8 @@ impl<'w,E> Widget<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, force: bool) -> Result<Bounds,()> {
-        (**self).trace_bounds(l, i, b, force)
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+        (**self).trace_bounds(l, i, b,e, force)
     }
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
@@ -445,5 +449,9 @@ impl<'w,E> WidgetMut<'w,E> for Box<dyn WidgetMut<'w,E>> where E: Env {
     #[inline]
     fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
         WidgetMut::into_child_mut(*self,i)
+    }
+    #[inline]
+    fn message(&mut self, m: E::Message) {
+        (**self).message(m)
     }
 }

@@ -6,6 +6,8 @@ pub mod bounded_widget;
 pub mod shortlt;
 pub mod traitcast;
 pub mod translate;
+pub mod sma;
+pub mod mapped;
 
 pub trait AsRefMut<T> {
     fn as_ref(&self) -> &T;

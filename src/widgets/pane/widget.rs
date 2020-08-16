@@ -15,11 +15,11 @@ impl<'w,E,T,Stil> Widget<'w,E> for Pane<'w,E,T,Stil> where
     fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
         self._event_direct_impl(l,e)
     }
-    fn _size(&self, l: Link<E>) -> ESize<E> {
-        self._size_impl(l)
+    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+        self._size_impl(l,e)
     }
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> {
-        self.child_bounds_impl(l,b,force)
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+        self.child_bounds_impl(l,b,e,force)
     }
     fn childs(&self) -> usize {
         self.childs.len()
@@ -77,7 +77,7 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
     {
         let mut r = r.with(&self.style);
         let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
-        let sizes = l.child_sizes().expect("Dead Path Inside Pane");
+        let sizes = l.child_sizes(r.style()).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&r.bounds().size,&sizes,self.orientation); 
 
         for i in 0..self.childs() {
@@ -93,7 +93,7 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
     {
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
         
-        let sizes = l.child_sizes().expect("Dead Path Inside Pane");
+        let sizes = l.child_sizes(&e.4).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&e.1.size,&sizes,self.orientation);
 
         let mut passed = false;
@@ -109,18 +109,18 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
         passed
     }
 
-    pub fn _size_impl(&self, mut l: Link<E>) -> ESize<E> where
+    pub fn _size_impl(&self, mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> where
         E: Env,
     {
         let mut s = ESize::<E>::empty();
-        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(), self.orientation) ).expect("Dead Path inside Pane");
+        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(e), self.orientation) ).expect("Dead Path inside Pane");
         s
     }
 
-    pub fn child_bounds_impl(&self, mut l: Link<E>, b: &Bounds, force: bool) -> Result<Vec<Bounds>,()> where
+    pub fn child_bounds_impl(&self, mut l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> where
         E: Env,
     {
-        let sizes = l.child_sizes().expect("Dead Path Inside Pane");
+        let sizes = l.child_sizes(e).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&b.size,&sizes,self.orientation); 
 
         Ok(bounds)

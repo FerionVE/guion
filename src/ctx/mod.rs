@@ -26,8 +26,8 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         Self::Handler::_send_event(self.link(w),e,child)
     }
     #[inline] 
-    fn size(&mut self, w: Resolved<E>) -> ESize<E> {
-        Self::Handler::_size(self.link(w))
+    fn size(&mut self, w: Resolved<E>, e: &ESVariant<E>) -> ESize<E> {
+        Self::Handler::_size(self.link(w),e)
     }
     #[inline] 
     fn _event_root(&mut self, w: Resolved<E>, e: &EventCompound<E>) -> EventResp {

@@ -20,6 +20,7 @@ pub enum StdEnqueueable<E> where E: Env {
     AccessWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+'static>},
     AccessRoot{f: fn(&E::Storage,&mut E::Context)},
     AccessRootClosure{f: Box<dyn FnOnce(&E::Storage,&mut E::Context)+'static>},
+    MutMessage{path: E::WidgetPath, msg: E::Message},
     InvalidateWidget{path: E::WidgetPath},
     ValidateWidgetRender{path: E::WidgetPath},
     ValidateWidgetSize{path: E::WidgetPath, size: ESize<E>},

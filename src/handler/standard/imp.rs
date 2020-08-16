@@ -230,9 +230,9 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
         }
     }
     #[inline] 
-    fn _size(l: Link<E>) -> ESize<E> {
+    fn _size(l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         //todo!();
-        S::_size(l)
+        S::_size(l,e)
     }
 }
 

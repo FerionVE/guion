@@ -21,6 +21,10 @@ pub trait WidgetID: Clone + PartialEq + Eq + Sized + Hash + 'static {
     }
 }
 
+pub trait WidgetIDAlloc: WidgetID {
+    fn new_id() -> Self where Self: Sized;
+}
+
 /*impl WidgetID for Vec<Box<dyn Any>> {
     
 }*/

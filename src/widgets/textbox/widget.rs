@@ -60,7 +60,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<'w,E> for TextBo
         //e.0._debug_type_name();
         let mut cursor = self.cursor.get(l.ctx);
         let border = l.style_provider().border(
-            &StyleVariantSupport::new_with(
+            &e.4.with(
                 &[StdTag::BorderVisual,StdTag::BorderMultiplier(2)][..]
             )
         );
@@ -177,7 +177,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<'w,E> for TextBo
         }
         passed
     }
-    fn _size(&self, _: Link<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -190,7 +190,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<'w,E> for TextBo
         vec![]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {

@@ -1,7 +1,8 @@
 use super::*;
 use crate::event::key::Key;
 use std::marker::PhantomData;
-use util::caption::Caption;
+use util::{LocalGlyphCache, caption::Caption};
+use label::Label;
 
 pub mod widget;
 
@@ -20,18 +21,37 @@ pub struct Button<'w,E,Text,Stil> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> Button<'w,E,&'static str,()> where
+impl<'w,E> Button<'w,E,Label<'w,E,&'static str,(),LocalGlyphCache<E>>,()> where
     E: Env,
+    E::WidgetID: WidgetIDAlloc,
 {
     #[inline]
     pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
-            size: ESize::<E>::empty(),
+            size: constraint!(0|0).into(),
             style: (),
             trigger: |_|{},
             locked: false,
-            text: "",
+            text: Label::new(E::WidgetID::new_id()),
+            p: PhantomData,
+        }
+    }
+}
+
+impl<'w,E,Text> Button<'w,E,Text,()> where
+    E: Env,
+    Text: 'w,
+{
+    #[inline]
+    pub fn immediate(id: E::WidgetID, text: Text) -> Self {
+        Self{
+            id,
+            size: constraint!(0|0).into(),
+            style: (),
+            trigger: |_|{},
+            locked: false,
+            text,
             p: PhantomData,
         }
     }
@@ -40,6 +60,7 @@ impl<'w,E> Button<'w,E,&'static str,()> where
 impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
     E: Env,
     Text: 'w,
+    Stil: 'w
 {
     
 
@@ -48,7 +69,7 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
         self.trigger = fun;
         self
     }
-    #[inline]
+    /*#[inline]
     pub fn with_text<T>(self, text: T) -> Button<'w,E,T,Stil> where T: 'w {
         Button{
             id: self.id,
@@ -59,6 +80,11 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
             text,
             p: PhantomData,
         }
+    }*/
+    #[inline]
+    pub fn with_locked(mut self, locked: bool) -> Self {
+        self.locked = locked;
+        self
     }
 
     #[inline]
@@ -80,10 +106,41 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
     }
 }
 
+impl<'w,E,T,LS,BS,LC> Button<'w,E,Label<'w,E,T,LS,LC>,BS> where
+    E: Env, //TODO WidgetWithCaption with_text replace
+{
+    #[inline]
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LS,LC>,BS> where T: 'w {
+        Button{
+            id: self.id,
+            size: self.size,
+            style: self.style,
+            trigger: self.trigger,
+            locked: self.locked,
+            text: self.text.with_text(text),
+            p: PhantomData,
+        }
+    }
+}
+
 unsafe impl<'w,E,Text,Stil> Statize<E> for Button<'w,E,Text,Stil> where
     E: Env,
     Text: StatizeSized<E>+'w,
     Stil: StatizeSized<E>+'w,
 {
     type Statur = Button<'static,E,Text::StaturSized,Stil::StaturSized>;
+}
+
+pub trait TriggerFn<E,W> where E: Env {
+    fn call(&mut self, w: &W, l: Link<E>);
+}
+impl<T,E,W> TriggerFn<E,W> for T where T: FnMut(&W,Link<E>), E: Env {
+    #[inline]
+    fn call(&mut self, w: &W, l: Link<E>) {
+        self(w,l)
+    }
+}
+impl<E,W> TriggerFn<E,W> for () where E: Env {
+    #[inline]
+    fn call(&mut self, _: &W, _: Link<E>) {}
 }
