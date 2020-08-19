@@ -64,17 +64,17 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
         //let mut invalid = false;
-        if e.0.is_hover_update() || e.0.is_kbd_down().is_some() || e.0.is_kbd_up().is_some() {
+        if e.event.is_hover_update() || e.event.is_kbd_down().is_some() || e.event.is_kbd_up().is_some() {
             l.enqueue_invalidate()
         }
-        if let Some(ee) = e.0.is_mouse_up() {
+        if let Some(ee) = e.event.is_mouse_up() {
             if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
                 let new = !self.state.get(l.ctx);
                 (self.trigger)(l.reference(),new);
                 Self::set(l,new);
                 return true;
             }
-        } else if let Some(ee) = e.0.is_kbd_press() {
+        } else if let Some(ee) = e.event.is_kbd_press() {
             if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
                 let new = !self.state.get(l.ctx);
                 (self.trigger)(l.reference(),new);
@@ -82,7 +82,7 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
                 return true;
             }
         }
-        e.0.is_mouse_down().is_some()
+        e.event.is_mouse_down().is_some()
     }
     fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         self.size.clone()

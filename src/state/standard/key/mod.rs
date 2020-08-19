@@ -64,7 +64,7 @@ impl<E> PressedKey<E> for StdPressedKey<E> where E: Env {
         self.down.clone()
     }
     #[inline]
-    fn timestamp(&self) -> u64 {
+    fn ts(&self) -> u64 {
         self.ts
     }
     #[inline]

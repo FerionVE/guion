@@ -55,7 +55,7 @@ impl<V,E,K,D> VariantSupport<V,E> for DynEvent<E,K,D> where V: Variant<E>, E: En
     #[inline]
     fn to_variant(&self) -> Option<V> {
         Any::downcast_ref(self.event._as_any())
-            .map(|e: &V| e.clon() )
+            .map(#[inline] |e: &V| e.clon() )
     }
 }
 

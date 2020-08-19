@@ -37,7 +37,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     #[deprecated]
     fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         (0..self.childs())
-            .map(|i| self.child(i).unwrap() )
+            .map(#[inline] |i| self.child(i).unwrap() )
             .collect::<Vec<_>>()
     }
     fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>>;
@@ -45,7 +45,7 @@ pub trait Widget<'w,E>: WBase<'w,E> + 'w where E: Env + 'static {
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (0..self.childs())
-            .map(|i| self.child(i).unwrap().in_parent_path(own_path.refc()) )
+            .map(#[inline] |i| self.child(i).unwrap().in_parent_path(own_path.refc()) )
             .collect::<Vec<_>>()
     }
 

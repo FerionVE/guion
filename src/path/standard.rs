@@ -110,4 +110,3 @@ impl<E,S> AsWidgetMut<'static,E> for SimplePath<E,S> where E: Env {
         ResolvableMut::Path(self.clone().into())
     }
 }*/
-

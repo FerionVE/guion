@@ -31,13 +31,13 @@ pub trait Glyphs<E>: Sized + Statize<E> where E: Env {
     fn glyphs<'s>(&'s self) -> Box<dyn Iterator<Item=Self::Glyph>+'s> {
         Box::new( //TODO OPTI use ext trait to avoid boxing
             self.lines()
-            .flat_map(|(c,_)| c )
+            .flat_map(#[inline] |(c,_)| c )
         )
     }
 
     fn char_at(&self, i: u32) -> Option<Self::Glyph> {
         self.lines()
-            .flat_map(|(c,_)| c )
+            .flat_map(#[inline] |(c,_)| c )
             .skip(i as usize)
             .next()
     }

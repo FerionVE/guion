@@ -5,8 +5,8 @@ use super::*;
 /// invalidations are always done right before rendering
 /// validations are always done right after rendering
 pub trait Queue<I,O> { //TODO probably remove mandantory StdEnqueueable bound
-    fn push(&mut self, v: I, o: O, p: i64);
-    fn send(&self, v: I, o: O, p: i64);
+    fn push(&mut self, v: I, order: O, prio: i64);
+    fn send(&self, v: I, order: O, prio: i64);
 }
 
 pub enum StdEnqueueable<E> where E: Env {
@@ -68,11 +68,11 @@ pub enum StdOrder {
 #[deprecated]
 pub fn invalidate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),()> {
     stor.widget_mut(i)
-        .map(|mut w| w._set_invalid(true) )
+        .map(#[inline] |mut w| w._set_invalid(true) )
 }
 #[deprecated]
 /// to be executed by the queue impl, always DIRECTLY after rendering
 pub fn validate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),()> {
     stor.widget_mut(i)
-        .map(|mut w| w._set_invalid(false) )
+        .map(#[inline] |mut w| w._set_invalid(false) )
 }

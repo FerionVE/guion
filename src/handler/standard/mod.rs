@@ -25,7 +25,14 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self
     pub fn unfocus(mut root: Link<E>, root_bounds: Bounds, ts: u64) -> EventResp {
         if let Some(p) = root.ctx.as_mut().s.kbd.focused.take() {
             root.send_event(
-                &EventCompound(Event::from(Unfocus{}),root_bounds,ts,Default::default(),Default::default(),false), //TODO check if default stylevariant here is correct
+                &EventCompound{
+                    event: Event::from(Unfocus{}),
+                    bounds: root_bounds,
+                    ts,
+                    filter: Default::default(),
+                    style: Default::default(),
+                    flag: false,
+                }, //TODO check if default stylevariant here is correct
                 p.refc().path,
             ).unwrap_or(false)
         }else{
@@ -37,7 +44,14 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self
         Self::unfocus(root.reference(),root_bounds,ts);
         root.as_mut().s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),root.widget.stor)?);
         root.send_event(
-            &EventCompound(Event::from(Focus{}),root_bounds,ts,Default::default(),Default::default(),false),
+            &EventCompound{
+                event: Event::from(Focus{}),
+                bounds: root_bounds,
+                ts,
+                filter: Default::default(),
+                style: Default::default(),
+                flag: false,
+            },
             p,
         )
     }

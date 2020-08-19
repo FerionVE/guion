@@ -23,7 +23,7 @@ impl<E> Handler<E> for () where E: Env {
     }
     #[inline] 
     fn _event_root(l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        if !e.0._root_only() {//TODO warn eprint??
+        if !e.event._root_only() {//TODO warn eprint??
             l.ctx.event_direct(l.widget,e)
         }else{
             false

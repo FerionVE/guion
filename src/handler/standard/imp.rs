@@ -16,7 +16,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
     }
     #[inline] 
     fn _event_direct(mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        if let Some(_) = e.0.is::<MouseMove>() {
+        if let Some(_) = e.event.is::<MouseMove>() {
             l.as_mut().s.mouse.hovered = Some(l.ident());
         }
         S::_event_direct(l,e)
@@ -32,7 +32,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
     //#[inline] 
     fn _event_root(mut l: Link<E>, e: &EventCompound<E>) -> EventResp { //TODO BUG handle sudden invalidation of hovered widget
         assert!(l.path().is_empty());
-        if let Some(ee) = e.0.is::<RootEvent<E>>() {
+        if let Some(ee) = e.event.is::<RootEvent<E>>() {
             let mut passed = false;
             match ee {
                 RootEvent::KbdDown{key} => {
@@ -45,7 +45,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                         l.as_mut().s.key.down(
                             key.clone(),
                             id.clone(),
-                            e.2,
+                            e.ts,
                             None,
                         );
                         //emit KbdDown event
@@ -115,12 +115,12 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                 RootEvent::MouseDown{key} => {
                     passed |= Self::_event_root(l.reference(),&e.with_event(Event::from(RootEvent::MouseUp{key: key.clone()})));
                     //unfocus previously focused widget
-                    passed |= Self::unfocus(l.reference(),e.1,e.2);
+                    passed |= Self::unfocus(l.reference(),e.bounds,e.ts);
 
                     //the currently hovered widget
                     if let Some(pos) = l.as_ref().s.mouse.pos {
                         if let Some(hovered) = l.as_ref().s.mouse.hovered.clone() {
-                            l.as_mut().s.key.down(key.clone(),hovered.clone(),e.2,Some(pos));
+                            l.as_mut().s.key.down(key.clone(),hovered.clone(),e.ts,Some(pos));
 
                             passed |= l.send_event(
                                 &e.default_filter().with_event(Event::from(MouseDown{key,pos})),
@@ -137,7 +137,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                             };
 
                             if focus {
-                                passed |= Self::focus(l,hovered.path,e.1,e.2).unwrap();
+                                passed |= Self::focus(l,hovered.path,e.bounds,e.ts).unwrap();
                             }
                         }
                     }

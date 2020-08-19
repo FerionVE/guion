@@ -36,7 +36,7 @@ pub fn resolve_in_root<'l:'s,'s,E: Env>(w: &'s dyn Widget<'l,E>, p: E::WidgetPat
 #[doc(hidden)]
 pub fn resolve_in_root_mut<'l:'s,'s,E: Env>(w: &'s mut dyn WidgetMut<'l,E>, p: E::WidgetPath) -> Result<(WidgetRefMut<'s,E>,E::WidgetPath),()> {
     let final_path = resolve_in_root::<E>(w.base(),p)
-        .map(|e| e.1 )?;
+        .map(#[inline] |e| e.1 )?;
 
     Ok((
         w.resolve_mut(final_path.refc())

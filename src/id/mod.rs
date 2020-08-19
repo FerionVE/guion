@@ -8,7 +8,7 @@ pub trait WidgetID: Clone + PartialEq + Eq + Sized + Hash + 'static {
     #[inline]
     fn id_eq<I: WidgetID + 'static>(&self, o: &I) -> bool where Self: 'static {
         Any::downcast_ref::<Self>(o)
-            .map_or(false, |r| self.eq(r) )
+            .map_or(false, #[inline] |r| self.eq(r) )
     }
 
     #[inline]

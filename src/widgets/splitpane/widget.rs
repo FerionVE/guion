@@ -56,24 +56,24 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
 
         let o = self.orientation;
-        let mut bounds = self.calc_bounds(&e.1,self.state.get(l.ctx)); 
+        let mut bounds = self.calc_bounds(&e.bounds,self.state.get(l.ctx)); 
 
         let mut passed = false;
 
         //if let Some(e) = e.slice_bounds(&bounds[1]).filter(&l) {
-            if let Some(mm) = e.0.is_mouse_move() {
+            if let Some(mm) = e.event.is_mouse_move() {
                 //if mouse is down and was pressed on us
                 if let Some(_) = l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()) {
                     let cursor = l.state().cursor_pos().expect("TODO");
                     let mut cx = cursor.par(o);
-                    let (mut wx0, ww) = e.1.par(o);
+                    let (mut wx0, ww) = e.bounds.par(o);
                     let mut wx1 = wx0 + ww as i32;
 
                     let l_min = l.for_child(0)
-                        .expect("Dead Path inside Pane").size(&e.4)
+                        .expect("Dead Path inside Pane").size(&e.style)
                         .as_std().par(o).min;
                     let r_min = l.for_child(1)
-                        .expect("Dead Path inside Pane").size(&e.4)
+                        .expect("Dead Path inside Pane").size(&e.style)
                         .as_std().par(o).min;
 
                     wx0 += (self.width/2) as i32;
@@ -94,7 +94,7 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
                             w.set(fcx,c);
                         }));
 
-                        bounds = self.calc_bounds(&e.1,fcx);
+                        bounds = self.calc_bounds(&e.bounds,fcx);
                     }
                 }
             }

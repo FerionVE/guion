@@ -11,11 +11,11 @@ impl<S,E> StdState<E> for StdHandler<S,E> where
     type K = StdPressedKey<E>;
     #[inline]
     fn hovered(&self) -> Option<E::WidgetID> { //TODO eventually WidgetIdent return in trait
-        self.s.mouse.hovered.as_ref().map(|p| p.id.clone() )
+        self.s.mouse.hovered.as_ref().map(#[inline] |p| p.id.clone() )
     }
     #[inline]
     fn selected(&self) -> Option<E::WidgetID> {
-        self.s.kbd.focused.as_ref().map(|p| p.id.clone() )
+        self.s.kbd.focused.as_ref().map(#[inline] |p| p.id.clone() )
     }
     #[inline]
     fn pressed(&self) -> &[Self::K] {
@@ -37,7 +37,7 @@ impl<S,E> DynState<E> for StdHandler<S,E> where
     fn remote_state_or_default<T>(&self, i: E::WidgetID) -> T where T: Default + Clone + 'static {
         self.s.remote_states
             .get(&(i,TypeId::of::<T>()))
-            .map_or_else(T::default,|v|
+            .map_or_else(T::default,#[inline] |v|
                 v
                 .downcast_ref::<T>()
                 .unwrap()

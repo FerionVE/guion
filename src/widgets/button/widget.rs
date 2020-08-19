@@ -51,21 +51,21 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
         //e.0._debug_type_name();
         //let mut invalid = false;
-        if e.0.is_hover_update() || e.0.is_kbd_press().is_some() || e.0.is_kbd_up().is_some() { //TODO catch down and press
+        if e.event.is_hover_update() || e.event.is_kbd_press().is_some() || e.event.is_kbd_up().is_some() { //TODO catch down and press
             l.enqueue_invalidate()
         }
-        if let Some(ee) = e.0.is_mouse_up() {
+        if let Some(ee) = e.event.is_mouse_up() {
             if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
                 (self.trigger)(l);
                 return true;
             }
-        } else if let Some(ee) = e.0.is_kbd_press() {
+        } else if let Some(ee) = e.event.is_kbd_press() {
             if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
                 (self.trigger)(l);
                 return true;
             }
         }
-        e.0.is_mouse_down().is_some()
+        e.event.is_mouse_down().is_some()
     }
     fn _size(&self, mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         let mut ms = l.for_child(0).unwrap().size(e).as_std();

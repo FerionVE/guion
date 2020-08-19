@@ -126,14 +126,10 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline]
     pub fn _send_event(&mut self, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
-        let e = EventCompound(
-            e.0.clone(),
-            e.1,
-            e.2,
-            e.3.clone().attach_path_prefix(child.clone()),
-            e.4.clone(),
-            e.5,
-        );
+        let e = EventCompound{
+            filter: e.filter.clone().attach_path_prefix(child.clone()),
+            ..e.clone()
+        };
         let _ = self.widget.resolve(child)?;
         let w = self.ctx.link(self.widget.reference());
         Ok( (**self.widget)._event_direct(w,&e) )
@@ -288,7 +284,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn childs<'s>(&'s self) -> impl Iterator<Item=Resolvable<'s,E>>+'s where 'c: 's {
         let w = unsafe{(&self.widget).short_lt()}; //TODO this looks like a fkn move and ref
         (0..w.childs())
-            .map(move |i| w.child(i).unwrap() )
+            .map(#[inline] move |i| w.child(i).unwrap() )
     }
 
 

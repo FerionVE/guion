@@ -2,7 +2,7 @@
 use super::*;
 use std::{any::TypeId, sync::atomic::{AtomicUsize,Ordering}};
 
-static ID_ITER: AtomicUsize = AtomicUsize::new(0);
+static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// A simple incremental usize-based ID
 #[derive(Clone,Copy,PartialEq,Eq,Hash,Debug)]
@@ -14,7 +14,7 @@ pub enum StdID {
 impl StdID {
     #[inline]
     pub fn new() -> Self {
-        StdID::Dyn(ID_ITER.fetch_add(1,Ordering::Relaxed))
+        StdID::Dyn(NEXT_ID.fetch_add(1,Ordering::Relaxed))
     }
 }
 
@@ -65,7 +65,7 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> 
     }
     #[inline]
     fn resolves_to_path(&self, p: E::WidgetPath) -> bool {
-        p.tip().map_or(false,|tip| { //TODO verify correctness of None => false
+        p.tip().map_or(false,#[inline] |tip| { //TODO verify correctness of None => false
             *self == tip.clone().into_id().into()
         })
     }

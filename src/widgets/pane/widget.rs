@@ -93,8 +93,8 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
     {
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
         
-        let sizes = l.child_sizes(&e.4).expect("Dead Path Inside Pane");
-        let bounds = calc_bounds(&e.1.size,&sizes,self.orientation);
+        let sizes = l.child_sizes(&e.style).expect("Dead Path Inside Pane");
+        let bounds = calc_bounds(&e.bounds.size,&sizes,self.orientation);
 
         let mut passed = false;
 

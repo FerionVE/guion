@@ -98,4 +98,3 @@ impl<'a,E> ResolvableMut<'a,E> where E: Env {
         }
     }
 }
-

@@ -23,11 +23,11 @@ pub trait StdState<E>: 'static where E: Env {
 
     #[inline]
     fn is_hovered(&self, i: &E::WidgetID) -> bool {
-        self.hovered().map_or(false, |w| w == *i )
+        self.hovered().map_or(false, #[inline] |w| w == *i )
     }
     #[inline]
     fn is_focused(&self, i: &E::WidgetID) -> bool {
-        self.selected().map_or(false, |w| w == *i )
+        self.selected().map_or(false, #[inline] |w| w == *i )
     }
 
     /*fn pressed(&self) -> &[Self::K];
@@ -41,15 +41,14 @@ pub trait StdState<E>: 'static where E: Env {
     fn is_pressed<'a>(&'a self, c: &[EEKey<E>]) -> Option<&'a Self::K> {
         //todo!() implement all c handling
         self.pressed().iter()
-            .find(|p| p.key() == c[0] )
+            .find(#[inline] |p| p.key() == c[0] )
     }
     #[inline]
     fn is_pressed_and_id<'a>(&'a self, c: &[EEKey<E>], id: E::WidgetID) -> Option<&'a Self::K> {
         //todo!() implement all c handling
         self.pressed().iter()
-            .find(|p| p.key() == c[0] && p.widget().is(id.clone()) )
+            .find(#[inline] |p| p.key() == c[0] && p.widget().is(id.clone()) )
     }
 
     fn cursor_pos(&self) -> Option<Offset>;
 }
-

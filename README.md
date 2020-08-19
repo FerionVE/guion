@@ -5,8 +5,8 @@
 guion is heavily WIP right now, API and concepts are still in flux.
 
 Goals: 
-- Data is the Widget: Widgets own data or reference data as immediate widget.
-- Widget Tree separate from Context, State and side-data
+- Data is the Widget: Widgets own model/data or reference model/data as immediate widget.
+- Widget Tree/Model separate from Context, State and side-data
 - Modularity: Components are defined in generics and traits
   - Standard implementations can be combined with e.g. a custom ID implementation.
 - Standard Widgets: Rich Set of Standard Widgets

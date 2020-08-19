@@ -16,7 +16,7 @@ impl<E> WidgetIdent<E> where E: Env {
     #[deprecated="this resolves the widget"]
     #[inline]
     pub fn from_path(path: E::WidgetPath, stor: &E::Storage) -> Result<Self,()> {
-        stor.widget(path).map(|r| r.ident() )
+        stor.widget(path).map(#[inline] |r| r.ident() )
     }
 }
 
