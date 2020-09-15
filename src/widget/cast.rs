@@ -232,7 +232,7 @@ mod imp {
         Path;PathBuf;
         crate::widgets::textbox::state::Cursor;
         StdID;
-        Size;SizeAxis
+        StdGonstraints;StdGonstraintAxis
     );
 
     macro_rules! impl_statize_tuple {

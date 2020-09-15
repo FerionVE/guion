@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use arc_slice::ArcSlice;
 
 #[allow(type_alias_bounds)]
-pub type StandardPath<E: Env> = SimplePath<E,StdID>;
+pub type StdPath<E: Env> = SimplePath<E,StdID>;
 
 #[derive(PartialEq,Clone)]
 pub struct SimplePath<E,S> {

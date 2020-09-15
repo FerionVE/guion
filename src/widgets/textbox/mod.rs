@@ -34,7 +34,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>,(
     pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
-            size: Size::empty().into(),
+            size: Gonstraints::empty(),
             style: (),
             text: "".to_owned(),
             scroll: (0,0),

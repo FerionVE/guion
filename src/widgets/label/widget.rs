@@ -31,8 +31,8 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<'w,E> for Label<'w,E,Text,Stil,GlyphCache
     }
     fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         let ms = self.glyphs(l).size();
-        let ms = Size::fixed(ms.w, ms.h);
-        ms.max( &self.size.as_std() ).into()
+        let ms = ESize::<E>::fixed(ms.w, ms.h);
+        ms.max( &self.size )
     }
     fn childs(&self) -> usize {
         0

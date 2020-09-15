@@ -1,16 +1,16 @@
 use super::*;
 
-pub fn calc_bounds<S: ISize>(outer: &Dims, ws: &[S], o: Orientation) -> Vec<Bounds> {
+pub fn calc_bounds<S: Gonstraints>(outer: &Dims, ws: &[S], o: Orientation) -> Vec<Bounds> {
     if ws.is_empty() {return vec![];}
 
     let width = outer.par(o) as u32;
 
-    let pars: Vec<SizeAxis> = ws.iter()
-        .map(|x| x.as_std().par(o).clone() )
+    let pars: Vec<StdGonstraintAxis> = ws.iter()
+        .map(|x| x.clone().into().par(o) )
         .collect();
 
     let snap = {
-        let axis_sum: SizeAxis = pars.iter().fold(SizeAxis::empty(), |acc,v| acc+v );
+        let axis_sum: StdGonstraintAxis = pars.iter().fold(StdGonstraintAxis::empty(), |acc,v| acc+v );
 
         if axis_sum.min > width {
             0
@@ -21,7 +21,7 @@ pub fn calc_bounds<S: ISize>(outer: &Dims, ws: &[S], o: Orientation) -> Vec<Boun
         }
     };
 
-    fn lower(axis: &SizeAxis, snap: usize) -> u32 {
+    fn lower(axis: &StdGonstraintAxis, snap: usize) -> u32 {
         if snap > 1 {
             axis.preferred
         } else if snap == 1 {

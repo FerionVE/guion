@@ -26,7 +26,7 @@ impl<'w,E,W> Area<'w,E,W,(u32,u32),()> where
     pub fn new(id: E::WidgetID, inner: W) -> Self {
         Self{
             id,
-            size: Size::empty().into(),
+            size: Gonstraints::empty(),
             style: (),
             inner,
             scroll: (0,0),

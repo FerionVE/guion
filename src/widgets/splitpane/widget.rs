@@ -71,10 +71,10 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
 
                     let l_min = l.for_child(0)
                         .expect("Dead Path inside Pane").size(&e.style)
-                        .as_std().par(o).min;
+                        .par(o).min();
                     let r_min = l.for_child(1)
                         .expect("Dead Path inside Pane").size(&e.style)
-                        .as_std().par(o).min;
+                        .par(o).min();
 
                     wx0 += (self.width/2) as i32;
                     wx1 -= (self.width/2) as i32;

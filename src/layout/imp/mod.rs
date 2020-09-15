@@ -4,8 +4,8 @@ use super::*;
 mod border;
 mod size_axis;
 
-impl Index<Orientation> for Size {
-    type Output = SizeAxis;
+impl Index<Orientation> for StdGonstraints {
+    type Output = StdGonstraintAxis;
     #[inline]
     fn index(&self, i: Orientation) -> &Self::Output {
         match i {
@@ -26,7 +26,7 @@ impl Index<Orientation> for Size {
     }
 }*/
 
-impl AsRef<Self> for SizeAxis {
+impl AsRef<Self> for StdGonstraintAxis {
     #[inline]
     fn as_ref(&self) -> &Self {
         self

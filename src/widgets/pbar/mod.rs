@@ -22,7 +22,7 @@ impl<'w,E> ProgressBar<'w,E,()> where
     pub fn new(id: E::WidgetID, o: Orientation) -> Self {
         Self {
             id,
-            size: Size::empty().into(),
+            size: Gonstraints::empty(),
             style: (),
             value: 0.0,
             orientation: o,

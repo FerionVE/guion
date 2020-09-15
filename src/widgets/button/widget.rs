@@ -68,10 +68,10 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
         e.event.is_mouse_down().is_some()
     }
     fn _size(&self, mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
-        let mut ms = l.for_child(0).unwrap().size(e).as_std();
-        ms += l.style_provider().border(&e.with(StdTag::BorderOuter));
-        ms += l.style_provider().border(&e.with(StdTag::BorderVisual));
-        ms.max( &self.size.as_std() ).into()
+        let mut ms = l.for_child(0).unwrap().size(e);
+        ms.add_border( &l.style_provider().border(&e.with(StdTag::BorderOuter)) );
+        ms.add_border( &l.style_provider().border(&e.with(StdTag::BorderVisual)) );
+        ms.max( &self.size )
     }
     fn childs(&self) -> usize {
         1
