@@ -21,6 +21,10 @@ impl<'w,E,State,Text,Stil> Widget<'w,E> for CheckBox<'w,E,State,Text,Stil> where
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
         let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        if l.state().is_hovered(&self.id) {
+            r.with(StdTag::CursorHand)
+                    .set_cursor(l.ctx);
+        }
         let size = r.bounds().size.h;
         {
             let rect = Bounds::from_wh(size,size);

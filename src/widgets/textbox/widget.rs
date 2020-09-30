@@ -47,6 +47,10 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<'w,E> for TextBo
                 .with(StdTag::ObjActive)
                 .fill_rect(l.ctx);
         }
+        if l.state().is_hovered(&self.id) {
+            r.with(StdTag::CursorIBeam)
+                    .set_cursor(l.ctx);
+        }
 
         r.with(&[
                 StdTag::ObjForeground,

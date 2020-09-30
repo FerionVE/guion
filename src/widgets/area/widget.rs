@@ -26,13 +26,36 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
             StdTag::BorderVisual,
         ][..])
             .fill_border_inner(l.ctx);
-        r.inside_border_by(StdTag::BorderVisual,l.ctx)
+        let mut r = r.inside_border_by(StdTag::BorderVisual,l.ctx);
+
+        let rect = *r.bounds();
+
+        let (sx,sy) = self.scroll.get(l.ctx);
+
+        let inner_size: ESize<E> = l.for_child(0).unwrap().size(r.style());
+        let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
+
+        let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
+
+        r.fork_with(Some(inner_rect), Some(rect), None)
             .render_widget(l.for_child(0).unwrap());
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
         let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderVisual));
-        todo!()
+        
+        let rect = e.bounds;
+
+        let (sx,sy) = self.scroll.get(l.ctx);
+
+        let inner_size: ESize<E> = l.for_child(0).unwrap().size(&e.style);
+        let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
+
+        let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
+
+        let e = e.with_bounds(inner_rect);
+
+        l.for_child(0).unwrap().event_direct(&e)
     }
     fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         self.size.clone()

@@ -19,6 +19,10 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
         let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        if l.state().is_hovered(&self.id) {
+            r.with(StdTag::CursorHand)
+                    .set_cursor(l.ctx);
+        }
         r.with(&[
             StdTag::ObjForeground,
             StdTag::Hovered(l.is_hovered()),
