@@ -11,9 +11,6 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
     Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
     Stil: Clone + StatizeSized<E>,
 {
-    fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
-        vec![]
-    }
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -74,7 +71,7 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
         todo!() // TODO complete inner bounds or just view
     }
     fn focusable(&self) -> bool {
-        todo!()
+        false
     }
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         if i != 0 {return Err(());}
