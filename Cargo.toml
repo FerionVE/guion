@@ -16,3 +16,7 @@ readme = "README.md"
 [dependencies]
 qwutils = { version = "0.2.0", git = "https://github.com/qwertz19281/rust_utils", rev = "ffb307c0a5a293aac82250cdd0f3510655e0e07d" }
 #qwutils = { path = "../qwutils" }
+
+[profile.release]
+codegen-units = 1
+

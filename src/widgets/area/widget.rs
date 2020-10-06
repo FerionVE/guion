@@ -71,7 +71,7 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
         todo!() // TODO complete inner bounds or just view
     }
     fn focusable(&self) -> bool {
-        false
+        false //TODO
     }
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         if i != 0 {return Err(());}
