@@ -50,9 +50,45 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
 
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
-        let e = e.with_bounds(inner_rect);
+        let mut passed = false;
 
-        l.for_child(0).unwrap().event_direct(&e)
+        {
+            let mut l = l.for_child(0).unwrap();
+            let e = e.with_bounds(inner_rect);
+            if let Some(ee) = e.filter(&l) { //TODO API OOF not filtering breaks for_child mechanism
+                passed |= l.event_direct(&ee);
+            }
+        }
+
+        if !passed {
+            if let Some(ee) = e.event.is_kbd_press() {
+                if
+                    ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN ||
+                    ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
+                {
+                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                        let mut w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
+                        let mut v = w.get(ctx);
+                        if ee.key == EEKey::<E>::UP {
+                            v.1 = v.1.saturating_sub(4);
+                        }
+                        if ee.key == EEKey::<E>::DOWN {
+                            v.1 += 4;
+                        }
+                        if ee.key == EEKey::<E>::LEFT {
+                            v.0 = v.0.saturating_sub(4);
+                        }
+                        if ee.key == EEKey::<E>::RIGHT {
+                            v.0 += 4;
+                        }
+                        w.set(v,ctx);
+                    }));
+                    passed = true;
+                }
+            }
+        }
+
+        passed
     }
     fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
         self.size.clone()
