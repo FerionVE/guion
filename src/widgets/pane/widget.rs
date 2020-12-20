@@ -1,9 +1,9 @@
 use super::*;
 
-impl<'w,E,T,Stil> Widget<'w,E> for Pane<'w,E,T,Stil> where
+impl<'w,E,T,Stil> Widget<E> for Pane<'w,E,T,Stil> where
     E: Env,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    T: WidgetArray<'w,E>+StatizeSized<E>,
+    T: WidgetArray<E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
     fn id(&self) -> E::WidgetID {
@@ -24,10 +24,10 @@ impl<'w,E,T,Stil> Widget<'w,E> for Pane<'w,E,T,Stil> where
     fn childs(&self) -> usize {
         self.childs.len()
     }
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
+    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
         self.childs.childs()
     }
-    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
         self.childs.into_childs()
     }
 
@@ -35,33 +35,33 @@ impl<'w,E,T,Stil> Widget<'w,E> for Pane<'w,E,T,Stil> where
         false
     }
 
-    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
         self.childs.child(i)
     }
-    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         self.childs.into_child(i)
     }
 }
-impl<'w,E,T,Stil> WidgetMut<'w,E> for Pane<'w,E,T,Stil> where 
+impl<'w,E,T,Stil> WidgetMut<E> for Pane<'w,E,T,Stil> where 
     E: Env,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    T: WidgetArrayMut<'w,E>+StatizeSized<E>,
+    T: WidgetArrayMut<E>+StatizeSized<E>+'w,
     Stil: StatizeSized<E>+Clone,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
         //self.invalid = true
     }
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         self.childs.childs_mut()
     }
-    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         self.childs.into_childs_mut()
     }
-    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
         self.childs.child_mut(i)
     }
-    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         self.childs.into_child_mut(i)
     }
 }
@@ -69,7 +69,7 @@ impl<'w,E,T,Stil> WidgetMut<'w,E> for Pane<'w,E,T,Stil> where
 impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
     E: Env,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    T: WidgetArray<'w,E>+StatizeSized<E>,
+    T: WidgetArray<E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
     pub fn _render_impl(&self, mut l: Link<E>, r: &mut RenderLink<E>) where

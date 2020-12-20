@@ -32,23 +32,23 @@ pub trait ValidState {
 #[macro_export]
 macro_rules! impl_env_stds {
     ($e:ty) => {
-        impl<'w> $crate::widget::as_widget::AsWidget<'w,$e> for <$e as $crate::env::Env>::WidgetPath {
+        impl $crate::widget::as_widget::AsWidget<$e> for <$e as $crate::env::Env>::WidgetPath {
             #[inline]
-            fn as_ref<'s>(&'s self) -> $crate::widget::resolvable::Resolvable<'s,$e> where 'w: 's {
+            fn as_ref(&self) -> $crate::widget::resolvable::Resolvable<'_,$e> {
                 $crate::widget::resolvable::Resolvable::Path(self.clone().into())
             }
             #[inline]
-            fn into_ref(self) -> $crate::widget::resolvable::Resolvable<'w,$e> {
+            fn into_ref<'w>(self) -> $crate::widget::resolvable::Resolvable<'w,$e> where Self: 'w {
                 $crate::widget::resolvable::Resolvable::Path(self.clone().into())
             }
         }
-        impl<'w> $crate::widget::as_widget::AsWidgetMut<'w,$e> for <$e as $crate::env::Env>::WidgetPath {
+        impl $crate::widget::as_widget::AsWidgetMut<$e> for <$e as $crate::env::Env>::WidgetPath {
             #[inline]
-            fn as_mut<'s>(&'s mut self) -> $crate::widget::resolvable::ResolvableMut<'s,$e> where 'w: 's {
+            fn as_mut(&mut self) -> $crate::widget::resolvable::ResolvableMut<'_,$e> {
                 $crate::widget::resolvable::ResolvableMut::Path(self.clone().into())
             }
             #[inline]
-            fn into_mut(self) -> $crate::widget::resolvable::ResolvableMut<'w,$e> {
+            fn into_mut<'w>(self) -> $crate::widget::resolvable::ResolvableMut<'w,$e> where Self: 'w {
                 $crate::widget::resolvable::ResolvableMut::Path(self.clone().into())
             }
         }

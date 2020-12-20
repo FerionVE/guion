@@ -1,13 +1,13 @@
 use super::*;
 use util::caption::CaptionMut;
 
-impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
+impl<'w,E,Text,Stil> Widget<E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    Text: AsWidget<'w,E>+StatizeSized<E>,
+    Text: AsWidget<E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -80,10 +80,10 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     fn childs(&self) -> usize {
         1
     }
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
+    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
         vec![self.text.as_ref()]
     }
-    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
         vec![self.text.into_ref()]
     }
     
@@ -93,36 +93,36 @@ impl<'w,E,Text,Stil> Widget<'w,E> for Button<'w,E,Text,Stil> where
     }
     fn focusable(&self) -> bool { true }
 
-    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
         if i != 0 {return Err(());}
         Ok(self.text.as_ref())
     }
-    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
         Ok(self.text.into_ref())
     }
 }
 
-impl<'w,E,Text,Stil> WidgetMut<'w,E> for Button<'w,E,Text,Stil> where
+impl<'w,E,Text,Stil> WidgetMut<E> for Button<'w,E,Text,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    Text: AsWidgetMut<'w,E>+StatizeSized<E>,
+    Text: AsWidgetMut<E>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         vec![self.text.as_mut()]
     }
-    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         vec![self.text.into_mut()]
     }
-    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
         if i != 0 {return Err(());}
         Ok(self.text.as_mut())
     }
-    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
         Ok(self.text.into_mut())
     }
@@ -134,7 +134,7 @@ impl<'w,E,S,Stil> Button<'w,E,S,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>>,
     E::Context: CtxStdState<E>,
-    S: AsWidget<'w,E>+StatizeSized<E>
+    S: AsWidget<E>+StatizeSized<E>
 {
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
         let id = l.id();

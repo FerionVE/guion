@@ -38,7 +38,7 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     fn link<'l: 's,'s>(&'s mut self, w: Resolved<'l,E>) -> Link<'s,E> {
         Link{
             ctx: self,
-            widget: unsafe{w.short_lt()},
+            widget: w,
         }
     }
 

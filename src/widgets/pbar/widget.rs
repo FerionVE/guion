@@ -1,7 +1,7 @@
 use super::*;
 use super::super::util::state::*;
 
-impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
+impl<'w,E,Stil> Widget<E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
@@ -30,10 +30,10 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
+    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
         vec![]
     }
-    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
         vec![]
     }
     fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
@@ -42,10 +42,10 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     fn focusable(&self) -> bool {
         false
     }
-    fn child<'a>(&'a self, _: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+    fn child(&self, _: usize) -> Result<Resolvable<'_,E>,()> {
         Err(())
     }
-    fn into_child(self: Box<Self>, _: usize) -> Result<Resolvable<'w,E>,()> {
+    fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         Err(())
     }
 
@@ -54,22 +54,22 @@ impl<'w,E,Stil> Widget<'w,E> for ProgressBar<'w,E,Stil> where
     );
 }
 
-impl<'w,E,Stil> WidgetMut<'w,E> for ProgressBar<'w,E,Stil> where
+impl<'w,E,Stil> WidgetMut<E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     Stil: StatizeSized<E>+Clone,
 {
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         vec![]
     }
-    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         vec![]
     }
-    fn child_mut<'a>(&'a mut self, _: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<'_,E>,()> {
         Err(())
     }
-    fn into_child_mut(self: Box<Self>, _: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         Err(())
     }
 

@@ -105,8 +105,8 @@ impl<'a,E> Deref for Resolved<'a,E> where E: Env {
 
 impl<'a,E> ResolvedMut<'a,E> where E: Env {
     #[inline]
-    pub fn widget<'s>(&'s mut self) -> &'s mut (dyn WidgetMut<'s,E>+'s) where 'a: 's {
-        unsafe{(&mut (*self.wref)).short_lt()}
+    pub fn widget(&mut self) -> &mut (dyn WidgetMut<E>+'_) {
+        &mut *self.wref
     }
 }
 

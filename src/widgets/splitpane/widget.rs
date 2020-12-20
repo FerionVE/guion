@@ -2,14 +2,14 @@ use super::*;
 use util::state::*;
 use crate::event::key::Key; //TODO fix req of this import
 
-impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
+impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    L: AsWidget<'w,E>+StatizeSized<E>,
-    R: AsWidget<'w,E>+StatizeSized<E>,
+    L: AsWidget<E>+StatizeSized<E>,
+    R: AsWidget<E>+StatizeSized<E>,
     V: AtomState<E,f32>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
@@ -127,10 +127,10 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
     fn childs(&self) -> usize {
         self.childs.len()
     }
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
+    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
         self.childs.childs()
     }
-    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
         self.childs.into_childs()
     }
 
@@ -138,21 +138,21 @@ impl<'w,E,L,R,V,Stil> Widget<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
         false
     }
 
-    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
         self.childs.child(i)
     }
-    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         self.childs.into_child(i)
     }
 }
-impl<'w,E,L,R,V,Stil> WidgetMut<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
+impl<'w,E,L,R,V,Stil> WidgetMut<E> for SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    L: AsWidgetMut<'w,E>+StatizeSized<E>,
-    R: AsWidgetMut<'w,E>+StatizeSized<E>,
+    L: AsWidgetMut<E>+StatizeSized<E>,
+    R: AsWidgetMut<E>+StatizeSized<E>,
     V: AtomStateMut<E,f32>+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
@@ -160,16 +160,16 @@ impl<'w,E,L,R,V,Stil> WidgetMut<'w,E> for SplitPane<'w,E,L,R,V,Stil> where
         let _ = v;
         //self.invalid = true
     }
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         self.childs.childs_mut()
     }
-    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         self.childs.into_childs_mut()
     }
-    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
         self.childs.child_mut(i)
     }
-    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         self.childs.into_child_mut(i)
     }
 

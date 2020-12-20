@@ -51,7 +51,6 @@ pub(crate) use style::*;
 pub(crate) use util::border::*;
 pub(crate) use util::bounded_widget::*;
 pub(crate) use util::bounds::*;
-pub(crate) use util::shortlt::*;
 pub(crate) use util::*;
 pub(crate) use widget::array::*;
 pub(crate) use widget::as_widget::*;

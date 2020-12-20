@@ -1,13 +1,13 @@
 use super::*;
 use util::{state::*};
 
-impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
+impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    W: AsWidget<'w,E>+StatizeSized<E>+'w,
+    W: AsWidget<E>+StatizeSized<E>+'w,
     Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
     Stil: Clone + StatizeSized<E>,
 {
@@ -96,10 +96,10 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
     fn childs(&self) -> usize {
         1
     }
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> where 'w: 's {
+    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
         vec![self.inner.as_ref()]
     }
-    fn into_childs(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
+    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
         vec![self.inner.into_ref()]
     }
     
@@ -109,37 +109,37 @@ impl<'w,E,W,Scroll,Stil> Widget<'w,E> for Area<'w,E,W,Scroll,Stil> where
     fn focusable(&self) -> bool {
         false //TODO
     }
-    fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
+    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
         if i != 0 {return Err(());}
         Ok(self.inner.as_ref())
     }
-    fn into_child(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
+    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
         Ok(self.inner.into_ref())
     }
 }
 
-impl<'w,E,W,Scroll,Stil> WidgetMut<'w,E> for Area<'w,E,W,Scroll,Stil> where
+impl<'w,E,W,Scroll,Stil> WidgetMut<E> for Area<'w,E,W,Scroll,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    W: AsWidgetMut<'w,E>+StatizeSized<E>+'w,
+    W: AsWidgetMut<E>+StatizeSized<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
     Stil: Clone + StatizeSized<E>,
 {
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         vec![self.inner.as_mut()]
     }
-    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         vec![self.inner.into_mut()]
     }
-    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
         if i != 0 {return Err(());}
         Ok(self.inner.as_mut())
     }
-    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
         Ok(self.inner.into_mut())
     }

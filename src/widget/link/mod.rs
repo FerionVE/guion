@@ -191,7 +191,7 @@ impl<'c,E> Link<'c,E> where E: Env {
             stor,
         };
         let l = Link{
-            widget: unsafe{w.short_lt()},
+            widget: w,
             ctx: self.ctx,
         };
 
@@ -200,7 +200,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn _with_link<'s>(ctx: &mut E::Context, w: Resolved<'s,E>, f: impl FnOnce(Link<E>)) where 'c: 's {
         let l = Link{
-            widget: unsafe{w.short_lt()},
+            widget: w,
             ctx,
         };
         f(l);
@@ -282,7 +282,7 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     #[inline]
     pub fn childs<'s>(&'s self) -> impl Iterator<Item=Resolvable<'s,E>>+'s where 'c: 's {
-        let w = unsafe{(&self.widget).short_lt()}; //TODO this looks like a fkn move and ref
+        let w = &self.widget; //TODO this looks like a fkn move and ref
         (0..w.childs())
             .map(#[inline] move |i| w.child(i).unwrap() )
     }
