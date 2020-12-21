@@ -136,3 +136,37 @@ pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
         unsafe{Self::_traitcast_mut(self.erase_mut())}
     }
 }
+
+#[macro_export]
+macro_rules! traitcast_for_immu {
+    ($trait:path) => {
+        unsafe impl<'w,E> $crate::util::traitcast::Traitcast<dyn $trait+'w,E> for dyn $crate::widget::Widget<E>+'w where E: $crate::env::Env {
+            type DestTypeID = dyn $trait+'static;
+        }
+    }
+}
+#[macro_export]
+macro_rules! traitcast_for_mut {
+    ($trait:path) => {
+        unsafe impl<'w,E> $crate::util::traitcast::TraitcastMut<dyn $trait+'w,E> for dyn $crate::widget::WidgetMut<E>+'w where E: $crate::env::Env {
+            type DestTypeID = dyn $trait+'static;
+        }
+    }
+}
+
+/// Implement Traitcast for traits to be traitcasted from Widget
+/// 
+/// Syntax: traitcast_for!(trait_path;mut_trait_path);
+/// 
+/// Implements for: Widget -> Trait, WidgetMut -> Trait, WidgetMut -> TraitMut
+/// 
+/// Example:
+/// traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);
+#[macro_export]
+macro_rules! traitcast_for {
+    ($trait_immu:path;$trait_mut:path) => {
+        $crate::traitcast_for_immu!($trait_immu);
+        $crate::traitcast_for_mut!($trait_immu);
+        $crate::traitcast_for_mut!($trait_mut);
+    };
+}

@@ -39,12 +39,4 @@ unsafe impl<'w,E> Statize<E> for dyn ICheckBoxMut<E>+'_ where E: Env {
     type Statur = dyn ICheckBoxMut<E>;
 }
 
-unsafe impl<'w,E> Traitcast<dyn ICheckBox<E>+'w,E> for dyn Widget<E>+'w where E: Env {
-    type DestTypeID = dyn ICheckBox<E>;
-}
-unsafe impl<'w,E> TraitcastMut<dyn ICheckBox<E>+'w,E> for dyn WidgetMut<E>+'w where E: Env {
-    type DestTypeID = dyn ICheckBox<E>;
-}
-unsafe impl<'w,E> TraitcastMut<dyn ICheckBoxMut<E>+'w,E> for dyn WidgetMut<E>+'w where E: Env {
-    type DestTypeID = dyn ICheckBoxMut<E>;
-}
+traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);
