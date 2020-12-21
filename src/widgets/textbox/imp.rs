@@ -4,8 +4,23 @@ use state::TBState;
 use std::sync::Arc;
 use validation::*;
 
+pub trait ITextBox<E> where E: Env {
 
-pub trait ITextBoxMut<'w,E> where E: Env {
+}
+
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+    E: Env,
+    Text: 'w,
+    Scroll: 'w,
+    Curs: 'w,
+    CursorStickX: 'w,
+    GlyphCache: 'w,
+    Stil: 'w,
+{
+
+}
+
+pub trait ITextBoxMut<E>: ITextBox<E> where E: Env {
     fn insert_text(&mut self, t: &str, ctx: &mut E::Context);
     fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context);
     fn remove_selection(&mut self, ctx: &mut E::Context) -> bool;
@@ -15,7 +30,7 @@ pub trait ITextBoxMut<'w,E> where E: Env {
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBoxMut<'w,E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -134,8 +149,11 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBoxMut<'w,E> for T
     }
 }
 
-unsafe impl<'w,E> Statize<E> for dyn ITextBoxMut<'w,E> where E: 'static {
-    type Statur = dyn ITextBoxMut<'static,E>;
+unsafe impl<'w,E> Statize<E> for dyn ITextBox<E> where E: 'static {
+    type Statur = dyn ITextBox<E>+'static;
+}
+unsafe impl<'w,E> Statize<E> for dyn ITextBoxMut<E> where E: 'static {
+    type Statur = dyn ITextBoxMut<E>+'static;
 }
 
 impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where

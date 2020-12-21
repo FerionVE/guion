@@ -1,7 +1,7 @@
 use super::*;
 use util::{state::*, caption::CaptionMut, LocalGlyphCache};
 use state::{Cursor, TBState};
-use super::imp::ITextBoxMut;
+use super::imp::*;
 use validation::*;
 
 impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
@@ -222,6 +222,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
         dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
         dyn AtomState<E,Cursor> => |s| &s.cursor;
         dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
+        dyn ITextBox<E> => |s| s;
     );
 }
 
@@ -251,19 +252,13 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> WidgetMut<E> for TextBo
         Err(())
     }
 
-    impl_traitcast!(
-        dyn CaptionMut<E> => |s| &s.text;
-        dyn AtomStateMut<E,(u32,u32)> => |s| &s.scroll;
-        dyn AtomStateMut<E,Cursor> => |s| &s.cursor;
-        dyn AtomStateMut<E,Option<u32>> => |s| &s.cursor_stick_x;
-        dyn ITextBoxMut<'w,E> => |s| s;
-    );
     impl_traitcast_mut!(
         dyn CaptionMut<E> => |s| &mut s.text;
         dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
         dyn AtomStateMut<E,Cursor> => |s| &mut s.cursor;
         dyn AtomStateMut<E,Option<u32>> => |s| &mut s.cursor_stick_x;
-        dyn ITextBoxMut<'w,E> => |s| s;
+        dyn ITextBox<E> => |s| s;
+        dyn ITextBoxMut<E> => |s| s;
         dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
         dyn ValidationMut<E> => |s| &mut s.text;
     );
