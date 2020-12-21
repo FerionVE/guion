@@ -106,33 +106,33 @@ impl<'a,E,T,U,V,F> AtomStateMut<E,V> for SMA<'a,T,U,F> where
     }
 }
 
-impl<'w,'a,E,T,U,F> Caption<'w,E> for SMA<'a,T,U,F> where 
+impl<'w,'a,E,T,U,F> Caption<E> for SMA<'a,T,U,F> where 
     E: Env,
-    U: Caption<'w,E>,
+    U: Caption<E>+'w,
     F: SMALens<T,U>
 {
-    fn caption<'s>(&'s self) -> std::borrow::Cow<'s,str> where 'w: 's {
+    fn caption(&self) -> std::borrow::Cow<'_,str> {
         let g = self.borrow_mut();
         let c = g.caption();
         std::borrow::Cow::Owned( c.into_owned() )
     }
-    fn len<'s>(&'s self) -> usize where 'w: 's {
+    fn len(&self) -> usize {
         self.borrow_mut().len()
     }
 }
 
-impl<'w,'a,E,T,U,F> CaptionMut<'w,E> for SMA<'a,T,U,F> where 
+impl<'w,'a,E,T,U,F> CaptionMut<E> for SMA<'a,T,U,F> where 
     E: Env,
-    U: CaptionMut<'w,E>,
+    U: CaptionMut<E>+'w,
     F: SMALens<T,U>
 {
-    fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's {
+    fn push(&mut self, off: usize, s: &str) {
         self.borrow_mut().push(off,s)
     }
-    fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's {
+    fn pop_left(&mut self, off: usize, n: usize) {
         self.borrow_mut().pop_left(off,n)
     }
-    fn replace<'s>(&'s mut self, s: &str) where 'w: 's {
+    fn replace(&mut self, s: &str) {
         self.borrow_mut().replace(s)
     }
 }

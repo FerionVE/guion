@@ -3,80 +3,80 @@ use std::borrow::Cow;
 use std::{ffi::{OsStr,OsString}, path::*};
 use crate::validation::validated::Validated;
 
-pub trait Caption<'w,E> {
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's;
+pub trait Caption<E> {
+    fn caption<'s>(&'s self) -> Cow<'s,str>;
     #[inline]
-    fn len<'s>(&'s self) -> usize where 'w: 's {
+    fn len(&self) -> usize {
         self.caption().len()
     }
 }
 
-impl<'w,E> Caption<'w,E> for str {
+impl<E> Caption<E> for str {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
+    fn caption(&self) -> Cow<'_,str> {
         Cow::Borrowed(self)
     }
 }
-impl<'w,E> Caption<'w,E> for String {
+impl<E> Caption<E> for String {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
+    fn caption(&self) -> Cow<'_,str> {
         Cow::Borrowed(self)
     }
 }
 
-impl<'w,E> Caption<'w,E> for Path {
+impl<E> Caption<E> for Path {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
+    fn caption(&self) -> Cow<'_,str> {
         self.to_string_lossy()
     }
 }
-impl<'w,E> Caption<'w,E> for PathBuf {
+impl<E> Caption<E> for PathBuf {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
-        self.to_string_lossy()
-    }
-}
-
-impl<'w,E> Caption<'w,E> for OsStr {
-    #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
-        self.to_string_lossy()
-    }
-}
-impl<'w,E> Caption<'w,E> for OsString {
-    #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
+    fn caption(&self) -> Cow<'_,str> {
         self.to_string_lossy()
     }
 }
 
-impl<'w,'l,E,T> Caption<'w,E> for &'w T where T: Caption<'l,E>+?Sized, 'l: 'w {
+impl<E> Caption<E> for OsStr {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
+    fn caption(&self) -> Cow<'_,str> {
+        self.to_string_lossy()
+    }
+}
+impl<E> Caption<E> for OsString {
+    #[inline]
+    fn caption(&self) -> Cow<'_,str> {
+        self.to_string_lossy()
+    }
+}
+
+impl<E,T> Caption<E> for &'_ T where T: Caption<E>+?Sized {
+    #[inline]
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
 }
-impl<'w,'l,E,T> Caption<'w,E> for &'w mut T where T: Caption<'l,E>+?Sized, 'l: 'w {
+impl<'l,E,T> Caption<E> for &'_ mut T where T: Caption<E>+?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
 }
 
-impl<'w,E,T> Caption<'w,E> for Validated<E,T> where T: Caption<'w,E> {
+impl<E,T> Caption<E> for Validated<E,T> where T: Caption<E> {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
 }
-impl<'w,E,T> CaptionMut<'w,E> for Validated<E,T> where T: CaptionMut<'w,E> {
-    fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's {
+impl<E,T> CaptionMut<E> for Validated<E,T> where T: CaptionMut<E> {
+    fn push(&mut self, off: usize, s: &str) {
         (**self).push(off,s)
     }
-    fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's {
+    fn pop_left(&mut self, off: usize, n: usize) {
         (**self).pop_left(off,n)
     }
-    fn replace<'s>(&'s mut self, s: &str) where 'w: 's {
+    fn replace(&mut self, s: &str) {
         (**self).replace(s)
     }
 }
@@ -87,9 +87,9 @@ macro_rules! impl_caption_gen {
         impl_caption_gen!($($tt);*);
     };
     ($t:ty) => {
-        impl<'w,E> Caption<'w,E> for $t {
+        impl<E> Caption<E> for $t {
             #[inline]
-            fn caption<'s>(&'s self) -> Cow<'s,str> where 'w: 's {
+            fn caption(&self) -> Cow<'_,str> {
                 Cow::Owned(self.to_string())
             }
         }
@@ -103,43 +103,45 @@ impl_caption_gen!(
     u8;u16;u32;u64;u128;usize
 );
 
-pub trait CaptionMut<'w,E>: Caption<'w,E> {
-    fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's;
-    fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's;
-    fn replace<'s>(&'s mut self, s: &str) where 'w: 's;
+pub trait CaptionMut<E>: Caption<E> {
+    fn push(&mut self, off: usize, s: &str);
+    fn pop_left(&mut self, off: usize, n: usize);
+    fn replace(&mut self, s: &str);
 }
 
-impl<'w,E> CaptionMut<'w,E> for String {
-    fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's {
+impl<E> CaptionMut<E> for String {
+    fn push(&mut self, off: usize, s: &str) {
         self.insert_str(off,s);
     }
-    fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's {
+    fn pop_left(&mut self, off: usize, n: usize) {
         let popable = n.min(off).min(Caption::<E>::len(self));
         let pop_start = off - popable;
         for _ in 0..popable { //TODO VERY INEFFICIENT optimize
             self.remove(pop_start);
         }
     }
-    fn replace<'s>(&'s mut self, s: &str) where 'w: 's {
+    fn replace(&mut self, s: &str) {
         *self = s.to_owned(); //TODO more efficient alloc-keeping replace
     }
 }
 
-impl<'w,'l,E,T> CaptionMut<'w,E> for &'w mut T where T: CaptionMut<'l,E>+?Sized, 'l: 'w {
-    fn push<'s>(&'s mut self, off: usize, s: &str) where 'w: 's {
+impl<E,T> CaptionMut<E> for &'_ mut T where T: CaptionMut<E>+?Sized {
+    fn push(&mut self, off: usize, s: &str) {
         (**self).push(off,s)
     }
-    fn pop_left<'s>(&'s mut self, off: usize, n: usize) where 'w: 's {
+    fn pop_left(&mut self, off: usize, n: usize) {
         (**self).pop_left(off,n)
     }
-    fn replace<'s>(&'s mut self, s: &str) where 'w: 's {
+    fn replace(&mut self, s: &str) {
         (**self).replace(s)
     }
 }
 
-unsafe impl<'w,E> Statize<E> for dyn Caption<'w,E> where E: 'static {
-    type Statur = dyn Caption<'static,E>;
+unsafe impl<E> Statize<E> for dyn Caption<E> where E: 'static {
+    type Statur = dyn Caption<E>+'static;
 }
-unsafe impl<'w,E> Statize<E> for dyn CaptionMut<'w,E> where E: 'static {
-    type Statur = dyn CaptionMut<'static,E>;
+unsafe impl<E> Statize<E> for dyn CaptionMut<E> where E: 'static {
+    type Statur = dyn CaptionMut<E>+'static;
 }
+
+traitcast_for!(Caption<E>;CaptionMut<E>);

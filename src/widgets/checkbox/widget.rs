@@ -10,7 +10,7 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+StatizeSized<E>,
-    Text: Caption<'w,E>+StatizeSized<E>,
+    Text: Caption<E>+'w+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -122,7 +122,7 @@ impl<'w,E,State,Text,Stil> WidgetMut<E> for CheckBox<'w,E,State,Text,Stil> where
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     State: AtomStateMut<E,bool>+StatizeSized<E>,
-    Text: Caption<'w,E>+StatizeSized<E>,
+    Text: Caption<E>+'w+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
@@ -153,7 +153,7 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
     ESVariant<E>: StyleVariantSupport<StdTag<E>>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+StatizeSized<E>+'w,
-    Text: Caption<'w,E>+StatizeSized<E>+'w,
+    Text: Caption<E>+'w+StatizeSized<E>,
 {
     pub fn set(mut l: Link<E>, v: bool) {
         l.mutate_closure(Box::new(move |mut w,c,_|{

@@ -8,7 +8,7 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<E> for Label<'w,E,Text,Stil,GlyphCache> w
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Text: Caption<'w,E>+Validation<E>+StatizeSized<E>,
+    Text: Caption<E>+Validation<E>+'w+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
 {
@@ -67,7 +67,7 @@ impl<'w,E,Text,Stil,GlyphCache> WidgetMut<E> for Label<'w,E,Text,Stil,GlyphCache
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Text: CaptionMut<'w,E>+ValidationMut<E>+StatizeSized<E>,
+    Text: CaptionMut<E>+ValidationMut<E>+'w+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
 {
@@ -99,7 +99,7 @@ impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Text: Caption<'w,E>+Validation<E>+StatizeSized<E>,
+    Text: Caption<E>+Validation<E>+'w+StatizeSized<E>,
     Stil: StatizeSized<E>+Clone,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
 {

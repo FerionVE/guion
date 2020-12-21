@@ -10,7 +10,7 @@ pub struct TBState<E> where E: Env {
 }
 
 impl<E> TBState<E> where E: Env {
-    pub fn retrieve<'a,S,P,C>(caption: &S, glyphs: Arc<ESGlyphs<E>>, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<'a,E>, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
+    pub fn retrieve<'a,S,P,C>(caption: &S, glyphs: Arc<ESGlyphs<E>>, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<E>+'a, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
         let off = p.get(ctx);
         //assert_eq!(glyphs.chars() as usize,caption.len()+1);
         let siz = glyphs.size();
@@ -212,7 +212,7 @@ impl Cursor {
     pub fn limit(&mut self, min: u32) {
         *self = self.min(min);
     }
-    pub fn del_selection<'a,S,E>(&mut self, c: &mut S) where S: CaptionMut<'a,E> {
+    pub fn del_selection<'a,S,E>(&mut self, c: &mut S) where S: CaptionMut<E>+'a {
         let (start,len) = self.start_len();
         c.pop_left((start+len) as usize, len as usize);
         self.caret = start;
