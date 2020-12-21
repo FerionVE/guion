@@ -1,7 +1,9 @@
 //! macros for implementing traitcast for widgets
+use std::any::TypeId;
+
 use super::*;
 
-/// should match the non-stabilized std::raw::TraitObject and represents a erased fat pointer
+/// should match the non-stabilized std::raw::TraitObject and represents an erased fat pointer
 #[repr(C)]
 #[derive(Copy, Clone)]
 #[doc(hidden)]
@@ -21,12 +23,12 @@ pub struct TraitObject {
 macro_rules! impl_traitcast {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
         #[inline]
-        unsafe fn _as_trait_ref(&self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
+        unsafe fn _as_trait_ref<'impl_traitcast_lt_a>(&'impl_traitcast_lt_a self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
                 if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
                     let $id = self;
-                    let senf: &$trait = $access;
-                    let senf = std::mem::transmute::<&$trait,$crate::util::traitcast::TraitObject>(senf);
+                    let senf: &'impl_traitcast_lt_a $trait = $access;
+                    let senf = std::mem::transmute::<&'impl_traitcast_lt_a $trait,$crate::util::traitcast::TraitObject>(senf);
                     return Some(senf);
                 }
             );*
@@ -46,12 +48,12 @@ macro_rules! impl_traitcast {
 macro_rules! impl_traitcast_mut {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
         #[inline]
-        unsafe fn _as_trait_mut(&mut self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
+        unsafe fn _as_trait_mut<'impl_traitcast_lt_a>(&'impl_traitcast_lt_a mut self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
                 if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
                     let $id = self;
-                    let senf: &mut $trait = $access;
-                    let senf = std::mem::transmute::<&mut $trait,$crate::util::traitcast::TraitObject>(senf);
+                    let senf: &'impl_traitcast_lt_a mut $trait = $access;
+                    let senf = std::mem::transmute::<&'impl_traitcast_lt_a mut $trait,$crate::util::traitcast::TraitObject>(senf);
                     return Some(senf);
                 }
             );*
@@ -72,4 +74,65 @@ macro_rules! impl_statize_lte {
             type Statur = &'static mut dyn $trait<'static,E>;
         }
     };
+}
+
+pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
+    type DestTypeID: ?Sized + 'static;
+
+    #[inline]
+    unsafe fn _traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Option<&'s T> {
+        // god plz fix https://github.com/rust-lang/rust/issues/51826
+        let t = TypeId::of::<Self::DestTypeID>();
+        let t = senf._as_trait_ref(t);
+        if let Some(v) = t {
+            Some(std::mem::transmute_copy::<TraitObject,&'s T>(&v))
+        } else if let Some(senf) = senf.inner() {
+            Self::_traitcast_ref(senf)
+        } else {
+            None
+        }
+    }
+    #[inline]
+    fn traitcast_ref<'s>(&'s self) -> Option<&'s T> {
+        unsafe{Self::_traitcast_ref(self.erase())}
+    }
+}
+
+pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
+    type DestTypeID: ?Sized + 'static;
+
+    #[inline]
+    unsafe fn _traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Option<&'s T> {
+        // god plz fix https://github.com/rust-lang/rust/issues/51826
+        let t = TypeId::of::<Self::DestTypeID>();
+        let t = senf._as_trait_ref(t);
+        if let Some(v) = t {
+            Some(std::mem::transmute_copy::<TraitObject,&'s T>(&v))
+        } else if let Some(senf) = senf.inner() {
+            Self::_traitcast_ref(senf)
+        } else {
+            None
+        }
+    }
+    #[inline]
+    fn traitcast_ref<'s>(&'s self) -> Option<&'s T> {
+        unsafe{Self::_traitcast_ref(self.erase())}
+    }
+    #[inline]
+    unsafe fn _traitcast_mut<'s>(senf: &'s mut dyn WidgetMut<E>) -> Option<&'s mut T> {
+        // god plz fix https://github.com/rust-lang/rust/issues/51826
+        let t = TypeId::of::<Self::DestTypeID>();
+        let t = senf._as_trait_mut(t);
+        if let Some(v) = t {
+            Some(std::mem::transmute_copy::<TraitObject,&'s mut T>(&v))
+        } else if let Some(senf) = senf.inner_mut() {
+            Self::_traitcast_mut(senf)
+        } else {
+            None
+        }
+    }
+    #[inline]
+    fn traitcast_mut<'s>(&'s mut self) -> Option<&'s mut T> {
+        unsafe{Self::_traitcast_mut(self.erase_mut())}
+    }
 }

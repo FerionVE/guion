@@ -1,6 +1,7 @@
 use super::*;
 use util::state::AtomStateMut;
 use imp::ICheckBox;
+use super::imp::ICheckBoxMut;
 
 impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     E: Env,
@@ -137,13 +138,9 @@ impl<'w,E,State,Text,Stil> WidgetMut<E> for CheckBox<'w,E,State,Text,Stil> where
         Err(())
     }
 
-    impl_traitcast!(
-        dyn ICheckBox<E> => |s| s;
-        dyn AtomState<E,bool> => |s| &s.state;
-        dyn AtomStateMut<E,bool> => |s| &s.state;
-    );
     impl_traitcast_mut!(
         dyn ICheckBox<E> => |s| s;
+        dyn ICheckBoxMut<E> => |s| s;
         dyn AtomState<E,bool> => |s| &mut s.state;
         dyn AtomStateMut<E,bool> => |s| &mut s.state;
     );
@@ -160,7 +157,9 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
 {
     pub fn set(mut l: Link<E>, v: bool) {
         l.mutate_closure(Box::new(move |mut w,c,_|{
-            w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
+            //w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
+            let w: &mut dyn ICheckBoxMut<E> = crate::util::traitcast::TraitcastMut::traitcast_mut(&mut *w).unwrap();
+            w.state_mut().set(v,c);
         }));
     }
 }
