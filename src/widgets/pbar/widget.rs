@@ -73,9 +73,6 @@ impl<'w,E,Stil> WidgetMut<E> for ProgressBar<'w,E,Stil> where
         Err(())
     }
 
-    impl_traitcast!(
-        dyn AtomStateMut<E,f32> => |s| &s.value;
-    );
     impl_traitcast_mut!(
         dyn AtomStateMut<E,f32> => |s| &mut s.value;
     );

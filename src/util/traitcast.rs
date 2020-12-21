@@ -25,7 +25,7 @@ macro_rules! impl_traitcast {
         #[inline]
         unsafe fn _as_trait_ref<'impl_traitcast_lt_a>(&'impl_traitcast_lt_a self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
-                if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
+                if t == std::any::TypeId::of::<<(dyn $crate::widget::Widget<_>) as $crate::util::traitcast::Traitcast::<$trait,_>>::DestTypeID>() {
                     let $id = self;
                     let senf: &'impl_traitcast_lt_a $trait = $access;
                     let senf = std::mem::transmute::<&'impl_traitcast_lt_a $trait,$crate::util::traitcast::TraitObject>(senf);
@@ -50,7 +50,7 @@ macro_rules! impl_traitcast_mut {
         #[inline]
         unsafe fn _as_trait_mut<'impl_traitcast_lt_a>(&'impl_traitcast_lt_a mut self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
-                if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
+                if t == std::any::TypeId::of::<<(dyn $crate::widget::WidgetMut<_>) as $crate::util::traitcast::TraitcastMut::<$trait,_>>::DestTypeID>() {
                     let $id = self;
                     let senf: &'impl_traitcast_lt_a mut $trait = $access;
                     let senf = std::mem::transmute::<&'impl_traitcast_lt_a mut $trait,$crate::util::traitcast::TraitObject>(senf);
@@ -76,6 +76,19 @@ macro_rules! impl_statize_lte {
     };
 }
 
+impl<E> dyn Widget<E>+'_ where E: Env {
+    #[inline]
+    pub fn traitcast_ref<'s,T>(&'s self) -> Option<&'s T> where Self: Traitcast<T,E>, T: ?Sized {
+        unsafe{Self::_traitcast_ref(self.erase())}
+    }
+}
+impl<E> dyn WidgetMut<E>+'_ where E: Env {
+    #[inline]
+    pub fn traitcast_mut<'s,T>(&'s mut self) -> Option<&'s mut T> where Self: TraitcastMut<T,E>, T: ?Sized {
+        unsafe{Self::_traitcast_mut(self.erase_mut())}
+    }
+}
+
 pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
     type DestTypeID: ?Sized + 'static;
 
@@ -91,10 +104,6 @@ pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
         } else {
             None
         }
-    }
-    #[inline]
-    fn traitcast_ref<'s>(&'s self) -> Option<&'s T> {
-        unsafe{Self::_traitcast_ref(self.erase())}
     }
 }
 
@@ -130,10 +139,6 @@ pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
         } else {
             None
         }
-    }
-    #[inline]
-    fn traitcast_mut<'s>(&'s mut self) -> Option<&'s mut T> {
-        unsafe{Self::_traitcast_mut(self.erase_mut())}
     }
 }
 

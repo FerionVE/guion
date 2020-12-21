@@ -117,6 +117,10 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
         if i != 0 {return Err(());}
         Ok(self.inner.into_ref())
     }
+
+    impl_traitcast!(
+        dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
+    );
 }
 
 impl<'w,E,W,Scroll,Stil> WidgetMut<E> for Area<'w,E,W,Scroll,Stil> where
@@ -144,10 +148,8 @@ impl<'w,E,W,Scroll,Stil> WidgetMut<E> for Area<'w,E,W,Scroll,Stil> where
         Ok(self.inner.into_mut())
     }
 
-    impl_traitcast!(
-        dyn AtomStateMut<E,(u32,u32)> => |s| &s.scroll;
-    );
     impl_traitcast_mut!(
+        dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
         dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
     );
 }

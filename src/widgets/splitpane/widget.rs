@@ -144,6 +144,10 @@ impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
     fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         self.childs.into_child(i)
     }
+
+    impl_traitcast!(
+        dyn AtomState<E,f32> => |s| &s.state;
+    );
 }
 impl<'w,E,L,R,V,Stil> WidgetMut<E> for SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
@@ -173,10 +177,6 @@ impl<'w,E,L,R,V,Stil> WidgetMut<E> for SplitPane<'w,E,L,R,V,Stil> where
         self.childs.into_child_mut(i)
     }
 
-    impl_traitcast!(
-        dyn AtomState<E,f32> => |s| &s.state;
-        dyn AtomStateMut<E,f32> => |s| &s.state;
-    );
     impl_traitcast_mut!(
         dyn AtomState<E,f32> => |s| &mut s.state;
         dyn AtomStateMut<E,f32> => |s| &mut s.state;

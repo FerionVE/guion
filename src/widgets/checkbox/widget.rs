@@ -113,6 +113,11 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         Err(())
     }
+
+    impl_traitcast!(
+        dyn ICheckBox<E> => |s| s;
+        dyn AtomState<E,bool> => |s| &s.state;
+    );
 }
 
 impl<'w,E,State,Text,Stil> WidgetMut<E> for CheckBox<'w,E,State,Text,Stil> where
@@ -158,7 +163,7 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
     pub fn set(mut l: Link<E>, v: bool) {
         l.mutate_closure(Box::new(move |mut w,c,_|{
             //w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
-            let w: &mut dyn ICheckBoxMut<E> = crate::util::traitcast::TraitcastMut::traitcast_mut(&mut *w).unwrap();
+            let w = w.traitcast_mut::<dyn ICheckBoxMut<E>>().unwrap();
             w.state_mut().set(v,c);
         }));
     }

@@ -58,6 +58,8 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<E> for Label<'w,E,Text,Stil,GlyphCache> w
     }
 
     impl_traitcast!(
+        dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
+        dyn Validation<E> => |s| &s.text;
         dyn Caption<E> => |s| &s.text;
     );
 }
@@ -84,9 +86,6 @@ impl<'w,E,Text,Stil,GlyphCache> WidgetMut<E> for Label<'w,E,Text,Stil,GlyphCache
         Err(())
     }
 
-    impl_traitcast!(
-        dyn CaptionMut<E> => |s| &s.text;
-    );
     impl_traitcast_mut!(
         dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
         dyn ValidationMut<E> => |s| &mut s.text;

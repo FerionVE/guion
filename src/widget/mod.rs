@@ -207,14 +207,6 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         self
     }
 
-    /// The impl_traitcast! macro should be used to implement this function
-    #[allow(unused)]
-    #[doc(hidden)]
-    #[deprecated]
-    #[inline]
-    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> { //TODO goner
-        Widget::_as_trait_ref(self,t)
-    }
     /// The impl_traitcast_mut! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]

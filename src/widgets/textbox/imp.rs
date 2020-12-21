@@ -156,6 +156,8 @@ unsafe impl<'w,E> Statize<E> for dyn ITextBoxMut<E> where E: 'static {
     type Statur = dyn ITextBoxMut<E>+'static;
 }
 
+traitcast_for!(ITextBox<E>;ITextBoxMut<E>);
+
 impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,

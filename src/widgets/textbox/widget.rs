@@ -223,6 +223,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
         dyn AtomState<E,Cursor> => |s| &s.cursor;
         dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
         dyn ITextBox<E> => |s| s;
+        dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
+        dyn Validation<E> => |s| &s.text;
     );
 }
 
@@ -253,13 +255,19 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> WidgetMut<E> for TextBo
     }
 
     impl_traitcast_mut!(
+        dyn Caption<E> => |s| &mut s.text;
         dyn CaptionMut<E> => |s| &mut s.text;
+        dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
+        dyn AtomState<E,Cursor> => |s| &mut s.cursor;
+        dyn AtomState<E,Option<u32>> => |s| &mut s.cursor_stick_x;
         dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
         dyn AtomStateMut<E,Cursor> => |s| &mut s.cursor;
         dyn AtomStateMut<E,Option<u32>> => |s| &mut s.cursor_stick_x;
         dyn ITextBox<E> => |s| s;
         dyn ITextBoxMut<E> => |s| s;
+        dyn AtomState<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
         dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
+        dyn Validation<E> => |s| &mut s.text;
         dyn ValidationMut<E> => |s| &mut s.text;
     );
 }
