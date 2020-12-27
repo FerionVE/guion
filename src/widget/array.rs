@@ -1,7 +1,7 @@
 //! Trait over types holding an array of AsWidget types
 use super::*;
 
-pub trait WidgetArray<E>: Sized + Statize<E> where E: Env {
+pub trait WidgetArray<E>: Sized where E: Env {
     fn len(&self) -> usize;
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()>;
     fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w;
@@ -15,7 +15,7 @@ pub trait WidgetArrayMut<E>: WidgetArray<E> where E: Env {
     fn into_childs_mut<'w>(self) -> Vec<ResolvableMut<'w,E>> where Self: 'w;
 }
 
-impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>+StatizeSized<E>, E: Env {
+impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         self.len()
@@ -45,7 +45,7 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>+StatizeSized<E>, E: Env
             .collect::<Vec<_>>()
     }
 }
-impl<T,E> WidgetArrayMut<E> for Vec<T> where T: AsWidgetMut<E>+StatizeSized<E>, E: Env {
+impl<T,E> WidgetArrayMut<E> for Vec<T> where T: AsWidgetMut<E>, E: Env {
     #[inline]
     fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
@@ -72,7 +72,7 @@ impl<T,E> WidgetArrayMut<E> for Vec<T> where T: AsWidgetMut<E>+StatizeSized<E>, 
     }
 }
 
-impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>+StatizeSized<E>, E: Env {
+impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -99,7 +99,7 @@ impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>+StatizeSized<E>, E: Env {
     }
 }
 
-impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>+StatizeSized<E>, E: Env {
+impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -125,7 +125,7 @@ impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>+StatizeSized<E>, E: E
             .collect::<Vec<_>>()
     }
 }
-impl<T,E> WidgetArrayMut<E> for &mut [T] where T: AsWidgetMut<E>+StatizeSized<E>, E: Env {
+impl<T,E> WidgetArrayMut<E> for &mut [T] where T: AsWidgetMut<E>, E: Env {
     #[inline]
     fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
@@ -154,8 +154,8 @@ macro_rules! impl_wpps_tuple {
 
         impl<E,$t,$($tt),+> WidgetArray<E> for ($t,$($tt),+) where
             E: Env,
-            $t: AsWidget<E>+StatizeSized<E>,
-            $($tt: AsWidget<E>+StatizeSized<E>),+ 
+            $t: AsWidget<E>,
+            $($tt: AsWidget<E>),+ 
         {
             #[inline]
             fn len(&self) -> usize {
@@ -191,8 +191,8 @@ macro_rules! impl_wpps_tuple {
 
         impl<E,$t,$($tt),+> WidgetArrayMut<E> for ($t,$($tt),+) where
             E: Env,
-            $t: AsWidgetMut<E>+StatizeSized<E>,
-            $($tt: AsWidgetMut<E>+StatizeSized<E>),+ 
+            $t: AsWidgetMut<E>,
+            $($tt: AsWidgetMut<E>),+ 
         {
             #[inline]
             fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {

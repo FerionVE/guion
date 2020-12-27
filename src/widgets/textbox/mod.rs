@@ -105,16 +105,3 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
         }
     }
 }
-
-unsafe impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Statize<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
-    E: Env,
-    Text: StatizeSized<E>,
-    Scroll: StatizeSized<E>,
-    Curs: StatizeSized<E>,
-    CursorStickX: StatizeSized<E>,
-    GlyphCache: StatizeSized<E>,
-    Stil: StatizeSized<E>,
-    GlyphCache: StatizeSized<E>,
-{
-    type Statur = TextBox<'static,E,Text::StaturSized,Scroll::StaturSized,Curs::StaturSized,CursorStickX::StaturSized,GlyphCache::StaturSized,Stil::StaturSized>;
-}

@@ -123,14 +123,6 @@ impl<'w,E,T,LS,BS,LC> Button<'w,E,Label<'w,E,T,LS,LC>,BS> where
     }
 }
 
-unsafe impl<'w,E,Text,Stil> Statize<E> for Button<'w,E,Text,Stil> where
-    E: Env,
-    Text: StatizeSized<E>+'w,
-    Stil: StatizeSized<E>+'w,
-{
-    type Statur = Button<'static,E,Text::StaturSized,Stil::StaturSized>;
-}
-
 pub trait TriggerFn<E,W> where E: Env {
     fn call(&mut self, w: &W, l: Link<E>);
 }

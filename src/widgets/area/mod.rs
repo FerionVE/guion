@@ -43,7 +43,7 @@ impl<'w,E,W,Scroll,Stil> Area<'w,E,W,Scroll,Stil> where
 {
     //TODO use a unified state object
     #[inline]
-    pub fn with_state<PScroll>(self, scroll: PScroll) -> Area<'w,E,W,PScroll,Stil> where PScroll: Statize<E>+'w {
+    pub fn with_state<PScroll>(self, scroll: PScroll) -> Area<'w,E,W,PScroll,Stil> where PScroll: 'w {
         Area{
             id: self.id,
             size: self.size,
@@ -60,7 +60,7 @@ impl<'w,E,W,Scroll,Stil> Area<'w,E,W,Scroll,Stil> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Area<'w,E,W,Scroll,SStil> where SStil: Statize<E>+'w {
+    pub fn with_style<SStil>(self, style: SStil) -> Area<'w,E,W,Scroll,SStil> where SStil: 'w {
         Area{
             id: self.id,
             size: self.size,
@@ -70,13 +70,4 @@ impl<'w,E,W,Scroll,Stil> Area<'w,E,W,Scroll,Stil> where
             p: PhantomData,
         }
     }
-}
-
-unsafe impl<'w,E,W,Scroll,Stil> Statize<E> for Area<'w,E,W,Scroll,Stil> where
-    E: Env,
-    W: StatizeSized<E>,
-    Scroll: StatizeSized<E>,
-    Stil: StatizeSized<E>,
-{
-    type Statur = Area<'static,E,W::StaturSized,Scroll::StaturSized,Stil::StaturSized>;
 }

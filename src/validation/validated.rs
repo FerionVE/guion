@@ -86,7 +86,3 @@ impl<E,T> AsMut<T> for Validated<E,T> {
         self
     }
 }
-
-unsafe impl<E,T> Statize<E> for Validated<E,T> where T: StatizeSized<E>, E: 'static {
-    type Statur = Validated<E,T::StaturSized>;
-}

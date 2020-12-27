@@ -5,7 +5,7 @@ pub trait Font<E>: Sized where E: Env {
 }
 
 /// Text in a optimized form for faster frequent rendering and iterating
-pub trait Glyphs<E>: Sized + Statize<E> where E: Env {
+pub trait Glyphs<E>: Sized where E: Env {
     type Glyph: Glyph;
 
     //type LineIter: Iterator<Item=(Self::CharIter,Bounds)>;

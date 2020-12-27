@@ -8,10 +8,10 @@ impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    L: AsWidget<E>+StatizeSized<E>,
-    R: AsWidget<E>+StatizeSized<E>,
-    V: AtomState<E,f32>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
+    L: AsWidget<E>,
+    R: AsWidget<E>,
+    V: AtomState<E,f32>,
+    Stil: Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -155,10 +155,10 @@ impl<'w,E,L,R,V,Stil> WidgetMut<E> for SplitPane<'w,E,L,R,V,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    L: AsWidgetMut<E>+StatizeSized<E>,
-    R: AsWidgetMut<E>+StatizeSized<E>,
-    V: AtomStateMut<E,f32>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
+    L: AsWidgetMut<E>,
+    R: AsWidgetMut<E>,
+    V: AtomStateMut<E,f32>,
+    Stil: Clone,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -185,7 +185,7 @@ impl<'w,E,L,R,V,Stil> WidgetMut<E> for SplitPane<'w,E,L,R,V,Stil> where
 
 impl<'w,E,L,R,V,Stil> SplitPane<'w,E,L,R,V,Stil> where
     E: Env,
-    V: AtomState<E,f32>+StatizeSized<E>+'w,
+    V: AtomState<E,f32>+'w,
 {
     fn calc_bounds(&self, b: &Bounds, v: f32) -> Vec<Bounds> {
         let handle_width = self.width.min(b.w());

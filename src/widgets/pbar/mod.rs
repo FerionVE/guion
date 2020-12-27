@@ -58,7 +58,3 @@ impl<'w,E,Stil> ProgressBar<'w,E,Stil> where
         }
     }
 }
-
-unsafe impl<'w,E,Stil> Statize<E> for ProgressBar<'w,E,Stil> where E: Env, Stil: StatizeSized<E>+'w, {
-    type Statur = ProgressBar<'static,E,Stil::StaturSized>;
-}

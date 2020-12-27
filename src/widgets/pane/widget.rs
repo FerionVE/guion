@@ -3,8 +3,8 @@ use super::*;
 impl<'w,E,T,Stil> Widget<E> for Pane<'w,E,T,Stil> where
     E: Env,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    T: WidgetArray<E>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
+    T: WidgetArray<E>,
+    Stil: Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -45,8 +45,8 @@ impl<'w,E,T,Stil> Widget<E> for Pane<'w,E,T,Stil> where
 impl<'w,E,T,Stil> WidgetMut<E> for Pane<'w,E,T,Stil> where 
     E: Env,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    T: WidgetArrayMut<E>+StatizeSized<E>+'w,
-    Stil: StatizeSized<E>+Clone,
+    T: WidgetArrayMut<E>+'w,
+    Stil: Clone,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -69,8 +69,8 @@ impl<'w,E,T,Stil> WidgetMut<E> for Pane<'w,E,T,Stil> where
 impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
     E: Env,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    T: WidgetArray<E>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
+    T: WidgetArray<E>,
+    Stil: Clone,
 {
     pub fn _render_impl(&self, mut l: Link<E>, r: &mut RenderLink<E>) where
         E: Env,

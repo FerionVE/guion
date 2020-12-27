@@ -3,7 +3,6 @@
 //! Note that some functions in the traits are not meant to be called from externel, but over `Link`'s methods  
 use super::*;
 use std::any::{TypeId, type_name};
-use cast::Statize;
 use traitcast::TraitObject;
 
 pub mod link;
@@ -219,18 +218,13 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
 /// this trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
 #[doc(hidden)]
 pub trait WBase<E> where E: Env {
-    fn typeid(&self) -> TypeId;
     fn type_name(&self) -> &'static str;
     fn erase(&self) -> &dyn Widget<E>;
     fn box_ref<'s>(&'s self) -> WidgetRef<'s,E>;
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
     fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
 }
-impl<T,E> WBase<E> for T where T: Widget<E>+Statize<E>, E: Env {
-    #[inline]
-    fn typeid(&self) -> TypeId {
-        <Self as Statize<E>>::_typeid()
-    }
+impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     #[inline]
     fn type_name(&self) -> &'static str {
         type_name::<Self>()
@@ -262,7 +256,7 @@ pub trait WBaseMut<E> where E: Env {
     fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w;
     fn boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w;
 }
-impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>+Statize<E>, E: Env {
+impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
     #[inline]
     fn base(&self) -> &dyn Widget<E> {
         self

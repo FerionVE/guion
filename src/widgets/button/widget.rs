@@ -7,8 +7,8 @@ impl<'w,E,Text,Stil> Widget<E> for Button<'w,E,Text,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    Text: AsWidget<E>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
+    Text: AsWidget<E>,
+    Stil: Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -109,8 +109,8 @@ impl<'w,E,Text,Stil> WidgetMut<E> for Button<'w,E,Text,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
-    Text: AsWidgetMut<E>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
+    Text: AsWidgetMut<E>,
+    Stil: Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         vec![self.text.as_mut()]
@@ -134,7 +134,7 @@ impl<'w,E,S,Stil> Button<'w,E,S,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>>,
     E::Context: CtxStdState<E>,
-    S: AsWidget<E>+StatizeSized<E>
+    S: AsWidget<E>,
 {
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
         let id = l.id();

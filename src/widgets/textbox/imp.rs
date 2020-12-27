@@ -36,12 +36,12 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBoxMut<E> for Text
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<E>+ValidationMut<E>+'w+StatizeSized<E>,
-    Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
-    Curs: AtomStateMut<E,Cursor>+StatizeSized<E>,
-    CursorStickX: AtomStateMut<E,Option<u32>>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+    Text: CaptionMut<E>+ValidationMut<E>+'w,
+    Scroll: AtomStateMut<E,(u32,u32)>,
+    Curs: AtomStateMut<E,Cursor>,
+    CursorStickX: AtomStateMut<E,Option<u32>>,
+    Stil: Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
         let mut cursor = self.cursor.get(ctx);
@@ -149,13 +149,6 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBoxMut<E> for Text
     }
 }
 
-unsafe impl<'w,E> Statize<E> for dyn ITextBox<E> where E: 'static {
-    type Statur = dyn ITextBox<E>+'static;
-}
-unsafe impl<'w,E> Statize<E> for dyn ITextBoxMut<E> where E: 'static {
-    type Statur = dyn ITextBoxMut<E>+'static;
-}
-
 traitcast_for!(ITextBox<E>;ITextBoxMut<E>);
 
 impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
@@ -164,12 +157,12 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: Caption<E>+Validation<E>+'w+StatizeSized<E>,
-    Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
-    Curs: AtomState<E,Cursor>+StatizeSized<E>,
-    CursorStickX: AtomState<E,Option<u32>>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+    Text: Caption<E>+Validation<E>+'w,
+    Scroll: AtomState<E,(u32,u32)>,
+    Curs: AtomState<E,Cursor>,
+    CursorStickX: AtomState<E,Option<u32>>,
+    Stil: Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<ESGlyphs<E>> {
         if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
@@ -199,12 +192,12 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<E>+ValidationMut<E>+'w+StatizeSized<E>,
-    Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
-    Curs: AtomStateMut<E,Cursor>+StatizeSized<E>,
-    CursorStickX: AtomStateMut<E,Option<u32>>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+    Text: CaptionMut<E>+ValidationMut<E>+'w,
+    Scroll: AtomStateMut<E,(u32,u32)>,
+    Curs: AtomStateMut<E,Cursor>,
+    CursorStickX: AtomStateMut<E,Option<u32>>,
+    Stil: Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<ESGlyphs<E>> {
         if let Some((v,c)) = self.glyph_cache.get(ctx) {

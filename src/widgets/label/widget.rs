@@ -8,9 +8,9 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<E> for Label<'w,E,Text,Stil,GlyphCache> w
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Text: Caption<E>+Validation<E>+'w+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+    Text: Caption<E>+Validation<E>+'w,
+    Stil: Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -69,9 +69,9 @@ impl<'w,E,Text,Stil,GlyphCache> WidgetMut<E> for Label<'w,E,Text,Stil,GlyphCache
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Text: CaptionMut<E>+ValidationMut<E>+'w+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+    Text: CaptionMut<E>+ValidationMut<E>+'w,
+    Stil: Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         vec![]
@@ -98,9 +98,9 @@ impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Text: Caption<E>+Validation<E>+'w+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+    Text: Caption<E>+Validation<E>+'w,
+    Stil: Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn glyphs(&self, mut l: Link<E>) -> Arc<ESGlyphs<E>> {
         if let Some((v,c)) = self.glyph_cache.get(l.ctx) {

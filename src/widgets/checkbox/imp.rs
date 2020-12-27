@@ -32,11 +32,4 @@ impl<'w,E,State,Text,Stil> ICheckBoxMut<E> for CheckBox<'w,E,State,Text,Stil> wh
     }
 }
 
-unsafe impl<'w,E> Statize<E> for dyn ICheckBox<E>+'_ where E: Env {
-    type Statur = dyn ICheckBox<E>;
-}
-unsafe impl<'w,E> Statize<E> for dyn ICheckBoxMut<E>+'_ where E: Env {
-    type Statur = dyn ICheckBoxMut<E>;
-}
-
 traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);

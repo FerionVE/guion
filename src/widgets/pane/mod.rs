@@ -54,12 +54,3 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
         }
     }
 }
-
-
-unsafe impl<'w,E,T,Stil> Statize<E> for Pane<'w,E,T,Stil> where
-    E: Env,
-    T: StatizeSized<E>+'w,
-    Stil: StatizeSized<E>+'w,
-{
-    type Statur = Pane<'static,E,T::StaturSized,Stil::StaturSized>;
-}

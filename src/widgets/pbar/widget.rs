@@ -5,7 +5,7 @@ impl<'w,E,Stil> Widget<E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Stil: StatizeSized<E>+Clone,
+    Stil: Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -58,7 +58,7 @@ impl<'w,E,Stil> WidgetMut<E> for ProgressBar<'w,E,Stil> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Stil: StatizeSized<E>+Clone,
+    Stil: Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         vec![]

@@ -96,12 +96,3 @@ impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
         }
     }
 }
-
-unsafe impl<'w,E,Text,Stil,GlyphCache> Statize<E> for Label<'w,E,Text,Stil,GlyphCache> where
-    E: Env,
-    Text: StatizeSized<E>,
-    Stil: StatizeSized<E>,
-    GlyphCache: StatizeSized<E>,
-{
-    type Statur = Label<'static,E,Text::StaturSized,Stil::StaturSized,GlyphCache::StaturSized>;
-}

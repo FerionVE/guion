@@ -60,12 +60,3 @@ impl<'w,E,L,R,V,Stil> SplitPane<'w,E,L,R,V,Stil> where
     }
 }
 
-unsafe impl<'w,E,L,R,V,Stil> Statize<E> for SplitPane<'w,E,L,R,V,Stil> where 
-    E: Env,
-    L: StatizeSized<E>+'w,
-    R: StatizeSized<E>+'w,
-    V: StatizeSized<E>+'w,
-    Stil: StatizeSized<E>+'w,
-{
-    type Statur = SplitPane<'static,E,L::StaturSized,R::StaturSized,V::StaturSized,Stil::StaturSized>;
-}

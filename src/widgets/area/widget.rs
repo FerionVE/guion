@@ -7,9 +7,9 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    W: AsWidget<E>+StatizeSized<E>+'w,
-    Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
-    Stil: Clone + StatizeSized<E>,
+    W: AsWidget<E>+'w,
+    Scroll: AtomState<E,(u32,u32)>,
+    Stil: Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -129,9 +129,9 @@ impl<'w,E,W,Scroll,Stil> WidgetMut<E> for Area<'w,E,W,Scroll,Stil> where
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    W: AsWidgetMut<E>+StatizeSized<E>+'w,
-    Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
-    Stil: Clone + StatizeSized<E>,
+    W: AsWidgetMut<E>+'w,
+    Scroll: AtomStateMut<E,(u32,u32)>,
+    Stil: Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         vec![self.inner.as_mut()]

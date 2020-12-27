@@ -10,12 +10,12 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: Caption<E>+Validation<E>+'w+StatizeSized<E>,
-    Scroll: AtomState<E,(u32,u32)>+StatizeSized<E>,
-    Curs: AtomState<E,Cursor>+StatizeSized<E>,
-    CursorStickX: AtomState<E,Option<u32>>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+    Text: Caption<E>+Validation<E>+'w,
+    Scroll: AtomState<E,(u32,u32)>,
+    Curs: AtomState<E,Cursor>,
+    CursorStickX: AtomState<E,Option<u32>>,
+    Stil: Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -234,12 +234,12 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> WidgetMut<E> for TextBo
     EEvent<E>: StdVarSup<E>,
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<E>+ValidationMut<E>+'w+StatizeSized<E>,
-    Scroll: AtomStateMut<E,(u32,u32)>+StatizeSized<E>,
-    Curs: AtomStateMut<E,Cursor>+StatizeSized<E>,
-    CursorStickX: AtomStateMut<E,Option<u32>>+StatizeSized<E>,
-    Stil: StatizeSized<E>+Clone,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+StatizeSized<E>+Clone,
+    Text: CaptionMut<E>+ValidationMut<E>+'w,
+    Scroll: AtomStateMut<E,(u32,u32)>,
+    Curs: AtomStateMut<E,Cursor>,
+    CursorStickX: AtomStateMut<E,Option<u32>>,
+    Stil: Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
         vec![]
