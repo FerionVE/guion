@@ -1,5 +1,3 @@
-use crate::util::traitcast::{Traitcast, TraitcastMut};
-
 use super::*;
 
 pub trait ICheckBox<E> where E: Env {

@@ -1,5 +1,4 @@
 use super::*;
-use util::caption::CaptionMut;
 
 impl<'w,E,Text,Stil> Widget<E> for Button<'w,E,Text,Stil> where
     E: Env,

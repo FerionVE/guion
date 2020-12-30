@@ -67,7 +67,7 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
                     ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
                 {
                     l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                        let mut w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
+                        let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
                         let mut v = w.get(ctx);
                         if ee.key == EEKey::<E>::UP {
                             v.1 = v.1.saturating_sub(4);

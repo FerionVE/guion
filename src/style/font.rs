@@ -108,4 +108,5 @@ impl Glyph for GlyphInfo {
     }
 }
 
+#[allow(type_alias_bounds)]
 pub type CrazyWorkaroundPPIter<'a,G: Glyph> = Box<dyn Iterator<Item=(Box<dyn Iterator<Item=G>+'a>,Bounds)>+'a>;

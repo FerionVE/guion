@@ -88,7 +88,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
                 let ctrl = l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some();
 
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let mut w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
+                    let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
                     if ee.key == EEKey::<E>::BACKSPACE {
                         w.remove_selection_or_n(1,ctx);
                     }
