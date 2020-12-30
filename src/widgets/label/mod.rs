@@ -1,3 +1,5 @@
+use crate::validation::Validation;
+
 use super::*;
 use std::marker::PhantomData;
 use util::{LocalGlyphCache, caption::Caption, remote_state::RemoteState};
@@ -26,7 +28,7 @@ impl<'w,E> Label<'w,E,&'static str,(),LocalGlyphCache<E>> where
     pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
-            size: constraint!(0|0).into(),
+            size: ESize::<E>::empty(),
             style: (),
             text: "",
             align: (0.5,0.5),
@@ -39,13 +41,13 @@ impl<'w,E> Label<'w,E,&'static str,(),LocalGlyphCache<E>> where
 impl<'w,E,Text> Label<'w,E,Text,(),RemoteState<E,LocalGlyphCache<E>>> where
     E: Env,
     E::Context: DynState<E>,
-    Text: 'w,
+    Text: Caption<E>+Validation<E>+'w,
 {
     #[inline]
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {
         Self{
             id: id.clone(),
-            size: constraint!(0|0).into(),
+            size: ESize::<E>::empty(),
             style: (),
             text,
             align: (0.5,0.5),
@@ -61,7 +63,7 @@ impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
     GlyphCache: 'w,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,Stil,GlyphCache> where T: 'w {
+    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,Stil,GlyphCache> where T: Caption<E>+Validation<E>+'w {
         Label{
             id: self.id,
             size: self.size,
@@ -84,7 +86,7 @@ impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Label<'w,E,Text,SStil,GlyphCache> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> Label<'w,E,Text,SStil,GlyphCache> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         Label{
             id: self.id,
             size: self.size,
@@ -95,13 +97,4 @@ impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
             p: PhantomData,
         }
     }
-}
-
-unsafe impl<'w,E,Text,Stil,GlyphCache> Statize<E> for Label<'w,E,Text,Stil,GlyphCache> where
-    E: Env,
-    Text: StatizeSized<E>,
-    Stil: StatizeSized<E>,
-    GlyphCache: StatizeSized<E>,
-{
-    type Statur = Label<'static,E,Text::StaturSized,Stil::StaturSized,GlyphCache::StaturSized>;
 }

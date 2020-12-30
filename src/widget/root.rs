@@ -3,8 +3,8 @@ use super::*;
 
 /// Implemented on the root of the widget tree
 pub trait Widgets<E>: Sized + 'static where E: Env {
-    fn widget<'a>(&'a self, i: E::WidgetPath) -> Result<Resolved<'a,E>,()>;
-    fn widget_mut<'a>(&'a mut self, i: E::WidgetPath) -> Result<ResolvedMut<'a,E>,()>;
+    fn widget(&self, i: E::WidgetPath) -> Result<Resolved<E>,()>;
+    fn widget_mut(&mut self, i: E::WidgetPath) -> Result<ResolvedMut<E>,()>;
 
     #[inline]
     fn has_widget(&self, i: E::WidgetPath) -> bool {
@@ -22,7 +22,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
     }
 }
 #[doc(hidden)]
-pub fn resolve_in_root<'l:'s,'s,E: Env>(w: &'s dyn Widget<'l,E>, p: E::WidgetPath) -> Result<(WidgetRef<'s,E>,E::WidgetPath),()> {
+pub fn resolve_in_root<E: Env>(w: &dyn Widget<E>, p: E::WidgetPath) -> Result<(WidgetRef<E>,E::WidgetPath),()> {
     let r = w.resolve(p.refc())?;
     
     match r {
@@ -34,7 +34,7 @@ pub fn resolve_in_root<'l:'s,'s,E: Env>(w: &'s dyn Widget<'l,E>, p: E::WidgetPat
     }
 }
 #[doc(hidden)]
-pub fn resolve_in_root_mut<'l:'s,'s,E: Env>(w: &'s mut dyn WidgetMut<'l,E>, p: E::WidgetPath) -> Result<(WidgetRefMut<'s,E>,E::WidgetPath),()> {
+pub fn resolve_in_root_mut<E: Env>(w: &mut dyn WidgetMut<E>, p: E::WidgetPath) -> Result<(WidgetRefMut<E>,E::WidgetPath),()> {
     let final_path = resolve_in_root::<E>(w.base(),p)
         .map(#[inline] |e| e.1 )?;
 

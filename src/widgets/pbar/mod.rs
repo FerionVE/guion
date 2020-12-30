@@ -47,7 +47,7 @@ impl<'w,E,Stil> ProgressBar<'w,E,Stil> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> ProgressBar<'w,E,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> ProgressBar<'w,E,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         ProgressBar{
             id: self.id,
             value: self.value,
@@ -57,8 +57,4 @@ impl<'w,E,Stil> ProgressBar<'w,E,Stil> where
             p: PhantomData,
         }
     }
-}
-
-unsafe impl<'w,E,Stil> Statize<E> for ProgressBar<'w,E,Stil> where E: Env, Stil: StatizeSized<E>+'w, {
-    type Statur = ProgressBar<'static,E,Stil::StaturSized>;
 }

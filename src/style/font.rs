@@ -5,14 +5,14 @@ pub trait Font<E>: Sized where E: Env {
 }
 
 /// Text in a optimized form for faster frequent rendering and iterating
-pub trait Glyphs<E>: Sized + Statize<E> where E: Env {
+pub trait Glyphs<E>: Sized where E: Env {
     type Glyph: Glyph;
 
     //type LineIter: Iterator<Item=(Self::CharIter,Bounds)>;
     //type CharIter: Iterator<Item=Bounds>;
 
     fn size(&self) -> Dims;
-    fn lines<'s>(&'s self) -> CrazyWorkaroundPPIter<'s,Self::Glyph>;
+    fn lines(&self) -> CrazyWorkaroundPPIter<Self::Glyph>;
 
     fn generate(s: &str, size: (f32,f32), ctx: &mut E::Context) -> Self;
 
@@ -28,7 +28,7 @@ pub trait Glyphs<E>: Sized + Statize<E> where E: Env {
         i
     }
 
-    fn glyphs<'s>(&'s self) -> Box<dyn Iterator<Item=Self::Glyph>+'s> {
+    fn glyphs(&self) -> Box<dyn Iterator<Item=Self::Glyph>+'_> {
         Box::new( //TODO OPTI use ext trait to avoid boxing
             self.lines()
             .flat_map(#[inline] |(c,_)| c )
@@ -108,4 +108,5 @@ impl Glyph for GlyphInfo {
     }
 }
 
+#[allow(type_alias_bounds)]
 pub type CrazyWorkaroundPPIter<'a,G: Glyph> = Box<dyn Iterator<Item=(Box<dyn Iterator<Item=G>+'a>,Bounds)>+'a>;

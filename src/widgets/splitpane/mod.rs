@@ -47,7 +47,7 @@ impl<'w,E,L,R,V,Stil> SplitPane<'w,E,L,R,V,Stil> where
     Stil: 'w,
 {
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> SplitPane<'w,E,L,R,V,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> SplitPane<'w,E,L,R,V,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         SplitPane{
             id: self.id,
             childs: self.childs,
@@ -60,12 +60,3 @@ impl<'w,E,L,R,V,Stil> SplitPane<'w,E,L,R,V,Stil> where
     }
 }
 
-unsafe impl<'w,E,L,R,V,Stil> Statize<E> for SplitPane<'w,E,L,R,V,Stil> where 
-    E: Env,
-    L: StatizeSized<E>+'w,
-    R: StatizeSized<E>+'w,
-    V: StatizeSized<E>+'w,
-    Stil: StatizeSized<E>+'w,
-{
-    type Statur = SplitPane<'static,E,L::StaturSized,R::StaturSized,V::StaturSized,Stil::StaturSized>;
-}

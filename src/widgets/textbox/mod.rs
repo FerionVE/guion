@@ -1,6 +1,6 @@
 use super::*;
 use std::marker::PhantomData;
-use util::{LocalGlyphCache, caption::Caption};
+use util::{LocalGlyphCache, caption::Caption, remote_state::RemoteState};
 use state::Cursor;
 
 pub mod widget;
@@ -41,6 +41,26 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>,(
             cursor: Cursor{select: 0, caret: 0}, //TODO default trait
             cursor_stick_x: None,
             glyph_cache: None,
+            p: PhantomData,
+        }
+    }
+}
+impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E>>,()> where
+    E: Env,
+    E::Context: DynState<E>,
+    Text: 'w,
+{
+    #[inline]
+    pub fn immediate(id: E::WidgetID, text: Text) -> Self {
+        Self{
+            size: Gonstraints::empty(),
+            style: (),
+            text,
+            scroll: RemoteState::for_widget(id.clone()),
+            cursor: RemoteState::for_widget(id.clone()), //TODO default trait
+            cursor_stick_x: RemoteState::for_widget(id.clone()),
+            glyph_cache: RemoteState::for_widget(id.clone()),
+            id,
             p: PhantomData,
         }
     }
@@ -91,7 +111,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         TextBox{
             id: self.id,
             size: self.size,
@@ -104,17 +124,4 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
             p: PhantomData,
         }
     }
-}
-
-unsafe impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Statize<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
-    E: Env,
-    Text: StatizeSized<E>,
-    Scroll: StatizeSized<E>,
-    Curs: StatizeSized<E>,
-    CursorStickX: StatizeSized<E>,
-    GlyphCache: StatizeSized<E>,
-    Stil: StatizeSized<E>,
-    GlyphCache: StatizeSized<E>,
-{
-    type Statur = TextBox<'static,E,Text::StaturSized,Scroll::StaturSized,Curs::StaturSized,CursorStickX::StaturSized,GlyphCache::StaturSized,Stil::StaturSized>;
 }

@@ -1,5 +1,5 @@
 use super::*;
-use crate::event::key::Key;
+use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
 use util::{LocalGlyphCache, caption::Caption};
 use label::Label;
@@ -69,8 +69,8 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
         self.trigger = fun;
         self
     }
-    /*#[inline]
-    pub fn with_text<T>(self, text: T) -> Button<'w,E,T,Stil> where T: 'w {
+    #[inline]
+    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T,Stil> where T: 'w {
         Button{
             id: self.id,
             size: self.size,
@@ -80,7 +80,7 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
             text,
             p: PhantomData,
         }
-    }*/
+    }
     #[inline]
     pub fn with_locked(mut self, locked: bool) -> Self {
         self.locked = locked;
@@ -93,7 +93,7 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Button<'w,E,Text,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> Button<'w,E,Text,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         Button{
             trigger: self.trigger,
             id: self.id,
@@ -110,7 +110,7 @@ impl<'w,E,T,LS,BS,LC> Button<'w,E,Label<'w,E,T,LS,LC>,BS> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LS,LC>,BS> where T: 'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LS,LC>,BS> where TT: Caption<E>+Validation<E>+'w {
         Button{
             id: self.id,
             size: self.size,
@@ -121,14 +121,6 @@ impl<'w,E,T,LS,BS,LC> Button<'w,E,Label<'w,E,T,LS,LC>,BS> where
             p: PhantomData,
         }
     }
-}
-
-unsafe impl<'w,E,Text,Stil> Statize<E> for Button<'w,E,Text,Stil> where
-    E: Env,
-    Text: StatizeSized<E>+'w,
-    Stil: StatizeSized<E>+'w,
-{
-    type Statur = Button<'static,E,Text::StaturSized,Stil::StaturSized>;
 }
 
 pub trait TriggerFn<E,W> where E: Env {

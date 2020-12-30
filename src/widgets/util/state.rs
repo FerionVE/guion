@@ -66,9 +66,19 @@ impl<E,T> AtomStateMut<E,T> for Cow<'_,T> where T: Clone, E: Env {
     }
 }
 
-unsafe impl<T,E> Statize<E> for dyn AtomState<E,T> where T: StatizeSized<E>, E: Env {
-    type Statur = dyn AtomState<E,T::StaturSized>;
+unsafe impl<T,E> Statize<E> for dyn AtomState<E,T> where T: 'static, E: Env {
+    type Statur = dyn AtomState<E,T>;
 }
-unsafe impl<T,E> Statize<E> for dyn AtomStateMut<E,T> where T: StatizeSized<E>, E: Env {
-    type Statur = dyn AtomStateMut<E,T::StaturSized>;
+unsafe impl<T,E> Statize<E> for dyn AtomStateMut<E,T> where T: 'static, E: Env {
+    type Statur = dyn AtomStateMut<E,T>;
+}
+
+unsafe impl<'w,T,E> Traitcast<dyn AtomState<E,T>+'w,E> for dyn Widget<E>+'w where E: Env, T: 'static {
+    type DestTypeID = dyn AtomState<E,T>;
+}
+unsafe impl<'w,T,E> TraitcastMut<dyn AtomState<E,T>+'w,E> for dyn WidgetMut<E>+'w where E: Env, T: 'static {
+    type DestTypeID = dyn AtomState<E,T>;
+}
+unsafe impl<'w,T,E> TraitcastMut<dyn AtomStateMut<E,T>+'w,E> for dyn WidgetMut<E>+'w where E: Env, T: 'static {
+    type DestTypeID = dyn AtomStateMut<E,T>;
 }

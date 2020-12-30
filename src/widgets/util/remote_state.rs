@@ -2,6 +2,7 @@ use super::*;
 use std::marker::PhantomData;
 use state::*;
 
+#[derive(Clone)]
 pub struct RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: DynState<E> {
     id: E::WidgetID,
     _p: PhantomData<T>,

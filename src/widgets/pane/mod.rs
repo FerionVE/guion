@@ -44,7 +44,7 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
         self
     }*/
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Pane<'w,E,T,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> Pane<'w,E,T,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         Pane{
             id: self.id,
             childs: self.childs,
@@ -53,13 +53,4 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
             p: PhantomData,
         }
     }
-}
-
-
-unsafe impl<'w,E,T,Stil> Statize<E> for Pane<'w,E,T,Stil> where
-    E: Env,
-    T: StatizeSized<E>+'w,
-    Stil: StatizeSized<E>+'w,
-{
-    type Statur = Pane<'static,E,T::StaturSized,Stil::StaturSized>;
 }

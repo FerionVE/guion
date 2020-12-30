@@ -3,7 +3,6 @@ use super::*;
 pub mod bounds;
 pub mod border;
 pub mod bounded_widget;
-pub mod shortlt;
 pub mod traitcast;
 pub mod translate;
 pub mod sma;

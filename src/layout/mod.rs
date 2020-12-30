@@ -36,7 +36,7 @@ pub trait Gonstraints: From<StdGonstraints> + Into<StdGonstraints> + Clone {
     fn par(&self, dir: Orientation) -> Self::Axis {
         match dir {
             Orientation::Horizontal => self.x(),
-            Orientation::Vertical => self.x(),
+            Orientation::Vertical => self.y(),
         }
     }
     #[inline]
@@ -79,6 +79,7 @@ pub trait Gonstraints: From<StdGonstraints> + Into<StdGonstraints> + Clone {
     fn add_x(&mut self, o: &Self);
     fn add_y(&mut self, o: &Self);
 
+    fn and(&self, o: &Self) -> Self;
     fn max(&self, o: &Self) -> Self;
 
     #[inline]
@@ -105,7 +106,7 @@ pub trait GonstraintAxis: Clone {
     fn fixed(v: u32) -> Self;
     fn op_add_u32(&mut self, v: u32);
     fn op_add(&mut self, v: &Self);
-    fn op_and(&mut self, v: &Self);
+    fn op_and(&self, v: &Self) -> Self;
     fn op_max(&self, o: &Self) -> Self;
 
     fn min(&self) -> u32;
@@ -170,6 +171,13 @@ impl Gonstraints for StdGonstraints {
         self.y += &o.y;
     }
     #[inline]
+    fn and(&self, o: &Self) -> Self {
+        Self{
+            x: self.x.op_and(&o.x),
+            y: self.y.op_and(&o.y),
+        }
+    }
+    #[inline]
     fn max(&self, o: &Self) -> Self {
         Self{
             x: self.x.op_max(&o.x),
@@ -195,9 +203,8 @@ impl GonstraintAxis for StdGonstraintAxis {
         senf += v;
     }
     #[inline]
-    fn op_and(&mut self, v: &Self) {
-        let mut senf = *self;
-        senf &= v;
+    fn op_and(&self, v: &Self) -> Self {
+        self & v
     }
     #[inline]
     fn op_max(&self, o: &Self) -> Self {

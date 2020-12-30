@@ -14,7 +14,7 @@ pub struct EventCompound<E> where E: Env {
 impl<E> EventCompound<E> where E: Env {
     /// filter event by integrated filter
     #[inline]
-    pub fn filter(&self, dest: &Link<'_,E>) -> Option<Self> {
+    pub fn filter(&self, dest: &Link<E>) -> Option<Self> {
         self.filter._filter(dest,self)
     }
 

@@ -38,13 +38,13 @@ pub trait StdState<E>: 'static where E: Env {
 
     fn pressed(&self) -> &[Self::K];
     #[inline]
-    fn is_pressed<'a>(&'a self, c: &[EEKey<E>]) -> Option<&'a Self::K> {
+    fn is_pressed(&self, c: &[EEKey<E>]) -> Option<&Self::K> {
         //todo!() implement all c handling
         self.pressed().iter()
             .find(#[inline] |p| p.key() == c[0] )
     }
     #[inline]
-    fn is_pressed_and_id<'a>(&'a self, c: &[EEKey<E>], id: E::WidgetID) -> Option<&'a Self::K> {
+    fn is_pressed_and_id(&self, c: &[EEKey<E>], id: E::WidgetID) -> Option<&Self::K> {
         //todo!() implement all c handling
         self.pressed().iter()
             .find(#[inline] |p| p.key() == c[0] && p.widget().is(id.clone()) )

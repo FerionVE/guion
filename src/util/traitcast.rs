@@ -1,7 +1,9 @@
 //! macros for implementing traitcast for widgets
+use std::any::TypeId;
+
 use super::*;
 
-/// should match the non-stabilized std::raw::TraitObject and represents a erased fat pointer
+/// should match the non-stabilized std::raw::TraitObject and represents an erased fat pointer
 #[repr(C)]
 #[derive(Copy, Clone)]
 #[doc(hidden)]
@@ -21,12 +23,12 @@ pub struct TraitObject {
 macro_rules! impl_traitcast {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
         #[inline]
-        unsafe fn _as_trait_ref(&self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
+        unsafe fn _as_trait_ref<'impl_traitcast_lt_a>(&'impl_traitcast_lt_a self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
-                if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
+                if t == std::any::TypeId::of::<<(dyn $crate::widget::Widget<_>) as $crate::util::traitcast::Traitcast::<$trait,_>>::DestTypeID>() {
                     let $id = self;
-                    let senf: &$trait = $access;
-                    let senf = std::mem::transmute::<&$trait,$crate::util::traitcast::TraitObject>(senf);
+                    let senf: &'impl_traitcast_lt_a $trait = $access;
+                    let senf = std::mem::transmute::<&'impl_traitcast_lt_a $trait,$crate::util::traitcast::TraitObject>(senf);
                     return Some(senf);
                 }
             );*
@@ -46,12 +48,12 @@ macro_rules! impl_traitcast {
 macro_rules! impl_traitcast_mut {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
         #[inline]
-        unsafe fn _as_trait_mut(&mut self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
+        unsafe fn _as_trait_mut<'impl_traitcast_lt_a>(&'impl_traitcast_lt_a mut self, t: std::any::TypeId) -> Option<$crate::util::traitcast::TraitObject> {
             $(
-                if t == <$trait as $crate::widget::cast::Statize<E>>::_typeid() {
+                if t == std::any::TypeId::of::<<(dyn $crate::widget::WidgetMut<_>) as $crate::util::traitcast::TraitcastMut::<$trait,_>>::DestTypeID>() {
                     let $id = self;
-                    let senf: &mut $trait = $access;
-                    let senf = std::mem::transmute::<&mut $trait,$crate::util::traitcast::TraitObject>(senf);
+                    let senf: &'impl_traitcast_lt_a mut $trait = $access;
+                    let senf = std::mem::transmute::<&'impl_traitcast_lt_a mut $trait,$crate::util::traitcast::TraitObject>(senf);
                     return Some(senf);
                 }
             );*
@@ -71,5 +73,105 @@ macro_rules! impl_statize_lte {
         unsafe impl<'l,'s,E> Statize<E> for &'s mut dyn $trait<'l,E> where E: Env, 'l: 's {
             type Statur = &'static mut dyn $trait<'static,E>;
         }
+    };
+}
+
+impl<E> dyn Widget<E>+'_ where E: Env {
+    #[inline]
+    pub fn traitcast_ref<'s,T>(&'s self) -> Option<&'s T> where Self: Traitcast<T,E>, T: ?Sized {
+        unsafe{Self::_traitcast_ref(self.erase())}
+    }
+}
+impl<E> dyn WidgetMut<E>+'_ where E: Env {
+    #[inline]
+    pub fn traitcast_mut<'s,T>(&'s mut self) -> Option<&'s mut T> where Self: TraitcastMut<T,E>, T: ?Sized {
+        unsafe{Self::_traitcast_mut(self.erase_mut())}
+    }
+}
+
+pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
+    type DestTypeID: ?Sized + 'static;
+
+    #[inline]
+    unsafe fn _traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Option<&'s T> {
+        // god plz fix https://github.com/rust-lang/rust/issues/51826
+        let t = TypeId::of::<Self::DestTypeID>();
+        let t = senf._as_trait_ref(t);
+        if let Some(v) = t {
+            Some(std::mem::transmute_copy::<TraitObject,&'s T>(&v))
+        } else if let Some(senf) = senf.inner() {
+            Self::_traitcast_ref(senf)
+        } else {
+            None
+        }
+    }
+}
+
+pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
+    type DestTypeID: ?Sized + 'static;
+
+    #[inline]
+    unsafe fn _traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Option<&'s T> {
+        // god plz fix https://github.com/rust-lang/rust/issues/51826
+        let t = TypeId::of::<Self::DestTypeID>();
+        let t = senf._as_trait_ref(t);
+        if let Some(v) = t {
+            Some(std::mem::transmute_copy::<TraitObject,&'s T>(&v))
+        } else if let Some(senf) = senf.inner() {
+            Self::_traitcast_ref(senf)
+        } else {
+            None
+        }
+    }
+    #[inline]
+    fn traitcast_ref<'s>(&'s self) -> Option<&'s T> {
+        unsafe{Self::_traitcast_ref(self.erase())}
+    }
+    #[inline]
+    unsafe fn _traitcast_mut<'s>(senf: &'s mut dyn WidgetMut<E>) -> Option<&'s mut T> {
+        // god plz fix https://github.com/rust-lang/rust/issues/51826
+        let t = TypeId::of::<Self::DestTypeID>();
+        let t = senf._as_trait_mut(t);
+        if let Some(v) = t {
+            Some(std::mem::transmute_copy::<TraitObject,&'s mut T>(&v))
+        } else if let Some(senf) = senf.inner_mut() {
+            Self::_traitcast_mut(senf)
+        } else {
+            None
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! traitcast_for_immu {
+    ($trait:path) => {
+        unsafe impl<'w,E> $crate::util::traitcast::Traitcast<dyn $trait+'w,E> for dyn $crate::widget::Widget<E>+'w where E: $crate::env::Env {
+            type DestTypeID = dyn $trait+'static;
+        }
+    }
+}
+#[macro_export]
+macro_rules! traitcast_for_mut {
+    ($trait:path) => {
+        unsafe impl<'w,E> $crate::util::traitcast::TraitcastMut<dyn $trait+'w,E> for dyn $crate::widget::WidgetMut<E>+'w where E: $crate::env::Env {
+            type DestTypeID = dyn $trait+'static;
+        }
+    }
+}
+
+/// Implement Traitcast for traits to be traitcasted from Widget
+/// 
+/// Syntax: traitcast_for!(trait_path;mut_trait_path);
+/// 
+/// Implements for: Widget -> Trait, WidgetMut -> Trait, WidgetMut -> TraitMut
+/// 
+/// Example:
+/// traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);
+#[macro_export]
+macro_rules! traitcast_for {
+    ($trait_immu:path;$trait_mut:path) => {
+        $crate::traitcast_for_immu!($trait_immu);
+        $crate::traitcast_for_mut!($trait_immu);
+        $crate::traitcast_for_mut!($trait_mut);
     };
 }
