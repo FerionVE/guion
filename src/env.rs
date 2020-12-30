@@ -34,7 +34,7 @@ macro_rules! impl_env_stds {
     ($e:ty) => {
         impl $crate::widget::as_widget::AsWidget<$e> for <$e as $crate::env::Env>::WidgetPath {
             #[inline]
-            fn as_ref(&self) -> $crate::widget::resolvable::Resolvable<'_,$e> {
+            fn as_ref(&self) -> $crate::widget::resolvable::Resolvable<$e> {
                 $crate::widget::resolvable::Resolvable::Path(self.clone().into())
             }
             #[inline]
@@ -44,7 +44,7 @@ macro_rules! impl_env_stds {
         }
         impl $crate::widget::as_widget::AsWidgetMut<$e> for <$e as $crate::env::Env>::WidgetPath {
             #[inline]
-            fn as_mut(&mut self) -> $crate::widget::resolvable::ResolvableMut<'_,$e> {
+            fn as_mut(&mut self) -> $crate::widget::resolvable::ResolvableMut<$e> {
                 $crate::widget::resolvable::ResolvableMut::Path(self.clone().into())
             }
             #[inline]

@@ -97,7 +97,7 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     fn childs(&self) -> usize {
         1
     }
-    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
+    fn childs_ref(&self) -> Vec<Resolvable<E>> {
         vec![self.text.as_ref()]
     }
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
@@ -110,7 +110,7 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     }
     fn focusable(&self) -> bool { true }
 
-    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
+    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
         if i != 0 {return Err(());}
         Ok(self.text.as_ref())
     }
@@ -135,13 +135,13 @@ impl<'w,E,State,Text,Stil> WidgetMut<E> for CheckBox<'w,E,State,Text,Stil> where
     Text: AsWidgetMut<E>,
     Stil: Clone,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![self.text.as_mut()]
     }
     fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         vec![self.text.into_mut()]
     }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         if i != 0 {return Err(());}
         Ok(self.text.as_mut())
     }

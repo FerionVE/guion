@@ -127,7 +127,7 @@ impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
     fn childs(&self) -> usize {
         self.childs.len()
     }
-    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
+    fn childs_ref(&self) -> Vec<Resolvable<E>> {
         self.childs.childs()
     }
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
@@ -138,7 +138,7 @@ impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
         false
     }
 
-    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
+    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
         self.childs.child(i)
     }
     fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
@@ -164,13 +164,13 @@ impl<'w,E,L,R,V,Stil> WidgetMut<E> for SplitPane<'w,E,L,R,V,Stil> where
         let _ = v;
         //self.invalid = true
     }
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         self.childs.childs_mut()
     }
     fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         self.childs.into_childs_mut()
     }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         self.childs.child_mut(i)
     }
     fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {

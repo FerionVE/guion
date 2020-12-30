@@ -12,7 +12,7 @@ pub trait Glyphs<E>: Sized where E: Env {
     //type CharIter: Iterator<Item=Bounds>;
 
     fn size(&self) -> Dims;
-    fn lines<'s>(&'s self) -> CrazyWorkaroundPPIter<'s,Self::Glyph>;
+    fn lines(&self) -> CrazyWorkaroundPPIter<Self::Glyph>;
 
     fn generate(s: &str, size: (f32,f32), ctx: &mut E::Context) -> Self;
 
@@ -28,7 +28,7 @@ pub trait Glyphs<E>: Sized where E: Env {
         i
     }
 
-    fn glyphs<'s>(&'s self) -> Box<dyn Iterator<Item=Self::Glyph>+'s> {
+    fn glyphs(&self) -> Box<dyn Iterator<Item=Self::Glyph>+'_> {
         Box::new( //TODO OPTI use ext trait to avoid boxing
             self.lines()
             .flat_map(#[inline] |(c,_)| c )

@@ -1,7 +1,7 @@
 use super::*;
 
 pub trait Filter<E>: Clone + Default + Sized where E: Env, EEFilter<E>: From<Self> {
-    fn _filter(&self, dest: &Link<'_,E>, e: &EventCompound<E>) -> Option<EventCompound<E>>;
+    fn _filter(&self, dest: &Link<E>, e: &EventCompound<E>) -> Option<EventCompound<E>>;
     fn attach_path_prefix(self, prefix: E::WidgetPath) -> Self;
 }
 
@@ -16,7 +16,7 @@ pub struct StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
 }
 
 impl<E> Filter<E> for StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
-    fn _filter(&self, dest: &Link<'_,E>, e: &EventCompound<E>) -> Option<EventCompound<E>> {
+    fn _filter(&self, dest: &Link<E>, e: &EventCompound<E>) -> Option<EventCompound<E>> {
         if !self.filter_path.is_empty() {
             dest.widget.resolves_by(self.filter_path.index(0))
                 .map(#[inline] || EventCompound{

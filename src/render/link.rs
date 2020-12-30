@@ -61,20 +61,20 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with force set
     #[inline]
-    pub fn with_force<'s>(&'s mut self, force: bool) -> RenderLink<'s,E> where 'a: 's {
+    pub fn with_force(&mut self, force: bool) -> RenderLink<E> {
         let mut f = self.forked(false,false,false);
         f.force = force;
         f
     }
     /// fork with force set to true
     #[inline]
-    pub fn enforced<'s>(&'s mut self) -> RenderLink<'s,E> where 'a: 's {
+    pub fn enforced(&mut self) -> RenderLink<E> {
         self.with_force(true)
     }
 
     /// fork with area inside the border
     #[inline]
-    pub fn inside_border_specific<'s>(&'s mut self, s: &Border) -> RenderLink<'s,E> where 'a: 's {
+    pub fn inside_border_specific(&mut self, s: &Border) -> RenderLink<E> {
         let bounds = self.bounds.inside_border(s);
         let mut f = self.forked(true,false,false);
         f.bounds = bounds;
@@ -82,18 +82,18 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with area inside the border defined by the style
     #[inline]
-    pub fn inside_border<'s>(&'s mut self, c: &E::Context) -> RenderLink<'s,E> where 'a: 's {
+    pub fn inside_border(&mut self, c: &E::Context) -> RenderLink<E> {
         self.inside_border_specific(&c.style_provider().border(&self.style))
     }
     /// fork with area inside the border defined by the style  
     /// default style border is determined by the attached tags which **won't** be present on the forked RenderLink
     #[inline]
-    pub fn inside_border_by<'s,V>(&'s mut self, tags: V, c: &E::Context) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone, 'a: 's {
+    pub fn inside_border_by<V>(&mut self, tags: V, c: &E::Context) -> RenderLink<E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
         self.inside_border_specific(&c.style_provider().border(&self.style.with(tags)))
     }
     /// fork with area inside the bounds
     #[inline]
-    pub fn slice<'s>(&'s mut self, s: &Bounds) -> RenderLink<'s,E> where 'a: 's {
+    pub fn slice(&mut self, s: &Bounds) -> RenderLink<E> {
         let bounds = self.bounds.slice(s);
         let mut f = self.forked(true,false,false);
         f.bounds = bounds;
@@ -101,7 +101,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with area inside the bounds
     #[inline]
-    pub fn slice_abs<'s>(&'s mut self, s: &Bounds) -> RenderLink<'s,E> where 'a: 's {
+    pub fn slice_abs(&mut self, s: &Bounds) -> RenderLink<E> {
         let bounds = self.bounds & s;
         let mut f = self.forked(true,false,false);
         f.bounds = bounds;
@@ -109,7 +109,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with area inside the bounds
     #[inline]
-    pub fn inner_centered<'s>(&'s mut self, size: Dims) -> RenderLink<'s,E> where 'a: 's {
+    pub fn inner_centered(&mut self, size: Dims) -> RenderLink<E> {
         let bounds = self.bounds.inner_centered(size);
         let mut f = self.forked(true,false,false);
         f.bounds = bounds;
@@ -117,7 +117,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with area inside the bounds
     #[inline]
-    pub fn inner_aligned<'s>(&'s mut self, size: Dims, align: (f32,f32)) -> RenderLink<'s,E> where 'a: 's {
+    pub fn inner_aligned(&mut self, size: Dims, align: (f32,f32)) -> RenderLink<E> {
         let bounds = self.bounds.inner_aligned(size,align);
         let mut f = self.forked(true,false,false);
         f.bounds = bounds;
@@ -125,7 +125,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with attached style variant tags
     #[inline]
-    pub fn with<'s,V>(&'s mut self, tags: V) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone, 'a: 's {
+    pub fn with<V>(&mut self, tags: V) -> RenderLink<E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
         let style = self.style.with(tags);
         let mut f = self.forked(false,false,true);
         f.style = style;
@@ -133,7 +133,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
     /// fork with default style and attache tags
     #[inline]
-    pub fn with_default_style<'s,V>(&'s mut self, tags: V) -> RenderLink<'s,E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone, 'a: 's {
+    pub fn with_default_style<V>(&mut self, tags: V) -> RenderLink<E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
         let mut f = self.forked(false,false,true);
         f.style = ESVariant::<E>::default().with(tags);
         f._set_style()
@@ -145,14 +145,14 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn with_bounds<'s>(&'s mut self, bounds: Bounds) -> RenderLink<'s,E> where 'a: 's {
+    pub fn with_bounds(&mut self, bounds: Bounds) -> RenderLink<E> {
         let mut f = self.forked(true,false,false);
         f.bounds = bounds;
         f._set_bounds()
     }
 
     #[inline]
-    pub fn with_viewport<'s>(&'s mut self, viewport: Bounds) -> RenderLink<'s,E> where 'a: 's {
+    pub fn with_viewport(&mut self, viewport: Bounds) -> RenderLink<E> {
         let mut f = self.forked(false,true,true);
         f.viewport = viewport;
         f._set_viewport()
@@ -197,7 +197,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }*/
     
     #[inline]
-    pub fn fork_with<'s>(&'s mut self, bounds: Option<Bounds>, viewport: Option<Bounds>, style: Option<ESVariant<E>>) -> RenderLink<'s,E> where 'a: 's {
+    pub fn fork_with(&mut self, bounds: Option<Bounds>, viewport: Option<Bounds>, style: Option<ESVariant<E>>) -> RenderLink<E> {
         let mut r = self.forked(bounds.is_some(),viewport.is_some(),style.is_some());
         if let Some(b) = bounds {
             r.bounds = b;
@@ -214,7 +214,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         r
     }
     #[inline]
-    fn forked<'s>(&'s mut self, prev_bounds: bool, prev_viewport: bool, prev_style: bool) -> RenderLink<'s,E> where 'a: 's {
+    fn forked(&mut self, prev_bounds: bool, prev_viewport: bool, prev_style: bool) -> RenderLink<E> {
         let mut r = RenderLink{
             r: self.r,
             bounds: self.bounds.clone(),

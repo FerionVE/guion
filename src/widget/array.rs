@@ -21,7 +21,7 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
         self.len()
     }
     #[inline]
-    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
+    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
         Ok(self.get(i).ok_or(())?.as_ref())
     }
     #[inline]
@@ -33,7 +33,7 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
         }
     }
     #[inline]
-    fn childs(&self) -> Vec<Resolvable<'_,E>> {
+    fn childs(&self) -> Vec<Resolvable<E>> {
         self.iter()
             .map(#[inline] |w| w.as_ref() )
             .collect::<Vec<_>>()
@@ -47,7 +47,7 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
 }
 impl<T,E> WidgetArrayMut<E> for Vec<T> where T: AsWidgetMut<E>, E: Env {
     #[inline]
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
     #[inline]
@@ -59,7 +59,7 @@ impl<T,E> WidgetArrayMut<E> for Vec<T> where T: AsWidgetMut<E>, E: Env {
         }
     }
     #[inline]
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         self.iter_mut()
             .map(#[inline] |w| w.as_mut() )
             .collect::<Vec<_>>()
@@ -78,7 +78,7 @@ impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
         (**self).len()
     }
     #[inline]
-    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
+    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
         Ok(self.get(i).ok_or(())?.as_ref())
     }
     #[inline]
@@ -86,7 +86,7 @@ impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
         Ok(self.get(i).ok_or(())?.as_ref())
     }
     #[inline]
-    fn childs(&self) -> Vec<Resolvable<'_,E>> {
+    fn childs(&self) -> Vec<Resolvable<E>> {
         self.iter()
             .map(#[inline] |w| w.as_ref() )
             .collect::<Vec<_>>()
@@ -127,7 +127,7 @@ impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>, E: Env {
 }
 impl<T,E> WidgetArrayMut<E> for &mut [T] where T: AsWidgetMut<E>, E: Env {
     #[inline]
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
     #[inline]
@@ -135,7 +135,7 @@ impl<T,E> WidgetArrayMut<E> for &mut [T] where T: AsWidgetMut<E>, E: Env {
         Ok(self.get_mut(i).ok_or(())?.as_mut())
     }
     #[inline]
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         self.iter_mut()
             .map(#[inline] |w| w.as_mut() )
             .collect::<Vec<_>>()
@@ -162,7 +162,7 @@ macro_rules! impl_wpps_tuple {
                 $n
             }
             #[inline]
-            fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
+            fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
                 if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
                     Ok(self.childs().swap_remove(i))
                 }else{
@@ -178,7 +178,7 @@ macro_rules! impl_wpps_tuple {
                 }
             }
             #[inline]
-            fn childs(&self) -> Vec<Resolvable<'_,E>> {
+            fn childs(&self) -> Vec<Resolvable<E>> {
                 let ($l,$($ll),*) = self;
                 vec![$l.as_ref(), $( $ll .as_ref() ),* ]
             }
@@ -195,7 +195,7 @@ macro_rules! impl_wpps_tuple {
             $($tt: AsWidgetMut<E>),+ 
         {
             #[inline]
-            fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
+            fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
                 if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
                     Ok(self.childs_mut().swap_remove(i))
                 }else{
@@ -211,7 +211,7 @@ macro_rules! impl_wpps_tuple {
                 }
             }
             #[inline]
-            fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
+            fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
                 let ($l,$($ll),*) = self;
                 vec![$l.as_mut(), $( $ll .as_mut() ),* ]
             }

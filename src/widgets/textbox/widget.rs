@@ -197,7 +197,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
+    fn childs_ref(&self) -> Vec<Resolvable<E>> {
         vec![]
     }
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
@@ -210,7 +210,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
     fn focusable(&self) -> bool {
         true
     }
-    fn child(&self, _: usize) -> Result<Resolvable<'_,E>,()> {
+    fn child(&self, _: usize) -> Result<Resolvable<E>,()> {
         Err(())
     }
     fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
@@ -241,13 +241,13 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> WidgetMut<E> for TextBo
     Stil: Clone,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![]
     }
     fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         vec![]
     }
-    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<'_,E>,()> {
+    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<E>,()> {
         Err(())
     }
     fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {

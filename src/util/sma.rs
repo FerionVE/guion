@@ -31,7 +31,7 @@ impl<'a,T,U,F> SMA<'a,T,U,F> where F: SMALens<T,U> {
     }
 
     #[inline]
-    pub fn borrow_mut(&self) -> RefMut<'_,U> {
+    pub fn borrow_mut(&self) -> RefMut<U> {
         let r = self.inner.borrow_mut();
         let f = &self.f;
         RefMut::map(r,#[inline] move |v| f.lens_mut(v) )
@@ -111,7 +111,7 @@ impl<'w,'a,E,T,U,F> Caption<E> for SMA<'a,T,U,F> where
     U: Caption<E>+'w,
     F: SMALens<T,U>
 {
-    fn caption(&self) -> std::borrow::Cow<'_,str> {
+    fn caption(&self) -> std::borrow::Cow<str> {
         let g = self.borrow_mut();
         let c = g.caption();
         std::borrow::Cow::Owned( c.into_owned() )

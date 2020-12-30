@@ -161,8 +161,8 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         WBase::_box_box(self)
     }
     #[inline]
-    fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
-        WBase::_boxed_ref(self)
+    fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
+        WBase::_boxed(self)
     }
 }
 
@@ -236,8 +236,8 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         WBaseMut::_box_box_mut(self)
     }
     #[inline]
-    fn boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
-        WBaseMut::_boxed(self)
+    fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
+        WBaseMut::_boxed_mut(self)
     }
 }
 
@@ -248,7 +248,7 @@ pub trait WBase<E> where E: Env {
     fn erase(&self) -> &dyn Widget<E>;
     fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E>;
     fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
-    fn _boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
+    fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
 }
 impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     #[inline]
@@ -268,7 +268,7 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
         self
     }
     #[inline]
-    fn _boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
+    fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
         Box::new(self)
     }
 }
@@ -280,7 +280,7 @@ pub trait WBaseMut<E> where E: Env {
     fn erase_mut(&mut self) -> &mut dyn WidgetMut<E>;
     fn _box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E>;
     fn _box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w;
-    fn _boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w;
+    fn _boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w;
 }
 impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
     #[inline]
@@ -300,7 +300,7 @@ impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
         self
     }
     #[inline]
-    fn _boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized + 'w {
+    fn _boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized + 'w {
         Box::new(self)
     }
 }

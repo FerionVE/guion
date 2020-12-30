@@ -96,7 +96,7 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
     fn childs(&self) -> usize {
         1
     }
-    fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
+    fn childs_ref(&self) -> Vec<Resolvable<E>> {
         vec![self.inner.as_ref()]
     }
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
@@ -109,7 +109,7 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
     fn focusable(&self) -> bool {
         false //TODO
     }
-    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
+    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
         if i != 0 {return Err(());}
         Ok(self.inner.as_ref())
     }
@@ -133,13 +133,13 @@ impl<'w,E,W,Scroll,Stil> WidgetMut<E> for Area<'w,E,W,Scroll,Stil> where
     Scroll: AtomStateMut<E,(u32,u32)>,
     Stil: Clone,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![self.inner.as_mut()]
     }
     fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         vec![self.inner.into_mut()]
     }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         if i != 0 {return Err(());}
         Ok(self.inner.as_mut())
     }

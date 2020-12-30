@@ -13,59 +13,59 @@ pub trait Caption<E> {
 
 impl<E> Caption<E> for str {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         Cow::Borrowed(self)
     }
 }
 impl<E> Caption<E> for String {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         Cow::Borrowed(self)
     }
 }
 
 impl<E> Caption<E> for Path {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         self.to_string_lossy()
     }
 }
 impl<E> Caption<E> for PathBuf {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         self.to_string_lossy()
     }
 }
 
 impl<E> Caption<E> for OsStr {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         self.to_string_lossy()
     }
 }
 impl<E> Caption<E> for OsString {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         self.to_string_lossy()
     }
 }
 
 impl<E,T> Caption<E> for &'_ T where T: Caption<E>+?Sized {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         (**self).caption()
     }
 }
 impl<'l,E,T> Caption<E> for &'_ mut T where T: Caption<E>+?Sized {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         (**self).caption()
     }
 }
 
 impl<E,T> Caption<E> for Validated<E,T> where T: Caption<E> {
     #[inline]
-    fn caption(&self) -> Cow<'_,str> {
+    fn caption(&self) -> Cow<str> {
         (**self).caption()
     }
 }
@@ -89,7 +89,7 @@ macro_rules! impl_caption_gen {
     ($t:ty) => {
         impl<E> Caption<E> for $t {
             #[inline]
-            fn caption(&self) -> Cow<'_,str> {
+            fn caption(&self) -> Cow<str> {
                 Cow::Owned(self.to_string())
             }
         }
