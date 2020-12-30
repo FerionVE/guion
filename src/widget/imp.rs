@@ -94,6 +94,18 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
     fn into_child<'w>(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
         (**self).child(i)
     }
+    #[inline]
+    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
+        Box::new(*self)
+    }
+    #[inline]
+    fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+        Box::new(*self)
+    }
+    #[inline]
+    fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
+        Box::new(self)
+    }
 }
 impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     #[inline]
@@ -189,6 +201,18 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         let r: &dyn Widget<E> = (**self).base();
         r.child(i)
     }
+    #[inline]
+    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
+        Box::new(WBaseMut::base(*self))
+    }
+    #[inline]
+    fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+        Box::new(WBaseMut::base(*self))
+    }
+    #[inline]
+    fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
+        Box::new(WBaseMut::base(self))
+    }
 }
 impl<E> WidgetMut<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     #[allow(deprecated)]
@@ -228,6 +252,18 @@ impl<E> WidgetMut<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     #[inline]
     fn message(&mut self, m: E::Message) {
         (**self).message(m)
+    }
+    #[inline]
+    fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
+        Box::new(&mut **self)
+    }
+    #[inline]
+    fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
+        Box::new(*self)
+    }
+    #[inline]
+    fn boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
+        Box::new(self)
     }
 }
 impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
@@ -322,6 +358,18 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
     fn into_child<'w>(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
         (*self).into_child(i)
     }
+    #[inline]
+    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
+        Box::new(&**self)
+    }
+    #[inline]
+    fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+        *self
+    }
+    #[inline]
+    fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
+        self
+    }
 }
 impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     #[inline]
@@ -415,6 +463,18 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     fn into_child<'w>(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
         (*self).into_child(i)
     }
+    #[inline]
+    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
+        Box::new(WBaseMut::base(&**self))
+    }
+    #[inline]
+    fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+        WBase::_box_box(*self)
+    }
+    #[inline]
+    fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
+        WBase::_box_box(self)
+    }
 }
 impl<E> WidgetMut<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     #[allow(deprecated)]
@@ -453,5 +513,17 @@ impl<E> WidgetMut<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     #[inline]
     fn message(&mut self, m: E::Message) {
         (**self).message(m)
+    }
+    #[inline]
+    fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
+        Box::new(&mut **self)
+    }
+    #[inline]
+    fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
+        *self
+    }
+    #[inline]
+    fn boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
+        self
     }
 }
