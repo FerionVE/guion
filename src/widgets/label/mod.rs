@@ -28,7 +28,7 @@ impl<'w,E> Label<'w,E,&'static str,(),LocalGlyphCache<E>> where
     pub fn new(id: E::WidgetID) -> Self {
         Self{
             id,
-            size: constraint!(0|0).into(),
+            size: ESize::<E>::empty(),
             style: (),
             text: "",
             align: (0.5,0.5),
@@ -47,7 +47,7 @@ impl<'w,E,Text> Label<'w,E,Text,(),RemoteState<E,LocalGlyphCache<E>>> where
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {
         Self{
             id: id.clone(),
-            size: constraint!(0|0).into(),
+            size: ESize::<E>::empty(),
             style: (),
             text,
             align: (0.5,0.5),
