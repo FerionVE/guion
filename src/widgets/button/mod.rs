@@ -69,8 +69,8 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
         self.trigger = fun;
         self
     }
-    /*#[inline]
-    pub fn with_text<T>(self, text: T) -> Button<'w,E,T,Stil> where T: 'w {
+    #[inline]
+    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T,Stil> where T: 'w {
         Button{
             id: self.id,
             size: self.size,
@@ -80,7 +80,7 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
             text,
             p: PhantomData,
         }
-    }*/
+    }
     #[inline]
     pub fn with_locked(mut self, locked: bool) -> Self {
         self.locked = locked;

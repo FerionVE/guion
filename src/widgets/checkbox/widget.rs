@@ -10,7 +10,7 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>,
-    Text: Caption<E>+'w,
+    Text: AsWidget<E>,
     Stil: Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -19,7 +19,7 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
         let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
         if l.state().is_hovered(&self.id) {
@@ -63,7 +63,7 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
                     StdTag::Focused(l.is_focused()),
                     StdTag::Locked(self.locked),
                 ][..])
-                .render_text(self.text.caption().as_ref(),(0.0,0.5),l.ctx);
+                .render_widget(l.for_child(0).unwrap());
         }
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
@@ -89,29 +89,34 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
         }
         e.event.is_mouse_down().is_some()
     }
-    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
-        self.size.clone()
+    fn _size(&self, mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+        let mut ms = l.for_child(0).unwrap().size(e);
+        ms.add_x( &self.size );
+        ms
     }
     fn childs(&self) -> usize {
-        0
+        1
     }
     fn childs_ref(&self) -> Vec<Resolvable<'_,E>> {
-        vec![]
+        vec![self.text.as_ref()]
     }
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
-        vec![]
+        vec![self.text.into_ref()]
     }
     
     fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
-        Ok(vec![])
+        todo!();
+        Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
     }
     fn focusable(&self) -> bool { true }
 
-    fn child(&self, _: usize) -> Result<Resolvable<'_,E>,()> {
-        Err(())
+    fn child(&self, i: usize) -> Result<Resolvable<'_,E>,()> {
+        if i != 0 {return Err(());}
+        Ok(self.text.as_ref())
     }
-    fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
-        Err(())
+    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
+        if i != 0 {return Err(());}
+        Ok(self.text.into_ref())
     }
 
     impl_traitcast!(
@@ -127,20 +132,22 @@ impl<'w,E,State,Text,Stil> WidgetMut<E> for CheckBox<'w,E,State,Text,Stil> where
     ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     State: AtomStateMut<E,bool>,
-    Text: Caption<E>+'w,
+    Text: AsWidgetMut<E>,
     Stil: Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<'_,E>> {
-        vec![]
+        vec![self.text.as_mut()]
     }
     fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![]
+        vec![self.text.into_mut()]
     }
-    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<'_,E>,()> {
-        Err(())
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<'_,E>,()> {
+        if i != 0 {return Err(());}
+        Ok(self.text.as_mut())
     }
-    fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        Err(())
+    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
+        if i != 0 {return Err(());}
+        Ok(self.text.into_mut())
     }
 
     impl_traitcast_mut!(
@@ -158,7 +165,7 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
     ESVariant<E>: StyleVariantSupport<StdTag<E>>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+'w,
-    Text: Caption<E>+'w,
+    Text: AsWidget<E>,
 {
     pub fn set(mut l: Link<E>, v: bool) {
         l.mutate_closure(Box::new(move |mut w,c,_|{

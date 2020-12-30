@@ -1,5 +1,7 @@
 use super::*;
-use crate::event::key::Key;
+use super::util::LocalGlyphCache;
+use super::label::Label;
+use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
 use util::{state::*, caption::Caption};
 
@@ -23,8 +25,9 @@ pub struct CheckBox<'w,E,State,Text,Stil> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,State,E> CheckBox<'w,E,State,&'static str,()> where
+impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,(),LocalGlyphCache<E>>,()> where
     E: Env,
+    E::WidgetID: WidgetIDAlloc,
 {
     #[inline]
     pub fn new(id: E::WidgetID, state: State) -> Self {
@@ -34,7 +37,8 @@ impl<'w,State,E> CheckBox<'w,E,State,&'static str,()> where
             style: (),
             trigger: |_,_|{},
             locked: false,
-            text: "",
+            text: Label::new(E::WidgetID::new_id())
+                .with_align((0.,0.5)),
             state,
             p: PhantomData,
         }
@@ -53,7 +57,7 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
         self
     }
     #[inline]
-    pub fn with_text<T>(self, text: T) -> CheckBox<'w,E,State,T,Stil> where T: 'w {
+    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,Stil> where T: AsWidget<E> {
         CheckBox{
             id: self.id,
             size: self.size,
@@ -80,6 +84,24 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
             style,
             locked: self.locked,
             text: self.text,
+            state: self.state,
+            p: PhantomData,
+        }
+    }
+}
+
+impl<'w,E,State,T,LS,Stil,LC> CheckBox<'w,E,State,Label<'w,E,T,LS,LC>,Stil> where
+    E: Env, //TODO WidgetWithCaption with_text replace
+{
+    #[inline]
+    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT,LS,LC>,Stil> where TT: Caption<E>+Validation<E>+'w {
+        CheckBox{
+            trigger: self.trigger,
+            id: self.id,
+            size: self.size,
+            style: self.style,
+            locked: self.locked,
+            text: self.text.with_text(text),
             state: self.state,
             p: PhantomData,
         }
