@@ -60,7 +60,7 @@ impl<'w,E,W,Scroll,Stil> Area<'w,E,W,Scroll,Stil> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Area<'w,E,W,Scroll,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> Area<'w,E,W,Scroll,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         Area{
             id: self.id,
             size: self.size,

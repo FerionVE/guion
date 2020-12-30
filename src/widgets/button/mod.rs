@@ -1,5 +1,5 @@
 use super::*;
-use crate::event::key::Key;
+use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
 use util::{LocalGlyphCache, caption::Caption};
 use label::Label;
@@ -93,7 +93,7 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Button<'w,E,Text,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> Button<'w,E,Text,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         Button{
             trigger: self.trigger,
             id: self.id,
@@ -110,7 +110,7 @@ impl<'w,E,T,LS,BS,LC> Button<'w,E,Label<'w,E,T,LS,LC>,BS> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LS,LC>,BS> where T: 'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LS,LC>,BS> where TT: Caption<E>+Validation<E>+'w {
         Button{
             id: self.id,
             size: self.size,

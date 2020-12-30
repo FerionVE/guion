@@ -72,7 +72,7 @@ impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> CheckBox<'w,E,State,Text,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> CheckBox<'w,E,State,Text,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         CheckBox{
             trigger: self.trigger,
             id: self.id,

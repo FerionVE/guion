@@ -44,7 +44,7 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
         self
     }*/
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Pane<'w,E,T,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> Pane<'w,E,T,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         Pane{
             id: self.id,
             childs: self.childs,

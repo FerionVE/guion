@@ -47,7 +47,7 @@ impl<'w,E,L,R,V,Stil> SplitPane<'w,E,L,R,V,Stil> where
     Stil: 'w,
 {
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> SplitPane<'w,E,L,R,V,SStil> where SStil: 'w {
+    pub fn with_style<SStil>(self, style: SStil) -> SplitPane<'w,E,L,R,V,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
         SplitPane{
             id: self.id,
             childs: self.childs,
