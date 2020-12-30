@@ -1,6 +1,6 @@
 use super::*;
 use std::marker::PhantomData;
-use util::{LocalGlyphCache, caption::Caption};
+use util::{LocalGlyphCache, caption::Caption, remote_state::RemoteState};
 use state::Cursor;
 
 pub mod widget;
@@ -41,6 +41,26 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>,(
             cursor: Cursor{select: 0, caret: 0}, //TODO default trait
             cursor_stick_x: None,
             glyph_cache: None,
+            p: PhantomData,
+        }
+    }
+}
+impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E>>,()> where
+    E: Env,
+    E::Context: DynState<E>,
+    Text: 'w,
+{
+    #[inline]
+    pub fn immediate(id: E::WidgetID, text: Text) -> Self {
+        Self{
+            size: Gonstraints::empty(),
+            style: (),
+            text,
+            scroll: RemoteState::for_widget(id.clone()),
+            cursor: RemoteState::for_widget(id.clone()), //TODO default trait
+            cursor_stick_x: RemoteState::for_widget(id.clone()),
+            glyph_cache: RemoteState::for_widget(id.clone()),
+            id,
             p: PhantomData,
         }
     }
