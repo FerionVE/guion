@@ -151,6 +151,19 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
         None
     }
+
+    #[inline]
+    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
+        WBase::_box_ref(self)
+    }
+    #[inline]
+    fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+        WBase::_box_box(self)
+    }
+    #[inline]
+    fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
+        WBase::_boxed_ref(self)
+    }
 }
 
 pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
@@ -213,6 +226,19 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
         None
     }
+
+    #[inline]
+    fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
+        WBaseMut::_box_mut(self)
+    }
+    #[inline]
+    fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
+        WBaseMut::_box_box_mut(self)
+    }
+    #[inline]
+    fn boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
+        WBaseMut::_boxed(self)
+    }
 }
 
 /// this trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
@@ -220,9 +246,9 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
 pub trait WBase<E> where E: Env {
     fn type_name(&self) -> &'static str;
     fn erase(&self) -> &dyn Widget<E>;
-    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E>;
-    fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
-    fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
+    fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E>;
+    fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
+    fn _boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
 }
 impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     #[inline]
@@ -234,15 +260,15 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
         self
     }
     #[inline]
-    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
+    fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
         Box::new(self.erase())
     }
     #[inline]
-    fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+    fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
         self
     }
     #[inline]
-    fn boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
+    fn _boxed_ref<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
         Box::new(self)
     }
 }
@@ -252,9 +278,9 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
 pub trait WBaseMut<E> where E: Env {
     fn base(&self) -> &dyn Widget<E>;
     fn erase_mut(&mut self) -> &mut dyn WidgetMut<E>;
-    fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E>;
-    fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w;
-    fn boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w;
+    fn _box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E>;
+    fn _box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w;
+    fn _boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w;
 }
 impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
     #[inline]
@@ -266,15 +292,15 @@ impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
         self
     }
     #[inline]
-    fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
+    fn _box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
         Box::new(self.erase_mut())
     }
     #[inline]
-    fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
+    fn _box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
         self
     }
     #[inline]
-    fn boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized + 'w {
+    fn _boxed<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized + 'w {
         Box::new(self)
     }
 }
