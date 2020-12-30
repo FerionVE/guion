@@ -8,6 +8,9 @@ pub enum Resolvable<'w,E> where E: Env {
 }
 
 impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
+    pub fn from_widget<W>(w: W) -> Self where W: Widget<E>+'w {
+        Self::Widget(w.boxed_ref())
+    }
     /// resolve further with the subpath if not a path
     /// meant to be used inside widget's resolve fn
     #[inline]
@@ -57,6 +60,9 @@ pub enum ResolvableMut<'w,E> where E: Env {
 }
 
 impl<'w,E> ResolvableMut<'w,E> where E: Env {
+    pub fn from_widget<W>(w: W) -> Self where W: WidgetMut<E>+'w {
+        Self::Widget(w.boxed())
+    }
     /// unwrap widget
     #[inline]
     pub fn as_widget(self) -> Result<WidgetRefMut<'w,E>,E::WidgetPath> {
