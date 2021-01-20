@@ -5,6 +5,7 @@ use super::*;
 /// Trait for retrieving the TypeId of a non-'static type by providing the 'static variant of the type
 /// 
 /// See [RFC 1849](https://github.com/rust-lang/rust/issues/41875)
+#[deprecated]
 pub unsafe trait Statize<E> {
     /// Must be `Self`, but with all lifetimes 'static
     type Statur: ?Sized + 'static;
@@ -18,6 +19,7 @@ pub unsafe trait Statize<E> {
 /// StatizeSized is Statize but with Statur: Sized
 ///
 /// StatizeSized is implemented on all Statize where Statur: Sized
+#[deprecated]
 pub unsafe trait StatizeSized<E> {
     type StaturSized: Sized + 'static; //TODO rename to Statur
 
@@ -27,23 +29,24 @@ pub unsafe trait StatizeSized<E> {
     }
 }
 
-unsafe impl<T,E> StatizeSized<E> for T where T: Statize<E>, T::Statur: Sized {
-    type StaturSized = T::Statur;
-}
-
-unsafe impl<E> Statize<E> for dyn Widget<E>+'_ where E: Env {
-    type Statur = dyn Widget<E>+'static;
-}
-unsafe impl<'w,E> Statize<E> for dyn WidgetMut<E>+'_ where E: Env {
-    type Statur = dyn WidgetMut<E>+'static;
-}
-unsafe impl<E> Statize<E> for dyn Any {
-    type Statur = dyn Any;
-}
-
+#[allow(deprecated)]
 mod imp {
     use super::*;
     use std::{borrow::Cow, path::{Path,PathBuf}, sync::Arc, rc::Rc};
+
+    unsafe impl<T,E> StatizeSized<E> for T where T: Statize<E>, T::Statur: Sized {
+        type StaturSized = T::Statur;
+    }
+
+    unsafe impl<E> Statize<E> for dyn Widget<E>+'_ where E: Env {
+        type Statur = dyn Widget<E>+'static;
+    }
+    unsafe impl<'w,E> Statize<E> for dyn WidgetMut<E>+'_ where E: Env {
+        type Statur = dyn WidgetMut<E>+'static;
+    }
+    unsafe impl<E> Statize<E> for dyn Any {
+        type Statur = dyn Any;
+    }
 
     unsafe impl<'w,T,E> Statize<E> for Box<T> where T: Statize<E>+?Sized {
         type Statur = Box<T::Statur>;
