@@ -1,6 +1,6 @@
 [package]
 name = "guion"
-version = "0.2.0-dev3"
+version = "0.3.0"
 
 authors = ["qwertz19281 <dellen903@gmail.com>"]
 edition = "2018"
@@ -14,7 +14,7 @@ repository = "https://github.com/ferionve/guion"
 readme = "README.md"
 
 [dependencies]
-qwutils = { version = "0.2.0", git = "https://github.com/qwertz19281/rust_utils", rev = "ffb307c0a5a293aac82250cdd0f3510655e0e07d" }
+qwutils = { version = "0.3.0", git = "https://github.com/qwertz19281/rust_utils", rev = "7959b3c0134fa864c1fd50adbeb063cbfe28e092" }
 #qwutils = { path = "../qwutils" }
 
 [profile.release]
