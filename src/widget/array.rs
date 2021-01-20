@@ -149,8 +149,8 @@ impl<T,E> WidgetArrayMut<E> for &mut [T] where T: AsWidgetMut<E>, E: Env {
 }
 
 macro_rules! impl_wpps_tuple {
-    {$n:expr;$t:ident $($tt:ident)+;$l:ident $($ll:ident)+} => {
-        impl_wpps_tuple!(($n-1);$($tt)+;$($ll)+);
+    {$n:expr;$senf:ident;$t:ident $($tt:ident)+;$l:ident $($ll:ident)+;$m:pat => $x:expr,$($mm:pat => $xx:expr),+} => {
+        impl_wpps_tuple!(($n-1);$senf;$($tt)+;$($ll)+;$($mm => $xx),+);
 
         impl<E,$t,$($tt),+> WidgetArray<E> for ($t,$($tt),+) where
             E: Env,
@@ -163,19 +163,21 @@ macro_rules! impl_wpps_tuple {
             }
             #[inline]
             fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
-                if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
-                    Ok(self.childs().swap_remove(i))
-                }else{
-                    Err(())
-                }
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidget::as_ref(& $x),
+                    $($mm => AsWidget::as_ref(& $xx)),+ ,
+                    _ => return Err(()),
+                })
             }
             #[inline]
             fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
-                if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
-                    Ok(self.into_childs().swap_remove(i))
-                }else{
-                    Err(())
-                }
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidget::into_ref($x),
+                    $($mm => AsWidget::into_ref($xx)),+ ,
+                    _ => return Err(()),
+                })
             }
             #[inline]
             fn childs(&self) -> Vec<Resolvable<E>> {
@@ -196,19 +198,21 @@ macro_rules! impl_wpps_tuple {
         {
             #[inline]
             fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-                if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
-                    Ok(self.childs_mut().swap_remove(i))
-                }else{
-                    Err(())
-                }
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidgetMut::as_mut(&mut $x),
+                    $($mm => AsWidgetMut::as_mut(&mut $xx)),+ ,
+                    _ => return Err(()),
+                })
             }
             #[inline]
             fn into_child_mut<'w>(self, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
-                if self.len() > i { //TODO optimize (current method completely defeats the purpose of tuples)
-                    Ok(self.into_childs_mut().swap_remove(i))
-                }else{
-                    Err(())
-                }
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidgetMut::into_mut($x),
+                    $($mm => AsWidgetMut::into_mut($xx)),+ ,
+                    _ => return Err(()),
+                })
             }
             #[inline]
             fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
@@ -222,11 +226,19 @@ macro_rules! impl_wpps_tuple {
             }
         }
     };
-    {$n:expr;$t:ident;$l:ident} => {}
+    {$n:expr;$senf:ident;$t:ident;$l:ident;$m:pat => $x:expr} => {}
 }
 
 impl_wpps_tuple!(
-    32;
+    32;senf;
     A B C D F G H I J K L M N O P Q R S T U V W X Y Z AA AB AC AD AE AF AG;
-    a b c d f g h i j k l m n o p q r s t u v w x y z aa ab ac ad ae af ag
+    a b c d f g h i j k l m n o p q r s t u v w x y z aa ab ac ad ae af ag;
+    31 => senf.31,30 => senf.30,29 => senf.29,28 => senf.28,
+    27 => senf.27,26 => senf.26,25 => senf.25,24 => senf.24,
+    23 => senf.23,22 => senf.22,21 => senf.21,20 => senf.20,
+    19 => senf.19,18 => senf.18,17 => senf.17,16 => senf.16,
+    15 => senf.15,14 => senf.14,13 => senf.13,12 => senf.12,
+    11 => senf.11,10 => senf.10,09 => senf. 9,08 => senf. 8,
+    07 => senf. 7,06 => senf. 6,05 => senf. 5,04 => senf. 4,
+    03 => senf. 3,02 => senf. 2,01 => senf. 1,00 => senf. 0
 );
