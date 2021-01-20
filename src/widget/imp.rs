@@ -96,15 +96,15 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
     }
     #[inline]
     fn box_ref(&self) -> WidgetRef<E> {
-        Box::new(*self)
+        (**self).box_ref()
     }
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
-        Box::new(*self)
+        (**self).box_ref()
     }
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
-        Box::new(self)
+        (*self).box_ref()
     }
 }
 impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
@@ -203,15 +203,15 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     }
     #[inline]
     fn box_ref(&self) -> WidgetRef<E> {
-        Box::new(WBaseMut::base(*self))
+        (**self).box_ref()
     }
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
-        Box::new(WBaseMut::base(*self))
+        (**self).box_ref()
     }
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
-        Box::new(WBaseMut::base(self))
+        (*self).box_ref()
     }
 }
 impl<E> WidgetMut<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
@@ -255,15 +255,15 @@ impl<E> WidgetMut<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     }
     #[inline]
     fn box_mut(&mut self) -> WidgetRefMut<E> {
-        Box::new(&mut **self)
+        (**self).box_mut()
     }
     #[inline]
     fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
-        Box::new(*self)
+        (**self).box_mut()
     }
     #[inline]
     fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
-        Box::new(self)
+        (*self).box_mut()
     }
 }
 impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
@@ -360,15 +360,15 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
     }
     #[inline]
     fn box_ref(&self) -> WidgetRef<E> {
-        Box::new(&**self)
+        (**self).box_ref()
     }
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
-        *self
+        (*self).box_box()
     }
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
-        self
+        self.box_box()
     }
 }
 impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
@@ -465,15 +465,15 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     }
     #[inline]
     fn box_ref(&self) -> WidgetRef<E> {
-        Box::new(WBaseMut::base(&**self))
+       (**self).box_ref()
     }
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
-        WBase::_box_box(*self)
+        (*self).box_box()
     }
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
-        WBase::_box_box(self)
+        self.box_box()
     }
 }
 impl<E> WidgetMut<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
@@ -516,14 +516,14 @@ impl<E> WidgetMut<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     }
     #[inline]
     fn box_mut(&mut self) -> WidgetRefMut<E> {
-        Box::new(&mut **self)
+        (**self).box_mut()
     }
     #[inline]
     fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
-        *self
+        (*self).box_box_mut()
     }
     #[inline]
     fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
-        self
+        self.box_box_mut()
     }
 }
