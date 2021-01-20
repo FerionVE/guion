@@ -15,31 +15,42 @@ pub struct ResolvedMut<'a,E> where E: Env {
 }
 
 impl<'a,E> Resolved<'a,E> where E: Env {
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    /// generally not called directly, rather through [`Link::render`](Link::render)
     #[inline]
     pub fn render(&self, c: &mut E::Context, r: &mut RenderLink<E>) {
         c.render(self.clone(),r)
     }
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    /// generally not called directly, rather through [`Link::event`](Link::event_direct)
     #[inline]
     pub fn event_direct(&self, c: &mut E::Context, e: &EventCompound<E>) -> EventResp {
         c.event_direct(self.clone(),e)
     }
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    /// generally not called directly, rather through [`Link::event`](Link::send_event)
     #[inline]
     pub fn send_event(&self, c: &mut E::Context, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
         c.send_event(self.clone(),e,child)
     }
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    /// generally not called directly, rather through [`Link::size`](Link::size)
     #[inline]
     pub fn size(&self, c: &mut E::Context, e: &ESVariant<E>) -> ESize<E> {
         c.size(self.clone(),e)
     }
 
+    /// render, but bypass context handlers
     #[inline]
     pub fn _render(&self, c: &mut E::Context, r: &mut RenderLink<E>) {
         (***self)._render(c.link(self.clone()),r)
     }
+    /// event, but bypass context handlers
     #[inline]
     pub fn _event_direct(&self, c: &mut E::Context, e: &EventCompound<E>) -> EventResp {
         (***self)._event_direct(c.link(self.clone()),e)
     }
+    /// size, but bypass context handlers
     #[inline]
     pub fn _size(&self, c: &mut E::Context, e: &ESVariant<E>) -> ESize<E> {
         (***self)._size(c.link(self.clone()),e)
@@ -55,7 +66,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn reference<'s>(&'s self) -> Resolved<'s,E> where 'a: 's {
+    pub fn reference(&self) -> Resolved<E> {
         Resolved{
             wref: Box::new(&*self.wref),
             path: self.path.clone(),

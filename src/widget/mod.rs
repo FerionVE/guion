@@ -22,25 +22,43 @@ pub mod ident;
 pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
 
-    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) this method should not be called from external, rather [`Link::render`](link/struct.Link.html#method.render)
+    /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
+    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
+    /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    /// generally not called directly, rather through [`Link::render`](Link::render)
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>);
-    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) this method should not be called from external, rather [`Link::event`](link/struct.Link.html#method.event)
+    /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
+    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
+    /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    /// generally not called directly, rather through [`Link::event`](Link::event)
     fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp;
-    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) this method should not be called from external, rather [`Link::size`](link/struct.Link.html#method.size)
+    /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
+    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
+    /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    /// generally not called directly, rather through [`Link::size`](Link::size)
     fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E>;
 
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn childs(&self) -> usize;
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()>;
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn into_child<'s>(self: Box<Self>, i: usize) -> Result<Resolvable<'s,E>,()> where Self: 's;
 
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
     fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> {
         (0..self.childs())
             .map(#[inline] |i| self.child(i).unwrap() )
             .collect::<Vec<_>>()
     }
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn into_childs<'w>(self: Box<Self>) -> Vec<Resolvable<'w,E>> where Self: 'w;
     
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (0..self.childs())
@@ -69,8 +87,10 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     
     //fn _accept_child_events(&self) -> bool;
 
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget
+    /// an empty path will resolve to this widget  
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
     #[inline]
     fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,()> {
         if i.is_empty() {
@@ -79,8 +99,10 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         let c = self.resolve_child(i.index(0))?;
         self.child(c).unwrap().resolve_child(i.slice(1..))
     }
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget
+    /// an empty path will resolve to this widget  
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
     #[inline]
     fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,()> where Self: 'w {
         if i.is_empty() {
@@ -89,7 +111,10 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         let c = self.resolve_child(i.index(0))?;
         self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..))
     }
-    /// child widget by path segment
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
+    /// resolve a deep child item by the given relative path  
+    /// an empty path will resolve to this widget  
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
     #[inline]
     fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
         for c in 0..self.childs() {
@@ -99,6 +124,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         }
         Err(())
     }
+    /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     #[inline]
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
         if i.is_empty() {
@@ -109,13 +135,16 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         
         Ok(bounds[child])
     }
+    /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()>;
     
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// attach widget's id to the given parent path
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         parent.attached(SubPath::from_id(self.id()))
     }
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// if the path segment would resolve to this widget
     #[inline]
     fn resolves_by(&self, p: &EWPSub<E>) -> bool {
@@ -152,14 +181,17 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         None
     }
 
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
     #[inline]
     fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
         WBase::_box_ref(self)
     }
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
         WBase::_box_box(self)
     }
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         WBase::_boxed(self)
@@ -167,6 +199,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
 }
 
 pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
+    /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// an alternative way to pass mutations. See [Link::Message]
     #[allow(unused)]
     #[inline]
@@ -180,15 +213,21 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         
     }
 
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()>;
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn into_child_mut<'w>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w;
 
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>>;
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn into_childs_mut<'w>(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> where Self: 'w;
 
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget
+    /// an empty path will resolve to this widget  
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
     #[inline]
     fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,()> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if i.is_empty() {
@@ -198,8 +237,10 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..))
     }
 
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget
+    /// an empty path will resolve to this widget  
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
     #[inline]
     fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
         if i.is_empty() {
@@ -219,6 +260,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         self
     }
 
+    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)
     /// The impl_traitcast_mut! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
@@ -227,14 +269,17 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         None
     }
 
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
     #[inline]
     fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
         WBaseMut::_box_mut(self)
     }
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
     #[inline]
     fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
         WBaseMut::_box_box_mut(self)
     }
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
     #[inline]
     fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
         WBaseMut::_boxed_mut(self)

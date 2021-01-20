@@ -1,5 +1,6 @@
 pub use super::*;
 
+/// helper for translating points between bound spaces offset and scaling
 pub struct Translate<'a>(&'a Bounds,&'a Bounds);
 
 impl<'a> Translate<'a> {

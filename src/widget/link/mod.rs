@@ -94,14 +94,19 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn render(&mut self, r: &mut RenderLink<E>) {
         self.ctx.render(self.widget.reference(),r)
     }
+    /// send event to this widget
     #[inline]
     pub fn event_direct(&mut self, e: &EventCompound<E>) -> EventResp {
         self.ctx.event_direct(self.widget.reference(),e)
     }
+    /// send event to subpath
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    /// generally not called directly, rather through [`Widgets::send_event`](Widgets::send_event)
     #[inline]
     pub fn send_event(&mut self, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
         self.ctx.send_event(self.widget.reference(),e,child)
     }
+    /// layout constraints of this widget
     #[inline]
     pub fn size(&mut self, e: &ESVariant<E>) -> ESize<E> {
         self.ctx.size(self.widget.reference(),e)
@@ -169,6 +174,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.widget.child_paths()
     }
 
+    /// Run closure for every child
     #[inline]
     pub fn for_childs<'s>(&'s mut self, mut f: impl FnMut(Link<E>)) -> Result<(),()> where 'c: 's {
         for i in 0..self.widget.childs() {
@@ -177,6 +183,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         }
         Ok(())
     }
+    /// Get Link for specific child by index
     #[inline]
     pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,()> where 'c: 's {
         let path = self.widget.path.refc();
@@ -216,6 +223,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         (**self.widget).child_bounds(w,b,e,force)
     }
 
+    /// Link for Widget by Path, resolves Widget by Path
     #[inline]
     pub fn with_widget<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
         Ok(

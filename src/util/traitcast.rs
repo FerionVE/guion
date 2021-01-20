@@ -15,10 +15,12 @@ pub struct TraitObject {
 /// This macro is used inside Widget/WidgetMut impls
 /// 
 /// Example:
+/// ```rust
 /// impl_traitcast!(
 ///     dyn IButton => |s| s;
 ///     dyn IButtonState => |s| &s.state;
 /// );
+///
 #[macro_export]
 macro_rules! impl_traitcast {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
@@ -40,10 +42,12 @@ macro_rules! impl_traitcast {
 /// This macro is used inside WidgetMut impls
 /// 
 /// Example:
+/// ```rust
 /// impl_traitcast_mut!(
 ///     dyn IButton => |s| s;
 ///     dyn IButtonState => |s| &mut s.state;
 /// );
+///
 #[macro_export]
 macro_rules! impl_traitcast_mut {
     ($( $trait:ty => |$id:pat| $access:expr; )*) => {
@@ -89,6 +93,10 @@ impl<E> dyn WidgetMut<E>+'_ where E: Env {
     }
 }
 
+/// trait to secure Traitcasting, generally implemented by macro  
+/// - always implemented on `dyn Widget<E>`
+/// - `T` is the destination `dyn Trait` to which should be traitcasted
+/// - `DestTypeID` must be the same type as `T`, but with 'static lifetimes. Used to retrieve TypeID
 pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
     type DestTypeID: ?Sized + 'static;
 
@@ -107,6 +115,10 @@ pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
     }
 }
 
+/// trait to secure Traitcasting, generally implemented by macro  
+/// - always implemented on `dyn WidgetMut<E>`
+/// - `T` is the destination `dyn Trait` to which should be traitcasted
+/// - `DestTypeID` must be the same type as `T`, but with 'static lifetimes. Used to retrieve TypeID
 pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
     type DestTypeID: ?Sized + 'static;
 

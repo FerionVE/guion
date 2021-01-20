@@ -1,9 +1,14 @@
 //! Entry point of the widget tree
 use super::*;
 
-/// Implemented on the root of the widget tree
+/// Implemented on the root of the widget tree  
+/// Represents the root of a widget tree and being a starting point for widget resolving
 pub trait Widgets<E>: Sized + 'static where E: Env {
+    /// Resolve Widget by path  
+    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) Implementations often can just call [`resolve_in_root`](resolve_in_root)
     fn widget(&self, i: E::WidgetPath) -> Result<Resolved<E>,()>;
+    /// Resolve Widget by path  
+    /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) Implementations often can just call [`resolve_in_root_mut`](resolve_in_root_mut)
     fn widget_mut(&mut self, i: E::WidgetPath) -> Result<ResolvedMut<E>,()>;
 
     #[inline]
@@ -22,6 +27,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
     }
 }
 #[doc(hidden)]
+/// Used by [`Widgets::widget`](Widgets::widget) implementations
 pub fn resolve_in_root<E: Env>(w: &dyn Widget<E>, p: E::WidgetPath) -> Result<(WidgetRef<E>,E::WidgetPath),()> {
     let r = w.resolve(p.refc())?;
     
@@ -34,6 +40,7 @@ pub fn resolve_in_root<E: Env>(w: &dyn Widget<E>, p: E::WidgetPath) -> Result<(W
     }
 }
 #[doc(hidden)]
+/// Used by [`Widgets::widget_mut`](Widgets::widget_mut) implementations
 pub fn resolve_in_root_mut<E: Env>(w: &mut dyn WidgetMut<E>, p: E::WidgetPath) -> Result<(WidgetRefMut<E>,E::WidgetPath),()> {
     let final_path = resolve_in_root::<E>(w.base(),p)
         .map(#[inline] |e| e.1 )?;

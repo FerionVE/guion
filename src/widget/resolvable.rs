@@ -2,6 +2,7 @@
 use super::*;
 
 /// This enum is returned by widget's resolve function
+/// A widget or path which can be resolved further to widget
 pub enum Resolvable<'w,E> where E: Env {
     Widget(WidgetRef<'w,E>),
     Path(E::WidgetPath),

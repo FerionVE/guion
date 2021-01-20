@@ -14,6 +14,7 @@ impl<E> WidgetIdent<E> where E: Env {
         self.id == w //TODO AsID trait
     }
     #[deprecated="this resolves the widget"]
+    /// Resolves the Widget
     #[inline]
     pub fn from_path(path: E::WidgetPath, stor: &E::Storage) -> Result<Self,()> {
         stor.widget(path).map(#[inline] |r| r.ident() )
