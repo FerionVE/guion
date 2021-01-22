@@ -1,11 +1,14 @@
 use std::iter::once;
 use std::iter::Once;
+use std::marker::PhantomData;
 use crate::{env::Env, border::Border, aliases::ESColor};
+
+use super::StyleSelectag;
 /// selectors enable/disable specific parts of styles.  
 /// Style implementations may ignore selectors.  
 #[non_exhaustive]
 #[derive(Clone)]
-pub enum StdSelector<E> where E: Env {
+pub enum StdSelectag<E> where E: Env {
     ObjDefault,
     ObjBackground,
     ObjForeground,
@@ -29,14 +32,6 @@ pub enum StdSelector<E> where E: Env {
     BorderOuter,
     /// pick the visual border for requesting border size
     BorderVisual,
-    BorderSpecific(Border),
-
-    BorderMultiplierDefault,
-    BorderMultiplier(u32),
-    BorderMultiply(u32),
-
-    ColorDefault,
-    ColorSpecific(ESColor<E>),
 
     Accent(u32),
 
@@ -51,27 +46,28 @@ pub enum StdSelector<E> where E: Env {
     Pressed(bool),
     Locked(bool),
 
-    CursorDefault,
-    CursorArrow,
-    CursorIBeam,
-    CursorWait,
-    CursorCrosshair,
-    CursorWaitArrow,
-    CursorSizeNWSE,
-    CursorSizeNESW,
-    CursorSizeWE,
-    CursorSizeNS,
-    CursorSizeAll,
-    CursorNo,
-    CursorHand,
+    _P(PhantomData<E>),
 }
 
-impl<E> IntoIterator for StdSelector<E> where E: Env {
-    type Item = StdSelector<E>;
-    type IntoIter = Once<StdSelector<E>>;
+impl<E> IntoIterator for StdSelectag<E> where E: Env {
+    type Item = StdSelectag<E>;
+    type IntoIter = Once<StdSelectag<E>>;
 
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         once(self)
     }
+}
+
+impl<E> StyleSelectag<E> for StdSelectag<E> where E: Env {
+
+}
+impl<E> StyleSelectag<E> for &'_ StdSelectag<E> where E: Env {
+
+}
+impl<E> StyleSelectag<E> for &'_ [StdSelectag<E> ]where E: Env {
+
+}
+impl<E> StyleSelectag<E> for &'_ [&'_ StdSelectag<E>] where E: Env {
+
 }

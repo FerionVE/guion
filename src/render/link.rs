@@ -1,3 +1,5 @@
+use selector::{StyleSelector, StyleSelectorAppend};
+
 use super::*;
 use std::ops::{DerefMut, Deref};
 
@@ -9,27 +11,32 @@ pub struct RenderLink<'a,E> where E: Env {
     prev_bounds: Option<&'a Bounds>,
     viewport: Bounds,
     prev_viewport: Option<&'a Bounds>,
-    style: ESVariant<E>,
-    prev_style: Option<&'a ESVariant<E>>,
+    style: EStyle<E>,
+    prev_style: Option<&'a EStyle<E>>,
+    selector: ESSelector<E>,
+    prev_selector: Option<&'a ESSelector<E>>,
 
     /// whether rendering is enforced (e.g. if invalidation from outside occured)
     pub force: bool,
 }
 
 impl<'a,E> RenderLink<'a,E> where E: Env {
-    pub fn new(r: &'a mut ERenderer<E>, bounds: Bounds, viewport: Bounds, style: ESVariant<E>, force: bool) -> Self {
+    pub fn new(r: &'a mut ERenderer<E>, bounds: Bounds, viewport: Bounds, style: EStyle<E>, selector: ESSelector<E>, force: bool) -> Self {
         Self{
             r,
-            bounds: bounds,
+            bounds,
             prev_bounds: None,
-            viewport: viewport,
+            viewport,
             prev_viewport: None,
-            style: style,
+            style,
             prev_style: None,
-            force: force,
+            selector,
+            prev_selector: None,
+            force,
         }
             ._set_bounds()
             ._set_style()
+            ._set_selector()
             ._set_viewport()
     }
     pub fn simple(r: &'a mut ERenderer<E>, dim: (u32,u32), c: &E::Context) -> Self {
@@ -37,7 +44,8 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             r,
             Bounds::from_xywh(0,0,dim.0,dim.1),
             Bounds::from_xywh(0,0,dim.0,dim.1),
-            ESVariant::<E>::default(),
+            Default::default(),
+            Default::default(),
             false,
         )
     }
@@ -51,8 +59,12 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         &self.viewport
     }
     #[inline]
-    pub fn style(&self) -> &ESVariant<E> {
+    pub fn style(&self) -> &EStyle<E> {
         &self.style
+    }
+    #[inline]
+    pub fn selector(&self) -> &ESSelector<E> {
+        &self.selector
     }
 
     #[inline]
@@ -62,7 +74,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     /// fork with force set
     #[inline]
     pub fn with_force(&mut self, force: bool) -> RenderLink<E> {
-        let mut f = self.forked(false,false,false);
+        let mut f = self.forked(false,false,false, false);
         f.force = force;
         f
     }
@@ -76,26 +88,32 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     #[inline]
     pub fn inside_border_specific(&mut self, s: &Border) -> RenderLink<E> {
         let bounds = self.bounds.inside_border(s);
-        let mut f = self.forked(true,false,false);
+        let mut f = self.forked(true,false,false, false);
         f.bounds = bounds;
         f._set_bounds()
     }
     /// fork with area inside the border defined by the style
     #[inline]
-    pub fn inside_border(&mut self, c: &E::Context) -> RenderLink<E> {
-        self.inside_border_specific(&c.style_provider().border(&self.style))
+    pub fn inside_border(&mut self, c: &mut E::Context) -> RenderLink<E> {
+        self.inside_border_specific(&self.style.border(&self.selector,c))
     }
     /// fork with area inside the border defined by the style  
     /// default style border is determined by the attached tags which **won't** be present on the forked RenderLink
     #[inline]
-    pub fn inside_border_by<V>(&mut self, tags: V, c: &E::Context) -> RenderLink<E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
-        self.inside_border_specific(&c.style_provider().border(&self.style.with(tags)))
+    pub fn inside_border_by<S>(&mut self, selectags: S, c: &mut E::Context) -> RenderLink<E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> { //ESVariant<E>: StyleVariantSupport<V>
+        self.inside_border_specific(&self.style.border(&self.selector.with(selectags),c))
+    }
+    /// fork with area inside the border defined by the style  
+    /// default style border is determined by the attached tags which **won't** be present on the forked RenderLink
+    #[inline]
+    pub fn inside_border_by_mul<S>(&mut self, selectags: S, multiplier: u32, c: &mut E::Context) -> RenderLink<E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> { //ESVariant<E>: StyleVariantSupport<V>
+        self.inside_border_specific(&(self.style.border(&self.selector.with(selectags),c)*multiplier))
     }
     /// fork with area inside the bounds
     #[inline]
     pub fn slice(&mut self, s: &Bounds) -> RenderLink<E> {
         let bounds = self.bounds.slice(s);
-        let mut f = self.forked(true,false,false);
+        let mut f = self.forked(true,false,false, false);
         f.bounds = bounds;
         f._set_bounds()
     }
@@ -103,7 +121,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     #[inline]
     pub fn slice_abs(&mut self, s: &Bounds) -> RenderLink<E> {
         let bounds = self.bounds & s;
-        let mut f = self.forked(true,false,false);
+        let mut f = self.forked(true,false,false, false);
         f.bounds = bounds;
         f._set_bounds()
     }
@@ -111,7 +129,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     #[inline]
     pub fn inner_centered(&mut self, size: Dims) -> RenderLink<E> {
         let bounds = self.bounds.inner_centered(size);
-        let mut f = self.forked(true,false,false);
+        let mut f = self.forked(true,false,false, false);
         f.bounds = bounds;
         f._set_bounds()
     }
@@ -119,41 +137,42 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     #[inline]
     pub fn inner_aligned(&mut self, size: Dims, align: (f32,f32)) -> RenderLink<E> {
         let bounds = self.bounds.inner_aligned(size,align);
-        let mut f = self.forked(true,false,false);
+        let mut f = self.forked(true,false,false, false);
         f.bounds = bounds;
         f._set_bounds()
     }
-    /// fork with attached style variant tags
+    /// fork with attached style variant selectors
     #[inline]
-    pub fn with<V>(&mut self, tags: V) -> RenderLink<E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
-        let style = self.style.with(tags);
-        let mut f = self.forked(false,false,true);
+    pub fn with<S>(&mut self, selectags: S) -> RenderLink<E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> {
+        self.with_style_selector(&self.selector.with(selectags))
+    }
+    /// fork with attached style variant selectors
+    #[inline]
+    pub fn with_style(&mut self, style: &EStyle<E>) -> RenderLink<E> {
+        let style = self.style.and(style);
+        let mut f = self.forked(false,false,true, false);
         f.style = style;
         f._set_style()
     }
-    /// fork with default style and attache tags
+    /// fork with attached style variant selectors
     #[inline]
-    pub fn with_default_style<V>(&mut self, tags: V) -> RenderLink<E> where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
-        let mut f = self.forked(false,false,true);
-        f.style = ESVariant::<E>::default().with(tags);
-        f._set_style()
-    }
-    /// get the current color defined by the style variant
-    #[inline]
-    pub fn color(&self, c: &E::Context) -> ESColor<E> {
-        c.style_provider().color(&self.style)
+    pub fn with_style_selector(&mut self, style_selector: &ESSelector<E>) -> RenderLink<E> {
+        let selector = self.selector.and(style_selector);
+        let mut f = self.forked(false,false,false, true);
+        f.selector = selector;
+        f._set_selector()
     }
 
     #[inline]
     pub fn with_bounds(&mut self, bounds: Bounds) -> RenderLink<E> {
-        let mut f = self.forked(true,false,false);
+        let mut f = self.forked(true,false,false, false);
         f.bounds = bounds;
         f._set_bounds()
     }
 
     #[inline]
     pub fn with_viewport(&mut self, viewport: Bounds) -> RenderLink<E> {
-        let mut f = self.forked(false,true,true);
+        let mut f = self.forked(false,true,true, false);
         f.viewport = viewport;
         f._set_viewport()
     }
@@ -197,8 +216,8 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     }*/
     
     #[inline]
-    pub fn fork_with(&mut self, bounds: Option<Bounds>, viewport: Option<Bounds>, style: Option<ESVariant<E>>) -> RenderLink<E> {
-        let mut r = self.forked(bounds.is_some(),viewport.is_some(),style.is_some());
+    pub fn fork_with(&mut self, bounds: Option<Bounds>, viewport: Option<Bounds>, style: Option<EStyle<E>>, selector: Option<ESSelector<E>>) -> RenderLink<E> {
+        let mut r = self.forked(bounds.is_some(),viewport.is_some(),style.is_some(), selector.is_some());
         if let Some(b) = bounds {
             r.bounds = b;
             r=r._set_bounds();
@@ -211,10 +230,14 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             r.style = b;
             r=r._set_style();
         }
+        if let Some(b) = selector {
+            r.selector = b;
+            r=r._set_selector();
+        }
         r
     }
     #[inline]
-    fn forked(&mut self, prev_bounds: bool, prev_viewport: bool, prev_style: bool) -> RenderLink<E> {
+    fn forked(&mut self, prev_bounds: bool, prev_viewport: bool, prev_style: bool, prev_selector: bool) -> RenderLink<E> {
         let mut r = RenderLink{
             r: self.r,
             bounds: self.bounds.clone(),
@@ -223,11 +246,14 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
             prev_viewport: Some(&self.viewport),
             style: self.style.clone(),
             prev_style: Some(&self.style),
+            selector: self.selector.clone(),
+            prev_selector: Some(&self.selector),
             force: self.force,
         };
         if !prev_bounds { r.prev_bounds = None; }
         if !prev_viewport { r.prev_viewport = None; }
         if !prev_style { r.prev_style = None; }
+        if !prev_selector { r.prev_selector = None; }
         r
     }
     #[inline]
@@ -243,6 +269,11 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     #[inline]
     fn _set_style(self) -> Self {
         self.r._set_style(&self.style);
+        self
+    }
+    #[inline]
+    fn _set_selector(self) -> Self {
+        self.r._set_selector(&self.selector);
         self
     }
 }

@@ -17,10 +17,10 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
+        let mut r = r.with_style(&self.style);
         r.with(&[
-            StdSelector::ObjForeground,
-            StdSelector::ObjText,
+            StdSelectag::ObjForeground,
+            StdSelectag::ObjText,
         ][..])
             .render_text(self.text.caption().as_ref(),self.align,l.ctx);
     }

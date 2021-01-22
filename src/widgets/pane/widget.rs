@@ -69,8 +69,8 @@ impl<'w,E,T> Pane<'w,E,T> where
     pub fn _render_impl(&self, mut l: Link<E>, r: &mut RenderLink<E>) where
         E: Env,
     {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdSelector::BorderOuter,l.ctx);
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         let sizes = l.child_sizes(r.style()).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&r.bounds().size,&sizes,self.orientation); 
 
@@ -85,7 +85,7 @@ impl<'w,E,T> Pane<'w,E,T> where
     pub fn _event_direct_impl(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp where
         E: Env,
     {
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdSelector::BorderOuter));
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
         
         let sizes = l.child_sizes(&e.style).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&e.bounds.size,&sizes,self.orientation);
@@ -108,7 +108,7 @@ impl<'w,E,T> Pane<'w,E,T> where
     {
         let e = e.and(&self.style);
         let mut s = ESize::<E>::empty();
-        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(e), self.orientation) ).expect("Dead Path inside Pane");
+        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(&e), self.orientation) ).expect("Dead Path inside Pane");
         s
     }
 
@@ -116,7 +116,7 @@ impl<'w,E,T> Pane<'w,E,T> where
         E: Env,
     {
         let e = e.and(&self.style);
-        let sizes = l.child_sizes(e).expect("Dead Path Inside Pane");
+        let sizes = l.child_sizes(&e).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&b.size,&sizes,self.orientation); 
 
         Ok(bounds)

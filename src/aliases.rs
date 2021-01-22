@@ -10,6 +10,7 @@ pub type EEFilter<E: Env> = <E::Backend as Backend<E>>::EventFilter;
 pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
 pub type ESize<E: Env> = <E::Backend as Backend<E>>::Size;
 
+pub type ESSelector<E: Env> = <EStyle<E> as Style<E>>::Selector;
 pub type ESGlyphs<E: Env> = <EStyle<E> as Style<E>>::Glyphs;
 pub type ESGlyph<E: Env> = <ESGlyphs<E> as Glyphs<E>>::Glyph;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;

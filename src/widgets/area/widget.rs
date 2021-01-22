@@ -13,16 +13,15 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdSelector::BorderOuter,l.ctx);
-        r.fill_border_inner(
-            &[
-                StdSelector::ObjBorder,
-                StdSelector::Focused(l.is_focused()),
-                StdSelector::BorderVisual,
-            ][..],
-            l.ctx);
-        let mut r = r.inside_border_by(StdSelector::BorderVisual,l.ctx);
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
+        r.with(&[
+            StdSelectag::ObjBorder,
+            StdSelectag::Focused(l.is_focused()),
+            StdSelectag::BorderVisual,
+        ][..])
+            .fill_border_inner(l.ctx);
+        let mut r = r.inside_border_by(StdSelectag::BorderVisual,l.ctx);
 
         let rect = *r.bounds();
 
@@ -33,13 +32,13 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
 
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
-        r.fork_with(Some(inner_rect), Some(rect), None)
+        r.fork_with(Some(inner_rect), Some(rect), None, None)
             .render_widget(l.for_child(0).unwrap());
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = e.with_style(&self.style);
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelector::BorderOuter,l.ctx));
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelector::BorderVisual,l.ctx));
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderVisual,l.ctx));
         
         let rect = e.bounds;
 
@@ -91,6 +90,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
         passed
     }
     fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
+        let e = e.and(&self.style);
         self.size.clone()
     }
     fn childs(&self) -> usize {

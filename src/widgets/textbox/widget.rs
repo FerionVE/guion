@@ -1,3 +1,5 @@
+use crate::style::standard::cursor::StdCursor;
+
 use super::*;
 use util::{state::*, caption::CaptionMut, LocalGlyphCache};
 use state::{Cursor, TBState};
@@ -22,51 +24,46 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdSelector::BorderOuter,l.ctx);
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         r.with(&[
-            StdSelector::ObjBorder,
-            StdSelector::Focused(l.is_focused()),
-            StdSelector::BorderVisual,
+            StdSelectag::ObjBorder,
+            StdSelectag::Focused(l.is_focused()),
+            StdSelectag::BorderVisual,
         ][..])
             .fill_border_inner(l.ctx);
-        let mut r = r.inside_border_by(&[StdSelector::BorderVisual,StdSelector::BorderMultiplier(2)][..],l.ctx);
+        let mut r = r.inside_border_by_mul(StdSelectag::BorderVisual,2,l.ctx);
         let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
         for b in s.selection_box() {
             let b = b - s.off2();
             r.slice(&b)
-                .with(StdSelector::ObjForeground)
+                .with(StdSelectag::ObjForeground)
                 .fill_rect(l.ctx);
         }
         if let Some(c) = s.cursor_display_pos(s.cursor.caret) { //TODO fix as it should work if cursor is at end
             let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
             let b = b - s.off2();
             r.slice(&b)
-                .with(StdSelector::ObjActive)
+                .with(StdSelectag::ObjActive)
                 .fill_rect(l.ctx);
         }
         if l.state().is_hovered(&self.id) {
-            r.with(StdSelector::CursorIBeam)
-                    .set_cursor(l.ctx);
+            r.set_cursor_specific(&StdCursor::IBeam.into(),l.ctx);
         }
 
         r.with(&[
-                StdSelector::ObjForeground,
-                StdSelector::ObjText,
+                StdSelectag::ObjForeground,
+                StdSelectag::ObjText,
             ][..])
                 .render_preprocessed_text(&s.glyphs, s.off2(), &mut l.ctx);
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = e.with_style(&self.style);
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdSelector::BorderOuter));
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
 
         //e.0._debug_type_name();
         let mut cursor = self.cursor.get(l.ctx);
-        let border = l.style_provider().border(
-            &e.style.with(
-                &[StdSelector::BorderVisual,StdSelector::BorderMultiplier(2)][..]
-            )
-        );
+        let border = e.style.border(&StdSelectag::BorderVisual.into_selector(),l.ctx)*2;
         let b = e.bounds.inside_border(&border);
 
         let mut passed = false;
@@ -191,6 +188,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
         passed
     }
     fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
+        let e = e.and(&self.style);
         self.size.clone()
     }
     fn childs(&self) -> usize {

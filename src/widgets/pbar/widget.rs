@@ -9,20 +9,21 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdSelector::BorderOuter,l.ctx);
-        r.with(StdSelector::ObjBackground)
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
+        r.with(StdSelectag::ObjBackground)
             .fill_rect(l.ctx);
         r.slice_abs(&crop(r.bounds(), self.value, self.orientation))
-            .with(StdSelector::ObjActive)
+            .with(StdSelectag::ObjActive)
             .fill_rect(l.ctx);
-        r.with(&[StdSelector::ObjBorder,StdSelector::BorderVisual][..])
+        r.with(&[StdSelectag::ObjBorder,StdSelectag::BorderVisual][..])
             .fill_border_inner(l.ctx);
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
     }
     fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
+        let e = e.and(&self.style);
         self.size.clone()
     }
     fn childs(&self) -> usize {

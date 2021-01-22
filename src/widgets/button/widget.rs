@@ -1,3 +1,5 @@
+use crate::style::standard::cursor::StdCursor;
+
 use super::*;
 
 impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
@@ -14,42 +16,42 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdSelector::BorderOuter,l.ctx);
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         if l.state().is_hovered(&self.id) {
-            r.set_cursor(l.ctx,StdSelector::CursorHand StdCursor);
+            r.set_cursor_specific(&StdCursor::Hand.into(),l.ctx);
         }
         r.with(&[
-            StdSelector::ObjForeground,
-            StdSelector::Hovered(l.is_hovered()),
-            StdSelector::Focused(l.is_focused()),
-            StdSelector::Locked(self.locked),
-            StdSelector::Pressed(Self::pressed(&l).is_some()),
+            StdSelectag::ObjForeground,
+            StdSelectag::Hovered(l.is_hovered()),
+            StdSelectag::Focused(l.is_focused()),
+            StdSelectag::Locked(self.locked),
+            StdSelectag::Pressed(Self::pressed(&l).is_some()),
         ][..])
             .fill_rect(l.ctx);
         r.with(&[
-            StdSelector::ObjBorder,
-            StdSelector::Hovered(l.is_hovered()),
-            StdSelector::Focused(l.is_focused()),
-            StdSelector::Locked(self.locked),
-            StdSelector::Pressed(Self::pressed(&l).is_some()),
-            StdSelector::BorderVisual,
+            StdSelectag::ObjBorder,
+            StdSelectag::Hovered(l.is_hovered()),
+            StdSelectag::Focused(l.is_focused()),
+            StdSelectag::Locked(self.locked),
+            StdSelectag::Pressed(Self::pressed(&l).is_some()),
+            StdSelectag::BorderVisual,
         ][..])
             .fill_border_inner(l.ctx);
-        let mut r = r.inside_border_by(StdSelector::BorderVisual,l.ctx);
+        let mut r = r.inside_border_by(StdSelectag::BorderVisual,l.ctx);
         r.with(&[
-            StdSelector::ObjForeground,
-            StdSelector::ObjText,
-            StdSelector::Hovered(l.is_hovered()),
-            StdSelector::Focused(l.is_focused()),
-            StdSelector::Locked(self.locked),
-            StdSelector::Pressed(Self::pressed(&l).is_some()),
+            StdSelectag::ObjForeground,
+            StdSelectag::ObjText,
+            StdSelectag::Hovered(l.is_hovered()),
+            StdSelectag::Focused(l.is_focused()),
+            StdSelectag::Locked(self.locked),
+            StdSelectag::Pressed(Self::pressed(&l).is_some()),
         ][..])
             .render_widget(l.for_child(0).unwrap());
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = e.with_style(&self.style);
-        let e = try_or_false!(e.filter_inside_bounds_by_style(&self.style,StdSelector::BorderOuter));
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
         //e.0._debug_type_name();
         //let mut invalid = false;
         if e.event.is_hover_update() || e.event.is_kbd_press().is_some() || e.event.is_kbd_up().is_some() { //TODO catch down and press
@@ -69,9 +71,10 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
         e.event.is_mouse_down().is_some()
     }
     fn _size(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> {
-        let mut ms = l.for_child(0).unwrap().size(e);
-        ms.add_border( &l.style_provider().border(&e.with(StdSelector::BorderOuter)) );
-        ms.add_border( &l.style_provider().border(&e.with(StdSelector::BorderVisual)) );
+        let e = e.and(&self.style);
+        let mut ms = l.for_child(0).unwrap().size(&e);
+        ms.add_border(&e.border(&StdSelectag::<E>::BorderOuter.into_selector(),l.ctx));
+        ms.add_border(&e.border(&StdSelectag::<E>::BorderVisual.into_selector(),l.ctx));
         ms.max( &self.size )
     }
     fn childs(&self) -> usize {

@@ -24,7 +24,7 @@ impl<E> Null<E> where E: Env {
 impl<'w,E> Widget<'w,E> for Null<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    EStyle<E>: StyleVariantSupport<StdSelector>,
+    EStyle<E>: StyleVariantSupport<StdSelectag>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -37,6 +37,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
         false
     }
     fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
+        let e = e.and(&self.style);
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -60,7 +61,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
         }
     }
     fn style(&self, s: &mut EStyle<E>) {
-        s.attach(&[StdSelector::ObjDefault]);
+        s.attach(&[StdSelectag::ObjDefault]);
         s.attach(&self.style[..]);
     }
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
@@ -74,7 +75,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
 impl<'w,E> WidgetMut<'w,E> for Null<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    EStyle<E>: StyleVariantSupport<StdSelector>,
+    EStyle<E>: StyleVariantSupport<StdSelectag>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

@@ -1,3 +1,5 @@
+use crate::style::standard::cursor::StdCursor;
+
 use super::*;
 use util::state::AtomStateMut;
 use imp::ICheckBox;
@@ -18,36 +20,35 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdSelector::BorderOuter,l.ctx);
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         if l.state().is_hovered(&self.id) {
-            r.with(StdSelector::CursorHand)
-                    .set_cursor(l.ctx);
+            r.set_cursor_specific(&StdCursor::Hand.into(),l.ctx);
         }
         let size = r.bounds().size.h;
         {
             let rect = Bounds::from_wh(size,size);
             let mut r = r.slice(&rect);
             r.with(&[
-                    StdSelector::ObjForeground,
+                    StdSelectag::ObjForeground,
                 ][..])
                 .fill_rect(l.ctx);
-            r.inside_border_by(&[StdSelector::BorderVisual,StdSelector::BorderMultiplier(3)][..],l.ctx)
+            r.inside_border_by_mul(StdSelectag::BorderVisual,3,l.ctx)
                 .with(&[
-                    StdSelector::ObjForeground,
-                    StdSelector::Hovered(l.is_hovered()),
-                    StdSelector::Focused(l.is_focused()),
-                    StdSelector::Locked(self.locked),
-                    StdSelector::Pressed(self.state.get(l.ctx))
+                    StdSelectag::ObjForeground,
+                    StdSelectag::Hovered(l.is_hovered()),
+                    StdSelectag::Focused(l.is_focused()),
+                    StdSelectag::Locked(self.locked),
+                    StdSelectag::Pressed(self.state.get(l.ctx))
                 ][..])
                 .fill_rect(l.ctx);
             r.with(&[
-                    StdSelector::ObjBorder,
-                    StdSelector::Hovered(l.is_hovered()),
-                    StdSelector::Focused(l.is_focused()),
-                    StdSelector::Locked(self.locked),
-                    StdSelector::BorderVisual,
-                    //StdSelector::Pressed(self.state.get())
+                    StdSelectag::ObjBorder,
+                    StdSelectag::Hovered(l.is_hovered()),
+                    StdSelectag::Focused(l.is_focused()),
+                    StdSelectag::Locked(self.locked),
+                    StdSelectag::BorderVisual,
+                    //StdSelectag::Pressed(self.state.get())
                 ][..])
                 .fill_border_inner(l.ctx);
         }
@@ -55,18 +56,18 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
             r.inside_border_specific(&text_border)
                 .with(&[
-                    StdSelector::ObjForeground,
-                    StdSelector::ObjText,
-                    StdSelector::Hovered(l.is_hovered()),
-                    StdSelector::Focused(l.is_focused()),
-                    StdSelector::Locked(self.locked),
+                    StdSelectag::ObjForeground,
+                    StdSelectag::ObjText,
+                    StdSelectag::Hovered(l.is_hovered()),
+                    StdSelectag::Focused(l.is_focused()),
+                    StdSelectag::Locked(self.locked),
                 ][..])
                 .render_widget(l.for_child(0).unwrap());
         }
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = e.with_style(&self.style);
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdSelector::BorderOuter));
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
         //let mut invalid = false;
         if e.event.is_hover_update() || e.event.is_kbd_down().is_some() || e.event.is_kbd_up().is_some() {
             l.enqueue_invalidate()
@@ -89,7 +90,8 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
         e.event.is_mouse_down().is_some()
     }
     fn _size(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> {
-        let mut ms = l.for_child(0).unwrap().size(e);
+        let e = e.and(&self.style);
+        let mut ms = l.for_child(0).unwrap().size(&e);
         ms.add_x( &self.size );
         ms
     }
