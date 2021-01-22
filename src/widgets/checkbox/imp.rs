@@ -7,22 +7,20 @@ pub trait ICheckBoxMut<E>: ICheckBox<E> where E: Env {
     fn state_mut(&mut self) -> &mut dyn AtomStateMut<E,bool>;
 }
 
-impl<'w,E,State,Text,Stil> ICheckBox<E> for CheckBox<'w,E,State,Text,Stil> where
+impl<'w,E,State,Text> ICheckBox<E> for CheckBox<'w,E,State,Text> where
     E: Env,
     State: AtomState<E,bool>,
     Text: 'w,
-    Stil: 'w,
 {
     #[inline]
     fn state(&self) -> &dyn AtomState<E,bool> {
         &self.state
     }
 }
-impl<'w,E,State,Text,Stil> ICheckBoxMut<E> for CheckBox<'w,E,State,Text,Stil> where
+impl<'w,E,State,Text> ICheckBoxMut<E> for CheckBox<'w,E,State,Text> where
     E: Env,
     State: AtomStateMut<E,bool>,
     Text: 'w,
-    Stil: 'w,
 {
     #[inline]
     fn state_mut(&mut self) -> &mut dyn AtomStateMut<E,bool> {

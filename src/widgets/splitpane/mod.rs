@@ -3,60 +3,44 @@ use std::{marker::PhantomData};
 
 pub mod widget;
 
-pub struct SplitPane<'w,E,L,R,V,Stil> where
+pub struct SplitPane<'w,E,L,R,V> where
     E: Env,
     L: 'w,
     R: 'w,
     V: 'w,
-    Stil: 'w,
 {
     id: E::WidgetID,
     pub childs: (L,R),
     pub state: V,
     pub orientation: Orientation,
     pub width: u32, //TODO with from style
-    pub style: Stil,
+    pub style: EStyle<E>,
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
+impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
     E: Env,
     L: 'w,
     R: 'w,
     V: 'w,
 {
     #[inline]
-    pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> SplitPane<'w,E,L,R,V,()> {
-        SplitPane{
+    pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> Self {
+        Self{
             id,
             childs,
             state,
             orientation,
             width: 8,
-            style: (),
+            style: Default::default(),
             p: PhantomData,
         }
     }
-}
-
-impl<'w,E,L,R,V,Stil> SplitPane<'w,E,L,R,V,Stil> where
-    E: Env,
-    L: 'w,
-    R: 'w,
-    V: 'w,
-    Stil: 'w,
-{
+    
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> SplitPane<'w,E,L,R,V,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
-        SplitPane{
-            id: self.id,
-            childs: self.childs,
-            orientation: self.orientation,
-            width: self.width,
-            style,
-            state: self.state,
-            p: PhantomData,
-        }
+    pub fn with_style(mut self, style: EStyle<E>) -> Self {
+        self.style = style;
+        self
     }
 }
 

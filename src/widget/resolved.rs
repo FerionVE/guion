@@ -36,7 +36,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::size`](Link::size)
     #[inline]
-    pub fn size(&self, c: &mut E::Context, e: &ESVariant<E>) -> ESize<E> {
+    pub fn size(&self, c: &mut E::Context, e: &EStyle<E>) -> ESize<E> {
         c.size(self.clone(),e)
     }
 
@@ -52,7 +52,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     }
     /// size, but bypass context handlers
     #[inline]
-    pub fn _size(&self, c: &mut E::Context, e: &ESVariant<E>) -> ESize<E> {
+    pub fn _size(&self, c: &mut E::Context, e: &EStyle<E>) -> ESize<E> {
         (***self)._size(c.link(self.clone()),e)
     }
     #[inline]
@@ -61,7 +61,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn trace_bounds(&mut self, c: &mut E::Context, root_bounds: &Bounds, e: &ESVariant<E>, force: bool) -> Bounds {
+    pub fn trace_bounds(&mut self, c: &mut E::Context, root_bounds: &Bounds, e: &EStyle<E>, force: bool) -> Bounds {
         self.stor.trace_bounds(c,self.path.refc(),root_bounds,e,force).unwrap()
     }
 

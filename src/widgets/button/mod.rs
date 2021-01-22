@@ -6,22 +6,21 @@ use label::Label;
 
 pub mod widget;
 
-pub struct Button<'w,E,Text,Stil> where
+pub struct Button<'w,E,Text> where
     E: Env,
     Text: 'w,
-    Stil: 'w,
 {
     pub trigger: for<'a> fn(Link<'a,E>),
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Stil,
+    pub style: EStyle<E>,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub text: Text,
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> Button<'w,E,Label<'w,E,&'static str,(),LocalGlyphCache<E>>,()> where
+impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {
@@ -30,7 +29,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str,(),LocalGlyphCache<E>>,()> where
         Self{
             id,
             size: constraint!(0|0).into(),
-            style: (),
+            style: Default::default(),
             trigger: |_|{},
             locked: false,
             text: Label::new(E::WidgetID::new_id()),
@@ -39,7 +38,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str,(),LocalGlyphCache<E>>,()> where
     }
 }
 
-impl<'w,E,Text> Button<'w,E,Text,()> where
+impl<'w,E,Text> Button<'w,E,Text> where
     E: Env,
     Text: 'w,
 {
@@ -48,7 +47,7 @@ impl<'w,E,Text> Button<'w,E,Text,()> where
         Self{
             id,
             size: constraint!(0|0).into(),
-            style: (),
+            style: Default::default(),
             trigger: |_|{},
             locked: false,
             text,
@@ -57,20 +56,17 @@ impl<'w,E,Text> Button<'w,E,Text,()> where
     }
 }
 
-impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
+impl<'w,E,Text> Button<'w,E,Text> where
     E: Env,
     Text: 'w,
-    Stil: 'w
 {
-    
-
     #[inline]
     pub fn with_trigger(mut self, fun: for<'a> fn(Link<E>)) -> Self {
         self.trigger = fun;
         self
     }
     #[inline]
-    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T,Stil> where T: 'w {
+    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T> where T: 'w {
         Button{
             id: self.id,
             size: self.size,
@@ -93,24 +89,17 @@ impl<'w,E,Text,Stil> Button<'w,E,Text,Stil> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Button<'w,E,Text,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
-        Button{
-            trigger: self.trigger,
-            id: self.id,
-            size: self.size,
-            style: style,
-            locked: self.locked,
-            text: self.text,
-            p: PhantomData,
-        }
+    pub fn with_style(mut self, style: EStyle<E>) -> Self {
+        self.style = style;
+        self
     }
 }
 
-impl<'w,E,T,LS,BS,LC> Button<'w,E,Label<'w,E,T,LS,LC>,BS> where
+impl<'w,E,T,LC> Button<'w,E,Label<'w,E,T,LC>> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LS,LC>,BS> where TT: Caption<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LC>> where TT: Caption<E>+Validation<E>+'w {
         Button{
             id: self.id,
             size: self.size,

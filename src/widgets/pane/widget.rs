@@ -1,10 +1,8 @@
 use super::*;
 
-impl<'w,E,T,Stil> Widget<E> for Pane<'w,E,T,Stil> where
+impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     E: Env,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArray<E>,
-    Stil: Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -15,10 +13,10 @@ impl<'w,E,T,Stil> Widget<E> for Pane<'w,E,T,Stil> where
     fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
         self._event_direct_impl(l,e)
     }
-    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E> {
         self._size_impl(l,e)
     }
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         self.child_bounds_impl(l,b,e,force)
     }
     fn childs(&self) -> usize {
@@ -42,11 +40,9 @@ impl<'w,E,T,Stil> Widget<E> for Pane<'w,E,T,Stil> where
         self.childs.into_child(i)
     }
 }
-impl<'w,E,T,Stil> WidgetMut<E> for Pane<'w,E,T,Stil> where 
+impl<'w,E,T> WidgetMut<E> for Pane<'w,E,T> where 
     E: Env,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArrayMut<E>+'w,
-    Stil: Clone,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -66,17 +62,15 @@ impl<'w,E,T,Stil> WidgetMut<E> for Pane<'w,E,T,Stil> where
     }
 }
 
-impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
+impl<'w,E,T> Pane<'w,E,T> where
     E: Env,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     T: WidgetArray<E>,
-    Stil: Clone,
 {
     pub fn _render_impl(&self, mut l: Link<E>, r: &mut RenderLink<E>) where
         E: Env,
     {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        let mut r = r.inside_border_by(StdSelector::BorderOuter,l.ctx);
         let sizes = l.child_sizes(r.style()).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&r.bounds().size,&sizes,self.orientation); 
 
@@ -91,7 +85,7 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
     pub fn _event_direct_impl(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp where
         E: Env,
     {
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
+        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdSelector::BorderOuter));
         
         let sizes = l.child_sizes(&e.style).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&e.bounds.size,&sizes,self.orientation);
@@ -109,17 +103,19 @@ impl<'w,E,T,Stil> Pane<'w,E,T,Stil> where
         passed
     }
 
-    pub fn _size_impl(&self, mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> where
+    pub fn _size_impl(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> where
         E: Env,
     {
+        let e = e.and(&self.style);
         let mut s = ESize::<E>::empty();
         l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(e), self.orientation) ).expect("Dead Path inside Pane");
         s
     }
 
-    pub fn child_bounds_impl(&self, mut l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> where
+    pub fn child_bounds_impl(&self, mut l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> where
         E: Env,
     {
+        let e = e.and(&self.style);
         let sizes = l.child_sizes(e).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&b.size,&sizes,self.orientation); 
 

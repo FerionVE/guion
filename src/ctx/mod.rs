@@ -26,7 +26,7 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         Self::Handler::_send_event(self.link(w),e,child)
     }
     #[inline] 
-    fn size(&mut self, w: Resolved<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn size(&mut self, w: Resolved<E>, e: &EStyle<E>) -> ESize<E> {
         Self::Handler::_size(self.link(w),e)
     }
     #[inline] 
@@ -41,6 +41,4 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
             widget: w,
         }
     }
-
-    fn style_provider(&self) -> &EStyle<E>;
 }

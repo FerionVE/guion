@@ -3,7 +3,7 @@ use super::*;
 pub struct Null<E> where E: Env {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Stil,
+    pub style: EStyle<E>,
 }
 
 impl<E> Null<E> where E: Env {
@@ -24,7 +24,7 @@ impl<E> Null<E> where E: Env {
 impl<'w,E> Widget<'w,E> for Null<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    EStyle<E>: StyleVariantSupport<StdSelector>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -33,9 +33,10 @@ impl<'w,E> Widget<'w,E> for Null<E> where
         r.fill_rect();
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
+        //let e = e.with_style(&self.style);
         false
     }
-    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -58,8 +59,8 @@ impl<'w,E> Widget<'w,E> for Null<E> where
             *b = *senf;
         }
     }
-    fn style(&self, s: &mut ESVariant<E>) {
-        s.attach(&[StdTag::ObjDefault]);
+    fn style(&self, s: &mut EStyle<E>) {
+        s.attach(&[StdSelector::ObjDefault]);
         s.attach(&self.style[..]);
     }
     fn child<'a>(&'a self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
@@ -73,7 +74,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
 impl<'w,E> WidgetMut<'w,E> for Null<E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag>,
+    EStyle<E>: StyleVariantSupport<StdSelector>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
         vec![]

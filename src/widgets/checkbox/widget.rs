@@ -3,15 +3,13 @@ use util::state::AtomStateMut;
 use imp::ICheckBox;
 use super::imp::ICheckBoxMut;
 
-impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
+impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>,
     Text: AsWidget<E>,
-    Stil: Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -21,9 +19,9 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        let mut r = r.inside_border_by(StdSelector::BorderOuter,l.ctx);
         if l.state().is_hovered(&self.id) {
-            r.with(StdTag::CursorHand)
+            r.with(StdSelector::CursorHand)
                     .set_cursor(l.ctx);
         }
         let size = r.bounds().size.h;
@@ -31,25 +29,25 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
             let rect = Bounds::from_wh(size,size);
             let mut r = r.slice(&rect);
             r.with(&[
-                    StdTag::ObjForeground,
+                    StdSelector::ObjForeground,
                 ][..])
                 .fill_rect(l.ctx);
-            r.inside_border_by(&[StdTag::BorderVisual,StdTag::BorderMultiplier(3)][..],l.ctx)
+            r.inside_border_by(&[StdSelector::BorderVisual,StdSelector::BorderMultiplier(3)][..],l.ctx)
                 .with(&[
-                    StdTag::ObjForeground,
-                    StdTag::Hovered(l.is_hovered()),
-                    StdTag::Focused(l.is_focused()),
-                    StdTag::Locked(self.locked),
-                    StdTag::Pressed(self.state.get(l.ctx))
+                    StdSelector::ObjForeground,
+                    StdSelector::Hovered(l.is_hovered()),
+                    StdSelector::Focused(l.is_focused()),
+                    StdSelector::Locked(self.locked),
+                    StdSelector::Pressed(self.state.get(l.ctx))
                 ][..])
                 .fill_rect(l.ctx);
             r.with(&[
-                    StdTag::ObjBorder,
-                    StdTag::Hovered(l.is_hovered()),
-                    StdTag::Focused(l.is_focused()),
-                    StdTag::Locked(self.locked),
-                    StdTag::BorderVisual,
-                    //StdTag::Pressed(self.state.get())
+                    StdSelector::ObjBorder,
+                    StdSelector::Hovered(l.is_hovered()),
+                    StdSelector::Focused(l.is_focused()),
+                    StdSelector::Locked(self.locked),
+                    StdSelector::BorderVisual,
+                    //StdSelector::Pressed(self.state.get())
                 ][..])
                 .fill_border_inner(l.ctx);
         }
@@ -57,17 +55,18 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
             r.inside_border_specific(&text_border)
                 .with(&[
-                    StdTag::ObjForeground,
-                    StdTag::ObjText,
-                    StdTag::Hovered(l.is_hovered()),
-                    StdTag::Focused(l.is_focused()),
-                    StdTag::Locked(self.locked),
+                    StdSelector::ObjForeground,
+                    StdSelector::ObjText,
+                    StdSelector::Hovered(l.is_hovered()),
+                    StdSelector::Focused(l.is_focused()),
+                    StdSelector::Locked(self.locked),
                 ][..])
                 .render_widget(l.for_child(0).unwrap());
         }
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
+        let e = e.with_style(&self.style);
+        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdSelector::BorderOuter));
         //let mut invalid = false;
         if e.event.is_hover_update() || e.event.is_kbd_down().is_some() || e.event.is_kbd_up().is_some() {
             l.enqueue_invalidate()
@@ -89,7 +88,7 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
         }
         e.event.is_mouse_down().is_some()
     }
-    fn _size(&self, mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> {
         let mut ms = l.for_child(0).unwrap().size(e);
         ms.add_x( &self.size );
         ms
@@ -104,7 +103,7 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
         vec![self.text.into_ref()]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
         todo!();
         Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
     }
@@ -125,15 +124,13 @@ impl<'w,E,State,Text,Stil> Widget<E> for CheckBox<'w,E,State,Text,Stil> where
     );
 }
 
-impl<'w,E,State,Text,Stil> WidgetMut<E> for CheckBox<'w,E,State,Text,Stil> where
+impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     State: AtomStateMut<E,bool>,
     Text: AsWidgetMut<E>,
-    Stil: Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![self.text.as_mut()]
@@ -158,11 +155,10 @@ impl<'w,E,State,Text,Stil> WidgetMut<E> for CheckBox<'w,E,State,Text,Stil> where
     );
 }
 
-impl<'w,E,State,Text,Stil> CheckBox<'w,E,State,Text,Stil> where
+impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>>,
     E::Context: CtxStdState<E>,
     State: AtomState<E,bool>+'w,
     Text: AsWidget<E>,

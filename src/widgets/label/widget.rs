@@ -3,13 +3,11 @@ use std::sync::Arc;
 use util::{caption::CaptionMut, state::{AtomStateMut, AtomState}};
 use validation::{ValidationMut, Validation};
 
-impl<'w,E,Text,Stil,GlyphCache> Widget<E> for Label<'w,E,Text,Stil,GlyphCache> where
+impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     Text: Caption<E>+Validation<E>+'w,
-    Stil: Clone,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -21,15 +19,15 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<E> for Label<'w,E,Text,Stil,GlyphCache> w
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with(&self.style);
         r.with(&[
-            StdTag::ObjForeground,
-            StdTag::ObjText,
+            StdSelector::ObjForeground,
+            StdSelector::ObjText,
         ][..])
             .render_text(self.text.caption().as_ref(),self.align,l.ctx);
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
     }
-    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, l: Link<E>, _: &EStyle<E>) -> ESize<E> {
         let ms = self.glyphs(l).size();
         let ms = ESize::<E>::fixed(ms.w, ms.h);
         ms.max( &self.size )
@@ -44,7 +42,7 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<E> for Label<'w,E,Text,Stil,GlyphCache> w
         vec![]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {
@@ -64,13 +62,11 @@ impl<'w,E,Text,Stil,GlyphCache> Widget<E> for Label<'w,E,Text,Stil,GlyphCache> w
     );
 }
 
-impl<'w,E,Text,Stil,GlyphCache> WidgetMut<E> for Label<'w,E,Text,Stil,GlyphCache> where
+impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     Text: CaptionMut<E>+ValidationMut<E>+'w,
-    Stil: Clone,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
@@ -93,13 +89,11 @@ impl<'w,E,Text,Stil,GlyphCache> WidgetMut<E> for Label<'w,E,Text,Stil,GlyphCache
     );
 }
 
-impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
+impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     Text: Caption<E>+Validation<E>+'w,
-    Stil: Clone,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn glyphs(&self, mut l: Link<E>) -> Arc<ESGlyphs<E>> {

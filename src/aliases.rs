@@ -10,12 +10,11 @@ pub type EEFilter<E: Env> = <E::Backend as Backend<E>>::EventFilter;
 pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
 pub type ESize<E: Env> = <E::Backend as Backend<E>>::Size;
 
-pub type ESGlyphs<E: Env> = <EStyle<E> as StyleProvider<E>>::Glyphs;
+pub type ESGlyphs<E: Env> = <EStyle<E> as Style<E>>::Glyphs;
 pub type ESGlyph<E: Env> = <ESGlyphs<E> as Glyphs<E>>::Glyph;
-pub type ESFont<E: Env> = <EStyle<E> as StyleProvider<E>>::Font;
-pub type ESColor<E: Env> = <EStyle<E> as StyleProvider<E>>::Color;
-pub type ESCursor<E: Env> = <EStyle<E> as StyleProvider<E>>::Cursor;
-pub type ESVariant<E: Env> = <EStyle<E> as StyleProvider<E>>::Variant;
+pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
+pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
+pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;
 pub type ECHandler<E: Env> = <E::Context as Context<E>>::Handler;
 pub type ECQueue<E: Env> = <E::Context as Context<E>>::Queue;
 

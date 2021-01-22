@@ -6,22 +6,21 @@ use util::{LocalGlyphCache, caption::Caption, remote_state::RemoteState};
 
 pub mod widget;
 
-pub struct Label<'w,E,Text,Stil,GlyphCache> where
+pub struct Label<'w,E,Text,GlyphCache> where
     E: Env,
     Text: 'w,
-    Stil: 'w,
     GlyphCache: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Stil,
+    pub style: EStyle<E>,
     pub text: Text,
     pub align: (f32,f32),
     pub glyph_cache: GlyphCache,
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> Label<'w,E,&'static str,(),LocalGlyphCache<E>> where
+impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
     E: Env,
 {
     #[inline]
@@ -29,7 +28,7 @@ impl<'w,E> Label<'w,E,&'static str,(),LocalGlyphCache<E>> where
         Self{
             id,
             size: ESize::<E>::empty(),
-            style: (),
+            style: Default::default(),
             text: "",
             align: (0.5,0.5),
             glyph_cache: None,
@@ -38,7 +37,7 @@ impl<'w,E> Label<'w,E,&'static str,(),LocalGlyphCache<E>> where
     }
 }
 
-impl<'w,E,Text> Label<'w,E,Text,(),RemoteState<E,LocalGlyphCache<E>>> where
+impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
     E: Env,
     E::Context: DynState<E>,
     Text: Caption<E>+Validation<E>+'w,
@@ -48,7 +47,7 @@ impl<'w,E,Text> Label<'w,E,Text,(),RemoteState<E,LocalGlyphCache<E>>> where
         Self{
             id: id.clone(),
             size: ESize::<E>::empty(),
-            style: (),
+            style: Default::default(),
             text,
             align: (0.5,0.5),
             glyph_cache: RemoteState::for_widget(id),
@@ -57,13 +56,13 @@ impl<'w,E,Text> Label<'w,E,Text,(),RemoteState<E,LocalGlyphCache<E>>> where
     }
 }
 
-impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
+impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     E: Env,
     Text: 'w,
     GlyphCache: 'w,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,Stil,GlyphCache> where T: Caption<E>+Validation<E>+'w {
+    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,GlyphCache> where T: Caption<E>+Validation<E>+'w {
         Label{
             id: self.id,
             size: self.size,
@@ -86,15 +85,8 @@ impl<'w,E,Text,Stil,GlyphCache> Label<'w,E,Text,Stil,GlyphCache> where
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> Label<'w,E,Text,SStil,GlyphCache> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
-        Label{
-            id: self.id,
-            size: self.size,
-            style,
-            text: self.text,
-            align: self.align,
-            glyph_cache: self.glyph_cache,
-            p: PhantomData,
-        }
+    pub fn with_style(mut self, style: EStyle<E>) -> Self {
+        self.style = style;
+        self
     }
 }

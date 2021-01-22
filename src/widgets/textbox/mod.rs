@@ -7,18 +7,17 @@ pub mod widget;
 pub mod state;
 pub mod imp;
 
-pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     Text: 'w,
     Scroll: 'w,
     Curs: 'w,
     CursorStickX: 'w,
     GlyphCache: 'w,
-    Stil: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
-    pub style: Stil,
+    pub style: EStyle<E>,
     pub text: Text,
     pub scroll: Scroll,
     pub cursor: Curs,
@@ -27,7 +26,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>,()> where
+impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>> where
     E: Env,
 {
     #[inline]
@@ -35,7 +34,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>,(
         Self{
             id,
             size: Gonstraints::empty(),
-            style: (),
+            style: Default::default(),
             text: "".to_owned(),
             scroll: (0,0),
             cursor: Cursor{select: 0, caret: 0}, //TODO default trait
@@ -45,7 +44,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>,(
         }
     }
 }
-impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E>>,()> where
+impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E>>> where
     E: Env,
     E::Context: DynState<E>,
     Text: 'w,
@@ -54,7 +53,7 @@ impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {
         Self{
             size: Gonstraints::empty(),
-            style: (),
+            style: Default::default(),
             text,
             scroll: RemoteState::for_widget(id.clone()),
             cursor: RemoteState::for_widget(id.clone()), //TODO default trait
@@ -66,7 +65,7 @@ impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     Text: 'w,
     Scroll: 'w,
@@ -75,7 +74,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
     GlyphCache: 'w,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,GlyphCache,Stil> where T: 'w {
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,GlyphCache> where T: 'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -91,7 +90,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
 
     //TODO use a unified state object
     #[inline]
-    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,GlyphCache,Stil> where PScroll: 'w, CCurs: 'w, XCursorStickX: 'w {
+    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,GlyphCache> where PScroll: 'w, CCurs: 'w, XCursorStickX: 'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -111,17 +110,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
         self
     }
     #[inline]
-    pub fn with_style<SStil>(self, style: SStil) -> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,SStil> where SStil: 'w, ESVariant<E>: for<'z> StyleVariantSupport<&'z Stil> {
-        TextBox{
-            id: self.id,
-            size: self.size,
-            style,
-            text: self.text,
-            cursor: self.cursor,
-            cursor_stick_x: self.cursor_stick_x,
-            scroll: self.scroll,
-            glyph_cache: self.glyph_cache,
-            p: PhantomData,
-        }
+    pub fn with_style(mut self, style: EStyle<E>) -> Self {
+        self.style = style;
+        self
     }
 }

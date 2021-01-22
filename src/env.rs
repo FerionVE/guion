@@ -15,9 +15,6 @@ pub trait Env: Sized + Clone + PartialEq + Debug + Send + Sync + 'static {
     //type Commit: Eq + Ord;
 }
 
-pub trait EnvFlexStyleVariant: Env {
-    type StyleVariant: StyleVariant;
-}
 pub trait EnvFlexCtxHandler: Env {
     type CtxHandler: Handler<Self>;
 }

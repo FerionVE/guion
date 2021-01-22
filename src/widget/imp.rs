@@ -15,7 +15,7 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
         (**self)._event_direct(l,e)
     }
     #[inline]
-    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E> {
         (**self)._size(l,e)
     }
     #[inline]
@@ -33,7 +33,7 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
         (**self).childs_ref()
     }
     #[inline]
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         (**self).child_bounds(l, b,e, force)
     }
     #[inline]
@@ -59,7 +59,7 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,()> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[inline]
@@ -121,7 +121,7 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         (**self)._event_direct(l,e)
     }
     #[inline]
-    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E> {
         (**self)._size(l,e)
     }
     #[inline]
@@ -139,7 +139,7 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         (**self).childs_ref()
     }
     #[inline]
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         (**self).child_bounds(l, b,e, force)
     }
     #[inline]
@@ -165,7 +165,7 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,()> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[inline]
@@ -280,7 +280,7 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
         (**self)._event_direct(l,e)
     }
     #[inline]
-    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E> {
         (**self)._size(l,e)
     }
     #[inline]
@@ -297,7 +297,7 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
         (*self).into_childs()
     }
     #[inline]
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         (**self).child_bounds(l, b,e, force)
     }
     #[inline]
@@ -323,7 +323,7 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,()> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[inline]
@@ -385,7 +385,7 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
         (**self)._event_direct(l,e)
     }
     #[inline]
-    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E> {
         (**self)._size(l,e)
     }
     #[inline]
@@ -402,7 +402,7 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
         (*self).into_childs()
     }
     #[inline]
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         (**self).child_bounds(l, b,e, force)
     }
     #[inline]
@@ -428,7 +428,7 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,()> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[inline]

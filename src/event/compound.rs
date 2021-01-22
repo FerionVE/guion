@@ -7,7 +7,7 @@ pub struct EventCompound<E> where E: Env {
     pub bounds: Bounds,
     pub ts: u64,
     pub filter: EEFilter<E>,
-    pub style: ESVariant<E>,
+    pub style: EStyle<E>,
     pub flag: bool,
 }
 
@@ -56,9 +56,9 @@ impl<E> EventCompound<E> where E: Env {
     }
 
     #[inline]
-    pub fn with<V>(&mut self, tags: V) -> Self where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
+    pub fn with_style<V>(&mut self, s: &EStyle<E>) -> Self {
         Self{
-            style: self.style.with(tags),
+            style: self.style.and(s),
             ..self.clone()
         }
     }
@@ -76,9 +76,9 @@ impl<E> EventCompound<E> where E: Env {
     }
 
     #[inline]
-    pub fn filter_bounds_by_border<V>(&self, s: &EStyle<E>, by: V) -> Option<Self> where ESVariant<E>: StyleVariantSupport<V>, V: Clone {
+    pub fn filter_inside_bounds_by_style<S>(&self, selectors: S, c: &mut E::Context) -> Option<Self> where EStyle<E>: StyleQuery<S,E> {
         self.inside_border(
-            &s.border(&self.style.with(by))
+            &self.style.border(selectors,c)
         ).filter_bounds()
     }
 }
