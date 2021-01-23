@@ -96,7 +96,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_ref()))
         }
-        let c = self.resolve_child(i.index(0))?;
+        let c = self.resolve_child(i.index(0).unwrap())?;
         self.child(c).unwrap().resolve_child(i.slice(1..))
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -108,7 +108,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_box()))
         }
-        let c = self.resolve_child(i.index(0))?;
+        let c = self.resolve_child(i.index(0).unwrap())?;
         self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..))
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -130,7 +130,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(*b)
         }
-        let child = self.resolve_child(i.index(0))?;
+        let child = self.resolve_child(i.index(0).unwrap())?;
         let bounds = self.child_bounds(l,b,e,force)?;
         
         Ok(bounds[child])
@@ -233,7 +233,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
-        let c = self.resolve_child(i.index(0))?;
+        let c = self.resolve_child(i.index(0).unwrap())?;
         self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..))
     }
 
@@ -246,7 +246,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
-        let c = self.resolve_child(i.index(0))?;
+        let c = self.resolve_child(i.index(0).unwrap())?;
         self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..))
     }
 
