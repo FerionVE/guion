@@ -22,8 +22,8 @@ pub trait Style<E>: Clone + Default where E: Env {
         for<'a> StyleSelectorAppend<&'a [StdSelectag<E>],E> +
         for<'a,'b> StyleSelectorAppend<&'a [&'b StdSelectag<E>],E>;
     type Font;
-    type Cursor: From<StdCursor>;
-    type Color: Color;
+    type Cursor: From<StdCursor>+Clone;
+    type Color: Color+Clone;
     type Glyphs: Glyphs<E>;
     
     fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::Glyphs;

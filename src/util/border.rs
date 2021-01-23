@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,PartialEq)]
 pub struct Border {
     pub left: u32,
     pub right: u32,

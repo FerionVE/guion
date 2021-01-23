@@ -4,7 +4,7 @@ use std::fmt::Debug;
 
 /// Type compound
 /// Note the Trait bounds Clone, Default, PartialEq are not used and just for simplifying derives
-pub trait Env: Sized + Clone + PartialEq + Debug + Send + Sync + 'static {
+pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'static {
     type Backend: Backend<Self>;
     type Context: Context<Self>;
     type Storage: Widgets<Self>;
