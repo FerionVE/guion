@@ -7,7 +7,6 @@ pub trait Backend<E>: Sized + 'static where E: Env<Backend=Self> {
     type Event: Event<E>;
     ///TODO move tree'd back to Event
     type EventFilter: Filter<E>;
-    // TODO pending [implied_bounds](https://github.com/rust-lang/rfcs/pull/2089) feature so that the messy StdSelectag deps can be moved into one trait
     type Style: Style<E>;
     type Size: Gonstraints;
 }

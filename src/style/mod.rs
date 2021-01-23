@@ -14,6 +14,7 @@ pub mod standard;
 use std::ops::Deref;
 
 pub trait Style<E>: Clone + Default where E: Env {
+    // TODO pending [implied_bounds](https://github.com/rust-lang/rfcs/pull/2089) feature so that the messy StdSelectag deps can be moved into one trait
     type Selector:
         StyleSelector<E> +
         StyleSelectorAppend<StdSelectag<E>,E> +

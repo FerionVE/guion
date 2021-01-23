@@ -62,12 +62,3 @@ impl<E> IntoIterator for StdSelectag<E> where E: Env {
 impl<E> StyleSelectag<E> for StdSelectag<E> where E: Env {
 
 }
-impl<E> StyleSelectag<E> for &'_ StdSelectag<E> where E: Env {
-
-}
-impl<E> StyleSelectag<E> for &'_ [StdSelectag<E> ]where E: Env {
-
-}
-impl<E> StyleSelectag<E> for &'_ [&'_ StdSelectag<E>] where E: Env {
-
-}
