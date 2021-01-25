@@ -66,27 +66,6 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
             .collect::<Vec<_>>()
     }
 
-    /*#[deprecated="Merge the shit into normal evention"]
-    fn _route_event(&self, mut l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
-        let cb = self.child_bounds(l.reference(),&e.1,false)?;
-        {
-            let c = self.resolve_child(child.index(0))?;
-            let mut l = l.for_child(c)?;
-            let b = cb[c];
-            //TODO FIX corrent compound filter use
-            if l._route_event(&EventCompound(e.0.clone(),b,e.2,e.3.clone())/*TODO compounds.with_bounds(b)*/,child.slice(1..))? {
-                return Ok(true);
-            }
-        }
-        Ok(if self._accept_child_events() {
-            self._event_direct(l,e)
-        }else{
-            false
-        })
-    }*/
-    
-    //fn _accept_child_events(&self) -> bool;
-
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// resolve a deep child item by the given relative path  
     /// an empty path will resolve to this widget  
@@ -173,6 +152,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         dest.push(self.type_name());
     }
 
+    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
     /// The impl_traitcast! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
@@ -181,17 +161,20 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         None
     }
 
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// box reference of this widget. Use [WidgetMut::box_mut] to box into mutable [WidgetRef]
     #[inline]
     fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
         WBase::_box_ref(self)
     }
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// move widget into box. Use [WidgetMut::box_box_mut] to box into mutable [WidgetRef]
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
         WBase::_box_box(self)
     }
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// move widget into box. Use [WidgetMut::boxed_mut] to box into mutable [WidgetRef]
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         WBase::_boxed(self)
@@ -199,7 +182,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
 }
 
 pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
-    /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
+    /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)  
     /// an alternative way to pass mutations. See [Link::Message]
     #[allow(unused)]
     #[inline]
@@ -260,7 +243,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         self
     }
 
-    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)
+    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
     /// The impl_traitcast_mut! macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
@@ -269,17 +252,20 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         None
     }
 
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// box mut reference of this widget
     #[inline]
     fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
         WBaseMut::_box_mut(self)
     }
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// move widget into box
     #[inline]
     fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
         WBaseMut::_box_box_mut(self)
     }
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// move widget into box
     #[inline]
     fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
         WBaseMut::_boxed_mut(self)
