@@ -78,9 +78,9 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
     fn _tabulate_by_tab(&self) -> bool {
         (**self)._tabulate_by_tab()
     }
-    fn debug_type_name(&self) {
-        eprintln!("\t{}",self.type_name());
-        (**self).debug_type_name();
+    fn debug_type_name(&self, dest: &mut Vec<&'static str>) {
+        dest.push(self.type_name());
+        (**self).debug_type_name(dest);
     }
     #[inline]
     fn inner(&self) -> Option<&dyn Widget<E>> {
@@ -184,9 +184,9 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     fn _tabulate_by_tab(&self) -> bool {
         (**self)._tabulate_by_tab()
     }
-    fn debug_type_name(&self) {
-        eprintln!("\t{}",self.type_name());
-        (**self).debug_type_name();
+    fn debug_type_name(&self, dest: &mut Vec<&'static str>) {
+        dest.push(self.type_name());
+        (**self).debug_type_name(dest);
     }
     #[inline]
     fn inner(&self) -> Option<&dyn Widget<E>> {
@@ -342,9 +342,9 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
     fn _tabulate_by_tab(&self) -> bool {
         (**self)._tabulate_by_tab()
     }
-    fn debug_type_name(&self) {
-        eprintln!("\t{}",self.type_name());
-        (**self).debug_type_name();
+    fn debug_type_name(&self, dest: &mut Vec<&'static str>) {
+        dest.push(self.type_name());
+        (**self).debug_type_name(dest);
     }
     #[inline]
     fn inner(&self) -> Option<&dyn Widget<E>> {
@@ -447,9 +447,9 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     fn _tabulate_by_tab(&self) -> bool {
         (**self)._tabulate_by_tab()
     }
-    fn debug_type_name(&self) {
-        eprintln!("\t{}",self.type_name());
-        (**self).debug_type_name();
+    fn debug_type_name(&self, dest: &mut Vec<&'static str>) {
+        dest.push(self.type_name());
+        (**self).debug_type_name(dest);
     }
     #[inline]
     fn inner(&self) -> Option<&dyn Widget<E>> {

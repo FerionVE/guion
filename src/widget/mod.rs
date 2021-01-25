@@ -169,8 +169,8 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         None //TODO fix inner mechanism AsWidget
     }
 
-    fn debug_type_name(&self) {
-        eprintln!("\t{}",self.type_name());
+    fn debug_type_name(&self, dest: &mut Vec<&'static str>) {
+        dest.push(self.type_name());
     }
 
     /// The impl_traitcast! macro should be used to implement this function
