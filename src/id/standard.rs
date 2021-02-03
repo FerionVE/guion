@@ -79,6 +79,17 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> 
     }
 }
 
+impl AsRefMut<Self> for StdID {
+    #[inline]
+    fn as_ref(&self) -> &Self {
+        self
+    }
+    #[inline]
+    fn as_mut(&mut self) -> &mut Self {
+        self
+    }
+}
+
 #[allow(unused)]
 mod const_id_test {
     const_std_id!(foo bar);
