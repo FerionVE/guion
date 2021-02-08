@@ -16,7 +16,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
         self.widget(i).is_ok()
     }
 
-    fn trace_bounds(&self, ctx: &mut E::Context, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()>;
+    fn trace_bounds(&self, ctx: &mut E::Context, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,()>;
 
     #[deprecated] #[inline] fn tune_path(&self, _i: &mut E::WidgetPath) {}
     #[deprecated] #[inline] fn tune_path_mut(&mut self, _i: &mut E::WidgetPath) {}
@@ -26,7 +26,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
         &self
     }
 }
-#[doc(hidden)]
+//#[doc(hidden)]
 /// Used by [`Widgets::widget`](Widgets::widget) implementations
 pub fn resolve_in_root<E: Env>(w: &dyn Widget<E>, p: E::WidgetPath) -> Result<(WidgetRef<E>,E::WidgetPath),()> {
     let r = w.resolve(p.refc())?;
@@ -39,7 +39,7 @@ pub fn resolve_in_root<E: Env>(w: &dyn Widget<E>, p: E::WidgetPath) -> Result<(W
         Resolvable::Path(p) => resolve_in_root(w,p),
     }
 }
-#[doc(hidden)]
+//#[doc(hidden)]
 /// Used by [`Widgets::widget_mut`](Widgets::widget_mut) implementations
 pub fn resolve_in_root_mut<E: Env>(w: &mut dyn WidgetMut<E>, p: E::WidgetPath) -> Result<(WidgetRefMut<E>,E::WidgetPath),()> {
     let final_path = resolve_in_root::<E>(w.base(),p)

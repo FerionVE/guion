@@ -39,7 +39,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::size`](Link::size)
-    fn _size(&self, l: Link<E>, e: &ESVariant<E>) -> ESize<E>;
+    fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E>;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn childs(&self) -> usize;
@@ -96,7 +96,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_ref()))
         }
-        let c = self.resolve_child(i.index(0))?;
+        let c = self.resolve_child(i.index(0).unwrap())?;
         self.child(c).unwrap().resolve_child(i.slice(1..))
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -108,7 +108,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_box()))
         }
-        let c = self.resolve_child(i.index(0))?;
+        let c = self.resolve_child(i.index(0).unwrap())?;
         self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..))
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -126,17 +126,17 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Bounds,()> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,()> {
         if i.is_empty() {
             return Ok(*b)
         }
-        let child = self.resolve_child(i.index(0))?;
+        let child = self.resolve_child(i.index(0).unwrap())?;
         let bounds = self.child_bounds(l,b,e,force)?;
         
         Ok(bounds[child])
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()>;
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()>;
     
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// attach widget's id to the given parent path
@@ -233,7 +233,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
-        let c = self.resolve_child(i.index(0))?;
+        let c = self.resolve_child(i.index(0).unwrap())?;
         self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..))
     }
 
@@ -246,7 +246,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
-        let c = self.resolve_child(i.index(0))?;
+        let c = self.resolve_child(i.index(0).unwrap())?;
         self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..))
     }
 

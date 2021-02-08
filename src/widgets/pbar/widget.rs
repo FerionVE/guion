@@ -1,30 +1,29 @@
 use super::*;
 use super::super::util::state::*;
 
-impl<'w,E,Stil> Widget<E> for ProgressBar<'w,E,Stil> where
+impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Stil: Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
-        r.with(StdTag::ObjBackground)
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
+        r.with(StdSelectag::ObjBackground)
             .fill_rect(l.ctx);
         r.slice_abs(&crop(r.bounds(), self.value, self.orientation))
-            .with(StdTag::ObjActive)
+            .with(StdSelectag::ObjActive)
             .fill_rect(l.ctx);
-        r.with(&[StdTag::ObjBorder,StdTag::BorderVisual][..])
+        r.with(&[StdSelectag::ObjBorder,StdSelectag::BorderVisual][..])
             .fill_border_inner(l.ctx);
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
         false
     }
-    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
+        let e = e.and(&self.style);
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -36,7 +35,7 @@ impl<'w,E,Stil> Widget<E> for ProgressBar<'w,E,Stil> where
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
         vec![]
     }
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {
@@ -54,11 +53,9 @@ impl<'w,E,Stil> Widget<E> for ProgressBar<'w,E,Stil> where
     );
 }
 
-impl<'w,E,Stil> WidgetMut<E> for ProgressBar<'w,E,Stil> where
+impl<'w,E> WidgetMut<E> for ProgressBar<'w,E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
-    Stil: Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![]

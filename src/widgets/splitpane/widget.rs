@@ -1,39 +1,37 @@
 use super::*;
 use util::state::*;
-use crate::event::key::Key; //TODO fix req of this import
+use crate::event::key::Key;
+use crate::style::standard::cursor::StdCursor; //TODO fix req of this import
 
-impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
+impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     L: AsWidget<E>,
     R: AsWidget<E>,
     V: AtomState<E,f32>,
-    Stil: Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         let bounds = self.calc_bounds(r.bounds(),self.state.get(l.ctx)); 
 
         {
             if l.state().is_hovered(&self.id) {
                 let cursor = match self.orientation {
-                    Orientation::Horizontal => StdTag::CursorSizeWE,
-                    Orientation::Vertical => StdTag::CursorSizeNS,
+                    Orientation::Horizontal => StdCursor::SizeWE,
+                    Orientation::Vertical => StdCursor::SizeNS,
                 };
 
-                r.with(cursor)
-                    .set_cursor(l.ctx);
+                r.set_cursor_specific(&cursor.into(),l.ctx);
             }
 
             r.slice_abs(&bounds[1])
-                .with(StdTag::ObjForeground)
+                .with(StdSelectag::ObjForeground)
                 .fill_rect(l.ctx);
         }
 
@@ -53,7 +51,8 @@ impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
         //TODO FIX viewport
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
+        let e = e.with_style(&self.style);
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
 
         let o = self.orientation;
         let mut bounds = self.calc_bounds(&e.bounds,self.state.get(l.ctx)); 
@@ -115,13 +114,14 @@ impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
         }
         passed
     }
-    fn _size(&self, mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> {
+        let e = e.and(&self.style);
         let mut s = ESize::<E>::empty();
-        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(e), self.orientation) ).expect("Dead Path inside Pane");
+        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(&e), self.orientation) ).expect("Dead Path inside Pane");
         s.add_space(self.width,self.orientation);
         s
     }
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &ESVariant<E>, force: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         Ok(self.calc_bounds(b,self.state.get(l.ctx)))
     }
     fn childs(&self) -> usize {
@@ -149,16 +149,14 @@ impl<'w,E,L,R,V,Stil> Widget<E> for SplitPane<'w,E,L,R,V,Stil> where
         dyn AtomState<E,f32> => |s| &s.state;
     );
 }
-impl<'w,E,L,R,V,Stil> WidgetMut<E> for SplitPane<'w,E,L,R,V,Stil> where
+impl<'w,E,L,R,V> WidgetMut<E> for SplitPane<'w,E,L,R,V> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E>,
     L: AsWidgetMut<E>,
     R: AsWidgetMut<E>,
     V: AtomStateMut<E,f32>,
-    Stil: Clone,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -183,7 +181,7 @@ impl<'w,E,L,R,V,Stil> WidgetMut<E> for SplitPane<'w,E,L,R,V,Stil> where
     );
 }
 
-impl<'w,E,L,R,V,Stil> SplitPane<'w,E,L,R,V,Stil> where
+impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
     E: Env,
     V: AtomState<E,f32>+'w,
 {

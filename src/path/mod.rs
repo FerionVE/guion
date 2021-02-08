@@ -46,7 +46,7 @@ where E: Env {
     fn is_empty(&self) -> bool;
 
     fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize>;
-    fn index<T>(&self, i: T) -> &Self::SubPath where T: SliceIndex<[Self::SubPath],Output=Self::SubPath>;
+    fn index<T>(&self, i: T) -> Option<&Self::SubPath> where T: SliceIndex<[Self::SubPath],Output=Self::SubPath>;
 
     fn empty() -> Self;
 

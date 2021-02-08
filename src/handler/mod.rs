@@ -8,7 +8,7 @@ pub trait Handler<E>: Sized + 'static where E: Env {
     fn _render(l: Link<E>, r: &mut RenderLink<E>);
     fn _event_direct(l: Link<E>, e: &EventCompound<E>) -> EventResp;
     fn _event_root(l: Link<E>, e: &EventCompound<E>) -> EventResp;
-    fn _size(l: Link<E>, e: &ESVariant<E>) -> ESize<E>;
+    fn _size(l: Link<E>, e: &EStyle<E>) -> ESize<E>;
     fn _send_event(l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()>;
 }
 
@@ -30,7 +30,7 @@ impl<E> Handler<E> for () where E: Env {
         }
     }
     #[inline] 
-    fn _size(mut l: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(mut l: Link<E>, e: &EStyle<E>) -> ESize<E> {
         l._size(e)
     }
     #[inline]

@@ -1,20 +1,20 @@
+use crate::style::standard::cursor::StdCursor;
+
 use super::*;
 use util::{state::*, caption::CaptionMut, LocalGlyphCache};
 use state::{Cursor, TBState};
 use super::imp::*;
 use validation::*;
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: Caption<E>+Validation<E>+'w,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
     CursorStickX: AtomState<E,Option<u32>>,
-    Stil: Clone,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -24,50 +24,46 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         r.with(&[
-            StdTag::ObjBorder,
-            StdTag::Focused(l.is_focused()),
-            StdTag::BorderVisual,
+            StdSelectag::ObjBorder,
+            StdSelectag::Focused(l.is_focused()),
+            StdSelectag::BorderVisual,
         ][..])
             .fill_border_inner(l.ctx);
-        let mut r = r.inside_border_by(&[StdTag::BorderVisual,StdTag::BorderMultiplier(2)][..],l.ctx);
+        let mut r = r.inside_border_by_mul(StdSelectag::BorderVisual,2,l.ctx);
         let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
         for b in s.selection_box() {
             let b = b - s.off2();
             r.slice(&b)
-                .with(StdTag::ObjForeground)
+                .with(StdSelectag::ObjForeground)
                 .fill_rect(l.ctx);
         }
         if let Some(c) = s.cursor_display_pos(s.cursor.caret) { //TODO fix as it should work if cursor is at end
             let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
             let b = b - s.off2();
             r.slice(&b)
-                .with(StdTag::ObjActive)
+                .with(StdSelectag::ObjActive)
                 .fill_rect(l.ctx);
         }
         if l.state().is_hovered(&self.id) {
-            r.with(StdTag::CursorIBeam)
-                    .set_cursor(l.ctx);
+            r.set_cursor_specific(&StdCursor::IBeam.into(),l.ctx);
         }
 
         r.with(&[
-                StdTag::ObjForeground,
-                StdTag::ObjText,
+                StdSelectag::ObjForeground,
+                StdSelectag::ObjText,
             ][..])
                 .render_preprocessed_text(&s.glyphs, s.off2(), &mut l.ctx);
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
+        let e = e.with_style(&self.style);
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
 
         //e.0._debug_type_name();
         let mut cursor = self.cursor.get(l.ctx);
-        let border = l.style_provider().border(
-            &e.style.with(
-                &[StdTag::BorderVisual,StdTag::BorderMultiplier(2)][..]
-            )
-        );
+        let border = e.style.border(&StdSelectag::BorderVisual.into_selector(),l.ctx)*2;
         let b = e.bounds.inside_border(&border);
 
         let mut passed = false;
@@ -191,7 +187,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
         }
         passed
     }
-    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
+        let e = e.and(&self.style);
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -204,7 +201,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
         vec![]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {
@@ -228,17 +225,15 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> Widget<E> for TextBox<'
     );
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> WidgetMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: CaptionMut<E>+ValidationMut<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
-    Stil: Clone,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {

@@ -60,8 +60,8 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
         }
     }
     #[inline]
-    fn index<T>(&self, i: T) -> &S where T: SliceIndex<[S],Output=S> {
-        &self.v[i] //TODO eventually non-panic refactor
+    fn index<T>(&self, i: T) -> Option<&S> where T: SliceIndex<[S],Output=S> {
+        self.v.get(i)
     }
     #[inline]
     fn empty() -> Self {

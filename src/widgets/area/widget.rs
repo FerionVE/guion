@@ -1,29 +1,27 @@
 use super::*;
 use util::{state::*};
 
-impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
+impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>+'w,
     Scroll: AtomState<E,(u32,u32)>,
-    Stil: Clone,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with(&self.style);
-        let mut r = r.inside_border_by(StdTag::BorderOuter,l.ctx);
+        let mut r = r.with_style(&self.style);
+        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         r.with(&[
-            StdTag::ObjBorder,
-            StdTag::Focused(l.is_focused()),
-            StdTag::BorderVisual,
+            StdSelectag::ObjBorder,
+            StdSelectag::Focused(l.is_focused()),
+            StdSelectag::BorderVisual,
         ][..])
             .fill_border_inner(l.ctx);
-        let mut r = r.inside_border_by(StdTag::BorderVisual,l.ctx);
+        let mut r = r.inside_border_by(StdSelectag::BorderVisual,l.ctx);
 
         let rect = *r.bounds();
 
@@ -34,12 +32,13 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
 
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
-        r.fork_with(Some(inner_rect), Some(rect), None)
+        r.fork_with(Some(inner_rect), Some(rect), None, None)
             .render_widget(l.for_child(0).unwrap());
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderOuter));
-        let e = try_or_false!(e.filter_bounds_by_border(l.style_provider(),StdTag::BorderVisual));
+        let e = e.with_style(&self.style);
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
+        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderVisual,l.ctx));
         
         let rect = e.bounds;
 
@@ -90,7 +89,8 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
 
         passed
     }
-    fn _size(&self, _: Link<E>, e: &ESVariant<E>) -> ESize<E> {
+    fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
+        let e = e.and(&self.style);
         self.size.clone()
     }
     fn childs(&self) -> usize {
@@ -103,7 +103,7 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
         vec![self.inner.into_ref()]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &ESVariant<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
         todo!() // TODO complete inner bounds or just view
     }
     fn focusable(&self) -> bool {
@@ -123,15 +123,13 @@ impl<'w,E,W,Scroll,Stil> Widget<E> for Area<'w,E,W,Scroll,Stil> where
     );
 }
 
-impl<'w,E,W,Scroll,Stil> WidgetMut<E> for Area<'w,E,W,Scroll,Stil> where
+impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidgetMut<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>,
-    Stil: Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![self.inner.as_mut()]

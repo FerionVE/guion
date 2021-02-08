@@ -20,8 +20,13 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<
     }
     fn render_preprocessed_text(&mut self, text: &ESGlyphs<E>, inner_offset: Offset, c: &mut E::Context);
 
+    fn set_cursor_specific(&mut self, cursor: &ESCursor<E>, c: &mut E::Context);
+
     /// set the cursor to the cursor derived from style
-    fn set_cursor(&mut self, c: &mut E::Context);
+    #[inline]
+    fn set_cursor(&mut self, c: &mut E::Context) {
+        self.set_cursor_specific(&self._style().cursor(self._selector(),c),c);
+    }
 
     //fn draw_text_button(&mut self, c: &mut E::Context, pressed: bool, caption: &str);
 

@@ -8,14 +8,13 @@ pub trait ITextBox<E> where E: Env {
 
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     Text: 'w,
     Scroll: 'w,
     Curs: 'w,
     CursorStickX: 'w,
     GlyphCache: 'w,
-    Stil: 'w,
 {
 
 }
@@ -30,17 +29,15 @@ pub trait ITextBoxMut<E>: ITextBox<E> where E: Env {
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: CaptionMut<E>+ValidationMut<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
-    Stil: Clone,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
@@ -151,20 +148,18 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> ITextBoxMut<E> for Text
 
 traitcast_for!(ITextBox<E>;ITextBoxMut<E>);
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: Caption<E>+Validation<E>+'w,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
     CursorStickX: AtomState<E,Option<u32>>,
-    Stil: Clone,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<ESGlyphs<E>> {
+    pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<ESGlyphs<E>> { //TODO FIX style mutation invalidating glyphs
         if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
             if self.text.valid(&c) {
                 return v;
@@ -186,17 +181,15 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scrol
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,Stil> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    ESVariant<E>: StyleVariantSupport<StdTag<E>> + for<'z> StyleVariantSupport<&'z [StdTag<E>]> + for<'z> StyleVariantSupport<&'z Stil>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: CaptionMut<E>+ValidationMut<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
-    Stil: Clone,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<ESGlyphs<E>> {

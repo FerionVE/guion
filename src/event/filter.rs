@@ -18,7 +18,7 @@ pub struct StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
 impl<E> Filter<E> for StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
     fn _filter(&self, dest: &Link<E>, e: &EventCompound<E>) -> Option<EventCompound<E>> {
         if !self.filter_path.is_empty() {
-            dest.widget.resolves_by(self.filter_path.index(0))
+            dest.widget.resolves_by(self.filter_path.index(0).unwrap())
                 .map(#[inline] || EventCompound{
                     filter: StdFilter{
                         filter_path: self.filter_path.slice(1..),
