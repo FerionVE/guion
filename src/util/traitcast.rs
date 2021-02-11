@@ -8,8 +8,8 @@ use super::*;
 #[derive(Copy, Clone)]
 #[doc(hidden)]
 pub struct TraitObject {
-    pub data: *mut (),
-    pub vtable: *mut (),
+    data: *mut (),
+    vtable: *mut (),
 }
 
 /// This macro is used inside Widget/WidgetMut impls

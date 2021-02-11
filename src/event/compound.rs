@@ -91,7 +91,6 @@ impl<E> BitAnd<&Bounds> for &EventCompound<E> where E: Env {
     type Output = EventCompound<E>;
     #[inline]
     fn bitand(self, rhs: &Bounds) -> EventCompound<E> {
-        //EventCompound(self.0.clone(),self.1 & rhs,self.2,self.3.clone(),self.4.clone(),self.5)
         EventCompound{
             bounds: self.bounds & rhs,
             ..self.clone()
