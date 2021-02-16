@@ -190,7 +190,7 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
         let o = self.orientation;
         let (x,w) = b.par(o);
         let (y,h) = b.unpar(o);
-        let w0 = ((w as f32 - handle_width as f32)*v.max(0.0).min(1.0)) as u32;
+        let w0 = ((w as f32 - handle_width as f32)*v.clamp(0.0,1.0)) as u32;
         let w2 = w - w0 - handle_width;
         let x1 = x + w0 as i32;
         let x2 = x1 + handle_width as i32;

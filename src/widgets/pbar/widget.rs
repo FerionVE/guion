@@ -79,7 +79,7 @@ pub fn crop(i: &Bounds, v: f32, o: Orientation) -> Bounds {
     let (x, w) = i.par(o);
     let (y, h) = i.unpar(o);
 
-    let w = ((w as f32) * v.max(0.0).min(1.0) ) as u32;
+    let w = ((w as f32) * v.clamp(0.0,1.0) ) as u32;
 
     Bounds::from_ori(x, y, w, h, o)
 }
