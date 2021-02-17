@@ -38,11 +38,21 @@ where E: Env {
         self
     }
 
+    /// IMPL
+    /// does the sub path from the parent path resolve to or through the specific child widget of the parent widget?
+    /// [`parent_path`]: absolute path of the current parent widget
+    /// [`child`]: child widget of parent widget to which the sub path probably resolves to/through
+    /// [`sub_path`]: relative sub path to which widget should be attempted to resolve
+    fn _resolves_thru<W>(child: &W, sub_path: &Self) -> Option<ResolvesThruResult<E>> where W: Widget<E>+?Sized;
+
+    fn for_child_widget<W>(&self, child: &W) -> Self where W: Widget<E>+?Sized;
+
     fn tip(&self) -> Option<&Self::SubPath>;
     fn exact_eq(&self, o: &Self) -> bool;
 
     fn parent(&self) -> Option<Self>;
 
+    /// if the path is empty e.g. doesn't resolve further
     fn is_empty(&self) -> bool;
 
     fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize>;
@@ -54,6 +64,11 @@ where E: Env {
     fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> Self where E::WidgetPath: WidgetPath<F> {
         self
     }
+}
+
+pub struct ResolvesThruResult<E> where E: Env {
+    /// the sub path inside the current child widget which resolves further
+    pub sub_path: E::WidgetPath,
 }
 
 #[inline]

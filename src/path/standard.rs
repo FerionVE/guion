@@ -70,6 +70,24 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
             _p: PhantomData,
         }
     }
+
+    fn _resolves_thru<W>(child: &W, sub_path: &Self) -> Option<ResolvesThruResult<E>> where W: Widget<E>+?Sized {
+        let sub_path_dest_id = sub_path.index(0).unwrap().clone().into_id(); //TODO deprecated old PathSub thing
+        let child_id = child.id();
+        if child_id == sub_path_dest_id {
+            // sub_path does indeed resolve to or through child
+            Some(ResolvesThruResult{
+                //TODO optimize .clone().attached() efficiency
+                sub_path: sub_path.slice(1..).into(),
+            })
+        }else{
+            None
+        }
+    }
+
+    fn for_child_widget<W>(&self, child: &W) -> Self where W: Widget<E>+?Sized {
+        self.clone().attached(SubPath::from_id(child.id()))
+    }
 }
 
 impl<E,S> SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {

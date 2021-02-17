@@ -185,7 +185,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// Get Link for specific child by index
     #[inline]
-    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,()> where 'c: 's {
+    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,()> where 'c: 's { //TODO rename to child(i)
         let path = self.widget.path.refc();
         let stor = self.widget.stor;
 
