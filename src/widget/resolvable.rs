@@ -41,9 +41,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     pub fn resolved_by_path(&self, p: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         match self {
             Resolvable::Widget(w) => w.resolved_by_path(p),
-            Resolvable::Path(w) => 
-                p.index(0).unwrap().resolves_to_path(w.refc())
-                    .then(|| ResolvesThruResult{ sub_path: p.slice(1..) } ) //TODO this is wrong, as the WidgetID isn't in the WidgetPath, so the current hack relies on the StdPath indeed having the last destination WidgetID. Resolving this requires architecturial modifications, either to enable resolving in this function, which requies the resolve fns to carry &E::Storage for resolving, which is ony possible in the immutable space. Alternatively path needs to somehow carry the last(dest) ID, which doesn't seem to be possible.
+            Resolvable::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p) //TODO this is wrong, as the WidgetID isn't in the WidgetPath, so the current hack relies on the StdPath indeed having the last destination WidgetID. Resolving this requires architecturial modifications, either to enable resolving in this function, which requies the resolve fns to carry &E::Storage for resolving, which is ony possible in the immutable space. Alternatively path needs to somehow carry the last(dest) ID, which doesn't seem to be possible.
         }
     }
     /// extend the path representing the parent of this widget to resolve to this widget
@@ -103,9 +101,7 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     pub fn resolved_by_path(&self, p: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         match self {
             ResolvableMut::Widget(w) => w.resolved_by_path(p),
-            ResolvableMut::Path(w) => 
-                p.index(0).unwrap().resolves_to_path(w.refc())
-                    .then(|| ResolvesThruResult{ sub_path: p.slice(1..) } ) //TODO this is wrong, as the WidgetID isn't in the WidgetPath, so the current hack relies on the StdPath indeed having the last destination WidgetID. Resolving this requires architecturial modifications, either to enable resolving in this function, which requies the resolve fns to carry &E::Storage for resolving, which is ony possible in the immutable space. Alternatively path needs to somehow carry the last(dest) ID, which doesn't seem to be possible.
+            ResolvableMut::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p)
         }
     }
 }

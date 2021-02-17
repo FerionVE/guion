@@ -71,22 +71,34 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
         }
     }
 
-    fn _resolves_thru<W>(child: &W, sub_path: &Self) -> Option<ResolvesThruResult<E>> where W: Widget<E>+?Sized {
+    fn resolves_thru_child_id(child_id: E::WidgetID, sub_path: &Self) -> Option<ResolvesThruResult<E>> {
         let sub_path_dest_id = sub_path.index(0).unwrap().clone().into_id(); //TODO deprecated old PathSub thing
-        let child_id = child.id();
-        if child_id == sub_path_dest_id {
-            // sub_path does indeed resolve to or through child
-            Some(ResolvesThruResult{
-                //TODO optimize .clone().attached() efficiency
-                sub_path: sub_path.slice(1..).into(),
-            })
-        }else{
-            None
-        }
+        (child_id == sub_path_dest_id)
+            .then(|| 
+                ResolvesThruResult{
+                    //TODO optimize .clone().attached() efficiency
+                    sub_path: sub_path.slice(1..).into(),
+                }
+            )
     }
 
-    fn for_child_widget<W>(&self, child: &W) -> Self where W: Widget<E>+?Sized {
-        self.clone().attached(SubPath::from_id(child.id()))
+    fn resolves_thru_child_path(child_path: &Self, sub_path: &Self) -> Option<ResolvesThruResult<E>> {
+        child_path.tip()
+            .and_then(|tip| 
+                Self::resolves_thru_child_id(tip.clone().into_id(),sub_path)
+            )
+    }
+
+    fn for_child_widget_id(&self, child_id: E::WidgetID) -> Self {
+        self.clone().attached(SubPath::from_id(child_id))
+    }
+
+    fn for_child_widget_path(&self, child_path: &Self) -> Self {
+        if let Some(tip) = child_path.tip() {
+            self.clone().attached(tip.clone()) //TODO doesn't use WidgetID conversion like other fns inconstistence rework StdPath::PathFragment
+        }else{
+            self.clone()
+        }
     }
 }
 

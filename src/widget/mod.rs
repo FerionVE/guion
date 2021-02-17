@@ -120,14 +120,16 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// attach widget's id to the given parent path
     #[inline]
+    #[deprecated]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
-        parent.for_child_widget(self)
+        parent.for_child_widget_id(self.id())
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Refer [`WidgetPath::_resolves_thru`](WidgetPath::_resolves_thru)
     /// [`sub_path`]: subpath in parent widget (which contains this widget as child) which would probably resolve to/through this widget
+    #[deprecated]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
-        E::WidgetPath::_resolves_thru(self, sub_path)
+        E::WidgetPath::resolves_thru_child_id(self.id(), sub_path)
     }
 
     /// if the widget should be focusable.  

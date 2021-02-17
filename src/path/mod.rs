@@ -43,9 +43,12 @@ where E: Env {
     /// [`parent_path`]: absolute path of the current parent widget
     /// [`child`]: child widget of parent widget to which the sub path probably resolves to/through
     /// [`sub_path`]: relative sub path to which widget should be attempted to resolve
-    fn _resolves_thru<W>(child: &W, sub_path: &Self) -> Option<ResolvesThruResult<E>> where W: Widget<E>+?Sized;
+    fn resolves_thru_child_id(child: E::WidgetID, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
+    fn resolves_thru_child_path(child_path: &Self, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
 
-    fn for_child_widget<W>(&self, child: &W) -> Self where W: Widget<E>+?Sized;
+    fn for_child_widget_id(&self, child: E::WidgetID) -> Self;
+    fn for_child_widget_path(&self, child_path: &Self) -> Self;
+
 
     fn tip(&self) -> Option<&Self::SubPath>;
     fn exact_eq(&self, o: &Self) -> bool;
