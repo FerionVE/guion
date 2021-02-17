@@ -18,7 +18,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
         match self {
             Resolvable::Widget(w) => w.into_resolve(sub),
-            Resolvable::Path(p) => Ok(Resolvable::Path(p.attached_path(&sub))),
+            Resolvable::Path(p) => Ok(Resolvable::Path(p.attached_subpath(&sub))),
         }
     }
     /// completely resolve using the storage
@@ -51,6 +51,23 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
         match self {
             Resolvable::Widget(w) => w.in_parent_path(parent),
             Resolvable::Path(w) => w.refc().into(), //TODO WRONG use widget's fns
+        }
+    }
+
+    pub fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
+        match self {
+            Resolvable::Widget(w) => GuionResolveErrorChildInfo {
+                child_idx,
+                widget_type: w.debugged_type_name(),
+                widget_path_if_path: None,
+                widget_id: Some(w.id()),
+            },
+            Resolvable::Path(w) => GuionResolveErrorChildInfo {
+                child_idx,
+                widget_type: vec![type_name::<E::WidgetPath>()],
+                widget_path_if_path: Some(w.clone()),
+                widget_id: w._dest_widget(),
+            },
         }
     }
 }
@@ -102,6 +119,23 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
         match self {
             ResolvableMut::Widget(w) => w.resolved_by_path(p),
             ResolvableMut::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p)
+        }
+    }
+
+    pub fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
+        match self {
+            ResolvableMut::Widget(w) => GuionResolveErrorChildInfo {
+                child_idx,
+                widget_type: w.debugged_type_name(),
+                widget_path_if_path: None,
+                widget_id: Some(w.id()),
+            },
+            ResolvableMut::Path(w) => GuionResolveErrorChildInfo {
+                child_idx,
+                widget_type: vec![type_name::<E::WidgetPath>()],
+                widget_path_if_path: Some(w.clone()),
+                widget_id: w._dest_widget(),
+            },
         }
     }
 }

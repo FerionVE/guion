@@ -149,9 +149,27 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn inner(&self) -> Option<&dyn Widget<E>> { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn Widget<E>+'w)> where Self: 'w
         None //TODO fix inner mechanism AsWidget
     }
+    #[inline]
+    fn innest(&self) -> Option<&dyn Widget<E>> { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn Widget<E>+'w)> where Self: 'w
+        let mut i = self.erase();
+        loop {
+            let v = i.inner();
+            if let Some(v) = v {
+                i = v;
+            }else{
+                return Some(i);
+            }
+        }
+    }
 
     fn debug_type_name(&self, dest: &mut Vec<&'static str>) {
         dest.push(self.type_name());
+    }
+    fn debugged_type_name(&self) -> Vec<&'static str> {
+        let mut v = Vec::new();
+        self.debug_type_name(&mut v);
+        v.shrink_to_fit();
+        v
     }
 
     /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
@@ -180,6 +198,29 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         WBase::_boxed(self)
+    }
+
+    #[inline(never)]
+    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str) -> GuionError<E> {
+        /*
+        Failed to resolve 3/5/2 in Pane<Vec<WidgetRefMut<E>>>
+            Child #0: 6 Button<E,Label<&str>>
+            Child #1: 8 CheckBox<E,Label<&str>>
+            Child #2: 4 ProgressBar<E>
+        */
+        /*
+        Traitcast(_mut) from Label<E,&str> to ICheckBox<E> not implemented (strip "dyn " prefix)
+        */
+        let widget_type = self.debugged_type_name();
+        let child_info = (0..self.childs())
+            .map(#[inline] |i| self.child(i).unwrap().guion_resolve_error_child_info(i) )
+            .collect::<Vec<_>>();
+        GuionError::ResolveError{
+            op,
+            sub_path: sub_path.clone(),
+            widget_type,
+            child_info,
+        }
     }
 }
 
@@ -271,6 +312,20 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     #[inline]
     fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
         WBaseMut::_boxed_mut(self)
+    }
+
+    #[inline(never)]
+    fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, op: &'static str) -> GuionError<E> {
+        let widget_type = self.debugged_type_name();
+        let child_info = (0..self.childs())
+            .map(#[inline] |i| self.child_mut(i).unwrap().guion_resolve_error_child_info(i) )
+            .collect::<Vec<_>>();
+        GuionError::ResolveError{
+            op,
+            sub_path: sub_path.clone(),
+            widget_type,
+            child_info,
+        }
     }
 }
 

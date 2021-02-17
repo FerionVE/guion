@@ -1,15 +1,11 @@
 //! macros for implementing traitcast for widgets
-use std::any::TypeId;
+use std::any::{TypeId, type_name};
 
 use super::*;
-
-/// should match the non-stabilized std::raw::TraitObject and represents an erased fat pointer
-#[repr(C)]
-#[derive(Copy, Clone)]
+#[repr(transparent)]
 #[doc(hidden)]
-pub struct TraitObject {
-    data: *mut (),
-    vtable: *mut (),
+pub struct TraitObject<'a> {
+    nuclear: &'a mut dyn std::any::Any,
 }
 
 /// This macro is used inside Widget/WidgetMut impls
@@ -186,4 +182,12 @@ macro_rules! traitcast_for {
         $crate::traitcast_for_mut!($trait_immu);
         $crate::traitcast_for_mut!($trait_mut);
     };
+}
+
+fn traitcast_error_info<E,DestTypeID>(senf: &(dyn Widget<E>+'_), op: &'static str) -> GuionError<E> where E: Env, DestTypeID: ?Sized + 'static {
+    GuionError::TraitcastError{
+        op,
+        src_type: senf.debugged_type_name(),
+        dest_trait_type: type_name::<DestTypeID>(),
+    }
 }
