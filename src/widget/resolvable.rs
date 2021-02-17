@@ -78,7 +78,7 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     pub fn resolve_child_mut(self, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> {
         match self {
             ResolvableMut::Widget(w) => w.into_resolve_mut(i),
-            ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p.attached_path(&i))),
+            ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p.attached_subpath(&i))),
         }
     }
     #[deprecated]

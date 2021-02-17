@@ -17,7 +17,11 @@ impl<E> WidgetIdent<E> where E: Env {
     /// Resolves the Widget
     #[inline]
     pub fn from_path(path: E::WidgetPath, stor: &E::Storage) -> Result<Self,()> {
-        stor.widget(path).map(#[inline] |r| r.ident() )
+        if let Some(id) = path._dest_widget() {
+            Ok(Self{id,path})
+        }else{
+            stor.widget(path).map(#[inline] |r| r.ident() )
+        }
     }
 }
 

@@ -98,7 +98,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn with_env<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self) -> Resolved<'a,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
+    pub fn with_env<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self) -> Resolved<'a,F> where E::WidgetPath: WidgetPath<F>, E::Storage: Widgets<F> {
         let stor = self.stor.with_env::<F>();
         let path = rc_path_with_env::<E,F>(self.path.refc());
         stor.widget(path).unwrap()

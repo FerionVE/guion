@@ -11,32 +11,57 @@ pub struct SimplePath<E,S> {
     _p: PhantomData<E>,
 }
 
-impl<E,S> WidgetPath<E> for SimplePath<E,S> where
-    E: Env,
-    S: SubPath<E> + From<E::WidgetID>+Into<E::WidgetID> + Send+Sync + 'static,
-    Self: From<E::WidgetPath>+Into<E::WidgetPath>
-{
-    type SubPath = S;
+impl<E,S> SimplePath<E,S> {
     #[inline]
-    fn attach(&mut self, sub: S) {
+    fn attach(&mut self, sub: S) where S: Clone {
         self.v.push(sub);
     }
     #[inline]
-    fn attached(mut self, sub: S) -> Self { //TODO can be default impl
+    fn attached(mut self, sub: S) -> Self where S: Clone { //TODO can be default impl
         self.attach(sub);
         self
-    }
-    #[inline]
-    fn attach_path(&mut self, sub: &Self) {
-        self.v.extend_from_slice(&sub.v);
     }
     #[inline]
     fn tip(&self) -> Option<&S> {
         self.v.get(self.v.len()-1)
     }
     #[inline]
+    fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize> {
+        Self{
+            v: self.v.slice(range),
+            _p: PhantomData,
+        }
+    }
+    #[inline]
+    fn index<T>(&self, i: T) -> Option<&S> where T: SliceIndex<[S],Output=S> {
+        self.v.get(i)
+    }
+}
+
+impl<E,S> WidgetPath<E> for SimplePath<E,S> where
+    E: Env,
+    S: SubPath<E> + From<E::WidgetID>+Into<E::WidgetID> + Send+Sync + 'static,
+    Self: From<E::WidgetPath>+Into<E::WidgetPath>
+{
+    #[inline]
+    fn attach_subpath(&mut self, sub: &Self) {
+        self.v.extend_from_slice(&sub.v);
+    }
+    #[inline]
+    fn _dest_widget(&self) -> Option<E::WidgetID> {
+        self.v.get(self.v.len()-1).cloned().map(SubPath::into_id)
+    }
+    #[inline]
     fn exact_eq(&self, o: &Self) -> bool {
         self.v[..] == o.v[..]
+    }
+    #[inline]
+    fn dest_eq(&self, o: &Self) -> bool {
+        if self.tip().is_none() && o.tip().is_none() {todo!();} //return true;
+        if let (Some(s),Some(o)) = (self.tip(),o.tip()) {
+            return s.resolve_to_same_widget(o);
+        }
+        false
     }
     #[inline]
     fn parent(&self) -> Option<Self> {
@@ -53,17 +78,6 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
         self.v.is_empty()
     }
     #[inline]
-    fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize> {
-        Self{
-            v: self.v.slice(range),
-            _p: PhantomData,
-        }
-    }
-    #[inline]
-    fn index<T>(&self, i: T) -> Option<&S> where T: SliceIndex<[S],Output=S> {
-        self.v.get(i)
-    }
-    #[inline]
     fn empty() -> Self {
         Self{
             v: ArcSlice::new(),
@@ -72,7 +86,13 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
     }
 
     fn resolves_thru_child_id(child_id: E::WidgetID, sub_path: &Self) -> Option<ResolvesThruResult<E>> {
-        let sub_path_dest_id = sub_path.index(0).unwrap().clone().into_id(); //TODO deprecated old PathSub thing
+        if sub_path.is_empty() {return None;}
+        let sub_path_dest_id;
+        if let Some(s) = sub_path.index(0) {
+            sub_path_dest_id = s.clone().into_id(); //TODO deprecated old PathSub thing
+        }else{
+            return None;
+        }
         (child_id == sub_path_dest_id)
             .then(|| 
                 ResolvesThruResult{
