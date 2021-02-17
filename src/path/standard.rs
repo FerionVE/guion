@@ -165,7 +165,7 @@ impl<E,S> Debug for SimplePath<E,S> where E: Env, S: Debug {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for i in 0..self.v.len() {
             self.v[i].fmt(f)?;
-            if i != self.v.len() {
+            if i+1 < self.v.len() {
                 write!(f,"/")?;
             }
         }

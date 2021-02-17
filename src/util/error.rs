@@ -1,10 +1,9 @@
 use std::error::Error;
-use std::fmt::Display;
+use std::fmt::{Debug,Display};
 
 use super::*;
 
 #[non_exhaustive]
-#[derive(Debug)]
 pub enum GuionError<E> where E: Env {
     TraitcastError{
         op: &'static str,
@@ -17,9 +16,9 @@ pub enum GuionError<E> where E: Env {
         widget_type: Vec<&'static str>,
         child_info: Vec<GuionResolveErrorChildInfo<E>>,
     },
+    Empty,
 }
 
-#[derive(Debug)]
 pub struct GuionResolveErrorChildInfo<E> where E: Env {
     pub child_idx: usize,
     pub widget_type: Vec<&'static str>,
@@ -31,18 +30,24 @@ impl<E> Error for GuionError<E> where E: Env {
     
 }
 
+impl<E> From<()> for GuionError<E> where E: Env {
+    fn from(_: ()) -> Self {
+        Self::Empty
+    }
+}
+
 impl<E> Display for GuionError<E> where E: Env {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::TraitcastError { op, src_type, dest_trait_type } => {
-                write!(f,"Failed to {}\n",op)?;
+                write!(f,"\n\nFailed to {}\n",op)?;
                 for v in src_type {
                     write!(f,"\tsrc_type={}\n",v)?;
                 }
-                write!(f,"\tdest_type={}\n",dest_trait_type)?;
+                write!(f,"\tdest_type={}\n\n",dest_trait_type)?;
             }
             Self::ResolveError { op, sub_path, widget_type, child_info } => {
-                write!(f,"Failed to {} child in Widget\n",op)?;
+                write!(f,"\n\nFailed to {} child in Widget\n",op)?;
                 write!(f,"\tsub_path={:?}\n",sub_path)?;
                 for v in widget_type {
                     write!(f,"\ttype={}\n",v)?;
@@ -58,8 +63,16 @@ impl<E> Display for GuionError<E> where E: Env {
                         write!(f,"\tChild #{} type={}\n",c.child_idx,v)?;
                     }
                 }
+                write!(f,"\n")?;
             }
+            Self::Empty => {}, //TODO
         }
         Ok(())
+    }
+}
+
+impl<E> Debug for GuionError<E> where E: Env {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(self,f)
     }
 }

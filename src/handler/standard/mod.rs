@@ -40,7 +40,7 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self
         }
     }
 
-    pub fn focus(mut root: Link<E>, p: E::WidgetPath, root_bounds: Bounds, ts: u64) -> Result<EventResp,()> {
+    pub fn focus(mut root: Link<E>, p: E::WidgetPath, root_bounds: Bounds, ts: u64) -> Result<EventResp,GuionError<E>> {
         Self::unfocus(root.reference(),root_bounds,ts);
         root.as_mut().s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),root.widget.stor)?);
         root.send_event(

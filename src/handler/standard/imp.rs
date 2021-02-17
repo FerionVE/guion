@@ -23,7 +23,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
         //todo!()
     }
     #[inline] 
-    fn _send_event(l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
+    fn _send_event(l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
         /*if let Some(_) = e.0.is::<MouseMove>() {
             l.as_mut().s.mouse.hovered = Some(l.ident());
         }*/

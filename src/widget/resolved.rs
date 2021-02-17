@@ -30,7 +30,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::event`](Link::send_event)
     #[inline]
-    pub fn send_event(&self, c: &mut E::Context, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,()> {
+    pub fn send_event(&self, c: &mut E::Context, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
         c.send_event(self.clone(),e,child)
     }
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)

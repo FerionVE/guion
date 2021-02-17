@@ -16,7 +16,7 @@ impl<E> WidgetIdent<E> where E: Env {
     #[deprecated="this resolves the widget"]
     /// Resolves the Widget
     #[inline]
-    pub fn from_path(path: E::WidgetPath, stor: &E::Storage) -> Result<Self,()> {
+    pub fn from_path(path: E::WidgetPath, stor: &E::Storage) -> Result<Self,GuionError<E>> {
         if let Some(id) = path._dest_widget() {
             Ok(Self{id,path})
         }else{
