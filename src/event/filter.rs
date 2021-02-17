@@ -35,7 +35,7 @@ impl<E> Filter<E> for StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
     }
 
     fn attach_path_prefix(mut self, prefix: E::WidgetPath) -> Self {
-        self.filter_path = prefix.attached_path(&self.filter_path);
+        self.filter_path = prefix.attached_subpath(&self.filter_path);
         self
     }
 }
