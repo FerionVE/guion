@@ -18,7 +18,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
         match self {
             Resolvable::Widget(w) => w.into_resolve(sub),
-            Resolvable::Path(p) => Ok(Resolvable::Path(p.attached_path(&sub))),
+            Resolvable::Path(p) => Ok(Resolvable::Path(p.attached_subpath(&sub))),
         }
     }
     /// completely resolve using the storage
