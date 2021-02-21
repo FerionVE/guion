@@ -142,7 +142,7 @@ impl Bounds {
     /// align is the start-to-end relative position (0.0 - 1.0)
     #[inline]
     pub fn inner_aligned_f(&self, size: (f32,f32), align: (f32,f32)) -> Self {
-        let align = (align.0.min(1.0).max(0.0), align.1.min(1.0).max(0.0));
+        let align = (align.0.clamp(0.0,1.0), align.1.clamp(0.0,1.0));
         let nx = (self.size.w as f32 - size.0)*align.0;
         let ny = (self.size.h as f32 - size.1)*align.1;
         let nw = ((nx+size.0) as i32 - nx as i32) as u32;
