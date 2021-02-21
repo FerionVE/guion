@@ -55,7 +55,7 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
         (**self).resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),()>  {
         (**self).resolve_child(p)
     }
     #[inline]
@@ -67,8 +67,8 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
         (**self).in_parent_path(parent)
     }
     #[inline]
-    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
-        (**self).resolves_by(p)
+    fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
+        (**self).resolved_by_path(sub_path)
     }
     #[inline]
     fn _focus_on_mouse_down(&self) -> bool {
@@ -161,7 +161,7 @@ impl<E> Widget<E> for &mut (dyn Widget<E>+'_) where E: Env {
         (**self).resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),()>  {
         (**self).resolve_child(p)
     }
     #[inline]
@@ -173,8 +173,8 @@ impl<E> Widget<E> for &mut (dyn Widget<E>+'_) where E: Env {
         (**self).in_parent_path(parent)
     }
     #[inline]
-    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
-        (**self).resolves_by(p)
+    fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
+        (**self).resolved_by_path(sub_path)
     }
     #[inline]
     fn _focus_on_mouse_down(&self) -> bool {
@@ -267,7 +267,7 @@ impl<E> Widget<E> for &(dyn WidgetMut<E>+'_) where E: Env {
         (**self).resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),()>  {
         (**self).resolve_child(p)
     }
     #[inline]
@@ -279,8 +279,8 @@ impl<E> Widget<E> for &(dyn WidgetMut<E>+'_) where E: Env {
         (**self).in_parent_path(parent)
     }
     #[inline]
-    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
-        (**self).resolves_by(p)
+    fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
+        (**self).resolved_by_path(sub_path)
     }
     #[inline]
     fn _focus_on_mouse_down(&self) -> bool {
@@ -374,7 +374,7 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         (**self).resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),()>  {
         (**self).resolve_child(p)
     }
     #[inline]
@@ -386,8 +386,8 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         (**self).in_parent_path(parent)
     }
     #[inline]
-    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
-        (**self).resolves_by(p)
+    fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
+        (**self).resolved_by_path(sub_path)
     }
     #[inline]
     fn _focus_on_mouse_down(&self) -> bool {
@@ -532,7 +532,7 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
         (*self).into_resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),()>  {
         (**self).resolve_child(p)
     }
     #[inline]
@@ -544,8 +544,8 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
         (**self).in_parent_path(parent)
     }
     #[inline]
-    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
-        (**self).resolves_by(p)
+    fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
+        (**self).resolved_by_path(sub_path)
     }
     #[inline]
     fn _focus_on_mouse_down(&self) -> bool {
@@ -637,7 +637,7 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
         (*self).into_resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),()>  {
         (**self).resolve_child(p)
     }
     #[inline]
@@ -649,8 +649,8 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
         (**self).in_parent_path(parent)
     }
     #[inline]
-    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
-        (**self).resolves_by(p)
+    fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
+        (**self).resolved_by_path(sub_path)
     }
     #[inline]
     fn _focus_on_mouse_down(&self) -> bool {

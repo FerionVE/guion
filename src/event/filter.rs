@@ -18,10 +18,10 @@ pub struct StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
 impl<E> Filter<E> for StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
     fn _filter(&self, dest: &Link<E>, e: &EventCompound<E>) -> Option<EventCompound<E>> {
         if !self.filter_path.is_empty() {
-            dest.widget.resolves_by(self.filter_path.index(0).unwrap())
-                .map(#[inline] || EventCompound{
+            dest.widget.resolved_by_path(&self.filter_path)
+                .map(#[inline] |r| EventCompound{
                     filter: StdFilter{
-                        filter_path: self.filter_path.slice(1..),
+                        filter_path: r.sub_path,
                         filter_bounds: self.filter_bounds,
                     }.into(),
                     ..e.clone()
@@ -35,7 +35,7 @@ impl<E> Filter<E> for StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
     }
 
     fn attach_path_prefix(mut self, prefix: E::WidgetPath) -> Self {
-        self.filter_path = prefix.attached_path(&self.filter_path);
+        self.filter_path = prefix.attached_subpath(&self.filter_path);
         self
     }
 }

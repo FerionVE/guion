@@ -75,8 +75,8 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_ref()))
         }
-        let c = self.resolve_child(i.index(0).unwrap())?;
-        self.child(c).unwrap().resolve_child(i.slice(1..))
+        let (c,sub) = self.resolve_child(&i)?;
+        self.child(c).unwrap().resolve_child(sub)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// resolve a deep child item by the given relative path  
@@ -87,18 +87,18 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_box()))
         }
-        let c = self.resolve_child(i.index(0).unwrap())?;
-        self.into_child(c).unwrap_nodebug().resolve_child(i.slice(1..))
+        let (c,sub) = self.resolve_child(&i)?;
+        self.into_child(c).unwrap_nodebug().resolve_child(sub)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget  
+    /// to (or through) which child path would the given sub_path resolve?
+    /// returns the child index and the subpath inside the child widget to resolve further
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
     #[inline]
-    fn resolve_child(&self, p: &EWPSub<E>) -> Result<usize,()> {
+    fn resolve_child(&self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),()> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
-            if self.child(c).unwrap().resolves_by(p) {
-                return Ok(c);
+            if let Some(r) = self.child(c).unwrap().resolved_by_path(sub_path) {
+                return Ok((c,r.sub_path));
             }
         }
         Err(())
@@ -109,7 +109,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(*b)
         }
-        let child = self.resolve_child(i.index(0).unwrap())?;
+        let (child,_) = self.resolve_child(&i)?;
         let bounds = self.child_bounds(l,b,e,force)?;
         
         Ok(bounds[child])
@@ -120,14 +120,16 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// attach widget's id to the given parent path
     #[inline]
+    #[deprecated]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
-        parent.attached(SubPath::from_id(self.id()))
+        parent.for_child_widget_id(self.id())
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// if the path segment would resolve to this widget
-    #[inline]
-    fn resolves_by(&self, p: &EWPSub<E>) -> bool {
-        p.resolves_to_id(self.id())
+    /// Refer [`WidgetPath::_resolves_thru`](WidgetPath::_resolves_thru)
+    /// [`sub_path`]: subpath in parent widget (which contains this widget as child) which would probably resolve to/through this widget
+    #[deprecated]
+    fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
+        E::WidgetPath::resolves_thru_child_id(self.id(), sub_path)
     }
 
     /// if the widget should be focusable.  
@@ -216,8 +218,8 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
-        let c = self.resolve_child(i.index(0).unwrap())?;
-        self.child_mut(c).unwrap().resolve_child_mut(i.slice(1..))
+        let (c,sub) = self.resolve_child(&i)?;
+        self.child_mut(c).unwrap().resolve_child_mut(sub)
     }
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -229,8 +231,8 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
-        let c = self.resolve_child(i.index(0).unwrap())?;
-        self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(i.slice(1..))
+        let (c,sub) = self.resolve_child(&i)?;
+        self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(sub)
     }
 
     #[inline]

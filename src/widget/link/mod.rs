@@ -185,7 +185,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// Get Link for specific child by index
     #[inline]
-    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,()> where 'c: 's {
+    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,()> where 'c: 's { //TODO rename to child(i)
         let path = self.widget.path.refc();
         let stor = self.widget.stor;
 
@@ -263,7 +263,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     pub fn resolve_sub<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,()> where 'c: 's {
-        let mut new_path = self.widget.path.refc().attached_path(&p);
+        let mut new_path = self.widget.path.refc().attached_subpath(&p); //TODO w h a t
         let rw = self.widget.wref.resolve(p.refc())?;
         rw.extract_path(&mut new_path);
         let rw = rw.resolve_widget(&self.widget.stor)?;
@@ -306,7 +306,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     
     #[inline]
-    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F,SubPath=EWPSub<E>>, EWPSub<E>: SubPath<F>, E::Storage: Widgets<F> {
+    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F>, E::Storage: Widgets<F> {
         Link{
             widget: self.widget.with_env::<F>(),
             ctx,

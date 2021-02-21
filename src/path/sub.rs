@@ -1,5 +1,6 @@
 use super::*;
 
+#[deprecated]
 pub trait SubPath<E>:
     Clone +
     PartialEq<Self> +
@@ -9,8 +10,7 @@ where E: Env {
     fn _eq_id(&self, id: E::WidgetID) -> bool;
     fn into_id(self) -> E::WidgetID;
 
-    fn resolves_to_id(&self, id: E::WidgetID) -> bool;
-    fn resolves_to_path(&self, p: E::WidgetPath) -> bool;
+    fn resolve_to_same_widget(&self, o: &Self) -> bool;
 
     fn is<T: Any>(&self) -> bool;
     fn downcast_ref<T: Any>(&self) -> Option<&T>;

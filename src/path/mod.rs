@@ -20,33 +20,47 @@ pub trait WidgetPath<E>:
     Sync +
     'static
 where E: Env {
-    type SubPath: SubPath<E>;
-    
-    // TODO rename to attach_sub
-    fn attach(&mut self, sub: Self::SubPath);
-    #[inline]
-    fn attached(mut self, sub: Self::SubPath) -> Self {
-        self.attach(sub);
-        self
-    }
+
 
     // TODO rename to attach_path
-    fn attach_path(&mut self, sub: &Self);
+    fn attach_subpath(&mut self, sub: &Self);
     #[inline]
-    fn attached_path(mut self, sub: &Self) -> Self {
-        self.attach_path(sub);
+    fn attached_subpath(mut self, sub: &Self) -> Self {
+        self.attach_subpath(sub);
         self
     }
 
-    fn tip(&self) -> Option<&Self::SubPath>;
+    /// IMPL  
+    /// Does the sub path from the parent path resolve to or through the specific child widget of the parent widget?  
+    // returns None only of sub_path wouldn't resolve to or through the given child widget
+    /// [`parent_path`]: Absolute path of the current parent widget  
+    /// [`child`]: Child widget of parent widget to which the sub path probably resolves to/through  
+    /// [`sub_path`]: Relative sub path to which widget should be attempted to resolve  
+    fn resolves_thru_child_id(child: E::WidgetID, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
+    fn resolves_thru_child_path(child_path: &Self, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
+
+    fn for_child_widget_id(&self, child: E::WidgetID) -> Self;
+    fn for_child_widget_path(&self, child_path: &Self) -> Self;
+
+
+    // fn tip(&self) -> Option<&Self::SubPath>;
+    /// returns the targeted widget ID if available
+    /// NOTE this function is implemented optionally, so it may never return ID, even if possible
+    fn _dest_widget(&self) -> Option<E::WidgetID> {
+        None
+    }
+    #[deprecated]
     fn exact_eq(&self, o: &Self) -> bool;
 
+    /// If self and o would resolve to the same widget
+    fn dest_eq(&self, o: &Self) -> bool;
+
+    /// the path which would resolve to the parent widget
+    /// returns None only if the path is empty
     fn parent(&self) -> Option<Self>;
 
+    /// if the path is empty e.g. doesn't resolve further
     fn is_empty(&self) -> bool;
-
-    fn slice<T>(&self, range: T) -> Self where T: RangeBounds<usize>;
-    fn index<T>(&self, i: T) -> Option<&Self::SubPath> where T: SliceIndex<[Self::SubPath],Output=Self::SubPath>;
 
     fn empty() -> Self;
 
@@ -54,6 +68,11 @@ where E: Env {
     fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> Self where E::WidgetPath: WidgetPath<F> {
         self
     }
+}
+
+pub struct ResolvesThruResult<E> where E: Env {
+    /// the sub path inside the current child widget which resolves further
+    pub sub_path: E::WidgetPath,
 }
 
 #[inline]

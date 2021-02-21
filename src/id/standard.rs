@@ -58,16 +58,9 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> 
     fn into_id(self) -> E::WidgetID {
         self.into()
     }
-
     #[inline]
-    fn resolves_to_id(&self, id: E::WidgetID) -> bool {
-        self == &id.into()
-    }
-    #[inline]
-    fn resolves_to_path(&self, p: E::WidgetPath) -> bool {
-        p.tip().map_or(false,#[inline] |tip| { //TODO verify correctness of None => false
-            *self == tip.clone().into_id().into()
-        })
+    fn resolve_to_same_widget(&self, o: &Self) -> bool {
+        self == o
     }
 
     fn is<T: Any>(&self) -> bool { //TODO default underlying-trait impl hack
@@ -82,7 +75,6 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> 
     fn downcast_into<T: Any>(self) -> Result<T,Self> where Self: Sized + 'static {
         todo!()
     }
-    
 }
 
 #[allow(unused)]
