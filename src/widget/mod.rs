@@ -215,12 +215,12 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         let child_info = (0..self.childs())
             .map(#[inline] |i| self.child(i).unwrap().guion_resolve_error_child_info(i) )
             .collect::<Vec<_>>();
-        GuionError::ResolveError{
+        GuionError::ResolveError(Box::new(ResolveError{
             op,
             sub_path: sub_path.clone(),
             widget_type,
             child_info,
-        }
+        }))
     }
 }
 
@@ -300,6 +300,16 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         self
     }
 
+    fn debug_type_name_mut(&mut self, dest: &mut Vec<&'static str>) {
+        dest.push(self.type_name());
+    }
+    fn debugged_type_name_mut(&mut self) -> Vec<&'static str> {
+        let mut v = Vec::new();
+        self.debug_type_name_mut(&mut v);
+        v.shrink_to_fit();
+        v
+    }
+
     /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
     /// The impl_traitcast_mut! macro should be used to implement this function
     #[allow(unused)]
@@ -330,16 +340,16 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
 
     #[inline(never)]
     fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, op: &'static str) -> GuionError<E> {
-        let widget_type = self.debugged_type_name();
+        let widget_type = self.debugged_type_name_mut();
         let child_info = (0..self.childs())
             .map(#[inline] |i| self.child_mut(i).unwrap().guion_resolve_error_child_info(i) )
             .collect::<Vec<_>>();
-        GuionError::ResolveError{
+        GuionError::ResolveError(Box::new(ResolveError{
             op,
             sub_path: sub_path.clone(),
             widget_type,
             child_info,
-        }
+        }))
     }
 }
 

@@ -186,9 +186,16 @@ macro_rules! traitcast_for {
 }
 
 fn traitcast_error_info<E,DestTypeID>(senf: &(dyn Widget<E>+'_), op: &'static str) -> GuionError<E> where E: Env, DestTypeID: ?Sized + 'static {
-    GuionError::TraitcastError{
+    GuionError::TraitcastError(Box::new(TraitcastError{
         op,
         src_type: senf.debugged_type_name(),
         dest_trait_type: type_name::<DestTypeID>(),
-    }
+    }))
+}
+fn traitcast_error_info_mut<E,DestTypeID>(senf: &mut (dyn WidgetMut<E>+'_), op: &'static str) -> GuionError<E> where E: Env, DestTypeID: ?Sized + 'static {
+    GuionError::TraitcastError(Box::new(TraitcastError{
+        op,
+        src_type: senf.debugged_type_name_mut(),
+        dest_trait_type: type_name::<DestTypeID>(),
+    }))
 }
