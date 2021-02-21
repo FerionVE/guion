@@ -66,30 +66,32 @@ macro_rules! impl_traitcast_mut {
     }
 }
 
-macro_rules! impl_statize_lte {
-    ($trait:ident) => {
-        unsafe impl<'w,E> Statize<E> for dyn $trait<'w,E> where E: Env {
-            type Statur = dyn $trait<'static,E>;
-        }
-        unsafe impl<'l,'s,E> Statize<E> for &'s dyn $trait<'l,E> where E: Env, 'l: 's {
-            type Statur = &'static dyn $trait<'static,E>;
-        }
-        unsafe impl<'l,'s,E> Statize<E> for &'s mut dyn $trait<'l,E> where E: Env, 'l: 's {
-            type Statur = &'static mut dyn $trait<'static,E>;
-        }
-    };
-}
-
 impl<E> dyn Widget<E>+'_ where E: Env {
     #[inline]
     pub fn traitcast_ref<'s,T>(&'s self) -> Result<&'s T,GuionError<E>> where Self: Traitcast<T,E>, T: ?Sized {
-        unsafe{Self::_traitcast_ref(self.erase())}
+        unsafe{Self::_traitcast_ref(self)}
+    }
+    #[inline]
+    pub fn try_traitcast_ref<'s,T>(&'s self) -> Result<&'s T,()> where Self: Traitcast<T,E>, T: ?Sized {
+        unsafe{Self::_try_traitcast_ref(self)}
     }
 }
 impl<E> dyn WidgetMut<E>+'_ where E: Env {
     #[inline]
+    pub fn traitcast_ref<'s,T>(&'s self) -> Result<&'s T,GuionError<E>> where Self: Traitcast<T,E>, T: ?Sized {
+        unsafe{Self::_traitcast_ref(self.erase())}
+    }
+    #[inline]
+    pub fn try_traitcast_ref<'s,T>(&'s self) -> Result<&'s T,()> where Self: Traitcast<T,E>, T: ?Sized {
+        unsafe{Self::_try_traitcast_ref(self.erase())}
+    }
+    #[inline]
     pub fn traitcast_mut<'s,T>(&'s mut self) -> Result<&'s mut T,GuionError<E>> where Self: TraitcastMut<T,E>, T: ?Sized {
-        unsafe{Self::_traitcast_mut(self.erase_mut())}
+        unsafe{Self::_traitcast_mut(self)}
+    }
+    #[inline]
+    pub fn try_traitcast_mut<'s,T>(&'s mut self) -> Result<&'s mut T,()> where Self: TraitcastMut<T,E>, T: ?Sized {
+        unsafe{Self::_try_traitcast_mut(self)}
     }
 }
 
@@ -102,15 +104,20 @@ pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
 
     #[inline]
     unsafe fn _traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Result<&'s T,GuionError<E>> {
+        Self::_try_traitcast_ref(senf)
+            .map_err(|_| traitcast_error_info::<E,Self::DestTypeID>(senf,"traitcast") )
+    }
+    #[inline]
+    unsafe fn _try_traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Result<&'s T,()> {
         // god plz fix https://github.com/rust-lang/rust/issues/51826
         let t = TypeId::of::<Self::DestTypeID>();
         let t = senf._as_trait_ref(t);
         if let Some(v) = t {
             Ok(std::mem::transmute_copy::<TraitObject,&'s T>(&v))
         } else if let Some(senf) = senf.inner() {
-            Self::_traitcast_ref(senf)
+            Self::_try_traitcast_ref(senf)
         } else {
-            Err(traitcast_error_info::<E,Self::DestTypeID>(senf,"traitcast"))
+            Err(())
         }
     }
 }
@@ -123,34 +130,23 @@ pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
     type DestTypeID: ?Sized + 'static;
 
     #[inline]
-    unsafe fn _traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Result<&'s T,GuionError<E>> {
-        // god plz fix https://github.com/rust-lang/rust/issues/51826
-        let t = TypeId::of::<Self::DestTypeID>();
-        let t = senf._as_trait_ref(t);
-        if let Some(v) = t {
-            Ok(std::mem::transmute_copy::<TraitObject,&'s T>(&v))
-        } else if let Some(senf) = senf.inner() {
-            Self::_traitcast_ref(senf)
-        } else {
-            Err(traitcast_error_info::<E,Self::DestTypeID>(senf,"traitcast"))
-        }
-    }
-    #[inline]
-    fn traitcast_ref<'s>(&'s self) -> Result<&'s T,GuionError<E>> {
-        unsafe{Self::_traitcast_ref(self.erase())}
-    }
-    #[inline]
     unsafe fn _traitcast_mut<'s>(senf: &'s mut dyn WidgetMut<E>) -> Result<&'s mut T,GuionError<E>> {
         // god plz fix https://github.com/rust-lang/rust/issues/51826
-        let error_info = traitcast_error_info::<E,Self::DestTypeID>(senf.erase(),"traitcast_mut"); //TODO optimize
+        let e = traitcast_error_info_mut::<E,Self::DestTypeID>(senf,"traitcast_mut");
+        Self::_try_traitcast_mut(senf)
+            .map_err(|_| e )
+    }
+    #[inline]
+    unsafe fn _try_traitcast_mut<'s>(senf: &'s mut dyn WidgetMut<E>) -> Result<&'s mut T,()> {
+        // god plz fix https://github.com/rust-lang/rust/issues/51826
         let t = TypeId::of::<Self::DestTypeID>();
         let t = senf._as_trait_mut(t);
         if let Some(v) = t {
             Ok(std::mem::transmute_copy::<TraitObject,&'s mut T>(&v))
         } else if let Some(senf) = senf.inner_mut() {
-            Self::_traitcast_mut(senf)
+            Self::_try_traitcast_mut(senf)
         } else {
-            Err(error_info)
+            Err(())
         }
     }
 }
