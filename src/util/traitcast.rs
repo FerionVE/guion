@@ -2,10 +2,14 @@
 use std::any::{TypeId, type_name};
 
 use super::*;
-#[repr(transparent)]
+
+/// should match the non-stabilized std::raw::TraitObject and represents an erased fat pointer
+#[repr(C)]
+#[derive(Copy, Clone)]
 #[doc(hidden)]
-pub struct TraitObject<'a> {
-    nuclear: &'a mut dyn std::any::Any,
+pub struct TraitObject {
+    data: *mut (),
+    vtable: *mut (),
 }
 
 /// This macro is used inside Widget/WidgetMut impls
