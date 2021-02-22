@@ -1,5 +1,5 @@
 //! A path contains information, like widget id, which can denote a location of a widget
-use std::{slice::SliceIndex, ops::RangeBounds};
+use std::{slice::SliceIndex, ops::RangeBounds, fmt::Debug};
 use qwutils::RefClonable;
 use super::*;
 
@@ -16,6 +16,7 @@ pub trait WidgetPath<E>:
     RefClonable +
     Clone +
     Sized +
+    Debug +
     Send +
     Sync +
     'static

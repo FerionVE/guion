@@ -1,11 +1,11 @@
 //! A simple incremental usize-based ID
 use super::*;
-use std::{any::TypeId, sync::atomic::{AtomicUsize,Ordering}};
+use std::{any::TypeId, fmt::Debug, sync::atomic::{AtomicUsize,Ordering}};
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// A simple incremental usize-based ID
-#[derive(Clone,Copy,PartialEq,Eq,Hash,Debug)]
+#[derive(Clone,Copy,PartialEq,Eq,Hash)]
 pub enum StdID {
     Dyn(usize),
     Const(TypeId),
@@ -80,4 +80,13 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> 
 #[allow(unused)]
 mod const_id_test {
     const_std_id!(foo bar);
+}
+
+impl Debug for StdID {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Dyn(v) => v.fmt(f),
+            Self::Const(v) => v.fmt(f), //TODO what if const int is same than dyn int?
+        }
+    }
 }

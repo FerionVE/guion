@@ -15,7 +15,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     /// resolve further with the subpath if not a path
     /// meant to be used inside widget's resolve fn
     #[inline]
-    pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'w,E>,()> {
+    pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> {
         match self {
             Resolvable::Widget(w) => w.into_resolve(sub),
             Resolvable::Path(p) => Ok(Resolvable::Path(p.attached_subpath(&sub))),
@@ -23,7 +23,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     }
     /// completely resolve using the storage
     #[inline]
-    pub fn resolve_widget<'a>(self, stor: &'a E::Storage) -> Result<WidgetRef<'w,E>,()> where 'a: 'w {
+    pub fn resolve_widget<'a>(self, stor: &'a E::Storage) -> Result<WidgetRef<'w,E>,GuionError<E>> where 'a: 'w {
         match self {
             Resolvable::Widget(w) => Ok(w),
             Resolvable::Path(p) => Ok(stor.widget(p)?.wref),
@@ -53,6 +53,23 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
             Resolvable::Path(w) => w.refc().into(), //TODO WRONG use widget's fns
         }
     }
+
+    pub fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
+        match self {
+            Resolvable::Widget(w) => GuionResolveErrorChildInfo {
+                child_idx,
+                widget_type: w.debugged_type_name(),
+                widget_path_if_path: None,
+                widget_id: Some(w.id()),
+            },
+            Resolvable::Path(w) => GuionResolveErrorChildInfo {
+                child_idx,
+                widget_type: vec![type_name::<E::WidgetPath>()],
+                widget_path_if_path: Some(w.clone()),
+                widget_id: w._dest_widget(),
+            },
+        }
+    }
 }
 
 pub enum ResolvableMut<'w,E> where E: Env {
@@ -75,7 +92,7 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     /// resolve further with the subpath if not a path
     /// meant to be used inside widget's resolve fn
     #[inline]
-    pub fn resolve_child_mut(self, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> {
+    pub fn resolve_child_mut(self, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> {
         match self {
             ResolvableMut::Widget(w) => w.into_resolve_mut(i),
             ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p.attached_subpath(&i))),
@@ -83,7 +100,7 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     }
     #[deprecated]
     #[inline]
-    pub fn resolve_widget<'a>(self, stor: &'a mut E::Storage) -> Result<WidgetRefMut<'w,E>,()> where 'a: 'w {
+    pub fn resolve_widget<'a>(self, stor: &'a mut E::Storage) -> Result<WidgetRefMut<'w,E>,GuionError<E>> where 'a: 'w {
         match self {
             ResolvableMut::Widget(w) => Ok(w),
             ResolvableMut::Path(p) => Ok(stor.widget_mut(p)?.wref),
@@ -102,6 +119,23 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
         match self {
             ResolvableMut::Widget(w) => w.resolved_by_path(p),
             ResolvableMut::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p)
+        }
+    }
+
+    pub fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
+        match self {
+            ResolvableMut::Widget(w) => GuionResolveErrorChildInfo {
+                child_idx,
+                widget_type: w.debugged_type_name(),
+                widget_path_if_path: None,
+                widget_id: Some(w.id()),
+            },
+            ResolvableMut::Path(w) => GuionResolveErrorChildInfo {
+                child_idx,
+                widget_type: vec![type_name::<E::WidgetPath>()],
+                widget_path_if_path: Some(w.clone()),
+                widget_id: w._dest_widget(),
+            },
         }
     }
 }
