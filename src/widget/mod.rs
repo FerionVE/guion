@@ -144,6 +144,8 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn _tabulate_by_tab(&self) -> bool {
         true
     }
+
+    fn _tabulate(&self, l: Link<E>, )
     
     #[inline]
     fn inner(&self) -> Option<&dyn Widget<E>> { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn Widget<E>+'w)> where Self: 'w
