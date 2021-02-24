@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use crate::style::selectag::StyleSelectag;
 
 use super::StyleSelectorAppend;

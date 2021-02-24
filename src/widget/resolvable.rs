@@ -17,21 +17,21 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     #[inline]
     pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> {
         match self {
-            Resolvable::Widget(w) => w.into_resolve(sub),
-            Resolvable::Path(p) => Ok(Resolvable::Path(p.attached_subpath(&sub))),
+            Self::Widget(w) => w.into_resolve(sub),
+            Self::Path(p) => Ok(Self::Path(p.attached_subpath(&sub))),
         }
     }
     /// completely resolve using the storage
     #[inline]
     pub fn resolve_widget<'a>(self, stor: &'a E::Storage) -> Result<WidgetRef<'w,E>,GuionError<E>> where 'a: 'w {
         match self {
-            Resolvable::Widget(w) => Ok(w),
-            Resolvable::Path(p) => Ok(stor.widget(p)?.wref),
+            Self::Widget(w) => Ok(w),
+            Self::Path(p) => Ok(stor.widget(p)?.wref),
         }
     }
     #[inline]
     pub fn extract_path(&self, dest: &mut E::WidgetPath) {
-        if let Resolvable::Path(p) = self {
+        if let Self::Path(p) = self {
             *dest = p.refc();
         }
     }
@@ -40,8 +40,8 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     #[inline]
     pub fn resolved_by_path(&self, p: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         match self {
-            Resolvable::Widget(w) => w.resolved_by_path(p),
-            Resolvable::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p) //TODO this is wrong, as the WidgetID isn't in the WidgetPath, so the current hack relies on the StdPath indeed having the last destination WidgetID. Resolving this requires architecturial modifications, either to enable resolving in this function, which requies the resolve fns to carry &E::Storage for resolving, which is ony possible in the immutable space. Alternatively path needs to somehow carry the last(dest) ID, which doesn't seem to be possible.
+            Self::Widget(w) => w.resolved_by_path(p),
+            Self::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p) //TODO this is wrong, as the WidgetID isn't in the WidgetPath, so the current hack relies on the StdPath indeed having the last destination WidgetID. Resolving this requires architecturial modifications, either to enable resolving in this function, which requies the resolve fns to carry &E::Storage for resolving, which is ony possible in the immutable space. Alternatively path needs to somehow carry the last(dest) ID, which doesn't seem to be possible.
         }
     }
     /// extend the path representing the parent of this widget to resolve to this widget
@@ -49,20 +49,20 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     #[inline]
     pub fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         match self {
-            Resolvable::Widget(w) => w.in_parent_path(parent),
-            Resolvable::Path(w) => w.refc().into(), //TODO WRONG use widget's fns
+            Self::Widget(w) => w.in_parent_path(parent),
+            Self::Path(w) => w.refc().into(), //TODO WRONG use widget's fns
         }
     }
 
     pub fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
         match self {
-            Resolvable::Widget(w) => GuionResolveErrorChildInfo {
+            Self::Widget(w) => GuionResolveErrorChildInfo {
                 child_idx,
                 widget_type: w.debugged_type_name(),
                 widget_path_if_path: None,
                 widget_id: Some(w.id()),
             },
-            Resolvable::Path(w) => GuionResolveErrorChildInfo {
+            Self::Path(w) => GuionResolveErrorChildInfo {
                 child_idx,
                 widget_type: vec![type_name::<E::WidgetPath>()],
                 widget_path_if_path: Some(w.clone()),
@@ -85,8 +85,8 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     #[inline]
     pub fn as_widget(self) -> Result<WidgetRefMut<'w,E>,E::WidgetPath> {
         match self {
-            ResolvableMut::Widget(w) => Ok(w),
-            ResolvableMut::Path(p) => Err(p),
+            Self::Widget(w) => Ok(w),
+            Self::Path(p) => Err(p),
         }
     }
     /// resolve further with the subpath if not a path
@@ -94,21 +94,21 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     #[inline]
     pub fn resolve_child_mut(self, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> {
         match self {
-            ResolvableMut::Widget(w) => w.into_resolve_mut(i),
-            ResolvableMut::Path(p) => Ok(ResolvableMut::Path(p.attached_subpath(&i))),
+            Self::Widget(w) => w.into_resolve_mut(i),
+            Self::Path(p) => Ok(Self::Path(p.attached_subpath(&i))),
         }
     }
     #[deprecated]
     #[inline]
     pub fn resolve_widget<'a>(self, stor: &'a mut E::Storage) -> Result<WidgetRefMut<'w,E>,GuionError<E>> where 'a: 'w {
         match self {
-            ResolvableMut::Widget(w) => Ok(w),
-            ResolvableMut::Path(p) => Ok(stor.widget_mut(p)?.wref),
+            Self::Widget(w) => Ok(w),
+            Self::Path(p) => Ok(stor.widget_mut(p)?.wref),
         }
     }
     #[inline]
     pub fn extract_path(&self, dest: &mut E::WidgetPath) {
-        if let ResolvableMut::Path(p) = self {
+        if let Self::Path(p) = self {
             *dest = p.refc();
         }
     }
@@ -117,20 +117,20 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     #[inline]
     pub fn resolved_by_path(&self, p: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         match self {
-            ResolvableMut::Widget(w) => w.resolved_by_path(p),
-            ResolvableMut::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p)
+            Self::Widget(w) => w.resolved_by_path(p),
+            Self::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p)
         }
     }
 
-    pub fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
+    pub fn guion_resolve_error_child_info(&mut self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
         match self {
-            ResolvableMut::Widget(w) => GuionResolveErrorChildInfo {
+            Self::Widget(w) => GuionResolveErrorChildInfo {
                 child_idx,
-                widget_type: w.debugged_type_name(),
+                widget_type: w.debugged_type_name_mut(),
                 widget_path_if_path: None,
                 widget_id: Some(w.id()),
             },
-            ResolvableMut::Path(w) => GuionResolveErrorChildInfo {
+            Self::Path(w) => GuionResolveErrorChildInfo {
                 child_idx,
                 widget_type: vec![type_name::<E::WidgetPath>()],
                 widget_path_if_path: Some(w.clone()),

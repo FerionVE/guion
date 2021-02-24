@@ -1,7 +1,7 @@
 use std::iter::once;
 use std::iter::Once;
 use std::marker::PhantomData;
-use crate::{env::Env, border::Border, aliases::ESColor};
+use crate::env::Env;
 
 use super::StyleSelectag;
 /// selectors enable/disable specific parts of styles.  
