@@ -40,7 +40,7 @@ impl<E,S> SimplePath<E,S> {
 
 impl<E,S> WidgetPath<E> for SimplePath<E,S> where
     E: Env,
-    S: SubPath<E> + From<E::WidgetID>+Into<E::WidgetID> + Send+Sync + 'static,
+    S: SubPath<E> + From<E::WidgetID>+Into<E::WidgetID> + Debug + Send+Sync + 'static,
     Self: From<E::WidgetPath>+Into<E::WidgetPath>
 {
     #[inline]
