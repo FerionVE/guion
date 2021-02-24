@@ -153,8 +153,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                     }
                     w.scroll_to_cursor(ctx,&b);
                 }));
+                passed = true;
             }
-            passed = true;
         } else if let Some(ee) = e.event.is_mouse_scroll() {
             let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
             
@@ -182,8 +182,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                         w.scroll_to_cursor(ctx,&b);
                     }
                 }));
+                passed = true;
             }
-            passed = true;
         }
         passed
     }

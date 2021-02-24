@@ -68,7 +68,7 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
                 return true;
             }
         }
-        e.event.is_mouse_down().is_some()
+        false
     }
     fn _size(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> {
         let e = e.and(&self.style);
