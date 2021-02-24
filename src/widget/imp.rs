@@ -62,10 +62,12 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
         (**self).trace_bounds(l, i, b,e, force)
     }
+    #[allow(deprecated)]
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         (**self).in_parent_path(parent)
     }
+    #[allow(deprecated)]
     #[inline]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         (**self).resolved_by_path(sub_path)
@@ -168,10 +170,12 @@ impl<E> Widget<E> for &mut (dyn Widget<E>+'_) where E: Env {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
         (**self).trace_bounds(l, i, b,e, force)
     }
+    #[allow(deprecated)]
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         (**self).in_parent_path(parent)
     }
+    #[allow(deprecated)]
     #[inline]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         (**self).resolved_by_path(sub_path)
@@ -274,10 +278,12 @@ impl<E> Widget<E> for &(dyn WidgetMut<E>+'_) where E: Env {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
         (**self).trace_bounds(l, i, b,e, force)
     }
+    #[allow(deprecated)]
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         (**self).in_parent_path(parent)
     }
+    #[allow(deprecated)]
     #[inline]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         (**self).resolved_by_path(sub_path)
@@ -381,10 +387,12 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
         (**self).trace_bounds(l, i, b,e, force)
     }
+    #[allow(deprecated)]
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         (**self).in_parent_path(parent)
     }
+    #[allow(deprecated)]
     #[inline]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         (**self).resolved_by_path(sub_path)
@@ -470,6 +478,10 @@ impl<E> WidgetMut<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     fn message(&mut self, m: E::Message) {
         (**self).message(m)
     }
+    fn debug_type_name_mut(&mut self, dest: &mut Vec<&'static str>) {
+        dest.push(self.type_name());
+        (**self).debug_type_name_mut(dest);
+    }
     #[inline]
     fn box_mut(&mut self) -> WidgetRefMut<E> {
         (**self).box_mut()
@@ -543,10 +555,12 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
         (**self).trace_bounds(l, i, b,e, force)
     }
+    #[allow(deprecated)]
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         (**self).in_parent_path(parent)
     }
+    #[allow(deprecated)]
     #[inline]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         (**self).resolved_by_path(sub_path)
@@ -648,10 +662,12 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
         (**self).trace_bounds(l, i, b,e, force)
     }
+    #[allow(deprecated)]
     #[inline]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         (**self).in_parent_path(parent)
     }
+    #[allow(deprecated)]
     #[inline]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         (**self).resolved_by_path(sub_path)
@@ -734,6 +750,10 @@ impl<E> WidgetMut<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     #[inline]
     fn message(&mut self, m: E::Message) {
         (**self).message(m)
+    }
+    fn debug_type_name_mut(&mut self, dest: &mut Vec<&'static str>) {
+        dest.push(self.type_name());
+        (**self).debug_type_name_mut(dest);
     }
     #[inline]
     fn box_mut(&mut self) -> WidgetRefMut<E> {
