@@ -104,7 +104,8 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                             if let Ok(mut l) = l.with_widget(id.path.refc()) {
                                 if key == EEKey::<E>::TAB && l.widget._tabulate_by_tab() {
                                     let reverse = l.state().is_pressed(&[EEKey::<E>::SHIFT]).is_some();
-                                    let path = tabulate::<E>(l.widget.stor,id.path,reverse);
+                                    let dir = if reverse {TabulateDirection::Backward} else {TabulateDirection::Forward};
+                                    let path = tabi(l.reference(),id.path,dir).expect("TODO");
                                     //better way than this hack to get the ident
                                     l.as_mut().s.kbd.focused = Some(WidgetIdent::from_path(path,l.widget.stor).expect("TODO"));
                                 }
