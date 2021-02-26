@@ -182,7 +182,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                         w.scroll_to_cursor(ctx,&b);
                     }
                 }));
-                passed = true;
+                passed |= mouse_pressed;
             }
         }
         passed
