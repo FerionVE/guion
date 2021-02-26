@@ -148,7 +148,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn _tabulate(&self, mut l: Link<E>, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,GuionError<E>> {
         // fn to tabulate to the next child away from the previous child (child_id None = self)
         let enter_child_sub = |senf: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
-             senf.for_child(child_id).unwrap()._tabulate(to,dir)
+            senf.for_child(child_id).unwrap()._tabulate(to,dir)
         };
         let next_child = |senf: &mut Link<E>, mut child_id: Option<usize>| -> Result<TabulateResponse<E>,GuionError<E>> {
             loop {
@@ -195,18 +195,18 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         match op {
             TabulateOrigin::Resolve(p) => {
                 if !p.is_empty() {
-                    //pass 1: resolve to previous focused widget
+                    // pass 1: resolve to previous focused widget
                     let (child_id,sub_path) = self.resolve_child(&p)?;
                     return enter_child(&mut l, child_id, TabulateOrigin::Resolve(sub_path));
                 }else{
-                    //pass 2: we are the previous focused widget and should tabulate away
+                    // pass 2: we are the previous focused widget and should tabulate away
                     return next_child(&mut l, None);
                 }
             },
             TabulateOrigin::Enter => {
                 // we got entered from the parent widget
                 let enter_dir;
-                //determine the targeted child, self, or leave
+                // determine the targeted child, self, or leave
                 match dir {
                     TabulateDirection::Forward if self.focusable() => enter_dir = None,
                     TabulateDirection::Forward if self.childs() != 0 => enter_dir = Some(0),

@@ -16,9 +16,9 @@ pub enum TabulateResponse<E> where E: Env {
     Leave,
 }
 
-pub fn tabi<E>(mut root: Link<E>, sub_path: E::WidgetPath, dir: TabulateDirection) -> Result<E::WidgetPath,GuionError<E>> where E: Env {
-    let mut current = sub_path.clone(); //TODO sub_path to absolute path WidgetPath::strip_prefix
-    let result = root._tabulate(TabulateOrigin::Resolve(sub_path),dir)?;
+pub fn tabi<E>(mut root: Link<E>, path: E::WidgetPath, dir: TabulateDirection) -> Result<E::WidgetPath,GuionError<E>> where E: Env {
+    let mut current = path.clone();
+    let result = root._tabulate(TabulateOrigin::Resolve( path.strip_prefix(&root.path()).unwrap() ),dir)?;
     match result {
         TabulateResponse::Done(p) => current = p,
         TabulateResponse::Leave => {

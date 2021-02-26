@@ -23,6 +23,7 @@ impl<E,S> SimplePath<E,S> {
     }
     #[inline]
     fn tip(&self) -> Option<&S> {
+        if self.v.len() == 0 {return None;}
         self.v.get(self.v.len()-1)
     }
     #[inline]
@@ -46,6 +47,24 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
     #[inline]
     fn attach_subpath(&mut self, sub: &Self) {
         self.v.extend_from_slice(&sub.v);
+    }
+    #[inline]
+    fn strip_prefix(&self, prefix: &Self) -> Result<Self,()> {
+        /*if prefix.v.len() > self.v.len() {return Err(());}
+        if self.v[..prefix.v.len()] != prefix.v[..] {return Err(());}
+        Ok(self.slice(prefix.v.len()..))*/
+        let ptip = match prefix.tip() {
+            Some(v) => v,
+            None => return Ok(self.clone()),
+        };
+        if self.tip().is_none() {return Err(());}
+        let idx = self.v.iter().enumerate()
+            .find(|(i,v)| v.resolve_to_same_widget(ptip) )
+            .map(|(i,_)| i );
+        match idx {
+            Some(i) => Ok(self.slice(i+1..)),
+            None => Err(()),
+        }
     }
     #[inline]
     fn _dest_widget(&self) -> Option<E::WidgetID> {
