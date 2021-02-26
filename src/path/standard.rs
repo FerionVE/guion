@@ -23,6 +23,7 @@ impl<E,S> SimplePath<E,S> {
     }
     #[inline]
     fn tip(&self) -> Option<&S> {
+        if self.v.len() == 0 {return None;}
         self.v.get(self.v.len()-1)
     }
     #[inline]
