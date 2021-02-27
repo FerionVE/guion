@@ -81,10 +81,10 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
         1
     }
     fn childs_ref(&self) -> Vec<Resolvable<E>> {
-        vec![self.text.as_ref()]
+        vec![self.text.as_widget()]
     }
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
-        vec![self.text.into_ref()]
+        vec![self.text.into_widget()]
     }
     
     fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
@@ -95,11 +95,22 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
 
     fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
         if i != 0 {return Err(());}
-        Ok(self.text.as_ref())
+        Ok(self.text.as_widget())
     }
     fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
-        Ok(self.text.into_ref())
+        Ok(self.text.into_widget())
+    }
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        vec![self.text.as_widget_mut()]
+    }
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        if i != 0 {return Err(());}
+        Ok(self.text.as_widget_mut())
+    }
+
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(self)
     }
 }
 
@@ -108,22 +119,9 @@ impl<'w,E,Text> WidgetMut<E> for Button<'w,E,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
-    Text: AsWidgetMut<E>,
+    Text: AsWidget<E>,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![self.text.as_mut()]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![self.text.into_mut()]
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        if i != 0 {return Err(());}
-        Ok(self.text.as_mut())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        if i != 0 {return Err(());}
-        Ok(self.text.into_mut())
-    }
+    
 }
 
 impl<'w,E,S> Button<'w,E,S> where

@@ -65,7 +65,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
                     ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN ||
                     ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
                 {
-                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                    l.try_mutate_closure(Box::new(move |mut w,ctx,_| {
                         let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
                         let mut v = w.get(ctx);
                         if ee.key == EEKey::<E>::UP {
@@ -97,10 +97,10 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
         1
     }
     fn childs_ref(&self) -> Vec<Resolvable<E>> {
-        vec![self.inner.as_ref()]
+        vec![self.inner.as_widget()]
     }
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
-        vec![self.inner.into_ref()]
+        vec![self.inner.into_widget()]
     }
     
     fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
@@ -111,11 +111,21 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     }
     fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
         if i != 0 {return Err(());}
-        Ok(self.inner.as_ref())
+        Ok(self.inner.as_widget())
     }
     fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
-        Ok(self.inner.into_ref())
+        Ok(self.inner.into_widget())
+    }
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        vec![self.inner.as_widget_mut()]
+    }
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        if i != 0 {return Err(());}
+        Ok(self.inner.as_widget_mut())
+    }
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(self)
     }
 
     impl_traitcast!(
@@ -128,26 +138,11 @@ impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    W: AsWidgetMut<E>+'w,
-    Scroll: AtomStateMut<E,(u32,u32)>,
+    W: AsWidget<E>+'w,
+    Scroll: AtomState<E,(u32,u32)>,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![self.inner.as_mut()]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![self.inner.into_mut()]
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        if i != 0 {return Err(());}
-        Ok(self.inner.as_mut())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        if i != 0 {return Err(());}
-        Ok(self.inner.into_mut())
-    }
-
     impl_traitcast_mut!(
         dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
-        dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
+        //dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
     );
 }

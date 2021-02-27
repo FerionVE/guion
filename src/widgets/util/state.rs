@@ -9,6 +9,10 @@ pub trait AtomState<E,T> where E: Env {
         self.get_direct().unwrap()
     }
     fn get_direct(&self) -> Result<T,()>;
+
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,T>,GuionError<E>>;
+    fn try_set(&mut self, v: T, _: &mut E::Context) -> Result<(),GuionError<E>>;
+    fn try_set_direct(&mut self, v: T) -> Result<(),GuionError<E>>;
 }
 /// Simple atomic type state
 pub trait AtomStateMut<E,T>: AtomState<E,T> where E: Env {
@@ -24,17 +28,57 @@ impl<E,T> AtomState<E,T> for T where T: Clone, E: Env {
     fn get_direct(&self) -> Result<T,()> {
         Ok(self.clone())
     }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,T>,GuionError<E>> {
+        Ok(self)
+    }
+    #[inline]
+    fn try_set(&mut self, v: T, c: &mut E::Context) -> Result<(),GuionError<E>> {
+        AtomStateMut::<E,T>::set(self,v,c);
+        Ok(())
+    }
+    #[inline]
+    fn try_set_direct(&mut self, v: T) -> Result<(),GuionError<E>> {
+        AtomStateMut::<E,T>::set_direct(self,v)?;
+        Ok(())
+    }
 }
 impl<E,T> AtomState<E,T> for &T where T: Clone, E: Env {
     #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok((**self).clone())
     }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,T>,GuionError<E>> {
+        Err(todo!())
+    }
+    #[inline]
+    fn try_set(&mut self, v: T, _: &mut E::Context) -> Result<(),GuionError<E>> {
+        Err(todo!())
+    }
+    #[inline]
+    fn try_set_direct(&mut self, v: T) -> Result<(),GuionError<E>> {
+        Err(todo!())
+    }
 }
 impl<E,T> AtomState<E,T> for &mut T where T: Clone, E: Env {
     #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok((**self).clone())
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,T>,GuionError<E>> {
+        Ok(self)
+    }
+    #[inline]
+    fn try_set(&mut self, v: T, c: &mut E::Context) -> Result<(),GuionError<E>> {
+        AtomStateMut::<E,T>::set(self,v,c);
+        Ok(())
+    }
+    #[inline]
+    fn try_set_direct(&mut self, v: T) -> Result<(),GuionError<E>> {
+        AtomStateMut::<E,T>::set_direct(self,v)?;
+        Ok(())
     }
 }
 impl<E,T> AtomStateMut<E,T> for &mut T where T: Clone, E: Env {
@@ -56,6 +100,20 @@ impl<E,T> AtomState<E,T> for Cow<'_,T> where T: Clone, E: Env {
     #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok((*self.as_ref()).clone())
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,T>,GuionError<E>> {
+        Ok(self)
+    }
+    #[inline]
+    fn try_set(&mut self, v: T, c: &mut E::Context) -> Result<(),GuionError<E>> {
+        AtomStateMut::<E,T>::set(self,v,c);
+        Ok(())
+    }
+    #[inline]
+    fn try_set_direct(&mut self, v: T) -> Result<(),GuionError<E>> {
+        AtomStateMut::<E,T>::set_direct(self,v)?;
+        Ok(())
     }
 }
 impl<E,T> AtomStateMut<E,T> for Cow<'_,T> where T: Clone, E: Env {

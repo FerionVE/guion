@@ -108,6 +108,30 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         (*self).box_ref()
     }
+    #[inline]
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        (**self).childs_ref()
+    }
+    #[inline]
+    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        (**self).resolve(i)
+    }
+    #[inline]
+    fn inner_mut(&mut self) -> Option<&mut dyn Widget<E>> {
+        Some(&mut (**self))
+    }
+    #[inline]
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        (**self).child(i)
+    }
+    #[inline]
+    fn box_mut(&mut self) -> WidgetRef<E> {
+        (**self).box_ref()
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Err(todo!())
+    }
 }
 impl<E> Widget<E> for &mut (dyn Widget<E>+'_) where E: Env {
     #[inline]
@@ -215,6 +239,30 @@ impl<E> Widget<E> for &mut (dyn Widget<E>+'_) where E: Env {
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         (*self).box_ref()
+    }
+    #[inline]
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        (**self).childs_mut()
+    }
+    #[inline]
+    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        (**self).resolve_mut(i)
+    }
+    #[inline]
+    fn inner_mut(&mut self) -> Option<&mut dyn Widget<E>> {
+        Some(&mut (**self))
+    }
+    #[inline]
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        (**self).child_mut(i)
+    }
+    #[inline]
+    fn box_mut(&mut self) -> WidgetRef<E> {
+        (**self).box_mut()
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        (**self).mutate()
     }
 }
 impl<E> Widget<E> for &(dyn WidgetMut<E>+'_) where E: Env {
@@ -325,6 +373,30 @@ impl<E> Widget<E> for &(dyn WidgetMut<E>+'_) where E: Env {
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         (*self).box_ref()
     }
+    #[inline]
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        (**self).childs_ref()
+    }
+    #[inline]
+    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        (**self).resolve(i)
+    }
+    #[inline]
+    fn inner_mut(&mut self) -> Option<&mut dyn Widget<E>> {
+        Some((**self).base_mut())
+    }
+    #[inline]
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        (**self).child(i)
+    }
+    #[inline]
+    fn box_mut(&mut self) -> WidgetRef<E> {
+        (**self).box_ref()
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Err(todo!())
+    }
 }
 impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     #[inline]
@@ -434,65 +506,43 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         (*self).box_ref()
     }
+    #[inline]
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        (**self).childs_mut()
+    }
+    #[inline]
+    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        (**self).resolve_mut(i)
+    }
+    #[inline]
+    fn inner_mut(&mut self) -> Option<&mut dyn Widget<E>> {
+        Some((**self).base_mut())
+    }
+    #[inline]
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        (**self).child_mut(i)
+    }
+    #[inline]
+    fn box_mut(&mut self) -> WidgetRef<E> {
+        (**self).box_mut()
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(&mut (**self))
+    }
 }
 impl<E> WidgetMut<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
-    #[allow(deprecated)]
-    #[inline]
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        (**self).childs_mut()
-    }
-    #[allow(deprecated)]
-    #[inline]
-    fn into_childs_mut<'w>(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
-        (**self).childs_mut()
-    }
     #[inline]
     fn _set_invalid(&mut self, v: bool) {
         (**self)._set_invalid(v)
     }
     #[inline]
-    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<ResolvableMut<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
-        (**self).resolve_mut(i)
-    }
-    #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> where Self: 'w {
-        (**self).resolve_mut(i)
-    }
-    #[inline]
-    fn resolve_child_mut(&mut self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
-        (**self).resolve_child_mut(p)
-    }
-    #[inline]
-    fn inner_mut(&mut self) -> Option<&mut dyn WidgetMut<E>> {
-        Some(&mut(**self))
-    }
-    #[inline]
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        (**self).child_mut(i)
-    }
-    #[inline]
-    fn into_child_mut<'w>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
-        (**self).child_mut(i)
-    }
-    #[inline]
     fn message(&mut self, m: E::Message) {
         (**self).message(m)
     }
-    fn debug_type_name_mut(&mut self, dest: &mut Vec<&'static str>) {
-        dest.push(self.type_name());
-        (**self).debug_type_name_mut(dest);
-    }
     #[inline]
-    fn box_mut(&mut self) -> WidgetRefMut<E> {
-        (**self).box_mut()
-    }
-    #[inline]
-    fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
-        (**self).box_mut()
-    }
-    #[inline]
-    fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
-        (*self).box_mut()
+    fn inner_mut(&mut self) -> Option<&mut dyn WidgetMut<E>> {
+        Some(&mut (**self))
     }
 }
 impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
@@ -601,6 +651,30 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         self.box_box()
     }
+    #[inline]
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        (**self).childs_mut()
+    }
+    #[inline]
+    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        (**self).resolve_mut(i)
+    }
+    #[inline]
+    fn inner_mut(&mut self) -> Option<&mut dyn Widget<E>> {
+        Some(&mut (**self))
+    }
+    #[inline]
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        (**self).child_mut(i)
+    }
+    #[inline]
+    fn box_mut(&mut self) -> WidgetRef<E> {
+        (**self).box_mut()
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        (**self).mutate()
+    }
 }
 impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     #[inline]
@@ -708,63 +782,42 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         self.box_box()
     }
-}
-impl<E> WidgetMut<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
-    #[allow(deprecated)]
     #[inline]
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
         (**self).childs_mut()
     }
     #[inline]
-    fn into_childs_mut<'w>(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
-        (*self).into_childs_mut()
+    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        (**self).resolve_mut(i)
     }
+    #[inline]
+    fn inner_mut(&mut self) -> Option<&mut dyn Widget<E>> {
+        Some((**self).base_mut())
+    }
+    #[inline]
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        (**self).child_mut(i)
+    }
+    #[inline]
+    fn box_mut(&mut self) -> WidgetRef<E> {
+        (**self).box_mut()
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(&mut (**self))
+    }
+}
+impl<E> WidgetMut<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
     #[inline]
     fn _set_invalid(&mut self, v: bool) {
         (**self)._set_invalid(v)
     }
     #[inline]
-    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<ResolvableMut<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
-        (**self).resolve_mut(i)
-    }
-    #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> where Self: 'w {
-        (*self).into_resolve_mut(i)
-    }
-    #[inline]
-    fn resolve_child_mut(&mut self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
-        (**self).resolve_child_mut(p)
-    }
-    #[inline]
-    fn inner_mut(&mut self) -> Option<&mut dyn WidgetMut<E>> {
-        Some(&mut(**self))
-    }
-    #[inline]
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        (**self).child_mut(i)
-    }
-    #[inline]
-    fn into_child_mut<'w>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
-        (*self).into_child_mut(i)
-    }
-    #[inline]
     fn message(&mut self, m: E::Message) {
         (**self).message(m)
     }
-    fn debug_type_name_mut(&mut self, dest: &mut Vec<&'static str>) {
-        dest.push(self.type_name());
-        (**self).debug_type_name_mut(dest);
-    }
     #[inline]
-    fn box_mut(&mut self) -> WidgetRefMut<E> {
-        (**self).box_mut()
-    }
-    #[inline]
-    fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
-        (*self).box_box_mut()
-    }
-    #[inline]
-    fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
-        self.box_box_mut()
+    fn inner_mut(&mut self) -> Option<&mut dyn WidgetMut<E>> {
+        Some(&mut (**self))
     }
 }

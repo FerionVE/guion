@@ -54,6 +54,15 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         Err(())
     }
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        vec![]
+    }
+    fn child_mut(&mut self, _: usize) -> Result<Resolvable<E>,()> {
+        Err(())
+    }
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(self)
+    }
 
     impl_traitcast!(
         dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
@@ -66,26 +75,15 @@ impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    Text: CaptionMut<E>+ValidationMut<E>+'w,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
+    Text: Caption<E>+Validation<E>+'w,
+    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![]
-    }
-    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<E>,()> {
-        Err(())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        Err(())
-    }
-
     impl_traitcast_mut!(
-        dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
-        dyn ValidationMut<E> => |s| &mut s.text;
-        dyn CaptionMut<E> => |s| &mut s.text;
+        //dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
+        //dyn ValidationMut<E> => |s| &mut s.text;
+        dyn Validation<E> => |s| &mut s.text;
+        //dyn CaptionMut<E> => |s| &mut s.text;
+        dyn Caption<E> => |s| &mut s.text;
     );
 }
 
@@ -107,7 +105,7 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
         let glyphs = Arc::new(ESGlyphs::<E>::generate(text.as_ref(),(20.0,20.0),l.ctx));
 
         let g = glyphs.refc();
-        l.mutate_closure(Box::new(move |mut w,ctx,_| {
+        l.try_mutate_closure(Box::new(move |mut w,ctx,_| {
             let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
             let key = vali.validate();
             let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();

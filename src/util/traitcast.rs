@@ -79,11 +79,11 @@ impl<E> dyn Widget<E>+'_ where E: Env {
 impl<E> dyn WidgetMut<E>+'_ where E: Env {
     #[inline]
     pub fn traitcast_ref<'s,T>(&'s self) -> Result<&'s T,GuionError<E>> where Self: Traitcast<T,E>, T: ?Sized {
-        unsafe{Self::_traitcast_ref(self.erase())}
+        unsafe{Self::_traitcast_ref(WBase::erase(self))}
     }
     #[inline]
     pub fn try_traitcast_ref<'s,T>(&'s self) -> Result<&'s T,()> where Self: Traitcast<T,E>, T: ?Sized {
-        unsafe{Self::_try_traitcast_ref(self.erase())}
+        unsafe{Self::_try_traitcast_ref(WBase::erase(self))}
     }
     #[inline]
     pub fn traitcast_mut<'s,T>(&'s mut self) -> Result<&'s mut T,GuionError<E>> where Self: TraitcastMut<T,E>, T: ?Sized {
@@ -143,7 +143,7 @@ pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
         let t = senf._as_trait_mut(t);
         if let Some(v) = t {
             Ok(std::mem::transmute_copy::<TraitObject,&'s mut T>(&v))
-        } else if let Some(senf) = senf.inner_mut() {
+        } else if let Some(senf) = WidgetMut::inner_mut(senf) {
             Self::_try_traitcast_mut(senf)
         } else {
             Err(())
@@ -195,7 +195,7 @@ fn traitcast_error_info<E,DestTypeID>(senf: &(dyn Widget<E>+'_), op: &'static st
 fn traitcast_error_info_mut<E,DestTypeID>(senf: &mut (dyn WidgetMut<E>+'_), op: &'static str) -> GuionError<E> where E: Env, DestTypeID: ?Sized + 'static {
     GuionError::TraitcastError(Box::new(TraitcastError{
         op,
-        src_type: senf.debugged_type_name_mut(),
+        src_type: senf.debugged_type_name(),
         dest_trait_type: type_name::<DestTypeID>(),
     }))
 }

@@ -16,21 +16,39 @@ pub struct Link<'c,E> where E: Env {
 impl<'c,E> Link<'c,E> where E: Env {
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)) {
+    pub fn mutate(&mut self, f: fn(WidgetRef<E>,&mut E::Context,E::WidgetPath)) { //TODO use ResolvedMut
         self.mutate_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+    pub fn mutate_at<O>(&mut self, f: fn(WidgetRef<E>,&mut E::Context,E::WidgetPath), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.path.refc(),f},o,p)
     }
     /// enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>) {
+    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context,E::WidgetPath)+'static>) {
         self.mutate_closure_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f},o,p)
+    }
+    /// enqueue mutable access to this widget
+    #[inline] 
+    pub fn try_mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)) {
+        self.try_mutate_at(f,StdOrder::PostCurrent,0)
+    }
+    #[inline] 
+    pub fn try_mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::TryMutateWidget{path: self.widget.path.refc(),f},o,p)
+    }
+    /// enqueue mutable access to this widget
+    #[inline] 
+    pub fn try_mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>) {
+        self.try_mutate_closure_at(f,StdOrder::PostCurrent,0)
+    }
+    #[inline] 
+    pub fn try_mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::TryMutateWidgetClosure{path: self.widget.path.refc(),f},o,p)
     }
     /// enqueue message-style invoking of [WidgetMut::message]
     #[inline]

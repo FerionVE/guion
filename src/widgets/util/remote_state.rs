@@ -29,6 +29,20 @@ impl<E,T> AtomState<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default +
     fn get_direct(&self) -> Result<T,()> {
         Err(())
     }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,T>,GuionError<E>> {
+        Ok(self)
+    }
+    #[inline]
+    fn try_set(&mut self, v: T, c: &mut E::Context) -> Result<(),GuionError<E>> {
+        AtomStateMut::<E,T>::set(self,v,c);
+        Ok(())
+    }
+    #[inline]
+    fn try_set_direct(&mut self, v: T) -> Result<(),GuionError<E>> {
+        AtomStateMut::<E,T>::set_direct(self,v)?;
+        Ok(())
+    }
 }
 
 impl<E,T> AtomStateMut<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: DynState<E> {

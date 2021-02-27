@@ -99,10 +99,10 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
         1
     }
     fn childs_ref(&self) -> Vec<Resolvable<E>> {
-        vec![self.text.as_ref()]
+        vec![self.text.as_widget()]
     }
     fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
-        vec![self.text.into_ref()]
+        vec![self.text.into_widget()]
     }
     
     fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
@@ -113,11 +113,21 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
 
     fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
         if i != 0 {return Err(());}
-        Ok(self.text.as_ref())
+        Ok(self.text.as_widget())
     }
     fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
-        Ok(self.text.into_ref())
+        Ok(self.text.into_widget())
+    }
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        vec![self.text.as_widget_mut()]
+    }
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        if i != 0 {return Err(());}
+        Ok(self.text.as_widget_mut())
+    }
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(self)
     }
 
     impl_traitcast!(
@@ -131,29 +141,14 @@ impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
-    State: AtomStateMut<E,bool>,
-    Text: AsWidgetMut<E>,
+    State: AtomState<E,bool>,
+    Text: AsWidget<E>,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![self.text.as_mut()]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![self.text.into_mut()]
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        if i != 0 {return Err(());}
-        Ok(self.text.as_mut())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        if i != 0 {return Err(());}
-        Ok(self.text.into_mut())
-    }
-
     impl_traitcast_mut!(
         dyn ICheckBox<E> => |s| s;
         dyn ICheckBoxMut<E> => |s| s;
         dyn AtomState<E,bool> => |s| &mut s.state;
-        dyn AtomStateMut<E,bool> => |s| &mut s.state;
+        //dyn AtomStateMut<E,bool> => |s| &mut s.state;
     );
 }
 
@@ -166,10 +161,10 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     Text: AsWidget<E>,
 {
     pub fn set(mut l: Link<E>, v: bool) {
-        l.mutate_closure(Box::new(move |mut w,c,_|{
+        l.try_mutate_closure(Box::new(move |mut w,c,_|{
             //w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
             let w = w.traitcast_mut::<dyn ICheckBoxMut<E>>().unwrap();
-            w.state_mut().set(v,c);
+            w.state_mut().try_set(v,c);
         }));
     }
 }

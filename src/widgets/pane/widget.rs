@@ -39,26 +39,24 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         self.childs.into_child(i)
     }
+
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        self.childs.childs_mut()
+    }
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        self.childs.child_mut(i)
+    }
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(self)
+    }
 }
 impl<'w,E,T> WidgetMut<E> for Pane<'w,E,T> where 
     E: Env,
-    T: WidgetArrayMut<E>+'w,
+    T: WidgetArray<E>+'w,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
         //self.invalid = true
-    }
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        self.childs.childs_mut()
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        self.childs.into_childs_mut()
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        self.childs.child_mut(i)
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        self.childs.into_child_mut(i)
     }
 }
 

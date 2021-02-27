@@ -12,8 +12,10 @@ pub trait Queue<I,O> { //TODO probably remove mandantory StdEnqueueable bound
 pub enum StdEnqueueable<E> where E: Env {
     Render{force: bool},
     Event{event: EEvent<E>, ts: u64},
-    MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)},
-    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>},
+    MutateWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context,E::WidgetPath)},
+    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context,E::WidgetPath)+'static>},
+    TryMutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)},
+    TryMutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>},
     MutateRoot{f: fn(&mut E::Storage,&mut E::Context)},
     MutateRootClosure{f: Box<dyn FnOnce(&mut E::Storage,&mut E::Context)+'static>},
     AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context)},
@@ -67,12 +69,12 @@ pub enum StdOrder {
 /// to be executed by the queue impl, always DIRECTLY before rendering
 #[deprecated]
 pub fn invalidate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),GuionError<E>> {
-    stor.widget_mut(i)
-        .map(#[inline] |mut w| w._set_invalid(true) )
+    stor.widget_mut(i)?.mutate()?._set_invalid(true);
+    Ok(())
 }
 #[deprecated]
 /// to be executed by the queue impl, always DIRECTLY after rendering
 pub fn validate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),GuionError<E>> {
-    stor.widget_mut(i)
-        .map(#[inline] |mut w| w._set_invalid(false) )
+    stor.widget_mut(i)?.mutate()?._set_invalid(false);
+    Ok(())
 }

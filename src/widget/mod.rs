@@ -286,6 +286,12 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         WBase::_box_ref(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// box mut reference of this widget
+    #[inline]
+    fn box_mut<'s>(&'s mut self) -> WidgetRef<'s,E> {
+        WBase::_box_mut(self)
+    }
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// move widget into box. Use [WidgetMut::box_box_mut] to box into mutable [WidgetRef]
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
@@ -301,7 +307,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     #[inline(never)]
     fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str) -> GuionError<E> {
         /*
-        Failed to resolve 3/5/2 in Pane<Vec<WidgetRefMut<E>>>
+        Failed to resolve 3/5/2 in Pane<Vec<WidgetRef<E>>>
             Child #0: 6 Button<E,Label<&str>>
             Child #1: 8 CheckBox<E,Label<&str>>
             Child #2: 4 ProgressBar<E>
@@ -320,6 +326,39 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
             child_info,
         }))
     }
+
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
+    fn child_mut<'s>(&'s mut self, i: usize) -> Result<Resolvable<'s,E>,()>;
+
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
+    #[deprecated]
+    fn childs_mut<'s>(&'s mut self) -> Vec<Resolvable<'s,E>>;
+
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
+    /// resolve a deep child item by the given relative path  
+    /// an empty path will resolve to this widget  
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
+    #[inline]
+    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        if i.is_empty() {
+            return Ok(Resolvable::Widget(self.box_mut()))
+        }
+        let (c,sub) = self.resolve_child(&i)?;
+        self.child_mut(c).unwrap().resolve_child(sub)
+    }
+
+    #[inline]
+    fn inner_mut(&mut self) -> Option<&mut dyn Widget<E>> {
+        None
+    }
+
+    #[inline]
+    fn pass(self) -> Self where Self: Sized {
+        self
+    }
+
+    /// fails when mut acces not possible, e.g. behind a immutable reference
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>>;
 }
 
 pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
@@ -337,75 +376,9 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         
     }
 
-    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()>;
-    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_child_mut<'w>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w;
-
-    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    #[deprecated]
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>>;
-    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_childs_mut<'w>(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> where Self: 'w;
-
-    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget  
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
-    #[inline]
-    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
-        if i.is_empty() {
-            return Ok(ResolvableMut::Widget(self.box_mut()))
-        }
-        let (c,sub) = self.resolve_child(&i)?;
-        self.child_mut(c).unwrap().resolve_child_mut(sub)
-    }
-
-    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget  
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
-    #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> where Self: 'w {
-        if i.is_empty() {
-            return Ok(ResolvableMut::Widget(self.box_box_mut()))
-        }
-        let (c,sub) = self.resolve_child(&i)?;
-        self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(sub)
-    }
-
-    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// to (or through) which child path would the given sub_path resolve?
-    /// returns the child index and the subpath inside the child widget to resolve further
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
-    #[inline]
-    fn resolve_child_mut(&mut self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
-        for c in 0..self.childs() {
-            if let Some(r) = self.child(c).unwrap().resolved_by_path(sub_path) {
-                return Ok((c,r.sub_path));
-            }
-        }
-        Err(self.gen_diag_error_resolve_fail_mut(sub_path,"resolve_mut"))
-    }
-
     #[inline]
     fn inner_mut(&mut self) -> Option<&mut dyn WidgetMut<E>> {
         None
-    }
-
-    #[inline]
-    fn pass(self) -> Self where Self: Sized {
-        self
-    }
-
-    fn debug_type_name_mut(&mut self, dest: &mut Vec<&'static str>) {
-        dest.push(self.type_name());
-    }
-    fn debugged_type_name_mut(&mut self) -> Vec<&'static str> {
-        let mut v = Vec::new();
-        self.debug_type_name_mut(&mut v);
-        v.shrink_to_fit();
-        v
     }
 
     /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
@@ -416,39 +389,6 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
         None
     }
-
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
-    /// box mut reference of this widget
-    #[inline]
-    fn box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
-        WBaseMut::_box_mut(self)
-    }
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
-    /// move widget into box
-    #[inline]
-    fn box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
-        WBaseMut::_box_box_mut(self)
-    }
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
-    /// move widget into box
-    #[inline]
-    fn boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w {
-        WBaseMut::_boxed_mut(self)
-    }
-
-    #[inline(never)]
-    fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, op: &'static str) -> GuionError<E> {
-        let widget_type = self.debugged_type_name_mut();
-        let child_info = (0..self.childs())
-            .map(#[inline] |i| self.child_mut(i).unwrap().guion_resolve_error_child_info(i) )
-            .collect::<Vec<_>>();
-        GuionError::ResolveError(Box::new(ResolveError{
-            op,
-            sub_path: sub_path.clone(),
-            widget_type,
-            child_info,
-        }))
-    }
 }
 
 /// this trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
@@ -456,7 +396,9 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
 pub trait WBase<E> where E: Env {
     fn type_name(&self) -> &'static str;
     fn erase(&self) -> &dyn Widget<E>;
+    fn erase_mut(&mut self) -> &mut dyn Widget<E>;
     fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E>;
+    fn _box_mut<'s>(&'s mut self) -> WidgetRef<'s,E>;
     fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
     fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
 }
@@ -470,8 +412,16 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
         self
     }
     #[inline]
+    fn erase_mut(&mut self) -> &mut dyn Widget<E> {
+        self
+    }
+    #[inline]
     fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
         Box::new(self.erase())
+    }
+    #[inline]
+    fn _box_mut<'s>(&'s mut self) -> WidgetRef<'s,E> {
+        Box::new(self.erase_mut())
     }
     #[inline]
     fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
@@ -487,10 +437,9 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
 #[doc(hidden)]
 pub trait WBaseMut<E> where E: Env {
     fn base(&self) -> &dyn Widget<E>;
+    fn base_mut(&mut self) -> &mut dyn Widget<E>;
+    fn erase(&self) -> &dyn WidgetMut<E>;
     fn erase_mut(&mut self) -> &mut dyn WidgetMut<E>;
-    fn _box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E>;
-    fn _box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w;
-    fn _boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized+'w;
 }
 impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
     #[inline]
@@ -498,19 +447,15 @@ impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
         self
     }
     #[inline]
+    fn base_mut(&mut self) -> &mut dyn Widget<E> {
+        self
+    }
+    #[inline]
+    fn erase(&self) -> &dyn WidgetMut<E> {
+        self
+    }
+    #[inline]
     fn erase_mut(&mut self) -> &mut dyn WidgetMut<E> {
         self
-    }
-    #[inline]
-    fn _box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
-        Box::new(self.erase_mut())
-    }
-    #[inline]
-    fn _box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
-        self
-    }
-    #[inline]
-    fn _boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized + 'w {
-        Box::new(self)
     }
 }

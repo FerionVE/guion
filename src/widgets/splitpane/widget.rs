@@ -88,9 +88,9 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
                         cx = cx - wx0;
                         let fcx = (cx as f32)/(ww as f32);
 
-                        l.mutate_closure(Box::new(move |mut w,c,_|{
+                        l.try_mutate_closure(Box::new(move |mut w,c,_|{
                             let w = w.traitcast_mut::<dyn AtomStateMut<E,f32>>().unwrap();
-                            w.set(fcx,c);
+                            w.try_set(fcx,c);
                         }));
 
                         bounds = self.calc_bounds(&e.bounds,fcx);
@@ -144,6 +144,15 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         self.childs.into_child(i)
     }
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        self.childs.childs_mut()
+    }
+    fn child_mut(&mut self, i: usize) -> Result<Resolvable<E>,()> {
+        self.childs.child_mut(i)
+    }
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(self)
+    }
 
     impl_traitcast!(
         dyn AtomState<E,f32> => |s| &s.state;
@@ -154,30 +163,18 @@ impl<'w,E,L,R,V> WidgetMut<E> for SplitPane<'w,E,L,R,V> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
-    L: AsWidgetMut<E>,
-    R: AsWidgetMut<E>,
-    V: AtomStateMut<E,f32>,
+    L: AsWidget<E>,
+    R: AsWidget<E>,
+    V: AtomState<E,f32>,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
         //self.invalid = true
     }
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        self.childs.childs_mut()
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        self.childs.into_childs_mut()
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        self.childs.child_mut(i)
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        self.childs.into_child_mut(i)
-    }
 
     impl_traitcast_mut!(
         dyn AtomState<E,f32> => |s| &mut s.state;
-        dyn AtomStateMut<E,f32> => |s| &mut s.state;
+        //dyn AtomStateMut<E,f32> => |s| &mut s.state;
     );
 }
 

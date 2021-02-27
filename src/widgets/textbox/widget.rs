@@ -70,7 +70,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
 
         if let Some(ee) = e.event.is_text_input() {
             let s = ee.text;
-            l.mutate_closure(Box::new(move |mut w,ctx,_| {
+            l.try_mutate_closure(Box::new(move |mut w,ctx,_| {
                 let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
                 w.insert_text(&s,ctx);
                 w.scroll_to_cursor(ctx,&b);
@@ -213,6 +213,15 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
     fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         Err(())
     }
+    fn childs_mut(&mut self) -> Vec<Resolvable<E>> {
+        vec![]
+    }
+    fn child_mut(&mut self, _: usize) -> Result<Resolvable<E>,()> {
+        Err(())
+    }
+    fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>> {
+        Ok(self)
+    }
 
     impl_traitcast!(
         dyn Caption<E> => |s| &s.text;
@@ -236,19 +245,6 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,
     CursorStickX: AtomStateMut<E,Option<u32>>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![]
-    }
-    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<E>,()> {
-        Err(())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        Err(())
-    }
-
     impl_traitcast_mut!(
         dyn Caption<E> => |s| &mut s.text;
         dyn CaptionMut<E> => |s| &mut s.text;

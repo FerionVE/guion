@@ -164,19 +164,11 @@ unsafe impl<E,S> Statize<E> for SimplePath<E,S> where E: Env, S: SubPath<E> + Se
 
 //TODO fix the AsWidget generic impl
 /*impl<E,S> AsWidget<'static,E> for SimplePath<E,S> where E: Env {
-    fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'static: 's {
+    fn as_widget<'s>(&'s self) -> Resolvable<'s,E> where 'static: 's {
         Resolvable::Path(self.clone().into())
     }
-    fn into_ref(self) -> Resolvable<'static,E> {
+    fn into_widget(self) -> Resolvable<'static,E> {
         Resolvable::Path(self.clone().into())
-    }
-}
-impl<E,S> AsWidgetMut<'static,E> for SimplePath<E,S> where E: Env {
-    fn as_mut<'s>(&'s mut self) -> ResolvableMut<'s,E> where 'static: 's {
-        ResolvableMut::Path(self.clone().into())
-    }
-    fn into_mut(self) -> ResolvableMut<'static,E> {
-        ResolvableMut::Path(self.clone().into())
     }
 }*/
 

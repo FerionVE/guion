@@ -41,7 +41,7 @@ pub fn resolve_in_root<E: Env>(w: &dyn Widget<E>, p: E::WidgetPath) -> Result<(W
 }
 //#[doc(hidden)]
 /// Used by [`Widgets::widget_mut`](Widgets::widget_mut) implementations
-pub fn resolve_in_root_mut<E: Env>(w: &mut dyn WidgetMut<E>, p: E::WidgetPath) -> Result<(WidgetRefMut<E>,E::WidgetPath),GuionError<E>> {
+pub fn resolve_in_root_mut<E: Env>(w: &mut dyn WidgetMut<E>, p: E::WidgetPath) -> Result<(WidgetRef<E>,E::WidgetPath),GuionError<E>> {
     let final_path = resolve_in_root::<E>(w.base(),p)
         .map(#[inline] |e| e.1 )?;
 

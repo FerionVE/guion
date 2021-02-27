@@ -77,16 +77,16 @@ impl<'w,E> WidgetMut<'w,E> for Null<E> where
     ERenderer<E>: RenderStdWidgets<E>,
     EStyle<E>: StyleVariantSupport<StdSelectag>,
 {
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {
+    fn childs_mut<'s>(&'s mut self) -> Vec<Resolvable<'s,E>> where 'w: 's {
         vec![]
     }
-    fn into_childs_mut(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> {
+    fn into_childs_mut(self: Box<Self>) -> Vec<Resolvable<'w,E>> {
         vec![]
     }
-    fn child_mut<'a>(&'a mut self, i: usize) -> Result<ResolvableMut<'a,E>,()> where 'w: 'a {
+    fn child_mut<'a>(&'a mut self, i: usize) -> Result<Resolvable<'a,E>,()> where 'w: 'a {
         Err(())
     }
-    fn into_child_mut(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> {
+    fn into_child_mut(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> {
         Err(())
     }
 }

@@ -10,9 +10,15 @@ pub struct Resolved<'a,E> where E: Env {
 }
 /// A mutable reference to a resolved Widget
 pub struct ResolvedMut<'a,E> where E: Env {
+    pub wref: WidgetRef<'a,E>,
+    pub path: E::WidgetPath,
+}
+/// A mutable reference to a resolved Widget
+pub struct ResolvedMutable<'a,E> where E: Env {
     pub wref: WidgetRefMut<'a,E>,
     pub path: E::WidgetPath,
 }
+
 
 impl<'a,E> Resolved<'a,E> where E: Env {
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
@@ -113,16 +119,15 @@ impl<'a,E> Deref for Resolved<'a,E> where E: Env {
         &self.wref
     }
 }
-
-impl<'a,E> ResolvedMut<'a,E> where E: Env {
+impl<'a,E> DerefMut for Resolved<'a,E> where E: Env {
     #[inline]
-    pub fn widget(&mut self) -> &mut (dyn WidgetMut<E>+'_) {
-        &mut *self.wref
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.wref
     }
 }
 
 impl<'a,E> Deref for ResolvedMut<'a,E> where E: Env {
-    type Target = WidgetRefMut<'a,E>;
+    type Target = WidgetRef<'a,E>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -136,9 +141,33 @@ impl<'a,E> DerefMut for ResolvedMut<'a,E> where E: Env {
     }
 }
 
+impl<'a,E> ResolvedMut<'a,E> where E: Env {
+    fn mutate(&mut self) -> Result<ResolvedMutable<E>,GuionError<E>> {
+        Ok(ResolvedMutable{
+            wref: Box::new(self.wref.mutate()?),
+            path: self.path.clone()
+        })
+    }
+}
+
+impl<'a,E> Deref for ResolvedMutable<'a,E> where E: Env {
+    type Target = WidgetRefMut<'a,E>;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.wref
+    }
+}
+impl<'a,E> DerefMut for ResolvedMutable<'a,E> where E: Env {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.wref
+    }
+}
+
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
     #[inline]
     fn clone(&self) -> Self {
-        self.stor.widget(self.path.refc()).unwrap()
+        self.stor.widget(self.path.refc()).unwrap() //A Clo(w)n that doesn't resolve
     }
 }
