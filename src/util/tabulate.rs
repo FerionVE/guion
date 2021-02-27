@@ -31,3 +31,31 @@ pub fn tabi<E>(mut root: Link<E>, path: E::WidgetPath, dir: TabulateDirection) -
     }
     Ok(current)
 }
+
+/// in determining the next target inside a widget, this describes the origin
+pub enum TabulateNextChildOrigin {
+    /// widget entered (previous focused was outside)
+    Enter,
+    /// the previous focused was the widget itself
+    This,
+    /// previous focused was inside specific child
+    Child(usize),
+}
+
+pub enum TabulateNextChildResponse {
+    /// the tabulation target would be the widget itself
+    This,
+    /// the next tabulation target would be this child
+    Child(usize),
+    /// the tabulation would leave the widget
+    Leave,
+}
+
+impl TabulateNextChildOrigin {
+    pub fn child_or_this(c: Option<usize>) -> Self {
+        match c {
+            Some(v) => Self::Child(v),
+            None => Self::This,
+        }
+    } 
+}
