@@ -157,6 +157,10 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     impl_traitcast!(
         dyn AtomState<E,f32> => |s| &s.state;
     );
+    impl_traitcast_mut!(
+        dyn AtomState<E,f32> => |s| &mut s.state;
+        //dyn AtomStateMut<E,f32> => |s| &mut s.state;
+    );
 }
 impl<'w,E,L,R,V> WidgetMut<E> for SplitPane<'w,E,L,R,V> where
     E: Env,
@@ -172,10 +176,7 @@ impl<'w,E,L,R,V> WidgetMut<E> for SplitPane<'w,E,L,R,V> where
         //self.invalid = true
     }
 
-    impl_traitcast_mut!(
-        dyn AtomState<E,f32> => |s| &mut s.state;
-        //dyn AtomStateMut<E,f32> => |s| &mut s.state;
-    );
+    
 }
 
 impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where

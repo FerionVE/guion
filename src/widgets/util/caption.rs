@@ -9,6 +9,10 @@ pub trait Caption<E> {
     fn len(&self) -> usize {
         self.caption().len()
     }
+
+    fn try_push(&mut self, off: usize, s: &str);
+    fn try_pop_left(&mut self, off: usize, n: usize);
+    fn try_replace(&mut self, s: &str);
 }
 
 impl<E> Caption<E> for str {
@@ -16,11 +20,28 @@ impl<E> Caption<E> for str {
     fn caption(&self) -> Cow<str> {
         Cow::Borrowed(self)
     }
+
+    #[inline] fn try_push(&mut self, off: usize, s: &str) {}
+    #[inline] fn try_pop_left(&mut self, off: usize, n: usize) {}
+    #[inline] fn try_replace(&mut self, s: &str) {}
 }
 impl<E> Caption<E> for String {
     #[inline]
     fn caption(&self) -> Cow<str> {
         Cow::Borrowed(self)
+    }
+
+    #[inline]
+    fn try_push(&mut self, off: usize, s: &str) {
+        CaptionMut::<E>::push(self,off,s)
+    }
+    #[inline]
+    fn try_pop_left(&mut self, off: usize, n: usize) {
+        CaptionMut::<E>::pop_left(self,off,n)
+    }
+    #[inline]
+    fn try_replace(&mut self, s: &str) {
+        CaptionMut::<E>::replace(self,s)
     }
 }
 
@@ -29,12 +50,20 @@ impl<E> Caption<E> for Path {
     fn caption(&self) -> Cow<str> {
         self.to_string_lossy()
     }
+
+    #[inline] fn try_push(&mut self, off: usize, s: &str) {}
+    #[inline] fn try_pop_left(&mut self, off: usize, n: usize) {}
+    #[inline] fn try_replace(&mut self, s: &str) {}
 }
 impl<E> Caption<E> for PathBuf {
     #[inline]
     fn caption(&self) -> Cow<str> {
         self.to_string_lossy()
     }
+
+    #[inline] fn try_push(&mut self, off: usize, s: &str) {}
+    #[inline] fn try_pop_left(&mut self, off: usize, n: usize) {}
+    #[inline] fn try_replace(&mut self, s: &str) {}
 }
 
 impl<E> Caption<E> for OsStr {
@@ -42,12 +71,20 @@ impl<E> Caption<E> for OsStr {
     fn caption(&self) -> Cow<str> {
         self.to_string_lossy()
     }
+
+    #[inline] fn try_push(&mut self, off: usize, s: &str) {}
+    #[inline] fn try_pop_left(&mut self, off: usize, n: usize) {}
+    #[inline] fn try_replace(&mut self, s: &str) {}
 }
 impl<E> Caption<E> for OsString {
     #[inline]
     fn caption(&self) -> Cow<str> {
         self.to_string_lossy()
     }
+
+    #[inline] fn try_push(&mut self, off: usize, s: &str) {}
+    #[inline] fn try_pop_left(&mut self, off: usize, n: usize) {}
+    #[inline] fn try_replace(&mut self, s: &str) {}
 }
 
 impl<E,T> Caption<E> for &'_ T where T: Caption<E>+?Sized {
@@ -55,11 +92,28 @@ impl<E,T> Caption<E> for &'_ T where T: Caption<E>+?Sized {
     fn caption(&self) -> Cow<str> {
         (**self).caption()
     }
+
+    #[inline] fn try_push(&mut self, off: usize, s: &str) {}
+    #[inline] fn try_pop_left(&mut self, off: usize, n: usize) {}
+    #[inline] fn try_replace(&mut self, s: &str) {}
 }
 impl<'l,E,T> Caption<E> for &'_ mut T where T: Caption<E>+?Sized {
     #[inline]
     fn caption(&self) -> Cow<str> {
         (**self).caption()
+    }
+
+    #[inline]
+    fn try_push(&mut self, off: usize, s: &str) {
+        (**self).try_push(off,s)
+    }
+    #[inline]
+    fn try_pop_left(&mut self, off: usize, n: usize) {
+        (**self).try_pop_left(off,n)
+    }
+    #[inline]
+    fn try_replace(&mut self, s: &str) {
+        (**self).try_replace(s)
     }
 }
 
@@ -67,6 +121,19 @@ impl<E,T> Caption<E> for Validated<E,T> where T: Caption<E> {
     #[inline]
     fn caption(&self) -> Cow<str> {
         (**self).caption()
+    }
+
+    #[inline]
+    fn try_push(&mut self, off: usize, s: &str) {
+        (**self).try_push(off,s)
+    }
+    #[inline]
+    fn try_pop_left(&mut self, off: usize, n: usize) {
+        (**self).try_pop_left(off,n)
+    }
+    #[inline]
+    fn try_replace(&mut self, s: &str) {
+        (**self).try_replace(s)
     }
 }
 impl<E,T> CaptionMut<E> for Validated<E,T> where T: CaptionMut<E> {
@@ -92,6 +159,10 @@ macro_rules! impl_caption_gen {
             fn caption(&self) -> Cow<str> {
                 Cow::Owned(self.to_string())
             }
+
+            #[inline] fn try_push(&mut self, off: usize, s: &str) {}
+            #[inline] fn try_pop_left(&mut self, off: usize, n: usize) {}
+            #[inline] fn try_replace(&mut self, s: &str) {}
         }
     }
 }
@@ -144,4 +215,4 @@ unsafe impl<E> Statize<E> for dyn CaptionMut<E> where E: 'static {
     type Statur = dyn CaptionMut<E>+'static;
 }
 
-traitcast_for!(Caption<E>;CaptionMut<E>);
+traitcast_for!(Caption<E>);

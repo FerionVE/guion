@@ -25,4 +25,4 @@ unsafe impl<E> Statize<E> for dyn ValidationMut<E> where E: 'static {
     type Statur = dyn ValidationMut<E>;
 }
 
-traitcast_for!(Validation<E>;ValidationMut<E>);
+traitcast_for!(Validation<E>);

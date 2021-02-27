@@ -60,15 +60,16 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     impl_traitcast!(
         dyn AtomState<E,f32> => |s| &s.value;
     );
+    impl_traitcast_mut!(
+        dyn AtomState<E,f32> => |s| &mut s.value;
+    );
 }
 
 impl<'w,E> WidgetMut<E> for ProgressBar<'w,E> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
 {
-    impl_traitcast_mut!(
-        dyn AtomStateMut<E,f32> => |s| &mut s.value;
-    );
+    
 }
 
 pub fn crop(i: &Bounds, v: f32, o: Orientation) -> Bounds {

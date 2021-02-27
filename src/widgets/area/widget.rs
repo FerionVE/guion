@@ -7,7 +7,8 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>+'w,
-    Scroll: AtomState<E,(u32,u32)>,
+    for<'a> &'a Scroll: AtomState<E,(u32,u32)>,
+    for<'a> &'a mut Scroll: AtomState<E,(u32,u32)>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -65,8 +66,8 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
                     ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN ||
                     ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
                 {
-                    l.try_mutate_closure(Box::new(move |mut w,ctx,_| {
-                        let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
+                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                        let w = w.traitcast_mut::<dyn AtomState<E,(u32,u32)>>().unwrap();
                         let mut v = w.get(ctx);
                         if ee.key == EEKey::<E>::UP {
                             v.1 = v.1.saturating_sub(4);
@@ -80,7 +81,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
                         if ee.key == EEKey::<E>::RIGHT {
                             v.0 += 4;
                         }
-                        w.set(v,ctx);
+                        w.try_set(v,ctx);
                     }));
                     passed = true;
                 }
@@ -131,6 +132,10 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     impl_traitcast!(
         dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
     );
+    impl_traitcast_mut!(
+        dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
+        //dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
+    );
 }
 
 impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
@@ -139,10 +144,8 @@ impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidget<E>+'w,
-    Scroll: AtomState<E,(u32,u32)>,
+    for<'a> &'a Scroll: AtomState<E,(u32,u32)>,
+    for<'a> &'a mut Scroll: AtomState<E,(u32,u32)>,
 {
-    impl_traitcast_mut!(
-        dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
-        //dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
-    );
+    
 }

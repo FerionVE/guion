@@ -270,15 +270,6 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         v
     }
 
-    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
-    /// The impl_traitcast! macro should be used to implement this function
-    #[allow(unused)]
-    #[doc(hidden)]
-    #[inline]
-    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
-        None
-    }
-
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// box reference of this widget. Use [WidgetMut::box_mut] to box into mutable [WidgetRef]
     #[inline]
@@ -359,6 +350,23 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
 
     /// fails when mut acces not possible, e.g. behind a immutable reference
     fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>>;
+
+    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
+    /// The impl_traitcast! macro should be used to implement this function
+    #[allow(unused)]
+    #[doc(hidden)]
+    #[inline]
+    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
+        None
+    }
+    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
+    /// The impl_traitcast_mut! macro should be used to implement this function
+    #[allow(unused)]
+    #[doc(hidden)]
+    #[inline]
+    unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
+        None
+    }
 }
 
 pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
@@ -378,15 +386,6 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
 
     #[inline]
     fn inner_mut(&mut self) -> Option<&mut dyn WidgetMut<E>> {
-        None
-    }
-
-    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
-    /// The impl_traitcast_mut! macro should be used to implement this function
-    #[allow(unused)]
-    #[doc(hidden)]
-    #[inline]
-    unsafe fn _as_trait_mut(&mut self, t: TypeId) -> Option<TraitObject> {
         None
     }
 }

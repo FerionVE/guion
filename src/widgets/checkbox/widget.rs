@@ -3,14 +3,14 @@ use crate::style::standard::cursor::StdCursor;
 use super::*;
 use util::state::AtomStateMut;
 use imp::ICheckBox;
-use super::imp::ICheckBoxMut;
 
 impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
-    State: AtomState<E,bool>,
+    for<'a> &'a State: AtomState<E,bool>,
+    //for<'a> &'a mut State: AtomState<E,bool>,
     Text: AsWidget<E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -134,6 +134,11 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
         dyn ICheckBox<E> => |s| s;
         dyn AtomState<E,bool> => |s| &s.state;
     );
+    impl_traitcast_mut!(
+        dyn ICheckBox<E> => |s| s;
+        dyn AtomState<E,bool> => |s| &mut s.state;
+        //dyn AtomStateMut<E,bool> => |s| &mut s.state;
+    );
 }
 
 impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
@@ -141,15 +146,11 @@ impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
-    State: AtomState<E,bool>,
+    for<'a> &'a State: AtomState<E,bool>,
+    //for<'a> &'a mut State: AtomState<E,bool>,
     Text: AsWidget<E>,
 {
-    impl_traitcast_mut!(
-        dyn ICheckBox<E> => |s| s;
-        dyn ICheckBoxMut<E> => |s| s;
-        dyn AtomState<E,bool> => |s| &mut s.state;
-        //dyn AtomStateMut<E,bool> => |s| &mut s.state;
-    );
+    
 }
 
 impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
@@ -163,7 +164,7 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     pub fn set(mut l: Link<E>, v: bool) {
         l.try_mutate_closure(Box::new(move |mut w,c,_|{
             //w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
-            let w = w.traitcast_mut::<dyn ICheckBoxMut<E>>().unwrap();
+            let w = w.traitcast_mut::<dyn ICheckBox<E>>().unwrap();
             w.state_mut().try_set(v,c);
         }));
     }

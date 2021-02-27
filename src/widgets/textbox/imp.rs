@@ -146,7 +146,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
     }
 }
 
-traitcast_for!(ITextBox<E>;ITextBoxMut<E>);
+traitcast_for!(ITextBox<E>);
 
 impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
