@@ -7,8 +7,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>+'w,
-    for<'a> &'a Scroll: AtomState<E,(u32,u32)>,
-    for<'a> &'a mut Scroll: AtomState<E,(u32,u32)>,
+    Scroll: AtomState<E,(u32,u32)>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -144,8 +143,7 @@ impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidget<E>+'w,
-    for<'a> &'a Scroll: AtomState<E,(u32,u32)>,
-    for<'a> &'a mut Scroll: AtomState<E,(u32,u32)>,
+    Scroll: AtomState<E,(u32,u32)>,
 {
     
 }

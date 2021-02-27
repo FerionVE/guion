@@ -29,7 +29,7 @@ macro_rules! impl_traitcast {
             $(
                 if t == std::any::TypeId::of::<<(dyn $crate::widget::Widget<_>) as $crate::util::traitcast::Traitcast::<Box<$trait>,_>>::DestTypeID>() {
                     let $id = self;
-                    let senf: &'impl_traitcast_lt_a _ = $access;
+                    let senf: &'impl_traitcast_lt_a $trait = $access;
                     let senf: Box<$trait> = Box::new(senf);
                     let senf = std::mem::transmute::<Box<$trait>,$crate::util::traitcast::TraitObject>(senf);
                     return Some(senf);
@@ -57,7 +57,7 @@ macro_rules! impl_traitcast_mut {
             $(
                 if t == std::any::TypeId::of::<<(dyn $crate::widget::Widget<_>) as $crate::util::traitcast::Traitcast::<Box<$trait>,_>>::DestTypeID>() {
                     let $id = self;
-                    let senf: &'impl_traitcast_lt_a _ = $access;
+                    let senf: &'impl_traitcast_lt_a mut $trait = $access;
                     let senf: Box<$trait> = Box::new(senf);
                     let senf = std::mem::transmute::<Box<$trait>,$crate::util::traitcast::TraitObject>(senf);
                     return Some(senf);
@@ -68,64 +68,64 @@ macro_rules! impl_traitcast_mut {
     }
 }
 
-pub trait SafeTraitcase<'s,E> where E: Env {
-    fn traitcast_ref<T>(&'s self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized;
-    fn try_traitcast_ref<T>(&'s self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized;
-    fn traitcast_mut<T>(&'s mut self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized;
-    fn try_traitcast_mut<T>(&'s mut self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized;
+pub trait SafeTraitcase<'s,'w:'s,E> where E: Env {
+    fn traitcast_ref<T>(&'s self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized;
+    fn try_traitcast_ref<T>(&'s self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized;
+    fn traitcast_mut<T>(&'s mut self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized;
+    fn try_traitcast_mut<T>(&'s mut self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized;
 }
 
-impl<'s,E> SafeTraitcase<'s,E> for dyn Widget<E>+'s where E: Env {
+impl<'s,'w:'s,E> SafeTraitcase<'s,'w,E> for dyn Widget<E>+'w where E: Env {
     #[inline]
-    fn traitcast_ref<T>(&'s self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn traitcast_ref<T>(&'s self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_traitcast_ref(self)}
     }
     #[inline]
-    fn try_traitcast_ref<T>(&'s self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn try_traitcast_ref<T>(&'s self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_try_traitcast_ref(self)}
     }
     #[inline]
-    fn traitcast_mut<T>(&'s mut self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn traitcast_mut<T>(&'s mut self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_traitcast_mut(self)}
     }
     #[inline]
-    fn try_traitcast_mut<T>(&'s mut self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn try_traitcast_mut<T>(&'s mut self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_try_traitcast_mut(self)}
     }
 }
-impl<'s,E> SafeTraitcase<'s,E> for &'s (dyn Widget<E>+'s) where E: Env {
+impl<'s,'w:'s,E> SafeTraitcase<'s,'w,E> for &'_ (dyn Widget<E>+'w) where E: Env {
     #[inline]
-    fn traitcast_ref<T>(&'s self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn traitcast_ref<T>(&'s self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_traitcast_ref(*self)}
     }
     #[inline]
-    fn try_traitcast_ref<T>(&'s self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn try_traitcast_ref<T>(&'s self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_try_traitcast_ref(*self)}
     }
     #[inline]
-    fn traitcast_mut<T>(&'s mut self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn traitcast_mut<T>(&'s mut self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_traitcast_ref(*self)}
     }
     #[inline]
-    fn try_traitcast_mut<T>(&'s mut self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn try_traitcast_mut<T>(&'s mut self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_try_traitcast_ref(*self)}
     }
 }
-impl<'s,E> SafeTraitcase<'s,E> for &'s mut (dyn Widget<E>+'s) where E: Env {
+impl<'s,'w:'s,E> SafeTraitcase<'s,'w,E> for &'_ mut (dyn Widget<E>+'w) where E: Env {
     #[inline]
-    fn traitcast_ref<T>(&'s self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn traitcast_ref<T>(&'s self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_traitcast_ref(*self)}
     }
     #[inline]
-    fn try_traitcast_ref<T>(&'s self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn try_traitcast_ref<T>(&'s self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_try_traitcast_ref(*self)}
     }
     #[inline]
-    fn traitcast_mut<T>(&'s mut self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn traitcast_mut<T>(&'s mut self) -> Result<Box<T>,GuionError<E>> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_traitcast_mut(*self)}
     }
     #[inline]
-    fn try_traitcast_mut<T>(&'s mut self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,Box<T>,E>, T: ?Sized {
+    fn try_traitcast_mut<T>(&'s mut self) -> Result<Box<T>,()> where dyn Widget<E>: Traitcast<'s,'w,Box<T>,E>, T: ?Sized {
         unsafe{Self::_try_traitcast_mut(*self)}
     }
 }
@@ -135,7 +135,7 @@ impl<'s,E> SafeTraitcase<'s,E> for &'s mut (dyn Widget<E>+'s) where E: Env {
 /// - must be implemented onto implemented on `dyn Widget<E>+'w`  
 /// - `T` is the destination `Box<dyn Trait+'w>` to which should be traitcasted  
 /// - `DestTypeID` must be `dyn Widget+'static`
-pub unsafe trait Traitcast<'s,T,E>: Widget<E> where T: Sized, E: Env {
+pub unsafe trait Traitcast<'s,'w,T,E>: Widget<E> where T: Sized, E: Env , 'w: 's {
     type DestTypeID: ?Sized + 'static;
 
     #[inline]
@@ -189,7 +189,7 @@ pub unsafe trait Traitcast<'s,T,E>: Widget<E> where T: Sized, E: Env {
 #[macro_export]
 macro_rules! traitcast_for {
     ($trait:path) => {
-        unsafe impl<'w,E> $crate::util::traitcast::Traitcast<'w,Box<dyn $trait+'w>,E> for dyn $crate::widget::Widget<E>+'w where E: $crate::env::Env {
+        unsafe impl<'s,'w:'s,E> $crate::util::traitcast::Traitcast<'w,'s,Box<dyn $trait+'s>,E> for dyn $crate::widget::Widget<E>+'w where E: $crate::env::Env {
             type DestTypeID = dyn $trait+'static;
         }
     };

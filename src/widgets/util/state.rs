@@ -131,7 +131,7 @@ unsafe impl<T,E> Statize<E> for dyn AtomStateMut<E,T> where T: 'static, E: Env {
     type Statur = dyn AtomStateMut<E,T>;
 }
 
-unsafe impl<'w,T,E> Traitcast<'w,Box<dyn AtomState<E,T>+'w>,E> for dyn Widget<E>+'w where E: Env, T: 'static {
+unsafe impl<'s,'w:'s,T,E> Traitcast<'s,'w,Box<dyn AtomState<E,T>+'s>,E> for dyn Widget<E>+'w where E: Env, T: 'static {
     type DestTypeID = dyn AtomState<E,T>;
 }
 /*unsafe impl<'w,T,E> TraitcastMut<'w,Box<dyn AtomState<E,T>+'w>,E> for dyn WidgetMut<E>+'w where E: Env, T: 'static {
@@ -140,3 +140,47 @@ unsafe impl<'w,T,E> Traitcast<'w,Box<dyn AtomState<E,T>+'w>,E> for dyn Widget<E>
 /*unsafe impl<'w,T,E> TraitcastMut<dyn AtomStateMut<E,T>+'w,E> for dyn WidgetMut<E>+'w where E: Env, T: 'static {
     type DestTypeID = dyn AtomStateMut<E,T>;
 }*/
+
+impl<E,T> AtomState<E,T> for &dyn AtomState<E,T> where E: Env {
+    #[inline]
+    fn get(&self, c: &mut E::Context) -> T {
+        (**self).get(c)
+    }
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        (**self).get_direct()
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,T>,GuionError<E>> {
+        Err(todo!())
+    }
+    #[inline]
+    fn try_set(&mut self, v: T, _: &mut E::Context) -> Result<(),GuionError<E>> {
+        Err(todo!())
+    }
+    #[inline]
+    fn try_set_direct(&mut self, v: T) -> Result<(),GuionError<E>> {
+        Err(todo!())
+    }
+}
+impl<E,T> AtomState<E,T> for &mut dyn AtomState<E,T> where E: Env {
+    #[inline]
+    fn get(&self, c: &mut E::Context) -> T {
+        (**self).get(c)
+    }#[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        (**self).get_direct()
+    }
+    #[inline]
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,T>,GuionError<E>> {
+        (**self).mutate()
+    }
+    #[inline]
+    fn try_set(&mut self, v: T, c: &mut E::Context) -> Result<(),GuionError<E>> {
+        (**self).try_set(v,c)
+    }
+    #[inline]
+    fn try_set_direct(&mut self, v: T) -> Result<(),GuionError<E>> {
+        (**self).try_set_direct(v)
+    }
+}
