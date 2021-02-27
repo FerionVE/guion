@@ -1,6 +1,7 @@
 use super::*;
 use state::standard::key::StdPressedKey;
 use std::any::TypeId;
+use std::hash::Hash;
 
 impl<S,E> StdState<E> for StdHandler<S,E> where
     S: Handler<E>,
@@ -31,6 +32,7 @@ impl<S,E> StdState<E> for StdHandler<S,E> where
 impl<S,E> DynState<E> for StdHandler<S,E> where
     S: Handler<E>,
     E: Env,
+    E::WidgetID: Eq + Hash,
     E::Context: AsRefMut<Self> + CtxStdState<E> + 'static,
     EEvent<E>: StdVarSup<E>
 {
