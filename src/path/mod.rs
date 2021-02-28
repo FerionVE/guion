@@ -17,8 +17,6 @@ pub trait WidgetPath<E>:
     Clone +
     Sized +
     Debug +
-    Send +
-    Sync +
     'static
 where E: Env {
 
