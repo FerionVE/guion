@@ -49,6 +49,24 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
         self.v.extend_from_slice(&sub.v);
     }
     #[inline]
+    fn strip_prefix(&self, prefix: &Self) -> Result<Self,()> {
+        /*if prefix.v.len() > self.v.len() {return Err(());}
+        if self.v[..prefix.v.len()] != prefix.v[..] {return Err(());}
+        Ok(self.slice(prefix.v.len()..))*/
+        let ptip = match prefix.tip() {
+            Some(v) => v,
+            None => return Ok(self.clone()),
+        };
+        if self.tip().is_none() {return Err(());}
+        let idx = self.v.iter().enumerate()
+            .find(|(i,v)| v.resolve_to_same_widget(ptip) )
+            .map(|(i,_)| i );
+        match idx {
+            Some(i) => Ok(self.slice(i+1..)),
+            None => Err(()),
+        }
+    }
+    #[inline]
     fn _dest_widget(&self) -> Option<E::WidgetID> {
         self.v.get(self.v.len()-1).cloned().map(SubPath::into_id)
     }

@@ -8,6 +8,7 @@ pub mod translate;
 pub mod sma;
 pub mod mapped;
 pub mod error;
+pub mod tabulate;
 
 pub trait AsRefMut<T> {
     fn as_ref(&self) -> &T;

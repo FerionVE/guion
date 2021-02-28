@@ -145,6 +145,11 @@ impl<'c,E> Link<'c,E> where E: Env {
         let w = self.ctx.link(self.widget.reference());
         (**self.widget)._size(w,e)
     }
+    #[inline]
+    pub fn _tabulate(&mut self, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,GuionError<E>> {
+        let w = self.ctx.link(self.widget.reference());
+        (**self.widget)._tabulate(w,op,dir)
+    }
 
     #[deprecated="Not needed in OOF anymore"]
     pub fn trace_bounds(&mut self, root_bounds: &Bounds, e: &EStyle<E>, force: bool) -> Bounds {
@@ -265,7 +270,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn resolve_sub<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
         let mut new_path = self.widget.path.refc().attached_subpath(&p); //TODO w h a t
         let rw = self.widget.wref.resolve(p.refc())?;
-        rw.extract_path(&mut new_path);
+        rw.extract_path(&mut new_path); //TODO extract FINAL path
         let rw = rw.resolve_widget(&self.widget.stor)?;
         let w = Resolved{
             path: new_path,

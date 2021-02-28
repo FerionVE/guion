@@ -144,6 +144,86 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn _tabulate_by_tab(&self) -> bool {
         true
     }
+
+    fn _tabulate(&self, mut l: Link<E>, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,GuionError<E>> {
+        // fn to tabulate to the next child away from the previous child (child_id None = self)
+        let enter_child_sub = |senf: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
+            senf.for_child(child_id).unwrap()._tabulate(to,dir)
+        };
+        let next_child = |senf: &mut Link<E>, mut child_id: Option<usize>| -> Result<TabulateResponse<E>,GuionError<E>> {
+            loop {
+                let targeted_child;
+                // determine the targeted next child
+                if let Some(child_id) = child_id {
+                    assert!(child_id < self.childs());
+                    match dir {
+                        TabulateDirection::Forward if child_id < self.childs()-1 => targeted_child = Some(child_id+1),
+                        TabulateDirection::Backward if child_id != 0 => targeted_child = Some(child_id-1),
+                        TabulateDirection::Backward if self.focusable() => targeted_child = None,
+                        _ => break,
+                    }
+                }else{
+                    match dir {
+                        TabulateDirection::Forward if self.childs() != 0 => targeted_child = Some(0),
+                        _ => break,
+                    }
+                }
+
+                if let Some(t) = targeted_child {
+                    // enter child or repeat
+                    match enter_child_sub(senf,t,TabulateOrigin::Enter)? {
+                        TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
+                        TabulateResponse::Leave => {
+                            // couldn't enter next child, repeat
+                            child_id = Some(t);
+                            continue
+                        },
+                    }
+                }else{
+                    return Ok(TabulateResponse::Done(senf.path()))
+                }
+            }
+            Ok(TabulateResponse::Leave)
+        };
+        // tabulate into specific child, either in resolve phase or enter
+        let enter_child = |senf: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
+            match enter_child_sub(senf,child_id,to)? {
+                TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
+                TabulateResponse::Leave => return next_child(senf,Some(child_id)),
+            }
+        };
+        match op {
+            TabulateOrigin::Resolve(p) => {
+                if !p.is_empty() {
+                    // pass 1: resolve to previous focused widget
+                    let (child_id,sub_path) = self.resolve_child(&p)?;
+                    return enter_child(&mut l, child_id, TabulateOrigin::Resolve(sub_path));
+                }else{
+                    // pass 2: we are the previous focused widget and should tabulate away
+                    return next_child(&mut l, None);
+                }
+            },
+            TabulateOrigin::Enter => {
+                // we got entered from the parent widget
+                let enter_dir;
+                // determine the targeted child, self, or leave
+                match dir {
+                    TabulateDirection::Forward if self.focusable() => enter_dir = None,
+                    TabulateDirection::Forward if self.childs() != 0 => enter_dir = Some(0),
+                    TabulateDirection::Backward if self.childs() != 0 => enter_dir = Some(self.childs()-1),
+                    TabulateDirection::Backward if self.focusable() => enter_dir = None,
+                    _ => return Ok(TabulateResponse::Leave),
+                };
+                if let Some(child_id) = enter_dir {
+                    // tabulate into enter the targeted child
+                    return enter_child(&mut l, child_id, TabulateOrigin::Enter);
+                }else{
+                    // tabulate to self
+                    return Ok(TabulateResponse::Done(l.path()));
+                }
+            },
+        }
+    }
     
     #[inline]
     fn inner(&self) -> Option<&dyn Widget<E>> { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn Widget<E>+'w)> where Self: 'w

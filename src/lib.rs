@@ -52,6 +52,7 @@ pub(crate) use util::border::*;
 pub(crate) use util::bounded_widget::*;
 pub(crate) use util::bounds::*;
 pub(crate) use util::error::*;
+pub(crate) use util::tabulate::*;
 pub(crate) use util::traitcast::*;
 pub(crate) use util::*;
 pub(crate) use widget::array::*;
