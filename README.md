@@ -1,6 +1,13 @@
+<img align="left" alt="" src="https://raw.githubusercontent.com/FerionVE/guion/430c18e7/res/icon.svg" height="150" />
+
 # guion
 
-[Documentation](https://docs.rs/guion/0.2.0-dev2/)
+[![Crates.io](https://img.shields.io/crates/v/guion.svg)](https://crates.io/crates/guion)
+[![Docs](https://docs.rs/guion/badge.svg)](https://docs.rs/guion)
+
+&nbsp;
+
+&nbsp;
 
 guion is heavily WIP right now, API and concepts are still in flux.
 
