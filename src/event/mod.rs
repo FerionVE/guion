@@ -3,16 +3,12 @@ use crate::event::key::Key;
 use super::*;
 use std::{fmt::Debug, any::Any};
 
-pub mod variants;
-pub mod key;
-
-pub mod imp;
-pub mod dyn_evt;
-
-pub mod variant;
-
-pub mod filter;
 pub mod compound;
+pub mod filter;
+pub mod variant;
+pub mod key;
+pub mod standard;
+pub mod imp;
 
 /// an Event holds one of the support Variant and can be downcasted to a specific Variant
 pub trait Event<E>: Sized + Clone + Debug where E: Env, E::Backend: Backend<E,Event=Self> {

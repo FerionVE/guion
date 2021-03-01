@@ -1,4 +1,3 @@
-use crate::event::variants::*;
 use super::*;
 
 impl<E> Clone for Box<dyn Variant<E>> where E: Env {
