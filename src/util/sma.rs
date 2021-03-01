@@ -31,6 +31,14 @@ impl<'a,T,U,F> SMA<'a,T,U,F> where F: SMALens<T,U> {
             p: PhantomData,
         }
     }
+    #[inline]
+    pub fn fork_with_lens_fn<V,G>(&self, lens: G) -> SMA<'a,T,V,G> where G: Fn(&mut T) -> &mut V + Clone {
+        SMA{
+            inner: self.inner.refc(),
+            f: lens,
+            p: PhantomData,
+        }
+    }
 
     #[inline]
     pub fn borrow_mut(&self) -> RefMut<U> {
@@ -136,5 +144,24 @@ impl<'w,'a,E,T,U,F> CaptionMut<E> for SMA<'a,T,U,F> where
     }
     fn replace(&mut self, s: &str) {
         self.borrow_mut().replace(s)
+    }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sma() {
+        let mut a: &mut (u32,u32) = &mut (5,5);
+        let mut sma = SMA::new(a);
+
+        let mut sma_a = sma.fork();
+        let mut sma_b = sma.fork_with_lens_fn(|v: &mut (u32,u32)| &mut v.0 );
+
+        assert_eq!(*sma.borrow_mut(),(5,5));
+        sma_a.borrow_mut().0 = 6;
+        assert_eq!(*sma.borrow_mut(),(6,5));
+        *sma_b.borrow_mut() = 7;
+        assert_eq!(*sma.borrow_mut(),(7,5));
     }
 }
