@@ -1,11 +1,11 @@
 //! [`Queue`] trait and util fns for implementors
 use super::*;
 
-/// The Queue, accesible from [`E::Context`](Context), used to enqueue [events](Event) or actions from any thread
+/// The Queue, accessible from [`E::Context`](Context), used to enqueue [events](Event) or actions from any thread
 /// 
 /// Invalidations are always done right before rendering  
 /// Validations are always done right after rendering  
-pub trait Queue<I,O> { //TODO probably remove mandantory StdEnqueueable bound
+pub trait Queue<I,O> { //TODO probably remove mandatory StdEnqueueable bound
     fn push(&mut self, v: I, order: O, prio: i64);
     fn send(&self, v: I, order: O, prio: i64);
 }

@@ -5,7 +5,31 @@
 		}
 	],
 	"settings": {
-		"rust-client.channel": "1.46.0-x86_64-unknown-linux-gnu",
-		"search.usePCRE2": true
+		"rust-client.channel": "1.50.0-x86_64-unknown-linux-gnu",
+		"search.usePCRE2": true,
+		"cSpell.words": [
+			"axis",
+			"childs",
+			"clippy",
+			"clonable",
+			"enqueueable",
+			"error",
+			"favicon",
+			"focusable",
+			"gonstraint",
+			"gonstraints",
+			"guion",
+			"html",
+			"layouting",
+			"qwutils",
+			"ref",
+			"selectag",
+			"statize",
+			"statur",
+			"std",
+			"traitcast",
+			"unsetting",
+			"url"
+		]
 	}
 }

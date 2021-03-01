@@ -13,7 +13,7 @@ pub trait Validation<E> {
 }
 
 pub trait ValidationMut<E>: Validation<E> {
-    /// Called if e.g. dependent data is just generated, marks this data as valid, and returns side data to cache along with the dependend generated data.
+    /// Called if e.g. dependent data is just generated, marks this data as valid, and returns side data to cache along with the dependent generated data.
     /// Impl note: this could be called more than once on the same data
     fn validate(&mut self) -> Arc<dyn Any>;
 }

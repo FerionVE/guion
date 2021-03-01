@@ -81,7 +81,7 @@ impl StdGonstraintAxis {
 /// 
 /// `5`: fixed size 5  
 /// `~5`: preferred 5, can be smaller (shrinked)  
-/// `2~5`: preffered 5, can bes smaller, but not smaller than 2  
+/// `2~5`: preferred 5, can bes smaller, but not smaller than 2  
 /// `5-`: preferred 5, can be bigger (extended)  
 /// `5-8`: preferred 5, can be bigger, but not bigger than 8  
 #[macro_export]

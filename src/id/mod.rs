@@ -1,4 +1,4 @@
-//! Unique indentifier for widgets
+//! Unique identifier for widgets
 use super::*;
 use std::fmt::Debug;
 use std::hash::Hash;

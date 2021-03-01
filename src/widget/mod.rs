@@ -1,8 +1,8 @@
 //! Widgets are interfaced in two Traits for immutable and mutable operations
 //! 
-//! The Traits features interface for queuering e.g. id or style, and also accessing or resolving child widgets
+//! The Traits features interface for querying e.g. id or style, and also accessing or resolving child widgets
 //! 
-//! Note that some functions in the traits are not meant to be called from externel, but over [`Link`]'s methods  
+//! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
 use super::*;
 use std::any::{TypeId, type_name};
 use traitcast::TraitObject;
@@ -73,7 +73,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// An empty path will resolve to this widget
     /// 
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`]
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,GuionError<E>> {
         if i.is_empty() {
@@ -87,7 +87,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// An empty path will resolve to this widget
     /// 
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`]
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
         if i.is_empty() {
@@ -101,7 +101,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// Returns the child index and the subpath inside the child widget to resolve further
     /// 
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`]
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn resolve_child(&self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
@@ -365,7 +365,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// An empty path will resolve to this widget
     /// 
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`]
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if i.is_empty() {
@@ -380,7 +380,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// An empty path will resolve to this widget
     /// 
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`]
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> where Self: 'w {
         if i.is_empty() {
@@ -395,7 +395,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// Returns the child index and the subpath inside the child widget to resolve further
     /// 
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`]
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn resolve_child_mut(&mut self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {

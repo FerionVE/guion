@@ -16,7 +16,7 @@ pub enum TabulateResponse<E> where E: Env {
     Leave,
 }
 
-pub fn tabi<E>(mut root: Link<E>, path: E::WidgetPath, dir: TabulateDirection) -> Result<E::WidgetPath,GuionError<E>> where E: Env {
+pub fn tabi<E>(mut root: Link<E>, path: E::WidgetPath, dir: TabulateDirection) -> Result<E::WidgetPath,GuionError<E>> where E: Env { //TODO rename to tabulate_root
     let mut current = path.clone();
     let result = root._tabulate(TabulateOrigin::Resolve( path.strip_prefix(&root.path()).unwrap() ),dir)?;
     match result {

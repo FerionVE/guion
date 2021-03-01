@@ -16,7 +16,7 @@ pub struct RenderLink<'a,E> where E: Env {
     selector: ESSelector<E>,
     prev_selector: Option<&'a ESSelector<E>>,
 
-    /// Whether rendering is enforced (e.g. if invalidation from outside occured)
+    /// Whether rendering is enforced (e.g. if invalidation from outside occurred)
     pub force: bool,
 }
 

@@ -43,7 +43,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     pub fn resolved_by_path(&self, p: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         match self {
             Self::Widget(w) => w.resolved_by_path(p),
-            Self::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p) //TODO this is wrong, as the WidgetID isn't in the WidgetPath, so the current hack relies on the StdPath indeed having the last destination WidgetID. Resolving this requires architecturial modifications, either to enable resolving in this function, which requies the resolve fns to carry &E::Storage for resolving, which is ony possible in the immutable space. Alternatively path needs to somehow carry the last(dest) ID, which doesn't seem to be possible.
+            Self::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p) //TODO this is wrong, as the WidgetID isn't in the WidgetPath, so the current hack relies on the StdPath indeed having the last destination WidgetID. Resolving this requires architectural modifications, either to enable resolving in this function, which requires the resolve fns to carry &E::Storage for resolving, which is ony possible in the immutable space. Alternatively path needs to somehow carry the last(dest) ID, which doesn't seem to be possible.
         }
     }
     /// Extend the path representing the parent of this widget to resolve to this widget

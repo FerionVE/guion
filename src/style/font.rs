@@ -80,7 +80,7 @@ pub trait Glyphs<E>: Sized where E: Env {
     }
 }
 
-/// Provides informations over a glyph
+/// Provides information over a glyph
 pub trait Glyph {
     fn bounds(&self) -> Option<Bounds>;
     fn offset(&self) -> Offset;
