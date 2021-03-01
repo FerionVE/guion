@@ -125,7 +125,8 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         parent.for_child_widget_id(self.id())
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// Refer [`WidgetPath::resolves_thru`](WidgetPath::resolves_thru_child_id)  
+    /// Refer [`WidgetPath::resolves_thru`](WidgetPath::resolves_thru_child_id)
+    /// 
     /// `sub_path`: subpath in parent widget (which contains this widget as child) which would probably resolve to/through this widget
     #[inline]
     #[deprecated]
