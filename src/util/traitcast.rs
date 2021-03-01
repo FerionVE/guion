@@ -15,7 +15,7 @@ pub struct TraitObject {
 /// This macro is used inside Widget/WidgetMut impls
 /// 
 /// Example:
-/// ```rust
+/// ```ignore
 /// impl_traitcast!(
 ///     dyn IButton => |s| s;
 ///     dyn IButtonState => |s| &s.state;
@@ -42,7 +42,7 @@ macro_rules! impl_traitcast {
 /// This macro is used inside WidgetMut impls
 /// 
 /// Example:
-/// ```rust
+/// ```ignore
 /// impl_traitcast_mut!(
 ///     dyn IButton => |s| s;
 ///     dyn IButtonState => |s| &mut s.state;

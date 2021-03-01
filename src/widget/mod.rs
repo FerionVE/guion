@@ -32,7 +32,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::event`](Link::event)
+    /// generally not called directly, rather through [`Link::event`](Link::send_event)
     fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp;
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
@@ -125,8 +125,9 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         parent.for_child_widget_id(self.id())
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// Refer [`WidgetPath::_resolves_thru`](WidgetPath::_resolves_thru)
-    /// [`sub_path`]: subpath in parent widget (which contains this widget as child) which would probably resolve to/through this widget
+    /// Refer [`WidgetPath::resolves_thru`](WidgetPath::resolves_thru_child_id)  
+    /// `sub_path`: subpath in parent widget (which contains this widget as child) which would probably resolve to/through this widget
+    #[inline]
     #[deprecated]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         E::WidgetPath::resolves_thru_child_id(self.id(), sub_path)
@@ -324,7 +325,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
 
 pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)  
-    /// an alternative way to pass mutations. See [Link::Message]
+    /// an alternative way to pass mutations. See [Widgets::message] and [link::enqueue_message]
     #[allow(unused)]
     #[inline]
     fn message(&mut self, m: E::Message) {

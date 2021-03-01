@@ -32,12 +32,12 @@ where E: Env {
     // returns the subpath which whenn attached to the prefix yields a path with identical target widget and resolve route
     fn strip_prefix(&self, prefix: &Self) -> Result<Self,()>; //TODO GuionError
 
-    /// IMPL  
-    /// Does the sub path from the parent path resolve to or through the specific child widget of the parent widget?  
+    /// Does the sub path from the parent path resolve to or through the specific child widget of the parent widget?
     // returns None only of sub_path wouldn't resolve to or through the given child widget
-    /// [`parent_path`]: Absolute path of the current parent widget  
-    /// [`child`]: Child widget of parent widget to which the sub path probably resolves to/through  
-    /// [`sub_path`]: Relative sub path to which widget should be attempted to resolve  
+    /// 
+    /// `parent_path`: Absolute path of the current parent widget  
+    /// `child`: Child widget of parent widget to which the sub path probably resolves to/through  
+    /// `sub_path`: Relative sub path to which widget should be attempted to resolve  
     fn resolves_thru_child_id(child: E::WidgetID, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
     fn resolves_thru_child_path(child_path: &Self, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
 
