@@ -145,33 +145,46 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         true
     }
 
+    /// determines the next child in this widget in the tabulation step
+    fn _tabulate_next_child(&self, _l: Link<E>, origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse {
+        match origin {
+            TabulateNextChildOrigin::Enter => match dir {
+                TabulateDirection::Forward if self.focusable() => TabulateNextChildResponse::This,
+                TabulateDirection::Forward if self.childs() != 0 => TabulateNextChildResponse::Child(0),
+                TabulateDirection::Backward if self.childs() != 0 => TabulateNextChildResponse::Child(self.childs()-1),
+                TabulateDirection::Backward if self.focusable() => TabulateNextChildResponse::This,
+                _ => TabulateNextChildResponse::Leave,
+            }
+            TabulateNextChildOrigin::This => match dir {
+                TabulateDirection::Forward if self.childs() != 0 => TabulateNextChildResponse::Child(0),
+                _ => TabulateNextChildResponse::Leave,
+            }
+            TabulateNextChildOrigin::Child(child_id) => match dir { //assert!(child_id < self.childs());
+                TabulateDirection::Forward if child_id < self.childs()-1 => TabulateNextChildResponse::Child(child_id+1),
+                TabulateDirection::Backward if child_id != 0 => TabulateNextChildResponse::Child(child_id-1),
+                TabulateDirection::Backward if self.focusable() => TabulateNextChildResponse::This,
+                _ => TabulateNextChildResponse::Leave,
+            }
+        }
+    }
+
     fn _tabulate(&self, mut l: Link<E>, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,GuionError<E>> {
         // fn to tabulate to the next child away from the previous child (child_id None = self)
-        let enter_child_sub = |senf: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
-            senf.for_child(child_id).unwrap()._tabulate(to,dir)
+        let enter_child_sub = |l: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
+            l.for_child(child_id).unwrap()._tabulate(to,dir)
         };
-        let next_child = |senf: &mut Link<E>, mut child_id: Option<usize>| -> Result<TabulateResponse<E>,GuionError<E>> {
+        let next_child = |l: &mut Link<E>, mut child_id: Option<usize>| -> Result<TabulateResponse<E>,GuionError<E>> {
             loop {
-                let targeted_child;
                 // determine the targeted next child
-                if let Some(child_id) = child_id {
-                    assert!(child_id < self.childs());
-                    match dir {
-                        TabulateDirection::Forward if child_id < self.childs()-1 => targeted_child = Some(child_id+1),
-                        TabulateDirection::Backward if child_id != 0 => targeted_child = Some(child_id-1),
-                        TabulateDirection::Backward if self.focusable() => targeted_child = None,
-                        _ => break,
-                    }
-                }else{
-                    match dir {
-                        TabulateDirection::Forward if self.childs() != 0 => targeted_child = Some(0),
-                        _ => break,
-                    }
-                }
+                let targeted_child = self._tabulate_next_child(
+                    l.reference(),
+                    TabulateNextChildOrigin::child_or_this(child_id),
+                    dir,
+                );
 
-                if let Some(t) = targeted_child {
+                match targeted_child {
                     // enter child or repeat
-                    match enter_child_sub(senf,t,TabulateOrigin::Enter)? {
+                    TabulateNextChildResponse::Child(t) => match enter_child_sub(l,t,TabulateOrigin::Enter)? {
                         TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
                         TabulateResponse::Leave => {
                             // couldn't enter next child, repeat
@@ -179,17 +192,24 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
                             continue
                         },
                     }
-                }else{
-                    return Ok(TabulateResponse::Done(senf.path()))
+                    TabulateNextChildResponse::This =>
+                        if self.focusable() {
+                            return Ok(TabulateResponse::Done(l.path()))
+                        }else{
+                            // we aren't focusable, repeat
+                            child_id = None;
+                            continue
+                        },
+                    TabulateNextChildResponse::Leave => break,
                 }
             }
             Ok(TabulateResponse::Leave)
         };
         // tabulate into specific child, either in resolve phase or enter
-        let enter_child = |senf: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
-            match enter_child_sub(senf,child_id,to)? {
+        let enter_child = |l: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
+            match enter_child_sub(l,child_id,to)? {
                 TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
-                TabulateResponse::Leave => return next_child(senf,Some(child_id)),
+                TabulateResponse::Leave => return next_child(l,Some(child_id)),
             }
         };
         match op {
@@ -205,21 +225,19 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
             },
             TabulateOrigin::Enter => {
                 // we got entered from the parent widget
-                let enter_dir;
-                // determine the targeted child, self, or leave
-                match dir {
-                    TabulateDirection::Forward if self.focusable() => enter_dir = None,
-                    TabulateDirection::Forward if self.childs() != 0 => enter_dir = Some(0),
-                    TabulateDirection::Backward if self.childs() != 0 => enter_dir = Some(self.childs()-1),
-                    TabulateDirection::Backward if self.focusable() => enter_dir = None,
-                    _ => return Ok(TabulateResponse::Leave),
-                };
-                if let Some(child_id) = enter_dir {
+
+                let enter_dir = self._tabulate_next_child(
+                    l.reference(),
+                    TabulateNextChildOrigin::Enter,
+                    dir,
+                );
+
+                match enter_dir {
                     // tabulate into enter the targeted child
-                    return enter_child(&mut l, child_id, TabulateOrigin::Enter);
-                }else{
+                    TabulateNextChildResponse::Child(t) => return enter_child(&mut l, t, TabulateOrigin::Enter),
                     // tabulate to self
-                    return Ok(TabulateResponse::Done(l.path()));
+                    TabulateNextChildResponse::This => return Ok(TabulateResponse::Done(l.path())),
+                    TabulateNextChildResponse::Leave => return Ok(TabulateResponse::Leave),
                 }
             },
         }
