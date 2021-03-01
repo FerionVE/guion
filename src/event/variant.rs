@@ -5,7 +5,7 @@ pub trait VariantSupport<V,E>: Event<E> where E: Env, E::Backend: Backend<E,Even
     fn to_variant(&self) -> Option<V>;
 }
 
-pub trait Variant<E>: VariantDerive<E> + Debug where E: Env {
+pub trait Variant<E>: VariantDerive<E> + Debug where E: Env { //TODO rename to EventVariant
     #[inline]
     fn in_bounds(&self, _: &Bounds) -> bool {
         true

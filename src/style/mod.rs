@@ -1,4 +1,4 @@
-//! Style handler, Style specifier and selectors
+//! [Style handler](Style), [Style specifier and selectors](StyleSelector)
 use self::selectag::standard::StdSelectag;
 use self::selector::{StyleSelector, StyleSelectorAppend};
 use self::standard::cursor::StdCursor;

@@ -1,3 +1,4 @@
+//! RefCell-based Shared Mutable Access helper for mutable immediate widgets e.g. when multiple parts need to mutably reference to the same thing
 use crate::widgets::util::{caption::Caption, caption::CaptionMut, state::{AtomState, AtomStateMut}};
 
 use super::*;

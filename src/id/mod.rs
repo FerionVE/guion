@@ -5,7 +5,7 @@ use std::hash::Hash;
 
 pub mod standard;
 
-/// Unique ID for Widgets
+/// Unique ID for [`Widgets`](Widget::id)
 /// 
 /// WidgetID shall be easily clonable
 pub trait WidgetID: Clone + PartialEq + Sized + Debug + 'static { //should also implement Eq + Hash + Send

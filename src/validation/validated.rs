@@ -1,7 +1,7 @@
 use super::*;
 use std::{ops::{DerefMut, Deref}, marker::PhantomData, borrow::{BorrowMut, Borrow}};
 
-/// simple wrapper type for data to track validity
+/// Simple wrapper type for data to track validity
 pub struct Validated<E,T> {
     inner: T,
     valid: bool,
