@@ -2,6 +2,7 @@ use crate::*;
 use widget::Widget;
 
 #[deprecated]
+#[allow(deprecated)]
 pub fn tabulate<E: Env>(s: &E::Storage, selected: E::WidgetPath, reverse: bool) -> E::WidgetPath {
     let initial_selected = selected.refc();
     let mut current = selected;

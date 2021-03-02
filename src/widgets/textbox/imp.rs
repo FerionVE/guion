@@ -122,7 +122,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
             s.cursor.caret = s.cursor_pos_reverse(tpos);
             //cursor.unselect();
         }
-        assert!(s.cursor.caret < s.glyphs.chars()); //TODO CRASH äöü crash the shit out of this. the whole unicode char handling is borked.
+        assert!(s.cursor.caret < s.glyphs.chars()); //TODO FIXME äöü crash. the whole unicode char handling is borked.
         self.cursor.set(s.cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
