@@ -224,28 +224,28 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
     }
 
     impl_traitcast!(
-        dyn Caption<E> => |s| &s.text;
-        dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
-        dyn AtomState<E,Cursor> => |s| &s.cursor;
-        dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
-        dyn ITextBox<E> => |s| s;
-        dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
-        dyn Validation<E> => |s| &s.text;
+        dyn Caption<E> => |s| s.text.ref_box();
+        dyn AtomState<E,(u32,u32)> => |s| s.scroll.ref_box();
+        dyn AtomState<E,Cursor> => |s| s.cursor.ref_box();
+        dyn AtomState<E,Option<u32>> => |s| s.cursor_stick_x.ref_box();
+        dyn ITextBox<E> => |s| s.ref_box();
+        dyn AtomState<E,LocalGlyphCache<E>> => |s| s.glyph_cache.ref_box();
+        dyn Validation<E> => |s| s.text.ref_box();
     );
     impl_traitcast_mut!(
-        dyn Caption<E> => |s| &mut s.text;
-        dyn CaptionMut<E> => |s| &mut s.text;
-        dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
-        dyn AtomState<E,Cursor> => |s| &mut s.cursor;
-        dyn AtomState<E,Option<u32>> => |s| &mut s.cursor_stick_x;
+        dyn Caption<E> => |s| s.text.mut_box();
+        dyn CaptionMut<E> => |s| s.text.mut_box();
+        dyn AtomState<E,(u32,u32)> => |s| s.scroll.mut_box();
+        dyn AtomState<E,Cursor> => |s| s.cursor.mut_box();
+        dyn AtomState<E,Option<u32>> => |s| s.cursor_stick_x.mut_box();
         //dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
         //dyn AtomStateMut<E,Cursor> => |s| &mut s.cursor;
         //dyn AtomStateMut<E,Option<u32>> => |s| &mut s.cursor_stick_x;
-        dyn ITextBox<E> => |s| s;
+        dyn ITextBox<E> => |s| s.mut_box();
         //dyn ITextBoxMut<E> => |s| s;
-        dyn AtomState<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
+        dyn AtomState<E,LocalGlyphCache<E>> => |s| s.glyph_cache.mut_box();
         //dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
-        dyn Validation<E> => |s| &mut s.text;
+        dyn Validation<E> => |s|  s.text.mut_box();
         //dyn ValidationMut<E> => |s| &mut s.text;
     );
 }
@@ -255,7 +255,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<E>+ValidationMut<E>+'w,
+    Text: Caption<E>+ValidationMut<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,

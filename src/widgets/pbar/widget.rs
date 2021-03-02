@@ -58,10 +58,10 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     }
 
     impl_traitcast!(
-        dyn AtomState<E,f32> => |s| &s.value;
+        dyn AtomState<E,f32> => |s| s.value.ref_box();
     );
     impl_traitcast_mut!(
-        dyn AtomState<E,f32> => |s| &mut s.value;
+        dyn AtomState<E,f32> => |s| s.value.mut_box();
     );
 }
 

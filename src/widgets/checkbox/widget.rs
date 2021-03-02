@@ -9,8 +9,9 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
+    State: AtomState<E,bool>,
     for<'a> &'a State: AtomState<E,bool>,
-    //for<'a> &'a mut State: AtomState<E,bool>,
+    for<'a> &'a mut State: AtomState<E,bool>,
     Text: AsWidget<E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -131,12 +132,12 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     }
 
     impl_traitcast!(
-        dyn ICheckBox<E> => |s| s;
-        dyn AtomState<E,bool> => |s| &s.state;
+        dyn ICheckBox<E> => |s| Box::new(s);
+        dyn AtomState<E,bool> => |s| Box::new(&s.state);
     );
     impl_traitcast_mut!(
-        dyn ICheckBox<E> => |s| s;
-        dyn AtomState<E,bool> => |s| &mut s.state;
+        dyn ICheckBox<E> => |s| Box::new(s);
+        dyn AtomState<E,bool> => |s| Box::new(&mut s.state);
         //dyn AtomStateMut<E,bool> => |s| &mut s.state;
     );
 }
@@ -146,8 +147,9 @@ impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
+    State: AtomState<E,bool>,
     for<'a> &'a State: AtomState<E,bool>,
-    //for<'a> &'a mut State: AtomState<E,bool>,
+    for<'a> &'a mut State: AtomState<E,bool>,
     Text: AsWidget<E>,
 {
     
@@ -162,10 +164,10 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     Text: AsWidget<E>,
 {
     pub fn set(mut l: Link<E>, v: bool) {
-        l.try_mutate_closure(Box::new(move |mut w,c,_|{
+        l.mutate_closure(Box::new(move |mut w,c,_|{
             //w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
             let w = w.traitcast_mut::<dyn ICheckBox<E>>().unwrap();
-            w.state_mut().try_set(v,c);
+            w.set(v,c);
         }));
     }
 }

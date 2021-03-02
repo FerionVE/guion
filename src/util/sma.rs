@@ -91,6 +91,90 @@ impl<'a,E,T,U,V,F> AtomState<E,V> for SMA<'a,T,U,F> where
     fn get(&self, c: &mut E::Context) -> V {
         self.borrow_mut().get(c)
     }
+
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,V>,GuionError<E>> {
+        todo!()
+    }
+
+    fn try_set(&mut self, v: V, c: &mut E::Context) -> Result<(),GuionError<E>> {
+        self.borrow_mut().try_set(v,c)
+    }
+
+    fn try_set_direct(&mut self, v: V) -> Result<(),GuionError<E>> {
+        self.borrow_mut().try_set_direct(v)
+    }
+
+    fn ref_box<'s>(&'s self) -> Box<dyn AtomState<E,V>+'_> where Self: 's {
+        Box::new(self)
+    }
+
+    fn mut_box<'s>(&'s mut self) -> Box<dyn AtomState<E,V>+'_> where Self: 's {
+        Box::new(self)
+    }
+}
+impl<'a,E,T,U,V,F> AtomState<E,V> for &SMA<'a,T,U,F> where 
+    E: Env,
+    U: AtomState<E,V>,
+    F: SMALens<T,U>
+{
+    fn get_direct(&self) -> Result<V,()> {
+        self.borrow_mut().get_direct()
+    }
+    fn get(&self, c: &mut E::Context) -> V {
+        self.borrow_mut().get(c)
+    }
+
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,V>,GuionError<E>> {
+        todo!()
+    }
+
+    fn try_set(&mut self, v: V, c: &mut E::Context) -> Result<(),GuionError<E>> {
+        self.borrow_mut().try_set(v,c)
+    }
+
+    fn try_set_direct(&mut self, v: V) -> Result<(),GuionError<E>> {
+        self.borrow_mut().try_set_direct(v)
+    }
+
+    fn ref_box<'s>(&'s self) -> Box<dyn AtomState<E,V>+'_> where Self: 's {
+        Box::new(*self)
+    }
+
+    fn mut_box<'s>(&'s mut self) -> Box<dyn AtomState<E,V>+'_> where Self: 's {
+        Box::new(*self)
+    }
+}
+impl<'a,E,T,U,V,F> AtomState<E,V> for &mut SMA<'a,T,U,F> where 
+    E: Env,
+    U: AtomState<E,V>,
+    F: SMALens<T,U>
+{
+    fn get_direct(&self) -> Result<V,()> {
+        self.borrow_mut().get_direct()
+    }
+    fn get(&self, c: &mut E::Context) -> V {
+        self.borrow_mut().get(c)
+    }
+
+    fn mutate(&mut self) -> Result<&mut dyn AtomStateMut<E,V>,GuionError<E>> {
+        todo!()
+    }
+
+    fn try_set(&mut self, v: V, c: &mut E::Context) -> Result<(),GuionError<E>> {
+        self.borrow_mut().try_set(v,c)
+    }
+
+    fn try_set_direct(&mut self, v: V) -> Result<(),GuionError<E>> {
+        self.borrow_mut().try_set_direct(v)
+    }
+
+    fn ref_box<'s>(&'s self) -> Box<dyn AtomState<E,V>+'_> where Self: 's {
+        Box::new(*self)
+    }
+
+    fn mut_box<'s>(&'s mut self) -> Box<dyn AtomState<E,V>+'_> where Self: 's {
+        Box::new(*self)
+    }
 }
 
 impl<'a,E,T,U,V,F> AtomStateMut<E,V> for SMA<'a,T,U,F> where 

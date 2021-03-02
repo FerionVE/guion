@@ -129,10 +129,10 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     }
 
     impl_traitcast!(
-        dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
+        dyn AtomState<E,(u32,u32)> => |s| s.scroll.ref_box();
     );
     impl_traitcast_mut!(
-        dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
+        dyn AtomState<E,(u32,u32)> => |s| s.scroll.mut_box();
         //dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
     );
 }

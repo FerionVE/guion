@@ -65,16 +65,16 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     }
 
     impl_traitcast!(
-        dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
-        dyn Validation<E> => |s| &s.text;
-        dyn Caption<E> => |s| &s.text;
+        dyn AtomState<E,LocalGlyphCache<E>> => |s| s.glyph_cache.ref_box();
+        dyn Validation<E> => |s| Box::new(&s.text);
+        dyn Caption<E> => |s| Box::new(&s.text);
     );
     impl_traitcast_mut!(
         //dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
         //dyn ValidationMut<E> => |s| &mut s.text;
-        dyn Validation<E> => |s| &mut s.text;
+        dyn Validation<E> => |s| Box::new(&mut s.text);
         //dyn CaptionMut<E> => |s| &mut s.text;
-        dyn Caption<E> => |s| &mut s.text;
+        dyn Caption<E> => |s| Box::new(&mut s.text);
     );
 }
 
@@ -106,11 +106,11 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
         let glyphs = Arc::new(ESGlyphs::<E>::generate(text.as_ref(),(20.0,20.0),l.ctx));
 
         let g = glyphs.refc();
-        l.try_mutate_closure(Box::new(move |mut w,ctx,_| {
+        l.mutate_closure(Box::new(move |mut w,ctx,_| {
             let vali = w.traitcast_mut::<dyn Validation<E>>().unwrap();
             let key = vali.validate();
             let cache = w.traitcast_mut::<dyn AtomState<E,LocalGlyphCache<E>>>().unwrap();
-            cache.set( Some((g,key)) ,ctx);
+            cache.try_set( Some((g,key)) ,ctx);
         }));
 
         glyphs
