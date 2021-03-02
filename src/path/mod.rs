@@ -29,7 +29,7 @@ where E: Env {
         self
     }
 
-    // returns the subpath which when attached to the prefix yields a path with identical target widget and resolve route
+    // Returns the subpath which when attached to the prefix yields a path with identical target widget and resolve route
     fn strip_prefix(&self, prefix: &Self) -> Result<Self,()>; //TODO GuionError
 
     /// Does the sub path from the parent path resolve to or through the specific child widget of the parent widget?
@@ -46,7 +46,8 @@ where E: Env {
 
 
     // fn tip(&self) -> Option<&Self::SubPath>;
-    /// returns the targeted widget ID if available
+    /// Returns the targeted widget ID if available
+    /// 
     /// NOTE this function is implemented optionally, so it may never return ID, even if possible
     fn _dest_widget(&self) -> Option<E::WidgetID> {
         None
@@ -57,11 +58,12 @@ where E: Env {
     /// If self and o would resolve to the same widget
     fn dest_eq(&self, o: &Self) -> bool;
 
-    /// the path which would resolve to the parent widget
-    /// returns None only if the path is empty
+    /// The path which would resolve to the parent widget
+    /// 
+    /// Returns None only if the path is empty
     fn parent(&self) -> Option<Self>;
 
-    /// if the path is empty e.g. doesn't resolve further
+    /// If the path is empty e.g. doesn't resolve further
     fn is_empty(&self) -> bool;
 
     fn empty() -> Self;
@@ -73,7 +75,7 @@ where E: Env {
 }
 
 pub struct ResolvesThruResult<E> where E: Env {
-    /// the sub path inside the current child widget which resolves further
+    /// The sub path inside the current child widget which resolves further
     pub sub_path: E::WidgetPath,
 }
 

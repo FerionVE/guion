@@ -1,4 +1,4 @@
-Unreleased: guion 0.4.0 (2021-03-0X)
+guion 0.4.0 (2021-03-02)
 =========================
 
 API changes (highlights)
@@ -21,7 +21,7 @@ Fixes
 
 - StdPath::tip: fix panic (c6c9141d)
 - widgets: event: fix response Button and TextBox (#24)
-- widgets: SplitPane: fix handling min-bounds of childs
+- widgets: SplitPane: fix handling min-bounds of childs (60190bdf)
 
 Misc
 ----

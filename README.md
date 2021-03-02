@@ -1,28 +1,31 @@
+<img align="left" alt="" src="https://raw.githubusercontent.com/FerionVE/guion/430c18e7/res/icon.svg" height="150" />
+
 # guion
 
-[Documentation](https://docs.rs/guion/0.2.0-dev2/)
+[![crates.io](https://img.shields.io/crates/v/guion?style=flat-square)](https://crates.io/crates/guion)
+[![docs.rs](https://img.shields.io/docsrs/guion?style=flat-square)](https://docs.rs/guion)
+![MIT or Apache 2.0 licensed](https://img.shields.io/crates/l/guion?style=flat-square)
 
-guion is heavily WIP right now, API and concepts are still in flux.
+&nbsp;
+
+guion is an experimental GUI framework, focused on flexibility (e.g. guion core flexible Widget model) and modularity (e.g. separate backend/engine, interchangeable standard components).
+
+guion being in an experimental state, API and concepts are still in flux.
 
 Goals: 
-- Data is the Widget: Widgets own model/data or reference model/data as immediate widget.
+- Data-oriented: Widgets abstract over model, can be directly implemented onto model, or be immediate
+- Widgets own model/data or reference model/data as immediate widget
+- Dynamic separate Context/states
 - Widget Tree/Model separate from Context, State and side-data
-- Modularity: Components are defined in generics and traits
+- Modularity
+  - Separation of core, backend, and higher features
+  - Components are defined in generics and traits
   - Standard implementations can be combined with e.g. a custom ID implementation.
-- Standard Widgets: Rich Set of Standard Widgets
-  - Ability to own or reference data (immediate widgets)
-- Standard Context: with features like hover, tabulating, and drag/drop in the future...
-- Layout Calculation, Invalidation, ...
+- guion-widgets Standard Widgets: common widgets, layouting widgets, etc.
+  - Can own or reference data immediate, Widget state in model or Context
+- guion-std Standard Window features like focused/hovered widgets, tabulating, drag/drop
+- Widget Data caching/invalidation abstractions
+- Tame complexity, provide efficient abstractions to make life easier
 
-Future Goals:
-- Simplicity
-    - Right now the flexibility causes a degree of complexity
-    - A simple interface limited to specific contexes and backends can still be implemented
-    - Some complexitiy is currenty caused by language limitations
-- Performance
-    - is not the priority right not
-    - although guion is designed in a manner of performance
-    - Rust is strong in inlining the complexity away
-    - (Performance should be good enough because stuff is implemented inline-friendly)
-
-Check out [guion_sdl2](https://github.com/ferionve/guion_sdl2) for a (also WIP) backend implementation.
+Related Project:
+- [guion_sdl2](https://github.com/FerionVE/guion_sdl2) for a prototype backend implementation
