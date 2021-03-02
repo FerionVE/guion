@@ -1,7 +1,6 @@
 //! Standard Handler featuring hovering/focusing of widgets and tracking of keyboard/mouse state
 use crate::*;
 use std::marker::PhantomData;
-use event::variants::{Focus, Unfocus};
 use state::standard::StdStdState;
 
 pub mod imp;

@@ -5,10 +5,10 @@ use self::standard::cursor::StdCursor;
 
 use super::*;
 
-pub mod font;
 pub mod selector;
 pub mod selectag;
 pub mod color;
+pub mod font;
 pub mod standard;
 
 pub trait Style<E>: Clone + Default where E: Env {

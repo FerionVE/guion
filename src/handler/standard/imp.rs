@@ -1,6 +1,5 @@
 use crate::*;
 use super::*;
-use event::variants::*;
 use state::standard::kbd::tabulate::tabulate;
 
 impl<S,E> Handler<E> for StdHandler<S,E> where

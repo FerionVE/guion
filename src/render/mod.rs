@@ -1,8 +1,8 @@
 //! Render functions and a Link struct tracking bounds and style
 use super::*;
 
-pub mod widgets;
 pub mod link;
+pub mod widgets;
 
 pub trait Render<E>: Sized where E: Env, /*ERenderer<E>: AsRefMut<Self>*/ {
     /// if widgets should be rendered even if the don't require to
