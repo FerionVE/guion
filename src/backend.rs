@@ -1,4 +1,4 @@
-//! part of Env
+//! part of [`Env`]
 use super::*;
 
 /// Type compound

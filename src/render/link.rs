@@ -3,7 +3,7 @@ use selector::{StyleSelector, StyleSelectorAppend};
 use super::*;
 use std::ops::{DerefMut, Deref};
 
-/// reference-compound of renderer, current bounds and style
+/// Reference-compound of renderer, current bounds and style
 pub struct RenderLink<'a,E> where E: Env {
     pub r: &'a mut ERenderer<E>,
 
@@ -16,7 +16,7 @@ pub struct RenderLink<'a,E> where E: Env {
     selector: ESSelector<E>,
     prev_selector: Option<&'a ESSelector<E>>,
 
-    /// whether rendering is enforced (e.g. if invalidation from outside occured)
+    /// Whether rendering is enforced (e.g. if invalidation from outside occurred)
     pub force: bool,
 }
 
@@ -71,20 +71,20 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
     pub fn force(&self) -> bool {
         self.force || self.r.force(&self.bounds)
     }
-    /// fork with force set
+    /// Fork with [force](Self::force) set
     #[inline]
     pub fn with_force(&mut self, force: bool) -> RenderLink<E> {
         let mut f = self.forked(false,false,false, false);
         f.force = force;
         f
     }
-    /// fork with force set to true
+    /// Fork with [force](Self::force) set to true
     #[inline]
     pub fn enforced(&mut self) -> RenderLink<E> {
         self.with_force(true)
     }
 
-    /// fork with area inside the border
+    /// Fork with area inside the border
     #[inline]
     pub fn inside_border_specific(&mut self, s: &Border) -> RenderLink<E> {
         let bounds = self.bounds.inside_border(s);
@@ -92,24 +92,24 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         f.bounds = bounds;
         f._set_bounds()
     }
-    /// fork with area inside the border defined by the style
+    /// Fork with area inside the border defined by the [style](Self::style)
     #[inline]
     pub fn inside_border(&mut self, c: &mut E::Context) -> RenderLink<E> {
         self.inside_border_specific(&self.style.border(&self.selector,c))
     }
-    /// fork with area inside the border defined by the style  
-    /// default style border is determined by the attached tags which **won't** be present on the forked RenderLink
+    /// Fork with area inside the border defined by the [style](Self::style)  
+    /// Default style border is determined by the attached tags which **won't** be present on the forked RenderLink
     #[inline]
     pub fn inside_border_by<S>(&mut self, selectags: S, c: &mut E::Context) -> RenderLink<E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> { //ESVariant<E>: StyleVariantSupport<V>
         self.inside_border_specific(&self.style.border(&self.selector.with(selectags),c))
     }
-    /// fork with area inside the border defined by the style  
-    /// default style border is determined by the attached tags which **won't** be present on the forked RenderLink
+    /// Fork with area inside the border defined by the [style](Self::style)  
+    /// Default style border is determined by the attached tags which **won't** be present on the forked RenderLink
     #[inline]
     pub fn inside_border_by_mul<S>(&mut self, selectags: S, multiplier: u32, c: &mut E::Context) -> RenderLink<E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> { //ESVariant<E>: StyleVariantSupport<V>
         self.inside_border_specific(&(self.style.border(&self.selector.with(selectags),c)*multiplier))
     }
-    /// fork with area inside the bounds
+    /// Fork with area inside the [bounds](Self::bounds)
     #[inline]
     pub fn slice(&mut self, s: &Bounds) -> RenderLink<E> {
         let bounds = self.bounds.slice(s);
@@ -117,7 +117,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         f.bounds = bounds;
         f._set_bounds()
     }
-    /// fork with area inside the bounds
+    /// Fork with area inside the bounds
     #[inline]
     pub fn slice_abs(&mut self, s: &Bounds) -> RenderLink<E> {
         let bounds = self.bounds & s;
@@ -125,7 +125,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         f.bounds = bounds;
         f._set_bounds()
     }
-    /// fork with area inside the bounds
+    /// Fork with area inside the bounds
     #[inline]
     pub fn inner_centered(&mut self, size: Dims) -> RenderLink<E> {
         let bounds = self.bounds.inner_centered(size);
@@ -133,7 +133,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         f.bounds = bounds;
         f._set_bounds()
     }
-    /// fork with area inside the bounds
+    /// Fork with area inside the bounds
     #[inline]
     pub fn inner_aligned(&mut self, size: Dims, align: (f32,f32)) -> RenderLink<E> {
         let bounds = self.bounds.inner_aligned(size,align);
@@ -141,12 +141,12 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         f.bounds = bounds;
         f._set_bounds()
     }
-    /// fork with attached style variant selectors
+    /// Fork with attached [style](Self::style) variant [selectors](Self::selector)
     #[inline]
     pub fn with<S>(&mut self, selectags: S) -> RenderLink<E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> {
         self.with_style_selector(&self.selector.with(selectags))
     }
-    /// fork with attached style variant selectors
+    /// Fork with attached [style](Self::style) variant [selectors](Self::selector)
     #[inline]
     pub fn with_style(&mut self, style: &EStyle<E>) -> RenderLink<E> {
         let style = self.style.and(style);
@@ -154,7 +154,7 @@ impl<'a,E> RenderLink<'a,E> where E: Env {
         f.style = style;
         f._set_style()
     }
-    /// fork with attached style variant selectors
+    /// Fork with attached [style](Self::style) variant [selectors](Self::selector)
     #[inline]
     pub fn with_style_selector(&mut self, style_selector: &ESSelector<E>) -> RenderLink<E> {
         let selector = self.selector.and(style_selector);

@@ -2,12 +2,12 @@
 use super::*;
 
 pub mod handler;
-pub mod standard;
 pub mod dyn_state;
+pub mod standard;
 
 //TODO move to StdState trait and AsStdState for deref
 
-//move StdState trait to sstandard StdState trait. StdState is not a core feature!
+//move StdState trait to standard StdState trait. StdState is not a core feature!
 
 pub trait CtxStdState<E>: Context<E> + Sized where E: Env<Context=Self> {
     type T: StdState<E>;

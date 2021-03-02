@@ -1,4 +1,4 @@
-//! A path contains information, like widget id, which can denote a location of a widget
+//! A [`Path`](WidgetPath) contains information, like [`WidgetID`], which can denote a location of a [`Widget`]
 use std::{slice::SliceIndex, ops::RangeBounds, fmt::Debug};
 use qwutils::RefClonable;
 use super::*;
@@ -8,7 +8,7 @@ pub use sub::*;
 
 pub mod standard;
 
-/// A WidgetPath contains information to resolve to a specific Widget in a widget tree
+/// A WidgetPath contains information to [resolve](Widget::TODOGuionBookResolveGuide) to a specific [`Widget`] in a [widget tree](Widgets)
 pub trait WidgetPath<E>:
     //AsWidget<'static,E> + //TODO fix the generic AsWidget impl for StdPath
     Into<E::WidgetPath> +
@@ -29,15 +29,15 @@ where E: Env {
         self
     }
 
-    // returns the subpath which whenn attached to the prefix yields a path with identical target widget and resolve route
+    // returns the subpath which when attached to the prefix yields a path with identical target widget and resolve route
     fn strip_prefix(&self, prefix: &Self) -> Result<Self,()>; //TODO GuionError
 
-    /// IMPL  
-    /// Does the sub path from the parent path resolve to or through the specific child widget of the parent widget?  
+    /// Does the sub path from the parent path resolve to or through the specific child widget of the parent widget?
     // returns None only of sub_path wouldn't resolve to or through the given child widget
-    /// [`parent_path`]: Absolute path of the current parent widget  
-    /// [`child`]: Child widget of parent widget to which the sub path probably resolves to/through  
-    /// [`sub_path`]: Relative sub path to which widget should be attempted to resolve  
+    /// 
+    /// `parent_path`: Absolute path of the current parent widget  
+    /// `child`: Child widget of parent widget to which the sub path probably resolves to/through  
+    /// `sub_path`: Relative sub path to which widget should be attempted to resolve  
     fn resolves_thru_child_id(child: E::WidgetID, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
     fn resolves_thru_child_path(child_path: &Self, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
 

@@ -1,4 +1,4 @@
-//! The Link is used to interface widgets thru and tracks the current path
+//! The [`Link`] is used to interface [widgets](Widget) thru and tracks the current [path](Env::WidgetPath)
 use std::ops::DerefMut;
 use std::ops::Deref;
 use super::*;
@@ -7,14 +7,14 @@ use super::*;
 pub mod imp;
 use imp::*;
 
-/// holds a immutable reference to the current widget and the widget tree, also a mutable reference to the context
+/// Holds a immutable reference to the current [`Widget`] and the [widget tree](Env::Storage), also a mutable reference to the [`Context`](Env::Context)
 pub struct Link<'c,E> where E: Env {
     pub ctx: &'c mut E::Context,
     pub widget: Resolved<'c,E>,
 }
 
 impl<'c,E> Link<'c,E> where E: Env {
-    /// enqueue mutable access to this widget
+    /// Enqueue mutable access to this widget
     #[inline] 
     pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)) {
         self.mutate_at(f,StdOrder::PostCurrent,0)
@@ -23,7 +23,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.path.refc(),f},o,p)
     }
-    /// enqueue mutable access to this widget
+    /// Enqueue mutable access to this widget
     #[inline] 
     pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>) {
         self.mutate_closure_at(f,StdOrder::PostCurrent,0)
@@ -32,17 +32,17 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f},o,p)
     }
-    /// enqueue message-style invoking of [WidgetMut::message]
+    /// Enqueue message-style invoking of [WidgetMut::message]
     #[inline]
     pub fn message_mut(&mut self, m: E::Message) {
         self.message_mut_at(m,StdOrder::PostCurrent,0)
     }
-    /// enqueue message-style invoking of [WidgetMut::message]
+    /// Enqueue message-style invoking of [WidgetMut::message]
     #[inline]
     pub fn message_mut_at<O>(&mut self, m: E::Message, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutMessage{path: self.widget.path.refc(),msg:m},o,p)
     }
-    /// enqueue immutable access to this widget
+    /// Enqueue immutable access to this widget
     #[inline] 
     pub fn later(&mut self, f: fn(WidgetRef<E>,&mut E::Context)) {
         self.later_at(f,StdOrder::PostCurrent,0)
@@ -51,7 +51,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn later_at<O>(&mut self, f: fn(WidgetRef<E>,&mut E::Context), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.path.refc(),f},o,p)
     }
-    /// enqueue immutable access to this widget
+    /// Enqueue immutable access to this widget
     #[inline] 
     pub fn later_closure(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+Sync>) {
         self.later_closure_at(f,StdOrder::PostCurrent,0)
@@ -64,8 +64,9 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn enqueue_invalidate(&mut self) {
         self.enqueue(StdEnqueueable::InvalidateWidget{path: self.widget.path.refc()},StdOrder::PreRender,0)
     }
-    /// mark the current widget as validated
-    /// this should and should only be called from widget's render fn
+    /// Mark the current widget as validated
+    /// 
+    /// This should and should only be called from widget's render fn
     #[inline]
     pub fn enqueue_validate_render(&mut self) {
         self.enqueue(StdEnqueueable::ValidateWidgetRender{path: self.widget.path.refc()},StdOrder::RenderValidation,0)
@@ -99,14 +100,15 @@ impl<'c,E> Link<'c,E> where E: Env {
     pub fn event_direct(&mut self, e: &EventCompound<E>) -> EventResp {
         self.ctx.event_direct(self.widget.reference(),e)
     }
-    /// send event to subpath
+    /// Send event to subpath
+    /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Widgets::send_event`](Widgets::send_event)
     #[inline]
     pub fn send_event(&mut self, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
         self.ctx.send_event(self.widget.reference(),e,child)
     }
-    /// layout constraints of this widget
+    /// [Layout](StdGonstraints) constraints of this widget
     #[inline]
     pub fn size(&mut self, e: &EStyle<E>) -> ESize<E> {
         self.ctx.size(self.widget.reference(),e)
@@ -117,13 +119,13 @@ impl<'c,E> Link<'c,E> where E: Env {
         assert!(self.path().is_empty());
         self.ctx._event_root(self.widget.reference(),e)
     }
-    /// bypasses Context and Handler(s)
+    /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _render(&mut self, r: &mut RenderLink<E>) {
         let w = self.ctx.link(self.widget.reference());
         (**self.widget)._render(w,r)
     }
-    /// bypasses Context and Handler(s)
+    /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _event_direct(&mut self, e: &EventCompound<E>) -> EventResp {
         let w = self.ctx.link(self.widget.reference());
@@ -139,7 +141,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         let w = self.ctx.link(self.widget.reference());
         Ok( (**self.widget)._event_direct(w,&e) )
     }
-    /// bypasses Context and Handler(s)
+    /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _size(&mut self, e: &EStyle<E>) -> ESize<E> {
         let w = self.ctx.link(self.widget.reference());
@@ -239,7 +241,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         )
     }
 
-    /// current widget must be parent of rw
+    /// Current widget must be parent of rw
     #[inline]
     pub fn with_child_specific<'s>(&'s mut self, rw: Resolvable<'s,E>) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
         let path = rw.in_parent_path(self.path());
@@ -301,7 +303,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
 
-    /// iterate from current up to the root element
+    /// Iterate from current up to the root element
     #[inline]
     pub fn parents(&'c self) -> Parents<'c,E> {
         Parents{

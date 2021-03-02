@@ -1,3 +1,4 @@
+#![doc(html_logo_url="https://raw.githubusercontent.com/FerionVE/guion/430c18e7/res/icon.svg")]
 //#![warn(clippy::all)]
 
 pub mod widget;

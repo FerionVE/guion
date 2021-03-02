@@ -26,7 +26,7 @@ pub type CtxRef<'a,E: Env> = (&'a E::Storage,&'a mut E::Context);
 pub type CtxRefR<'a,E: Env> = (&'a E::Storage,&'a E::Context);
 pub type CtxRefM<'a,E: Env> = (&'a mut E::Storage,&'a mut E::Context);
 
-/// Reference to a widget or immediate widget
+/// Reference to a [`Widget`](Widget) or [immediate widget](AsWidget)
 pub type WidgetRef<'a,E: Env> = Box<(dyn Widget<E>+'a)>;
-/// Reference to a widget or immediate widget
+/// Reference to a [`Widget`](WidgetMut) or [immediate widget](AsWidgetMut)
 pub type WidgetRefMut<'a,E: Env> = Box<(dyn WidgetMut<E>+'a)>;

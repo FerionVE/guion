@@ -1,9 +1,9 @@
-//! macros for implementing traitcast for widgets
+//! Macros for implementing traitcast for widgets
 use std::any::{TypeId, type_name};
 
 use super::*;
 
-/// should match the non-stabilized std::raw::TraitObject and represents an erased fat pointer
+/// Should match the non-stabilized std::raw::TraitObject and represents an erased fat pointer
 #[repr(C)]
 #[derive(Copy, Clone)]
 #[doc(hidden)]
@@ -12,10 +12,10 @@ pub struct TraitObject {
     vtable: *mut (),
 }
 
-/// This macro is used inside Widget/WidgetMut impls
+/// This macro is used inside [`Widget/WidgetMut`](Widget) impls
 /// 
 /// Example:
-/// ```rust
+/// ```ignore
 /// impl_traitcast!(
 ///     dyn IButton => |s| s;
 ///     dyn IButtonState => |s| &s.state;
@@ -39,10 +39,10 @@ macro_rules! impl_traitcast {
     }
 }
 
-/// This macro is used inside WidgetMut impls
+/// This macro is used inside [`WidgetMut`](WidgetMut) impls
 /// 
 /// Example:
-/// ```rust
+/// ```ignore
 /// impl_traitcast_mut!(
 ///     dyn IButton => |s| s;
 ///     dyn IButtonState => |s| &mut s.state;
@@ -95,8 +95,8 @@ impl<E> dyn WidgetMut<E>+'_ where E: Env {
     }
 }
 
-/// trait to secure Traitcasting, generally implemented by macro  
-/// - always implemented on `dyn Widget<E>`
+/// Trait to secure Traitcasting, generally implemented by [macro](traitcast_for)  
+/// - Always implemented on `dyn Widget<E>`
 /// - `T` is the destination `dyn Trait` to which should be traitcasted
 /// - `DestTypeID` must be the same type as `T`, but with 'static lifetimes. Used to retrieve TypeID
 pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
@@ -122,8 +122,8 @@ pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
     }
 }
 
-/// trait to secure Traitcasting, generally implemented by macro  
-/// - always implemented on `dyn WidgetMut<E>`
+/// Trait to secure Traitcasting, generally implemented by [macro](traitcast_for)  
+/// - Always implemented on `dyn WidgetMut<E>`
 /// - `T` is the destination `dyn Trait` to which should be traitcasted
 /// - `DestTypeID` must be the same type as `T`, but with 'static lifetimes. Used to retrieve TypeID
 pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
@@ -168,14 +168,16 @@ macro_rules! traitcast_for_mut {
     }
 }
 
-/// Implement Traitcast for traits to be traitcasted from Widget
+/// Implement [`Traitcast`] for traits to be traitcasted from [`Widget`]
 /// 
-/// Syntax: traitcast_for!(trait_path;mut_trait_path);
+/// Syntax:  
+/// `traitcast_for!(trait_path;mut_trait_path);`
+/// 
 /// 
 /// Implements for: Widget -> Trait, WidgetMut -> Trait, WidgetMut -> TraitMut
 /// 
-/// Example:
-/// traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);
+/// Example:  
+/// `traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);`
 #[macro_export]
 macro_rules! traitcast_for {
     ($trait_immu:path;$trait_mut:path) => {

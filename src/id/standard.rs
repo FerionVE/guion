@@ -18,7 +18,9 @@ impl StdID {
     }
 }
 
-/// Macro for defining const StdIDs
+/// Macro for defining const [`StdIDs`](StdID)
+// 
+// This defines a dummy type and uses it's TypeID for `StdID::Const` variant
 #[macro_export]
 macro_rules! const_std_id {
     ($n:ident) => {
