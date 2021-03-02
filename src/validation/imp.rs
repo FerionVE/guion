@@ -1,5 +1,5 @@
 use super::*;
-use std::{path::PathBuf};
+use std::path::PathBuf;
 
 impl<E,T> Validation<E> for &T where T: Validation<E> {
     //type Cached = T::Cached;

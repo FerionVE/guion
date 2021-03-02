@@ -1,14 +1,14 @@
-//! Widget reference including it's path and a reference to the root
+//! [`Widget`] reference including it's [path](Env::WidgetPath) and a reference to the [root](Env::Storage)
 use super::*;
 use std::ops::{DerefMut, Deref};
 
-/// A reference to a resolved Widget
+/// A reference to a resolved [`Widget`]
 pub struct Resolved<'a,E> where E: Env {
     pub wref: WidgetRef<'a,E>,
     pub path: E::WidgetPath,
     pub stor: &'a E::Storage,
 }
-/// A mutable reference to a resolved Widget
+/// A mutable reference to a resolved [`Widget`][WidgetMut]
 pub struct ResolvedMut<'a,E> where E: Env {
     pub wref: WidgetRef<'a,E>,
     pub path: E::WidgetPath,
@@ -22,7 +22,7 @@ pub struct ResolvedMutable<'a,E> where E: Env {
 
 impl<'a,E> Resolved<'a,E> where E: Env {
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::render`](Link::render)
+    /// generally not called directly, rather through [`Link::render`]
     #[inline]
     pub fn render(&self, c: &mut E::Context, r: &mut RenderLink<E>) {
         c.render(self.clone(),r)
@@ -40,23 +40,23 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         c.send_event(self.clone(),e,child)
     }
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::size`](Link::size)
+    /// generally not called directly, rather through [`Link::size`]
     #[inline]
     pub fn size(&self, c: &mut E::Context, e: &EStyle<E>) -> ESize<E> {
         c.size(self.clone(),e)
     }
 
-    /// render, but bypass context handlers
+    /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _render(&self, c: &mut E::Context, r: &mut RenderLink<E>) {
         (***self)._render(c.link(self.clone()),r)
     }
-    /// event, but bypass context handlers
+    /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _event_direct(&self, c: &mut E::Context, e: &EventCompound<E>) -> EventResp {
         (***self)._event_direct(c.link(self.clone()),e)
     }
-    /// size, but bypass context handlers
+    /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _size(&self, c: &mut E::Context, e: &EStyle<E>) -> ESize<E> {
         (***self)._size(c.link(self.clone()),e)

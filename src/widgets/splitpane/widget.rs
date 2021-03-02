@@ -78,7 +78,7 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
                     wx0 += (self.width/2) as i32;
                     wx1 -= (self.width/2) as i32;
 
-                    let ewx0 = wx0 - l_min as i32;
+                    let ewx0 = wx0 + l_min as i32;
                     let ewx1 = wx1 - r_min as i32;
 
                     cx = cx.min(ewx1-1).max(ewx0);

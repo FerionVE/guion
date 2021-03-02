@@ -1,14 +1,14 @@
-//! Style handler, Style specifier and selectors
+//! [Style handler](Style), [Style specifier and selectors](StyleSelector)
 use self::selectag::standard::StdSelectag;
 use self::selector::{StyleSelector, StyleSelectorAppend};
 use self::standard::cursor::StdCursor;
 
 use super::*;
 
-pub mod font;
 pub mod selector;
 pub mod selectag;
 pub mod color;
+pub mod font;
 pub mod standard;
 
 pub trait Style<E>: Clone + Default where E: Env {

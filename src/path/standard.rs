@@ -134,7 +134,7 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
 
     fn for_child_widget_path(&self, child_path: &Self) -> Self {
         if let Some(tip) = child_path.tip() {
-            self.clone().attached(tip.clone()) //TODO doesn't use WidgetID conversion like other fns inconstistence rework StdPath::PathFragment
+            self.clone().attached(tip.clone()) //TODO doesn't use WidgetID conversion like other fns inconsistent rework StdPath::PathFragment
         }else{
             self.clone()
         }

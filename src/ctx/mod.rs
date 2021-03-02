@@ -1,11 +1,11 @@
-//! The Context trait housing handlers, queue and other side stuff
+//! The [`Context`] trait housing handlers, queue and other side stuff
 use super::*;
 
 pub mod queue;
 pub mod clipboard;
 
-/// The Context contains the Handlers, the queue and other side data and is also the entry point for most actions.
-/// A Context is regularly referenced in parallel with the widget tree
+/// The Context contains the [`Handlers`](Handler), the [`Queue`] and other side data and is also the entry point for most actions.  
+/// A Context is regularly referenced in parallel with the [widget tree](Env::Storage)
 pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     type Handler: Handler<E>;
     type Queue: Queue<StdEnqueueable<E>,StdOrder>;

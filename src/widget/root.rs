@@ -4,10 +4,12 @@ use super::*;
 /// Implemented on the root of the widget tree  
 /// Represents the root of a widget tree and being a starting point for widget resolving
 pub trait Widgets<E>: Sized + 'static where E: Env {
-    /// Resolve Widget by path  
+    /// Resolve Widget by [path](WidgetPath)
+    /// 
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) Implementations often can just call [`resolve_in_root`](resolve_in_root)
     fn widget(&self, i: E::WidgetPath) -> Result<Resolved<E>,GuionError<E>>;
-    /// Resolve Widget by path  
+    /// Resolve Widget by [path](WidgetPath)
+    /// 
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) Implementations often can just call [`resolve_in_root_mut`](resolve_in_root_mut)
     fn widget_mut(&mut self, i: E::WidgetPath) -> Result<ResolvedMut<E>,GuionError<E>>;
 
@@ -16,6 +18,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
         self.widget(i).is_ok()
     }
 
+    #[deprecated] 
     fn trace_bounds(&self, ctx: &mut E::Context, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>>;
 
     #[deprecated] #[inline] fn tune_path(&self, _i: &mut E::WidgetPath) {}
@@ -27,7 +30,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
     }
 }
 //#[doc(hidden)]
-/// Used by [`Widgets::widget`](Widgets::widget) implementations
+/// Used by [`Widgets::widget`] implementations
 pub fn resolve_in_root<E: Env>(w: &dyn Widget<E>, p: E::WidgetPath) -> Result<(WidgetRef<E>,E::WidgetPath),GuionError<E>> {
     let r = w.resolve(p.refc())?;
     

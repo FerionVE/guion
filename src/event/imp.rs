@@ -1,4 +1,3 @@
-use crate::event::variants::*;
 use super::*;
 
 impl<E> Clone for Box<dyn Variant<E>> where E: Env {
@@ -11,7 +10,7 @@ impl<E> Clone for Box<dyn Variant<E>> where E: Env {
 pub trait VariantDerive<E>: 'static where E: Env {
     fn _as_any(&self) -> &dyn Any;
     fn _as_any_mut(&mut self) -> &mut dyn Any;
-    //don't trigger ambiguousity for now
+    //don't trigger ambiguity for now
     fn clon(&self) -> Self where Self: Sized;
     fn clone_dyn(&self) -> Box<dyn Variant<E>>;
 }

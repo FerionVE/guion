@@ -1,7 +1,5 @@
 use crate::*;
 use super::*;
-use event::variants::*;
-use state::standard::kbd::tabulate::tabulate;
 
 impl<S,E> Handler<E> for StdHandler<S,E> where
     S: Handler<E>,
@@ -154,7 +152,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                         if let Some(pos) = l.as_ref().s.mouse.pos {
                             let event = MouseUp{
                                 key: p.key,
-                                pos: pos,
+                                pos,
                                 down_pos: p.cursor.expect("TODO"), //fails if a invalid press was inserted into the state
                                 down_widget: p.down.refc(),
                                 down_ts: p.ts

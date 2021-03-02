@@ -3,12 +3,14 @@ use super::*;
 use std::fmt::Debug;
 
 /// Type compound
+/// 
 /// Note the Trait bounds Clone, Default, PartialEq are not used and just for simplifying derives
 pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'static {
     type Backend: Backend<Self>;
     type Context: Context<Self>;
     type Storage: Widgets<Self>;
     type WidgetID: WidgetID;
+    /// Implementation of path to resolve [`Widget`]
     type WidgetPath: WidgetPath<Self>;
     type ValidState: ValidState;
     type Message: 'static;

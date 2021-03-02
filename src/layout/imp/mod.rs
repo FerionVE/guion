@@ -32,9 +32,3 @@ impl AsRef<Self> for StdGonstraintAxis {
         self
     }
 }
-
-/*qwutils::asref_op!(;;SizeAxis;Add=add;AddAssign=add_assign;r: {
-    self.min += r.min;
-    self.preferred += r.preferred;
-    self.max.add_to_lossy(r.max);
-});*/

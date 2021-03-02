@@ -1,21 +1,23 @@
+#![doc(html_logo_url="https://raw.githubusercontent.com/FerionVE/guion/430c18e7/res/icon.svg")]
+#![doc(html_favicon_url="https://raw.githubusercontent.com/FerionVE/guion/8cc44b2e/res/favicon.svg")]
 //#![warn(clippy::all)]
 
-pub mod aliases;
+pub mod widget;
 pub mod backend;
-pub mod ctx;
 pub mod env;
-pub mod event;
-pub mod handler;
 pub mod id;
-pub mod layout;
 pub mod path;
 pub mod render;
-pub mod state;
+pub mod event;
 pub mod style;
+pub mod layout;
+pub mod ctx;
+pub mod handler;
+pub mod state;
 pub mod util;
-pub mod widget;
-pub mod widgets;
 pub mod validation;
+pub mod aliases;
+pub mod widgets;
 
 pub(crate) use aliases::*;
 pub(crate) use backend::*;
@@ -26,7 +28,7 @@ pub(crate) use env::*;
 pub(crate) use event::imp::*;
 pub(crate) use event::key::*;
 pub(crate) use event::variant::*;
-pub(crate) use event::variants::*;
+pub(crate) use event::standard::variants::*;
 pub(crate) use event::filter::*;
 pub(crate) use event::compound::*;
 pub(crate) use event::*;

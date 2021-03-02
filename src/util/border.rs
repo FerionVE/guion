@@ -1,3 +1,4 @@
+//! Used in layouting
 use super::*;
 
 #[derive(Clone,Copy,PartialEq)]

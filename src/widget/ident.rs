@@ -1,7 +1,8 @@
+//! WidgetIdent is combined [`WidgetID`] and [`Path`](WidgetPath), and can be found in event to make it comparable by the ID and resolvable by the Path
 use super::*;
 use std::{fmt::Debug, ops::Deref};
 
-/// WidgetIdent is combined WidgetID and Path, and can be found in event to make it comparable by the ID and resolvable by the Path
+/// WidgetIdent is combined [`WidgetID`] and [`Path`](WidgetPath), and can be found in event to make it comparable by the ID and resolvable by the Path
 #[derive(Clone)]
 pub struct WidgetIdent<E> where E: Env {
     pub id: E::WidgetID,

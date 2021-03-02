@@ -4,7 +4,7 @@ use std::sync::Arc;
 pub mod imp;
 pub mod validated;
 
-/// trait for querying/updating revision on trait data
+/// Trait for querying/updating revision on trait data
 pub trait Validation<E> {
     // As validation is generally used for caching (e.g. generated glyphs), this type is cached next to the cached generated data
     //type Cached: Clone + Sized + 'static;
@@ -13,7 +13,7 @@ pub trait Validation<E> {
 }
 
 pub trait ValidationMut<E>: Validation<E> {
-    /// called if e.g. dependent data is just generated, marks this data as valid, and returns side data to cache along with the dependend generated data.
+    /// Called if e.g. dependent data is just generated, marks this data as valid, and returns side data to cache along with the dependent generated data.
     /// Impl note: this could be called more than once on the same data
     fn validate(&mut self) -> Arc<dyn Any>;
 }

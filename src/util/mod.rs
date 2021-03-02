@@ -6,7 +6,7 @@ pub mod bounded_widget;
 pub mod traitcast;
 pub mod translate;
 pub mod sma;
-pub mod mapped;
+//pub mod mapped;
 pub mod error;
 pub mod tabulate;
 

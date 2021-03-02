@@ -1,6 +1,8 @@
-//! Widgets are interfaced in two Traits for immutable and mutable operations  
-//! The Traits features interface for queuering e.g. id or style, and also accessing or resolving child widgets  
-//! Note that some functions in the traits are not meant to be called from externel, but over `Link`'s methods  
+//! Widgets are interfaced in two Traits for immutable and mutable operations
+//! 
+//! The Traits features interface for querying e.g. id or style, and also accessing or resolving child widgets
+//! 
+//! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
 use super::*;
 use std::any::{TypeId, type_name};
 use traitcast::TraitObject;
@@ -26,19 +28,19 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::render`](Link::render)
+    /// generally not called directly, rather through [`Link::render`]
     fn _render(&self, l: Link<E>, r: &mut RenderLink<E>);
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::event`](Link::event)
+    /// generally not called directly, rather through [`Link::event`](Link::send_event)
     fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp;
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::size`](Link::size)
+    /// generally not called directly, rather through [`Link::size`]
     fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E>;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
@@ -67,9 +69,11 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     }
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget  
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
+    /// Resolve a deep child item by the given relative path
+    /// 
+    /// An empty path will resolve to this widget
+    /// 
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,GuionError<E>> {
         if i.is_empty() {
@@ -79,9 +83,11 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         self.child(c).unwrap().resolve_child(sub)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget  
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
+    /// Resolve a deep child item by the given relative path
+    /// 
+    /// An empty path will resolve to this widget
+    /// 
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
         if i.is_empty() {
@@ -91,9 +97,11 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         self.into_child(c).unwrap_nodebug().resolve_child(sub)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// to (or through) which child path would the given sub_path resolve?
-    /// returns the child index and the subpath inside the child widget to resolve further
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
+    /// To (or through) which child path would the given sub_path resolve?
+    /// 
+    /// Returns the child index and the subpath inside the child widget to resolve further
+    /// 
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn resolve_child(&self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
@@ -118,22 +126,25 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()>;
     
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// attach widget's id to the given parent path
+    /// Attach widget's id to the given parent path
     #[inline]
     #[deprecated]
     fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
         parent.for_child_widget_id(self.id())
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// Refer [`WidgetPath::_resolves_thru`](WidgetPath::_resolves_thru)
-    /// [`sub_path`]: subpath in parent widget (which contains this widget as child) which would probably resolve to/through this widget
+    /// Refer [`WidgetPath::resolves_thru`](WidgetPath::resolves_thru_child_id)
+    /// 
+    /// `sub_path`: subpath in parent widget (which contains this widget as child) which would probably resolve to/through this widget
+    #[inline]
     #[deprecated]
     fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
         E::WidgetPath::resolves_thru_child_id(self.id(), sub_path)
     }
 
-    /// if the widget should be focusable.  
-    /// regularly true for interactive widgets, false for layouts.
+    /// If the widget should be focusable
+    /// 
+    /// Regularly true for interactive widgets, false for layouts.
     fn focusable(&self) -> bool;
     #[inline]
     fn _focus_on_mouse_down(&self) -> bool {
@@ -145,7 +156,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         true
     }
 
-    /// determines the next child in this widget in the tabulation step
+    /// Determines the next child in this widget in the tabulation step
     fn _tabulate_next_child(&self, _l: Link<E>, origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse {
         match origin {
             TabulateNextChildOrigin::Enter => match dir {
@@ -271,25 +282,25 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     }
 
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
-    /// box reference of this widget. Use [WidgetMut::box_mut] to box into mutable [WidgetRef]
+    /// Box reference of this widget immutable. Use [`Widget::box_mut`] to box into mutable [`WidgetRef`](WidgetRef).
     #[inline]
     fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
         WBase::_box_ref(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
-    /// box mut reference of this widget
+    /// Box mut reference of this widget.
     #[inline]
     fn box_mut<'s>(&'s mut self) -> WidgetRef<'s,E> {
         WBase::_box_mut(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
-    /// move widget into box. Use [WidgetMut::box_box_mut] to box into mutable [WidgetRef]
+    /// Move widget into box.
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
         WBase::_box_box(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
-    /// move widget into box. Use [WidgetMut::boxed_mut] to box into mutable [WidgetRef]
+    /// Move widget into box immutable. Use [`WidgetMut::boxed_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
     fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
         WBase::_boxed(self)
@@ -326,9 +337,11 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn childs_mut<'s>(&'s mut self) -> Vec<Resolvable<'s,E>>;
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// resolve a deep child item by the given relative path  
-    /// an empty path will resolve to this widget  
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but throught [`Widgets::widget`](Widgets::widget)
+    /// Resolve a deep child item by the given relative path
+    /// 
+    /// An empty path will resolve to this widget
+    /// 
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if i.is_empty() {
@@ -352,7 +365,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn mutate(&mut self) -> Result<&mut dyn WidgetMut<E>,GuionError<E>>;
 
     /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
-    /// The impl_traitcast! macro should be used to implement this function
+    /// The [`impl_traitcast`] macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
     #[inline]
@@ -360,7 +373,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         None
     }
     /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
-    /// The impl_traitcast_mut! macro should be used to implement this function
+    /// The [`impl_traitcast_mut`] macro should be used to implement this function
     #[allow(unused)]
     #[doc(hidden)]
     #[inline]
@@ -369,9 +382,10 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     }
 }
 
+/// Mutable [`Widget`]
 pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)  
-    /// an alternative way to pass mutations. See [Link::Message]
+    /// An alternative way to pass mutations. See [Widgets::message] and [link::enqueue_message]
     #[allow(unused)]
     #[inline]
     fn message(&mut self, m: E::Message) {
@@ -390,7 +404,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     }
 }
 
-/// this trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
+/// This trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
 #[doc(hidden)]
 pub trait WBase<E> where E: Env {
     fn type_name(&self) -> &'static str;
@@ -432,7 +446,7 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     }
 }
 
-/// this trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
+/// This trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
 #[doc(hidden)]
 pub trait WBaseMut<E> where E: Env {
     fn base(&self) -> &dyn Widget<E>;

@@ -83,7 +83,7 @@ impl Bounds {
         }
     }
 
-    /// get the bounds inside this bound (subtract border)
+    /// Get the bounds inside this bound (subtract border)
     #[inline]
     pub fn inside_border(&self, b: &Border) -> Self {
         let mut s = *self;
@@ -92,7 +92,7 @@ impl Bounds {
         s
     }
 
-    /// get the part of the inner which also is inside this bound
+    /// Get the part of the inner which also is inside this bound
     /// 
     /// Use the BitAnd operator if the inner bound is absolute
     #[inline]
@@ -110,7 +110,7 @@ impl Bounds {
         senf.size.h = (senf.size.h as i32 - step*2).max(0) as u32;
         senf
     }
-    /// get bound with size s and centered relative to self
+    /// Get bound with size s and centered relative to self
     #[inline]
     pub const fn inner_centered(&self, size: Dims) -> Self {
         let nx = (self.size.w as i32 - size.w as i32)/2;
@@ -123,8 +123,9 @@ impl Bounds {
             size,
         }
     }
-    /// inner_centered but advanced
-    /// align is the start-to-end relative position (0.0 - 1.0)
+    /// [`inner_centered`](Self::inner_centered) but advanced
+    /// 
+    /// `align`: is the start-to-end relative position (0.0 - 1.0)
     #[inline]
     pub fn inner_aligned(&self, size: Dims, align: (f32,f32)) -> Self {
         //let align = (align.0.min(1.0).max(0.0), align.1.min(1.0).max(0.0));
@@ -138,8 +139,9 @@ impl Bounds {
             size,
         }
     }
-    /// inner_centered but advanced
-    /// align is the start-to-end relative position (0.0 - 1.0)
+    /// [`inner_centered`](Self::inner_centered) but advanced
+    /// 
+    /// `align`: the start-to-end relative position (0.0 - 1.0)
     #[inline]
     pub fn inner_aligned_f(&self, size: (f32,f32), align: (f32,f32)) -> Self {
         let align = (align.0.clamp(0.0,1.0), align.1.clamp(0.0,1.0));
@@ -207,7 +209,7 @@ impl Bounds {
 }
 
 impl Offset {
-    /// if the offset is inside the bound b
+    /// If the offset is inside the bound b
     #[inline]
     pub fn is_inside(&self, b: &Bounds) -> bool {
         self.x >= b.x() && self.x < b.x1() &&

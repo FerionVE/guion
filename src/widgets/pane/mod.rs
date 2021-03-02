@@ -1,5 +1,5 @@
 use super::*;
-use std::{marker::PhantomData};
+use std::marker::PhantomData;
 
 use calc::calc_bounds;
 

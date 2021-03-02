@@ -10,7 +10,7 @@ pub trait Filter<E>: Clone + Default + Sized where E: Env, EEFilter<E>: From<Sel
 pub struct StdFilter<E> where E: Env, EEFilter<E>: From<Self> {
     /// An empty path means no filter
     pub filter_path: E::WidgetPath,
-    /// Absolute Bounds filter
+    /// Absolute [`Bounds`] filter
     /// Note: is only filtered if filter_path is empty
     pub filter_bounds: bool,
 }
