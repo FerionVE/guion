@@ -3,7 +3,7 @@
 # guion
 
 [![crates.io](https://img.shields.io/crates/v/guion?style=flat-square)](https://crates.io/crates/guion)
-[![docs.rs](https://img.shields.io/badge/docs-docs.rs-0f?style=flat-square)](https://docs.rs/guion)
+[![docs.rs](https://img.shields.io/docsrs/guion?style=flat-square)](https://docs.rs/guion)
 [![rustc 1.50+](https://img.shields.io/badge/rustc-1.50+-ab6000?style=flat-square)](https://blog.rust-lang.org/2021/02/11/Rust-1.50.0.html)
 ![MIT or Apache 2.0 licensed](https://img.shields.io/crates/l/guion?style=flat-square)
 
