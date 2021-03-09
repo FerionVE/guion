@@ -4,7 +4,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/guion?style=flat-square)](https://crates.io/crates/guion)
 [![docs.rs](https://img.shields.io/docsrs/guion?style=flat-square)](https://docs.rs/guion)
-![MIT or Apache 2.0 licensed](https://img.shields.io/crates/l/guion?style=flat-square)
+[![MIT licensed](https://img.shields.io/crates/l/guion?style=flat-square)](LICENSE)
 
 &nbsp;
 
@@ -27,5 +27,9 @@ Goals:
 - Widget Data caching/invalidation abstractions
 - Tame complexity, provide efficient abstractions to make life easier
 
-Related Project:
+## Related Projects
 - [guion_sdl2](https://github.com/FerionVE/guion_sdl2) for a prototype backend implementation
+
+## License
+
+This project is licensed under the [MIT license](LICENSE).
