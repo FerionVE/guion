@@ -64,7 +64,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         (0..self.childs())
-            .map(#[inline] |i| self.child(i).unwrap().in_parent_path(own_path.refc()) )
+            .map(#[inline] |i| self.child(i).unwrap().in_parent_path(own_path.refc(),todo!("TODO")) )
             .collect::<Vec<_>>()
     }
 

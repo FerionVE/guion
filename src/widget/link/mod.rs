@@ -1,4 +1,4 @@
-//! The [`Link`] is used to interface [widgets](Widget) thru and tracks the current [path](Env::WidgetPath)
+//! The [`Link`] is used to interface [widgets](Widget) thru and tracks the current [master sword](Env::WidgetPath)
 use std::ops::DerefMut;
 use std::ops::Deref;
 use super::*;
@@ -87,6 +87,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
+    pub fn short_path(&self) -> E::WidgetPath {
+        self.widget.short_path.refc()
+    }
+
+    #[inline]
     pub fn ident(&self) -> WidgetIdent<E> {
         self.widget.ident()
     }
@@ -132,12 +137,12 @@ impl<'c,E> Link<'c,E> where E: Env {
         (**self.widget)._event_direct(w,e)
     }
     #[inline]
-    pub fn _send_event(&mut self, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
+    pub fn _send_event(&mut self, e: &EventCompound<E>, sub: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
         let e = EventCompound{
-            filter: e.filter.clone().attach_path_prefix(child.clone()),
+            filter: e.filter.clone().attach_path_prefix(sub.clone()),
             ..e.clone()
         };
-        let _ = self.widget.resolve(child)?;
+        let _ = self.widget.resolve(sub)?;
         let w = self.ctx.link(self.widget.reference());
         Ok( (**self.widget)._event_direct(w,&e) )
     }
@@ -192,20 +197,32 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// Get Link for specific child by index
     #[inline]
-    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,GuionError<E>> where 'c: 's { //TODO rename to child(i)
+    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,GuionError<E>> where 'c: 's { //TODO rename to child(i), use with_child_specific
         let path = self.widget.path.refc();
         let stor = self.widget.stor;
 
         let c = self.widget.child(i)?;
+        let mut r;
 
-        let w = c.resolve_widget(stor)?;
-        let w = Resolved{
-            path: w.in_parent_path(path.refc()).into(),
-            wref: w,
-            stor,
-        };
+        match c {
+            Resolvable::Widget(w) => {
+                let cpath = w.in_parent_path(path.refc()).into();
+                r = Resolved {
+                    path: cpath.refc(),
+                    short_path: cpath,
+                    wref: w,
+                    stor,
+                };
+            },
+            Resolvable::Path(w) => {
+                let cpath = path.for_child_widget_path(&w,false);
+                r = stor.widget(w)?;
+                r.path = cpath;
+            }
+        }
+
         let l = Link{
-            widget: w,
+            widget: r,
             ctx: self.ctx,
         };
 
@@ -244,24 +261,35 @@ impl<'c,E> Link<'c,E> where E: Env {
     /// Current widget must be parent of rw
     #[inline]
     pub fn with_child_specific<'s>(&'s mut self, rw: Resolvable<'s,E>) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
-        let path = rw.in_parent_path(self.path());
+        let path = rw.in_parent_path(self.path(),false);
         self.with_resolvable(rw,path)
     }
 
     #[inline]
     pub fn with_resolvable<'s>(&'s mut self, rw: Resolvable<'s,E>, path: E::WidgetPath) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
-        let rw = rw.resolve_widget(&self.widget.stor)?;
-        let w = Resolved{
-            path,
-            wref: rw,
-            stor: self.widget.stor,
-        };
-        Ok(
-            Link{
-                widget: w,
-                ctx: self.ctx,
+        let mut r;
+
+        match rw {
+            Resolvable::Widget(w) => {
+                r = Resolved {
+                    path: path.refc(),
+                    short_path: path,
+                    wref: w,
+                    stor: &self.widget.stor,
+                };
+            },
+            Resolvable::Path(w) => {
+                r = self.widget.stor.widget(w)?;
+                r.path = path;
             }
-        )
+        }
+
+        let l = Link{
+            widget: r,
+            ctx: self.ctx,
+        };
+
+        Ok(l)
     }
 
     #[inline]
@@ -269,19 +297,29 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.with_widget(WidgetPath::empty()).map_err(|_| ()) //TODO GuionError everywhere
     }
 
-    pub fn resolve_sub<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
-        let mut new_path = self.widget.path.refc().attached_subpath(&p); //TODO w h a t
-        let rw = self.widget.wref.resolve(p.refc())?;
-        rw.extract_path(&mut new_path); //TODO extract FINAL path
-        let rw = rw.resolve_widget(&self.widget.stor)?;
-        let w = Resolved{
-            path: new_path,
-            wref: rw,
-            stor: self.widget.stor,
-        };
+    pub fn resolve_sub<'s>(&'s mut self, sub: &E::WidgetPath) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
+        let path = self.widget.path.refc().attached_subpath(sub);
+        let rw = self.widget.wref.resolve(sub.refc())?;
+        
+        let mut r;
+        match rw {
+            Resolvable::Widget(w) => {
+                r = Resolved {
+                    path: path.refc(),
+                    short_path: path,
+                    wref: w,
+                    stor: &self.widget.stor,
+                };
+            },
+            Resolvable::Path(w) => {
+                r = self.widget.stor.widget(w)?;
+                r.path = path;
+            }
+        }
+        
         Ok(
             Link{
-                widget: w,
+                widget: r,
                 ctx: self.ctx,
             }
         )

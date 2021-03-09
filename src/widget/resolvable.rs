@@ -47,12 +47,12 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
         }
     }
     /// Extend the path representing the parent of this widget to resolve to this widget
-    #[deprecated]
+    #[deprecated] //TODO stabilize
     #[inline]
-    pub fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
+    pub fn in_parent_path(&self, parent: E::WidgetPath, reduce: bool) -> E::WidgetPath {
         match self {
             Self::Widget(w) => w.in_parent_path(parent),
-            Self::Path(w) => w.refc().into(), //TODO WRONG use widget's fns
+            Self::Path(w) => parent.for_child_widget_path(w,reduce) //TODO WRONG use widget's fns
         }
     }
 

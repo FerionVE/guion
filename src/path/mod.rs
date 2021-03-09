@@ -42,7 +42,8 @@ where E: Env {
     fn resolves_thru_child_path(child_path: &Self, sub_path: &Self) -> Option<ResolvesThruResult<E>>;
 
     fn for_child_widget_id(&self, child: E::WidgetID) -> Self;
-    fn for_child_widget_path(&self, child_path: &Self) -> Self;
+    /// `reduce': as 'child_path' is a absolute path and can resolve to the widget itself, the path with the child can be "reduced" to just returning 'child_path'. This reduction should only be done if 'reduce'=true
+    fn for_child_widget_path(&self, child_path: &Self, reduce: bool) -> Self;
 
 
     // fn tip(&self) -> Option<&Self::SubPath>;
