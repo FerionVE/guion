@@ -18,6 +18,7 @@ pub mod util;
 pub mod validation;
 pub mod aliases;
 pub mod widgets;
+pub mod log;
 
 pub(crate) use aliases::*;
 pub(crate) use backend::*;

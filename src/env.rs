@@ -15,6 +15,7 @@ pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'stat
     type ValidState: ValidState;
     type Message: 'static;
     //type Commit: Eq + Ord;
+    type Log: crate::log::Logger;
 }
 
 pub trait EnvFlexCtxHandler: Env {
