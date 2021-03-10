@@ -21,7 +21,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline] 
     pub fn mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.path.refc(),f},o,p)
+        self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.short_path.refc(),f},o,p)
     }
     /// Enqueue mutable access to this widget
     #[inline] 
@@ -30,7 +30,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline] 
     pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f},o,p)
+        self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.short_path.refc(),f},o,p)
     }
     /// Enqueue message-style invoking of [WidgetMut::message]
     #[inline]
@@ -40,7 +40,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     /// Enqueue message-style invoking of [WidgetMut::message]
     #[inline]
     pub fn message_mut_at<O>(&mut self, m: E::Message, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::MutMessage{path: self.widget.path.refc(),msg:m},o,p)
+        self.enqueue(StdEnqueueable::MutMessage{path: self.widget.short_path.refc(),msg:m},o,p)
     }
     /// Enqueue immutable access to this widget
     #[inline] 
@@ -49,7 +49,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline] 
     pub fn later_at<O>(&mut self, f: fn(WidgetRef<E>,&mut E::Context), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.path.refc(),f},o,p)
+        self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.short_path.refc(),f},o,p)
     }
     /// Enqueue immutable access to this widget
     #[inline] 
@@ -58,22 +58,22 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline] 
     pub fn later_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+Sync>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.path.refc(),f},o,p)
+        self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.short_path.refc(),f},o,p)
     }
     #[inline]
     pub fn enqueue_invalidate(&mut self) {
-        self.enqueue(StdEnqueueable::InvalidateWidget{path: self.widget.path.refc()},StdOrder::PreRender,0)
+        self.enqueue(StdEnqueueable::InvalidateWidget{path: self.widget.short_path.refc()},StdOrder::PreRender,0)
     }
     /// Mark the current widget as validated
     /// 
     /// This should and should only be called from widget's render fn
     #[inline]
     pub fn enqueue_validate_render(&mut self) {
-        self.enqueue(StdEnqueueable::ValidateWidgetRender{path: self.widget.path.refc()},StdOrder::RenderValidation,0)
+        self.enqueue(StdEnqueueable::ValidateWidgetRender{path: self.widget.short_path.refc()},StdOrder::RenderValidation,0)
     }
     #[inline]
     pub fn enqueue_validate_size(&mut self, s: ESize<E>) {
-        self.enqueue(StdEnqueueable::ValidateWidgetSize{path: self.widget.path.refc(),size: s},StdOrder::RenderValidation,0)
+        self.enqueue(StdEnqueueable::ValidateWidgetSize{path: self.widget.short_path.refc(),size: s},StdOrder::RenderValidation,0)
     }
 
     #[inline]
@@ -199,7 +199,6 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,GuionError<E>> where 'c: 's { //TODO rename to child(i), use with_child_specific
         let path = self.widget.path.refc();
-        let stor = self.widget.stor;
 
         let c = self.widget.child(i)?;
         let mut r;
@@ -211,12 +210,12 @@ impl<'c,E> Link<'c,E> where E: Env {
                     path: cpath.refc(),
                     short_path: cpath,
                     wref: w,
-                    stor,
+                    stor: self.widget.stor,
                 };
             },
             Resolvable::Path(w) => {
                 let cpath = path.for_child_widget_path(&w,false);
-                r = stor.widget(w)?;
+                r = self.widget.stor.widget(w)?;
                 r.path = cpath;
             }
         }
@@ -275,7 +274,7 @@ impl<'c,E> Link<'c,E> where E: Env {
                     path: path.refc(),
                     short_path: path,
                     wref: w,
-                    stor: &self.widget.stor,
+                    stor: self.widget.stor,
                 };
             },
             Resolvable::Path(w) => {
@@ -308,7 +307,7 @@ impl<'c,E> Link<'c,E> where E: Env {
                     path: path.refc(),
                     short_path: path,
                     wref: w,
-                    stor: &self.widget.stor,
+                    stor: self.widget.stor,
                 };
             },
             Resolvable::Path(w) => {

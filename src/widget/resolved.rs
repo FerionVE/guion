@@ -142,6 +142,8 @@ impl<'a,E> DerefMut for ResolvedMut<'a,E> where E: Env {
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
     #[inline]
     fn clone(&self) -> Self {
-        self.stor.widget(self.path.refc()).unwrap()
+        let mut s = self.stor.widget(self.short_path.refc()).unwrap();
+        s.path = self.path.refc();
+        s
     }
 }
