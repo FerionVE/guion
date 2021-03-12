@@ -5,12 +5,14 @@ use util::{LocalGlyphCache, caption::Caption};
 use label::Label;
 
 pub mod widget;
+pub mod imp;
 
 pub struct Button<'w,E,Text> where
     E: Env,
     Text: 'w,
 {
-    pub trigger: for<'a> fn(Link<'a,E>),
+    pub trigger: Box<dyn Fn(Link<'_,E>)+'w>,
+    pub trigger_mut: Box<dyn FnMut()+'w>,
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
@@ -30,7 +32,8 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>> where
             id,
             size: constraint!(0|0).into(),
             style: Default::default(),
-            trigger: |_|{},
+            trigger: Box::new(|_|{}),
+            trigger_mut: Box::new(||{}),
             locked: false,
             text: Label::new(E::WidgetID::new_id()),
             p: PhantomData,
@@ -48,7 +51,8 @@ impl<'w,E,Text> Button<'w,E,Text> where
             id,
             size: constraint!(0|0).into(),
             style: Default::default(),
-            trigger: |_|{},
+            trigger: Box::new(|_|{}),
+            trigger_mut: Box::new(||{}),
             locked: false,
             text,
             p: PhantomData,
@@ -61,8 +65,13 @@ impl<'w,E,Text> Button<'w,E,Text> where
     Text: 'w,
 {
     #[inline]
-    pub fn with_trigger(mut self, fun: for<'a> fn(Link<E>)) -> Self {
-        self.trigger = fun;
+    pub fn with_trigger(mut self, fun: impl Fn(Link<'_,E>)+'w) -> Self {
+        self.trigger = Box::new(fun);
+        self
+    }
+    #[inline]
+    pub fn with_trigger_mut(mut self, fun: impl FnMut()+'w) -> Self {
+        self.trigger_mut = Box::new(fun);
         self
     }
     #[inline]
@@ -72,6 +81,7 @@ impl<'w,E,Text> Button<'w,E,Text> where
             size: self.size,
             style: self.style,
             trigger: self.trigger,
+            trigger_mut: self.trigger_mut,
             locked: self.locked,
             text,
             p: PhantomData,
@@ -105,6 +115,7 @@ impl<'w,E,T,LC> Button<'w,E,Label<'w,E,T,LC>> where
             size: self.size,
             style: self.style,
             trigger: self.trigger,
+            trigger_mut: self.trigger_mut,
             locked: self.locked,
             text: self.text.with_text(text),
             p: PhantomData,

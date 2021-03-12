@@ -1,6 +1,7 @@
 use crate::style::standard::cursor::StdCursor;
 
 use super::*;
+use super::imp::*;
 
 impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
     E: Env,
@@ -59,12 +60,20 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
         }
         if let Some(ee) = e.event.is_mouse_up() {
             if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
-                (self.trigger)(l);
+                (self.trigger)(l.reference());
+                l.mutate_closure(Box::new(move |mut w,c,_|{
+                    let w = w.traitcast_mut::<dyn IButton<E>>().unwrap();
+                    w.trigger_mut();
+                }));
                 return true;
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
             if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
-                (self.trigger)(l);
+                (self.trigger)(l.reference());
+                l.mutate_closure(Box::new(move |mut w,c,_|{
+                    let w = w.traitcast_mut::<dyn IButton<E>>().unwrap();
+                    w.trigger_mut();
+                }));
                 return true;
             }
         }
@@ -101,6 +110,10 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
         if i != 0 {return Err(());}
         Ok(self.text.into_ref())
     }
+
+    impl_traitcast!(
+        dyn IButton<E> => |s| s;
+    );
 }
 
 impl<'w,E,Text> WidgetMut<E> for Button<'w,E,Text> where
@@ -124,6 +137,10 @@ impl<'w,E,Text> WidgetMut<E> for Button<'w,E,Text> where
         if i != 0 {return Err(());}
         Ok(self.text.into_mut())
     }
+
+    impl_traitcast_mut!(
+        dyn IButton<E> => |s| s;
+    );
 }
 
 impl<'w,E,S> Button<'w,E,S> where
