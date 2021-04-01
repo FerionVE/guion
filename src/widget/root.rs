@@ -39,7 +39,7 @@ pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs
             Ok(Resolved {
                 wref: w,
                 path: abs_path.clone(),
-                short_path: abs_path,
+                direct_path: abs_path,
                 stor
             }),
         Resolvable::Path(p) => {
@@ -59,7 +59,7 @@ pub fn resolve_in_root_mut<E: Env>(
 ) -> Result<ResolvedMut<E>,GuionError<E>> {
     
     let final_path = resolve_in_root::<E>(root_in_stor(stor), sub, abs_path.refc(), stor)
-        .map(#[inline] |e| e.short_path )?;
+        .map(#[inline] |e| e.direct_path )?;
 
     let w = root_in_stor_mut(stor)
         .resolve_mut(final_path.refc())
@@ -70,6 +70,6 @@ pub fn resolve_in_root_mut<E: Env>(
     Ok(ResolvedMut {
         wref: w,
         path: abs_path,
-        short_path: final_path,
+        direct_path: final_path,
     })
 }
