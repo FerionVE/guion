@@ -31,28 +31,45 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
 }
 //#[doc(hidden)]
 /// Used by [`Widgets::widget`] implementations
-pub fn resolve_in_root<E: Env>(w: &dyn Widget<E>, p: E::WidgetPath) -> Result<(WidgetRef<E>,E::WidgetPath),GuionError<E>> {
-    let r = w.resolve(p.refc())?;
+pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage) -> Result<Resolved<'s,E>,GuionError<E>> where E: Env, 'l: 's {
+    let r = root.resolve(sub.refc())?;
     
     match r {
         Resolvable::Widget(w) => 
-            Ok(
-                (w,From::from(p))
-            ),
-        Resolvable::Path(p) => resolve_in_root(w,p),
+            Ok(Resolved {
+                wref: w,
+                path: abs_path.clone(),
+                direct_path: abs_path,
+                stor
+            }),
+        Resolvable::Path(p) => {
+            let mut r = stor.widget(p)?;
+            r.path = abs_path;
+            Ok(r)
+        },
     }
 }
 //#[doc(hidden)]
 /// Used by [`Widgets::widget_mut`](Widgets::widget_mut) implementations
-pub fn resolve_in_root_mut<E: Env>(w: &mut dyn WidgetMut<E>, p: E::WidgetPath) -> Result<(WidgetRefMut<E>,E::WidgetPath),GuionError<E>> {
-    let final_path = resolve_in_root::<E>(w.base(),p)
-        .map(#[inline] |e| e.1 )?;
+pub fn resolve_in_root_mut<E: Env>(
+    stor: &mut E::Storage,
+    root_in_stor: impl FnOnce(&E::Storage) -> &dyn Widget<E>,
+    root_in_stor_mut: impl FnOnce(&mut E::Storage) -> &mut dyn WidgetMut<E>,
+    sub: E::WidgetPath, abs_path: E::WidgetPath,
+) -> Result<ResolvedMut<E>,GuionError<E>> {
+    
+    let final_path = resolve_in_root::<E>(root_in_stor(stor), sub, abs_path.refc(), stor)
+        .map(#[inline] |e| e.direct_path )?;
 
-    Ok((
-        w.resolve_mut(final_path.refc())
-            .unwrap()
-            .as_widget()
-            .unwrap_nodebug(),
-        final_path
-    ))
+    let w = root_in_stor_mut(stor)
+        .resolve_mut(final_path.refc())
+        .unwrap()
+        .as_widget()
+        .unwrap_nodebug(); 
+
+    Ok(ResolvedMut {
+        wref: w,
+        path: abs_path,
+        direct_path: final_path,
+    })
 }

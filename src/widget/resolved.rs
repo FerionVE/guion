@@ -6,12 +6,14 @@ use std::ops::{DerefMut, Deref};
 pub struct Resolved<'a,E> where E: Env {
     pub wref: WidgetRef<'a,E>,
     pub path: E::WidgetPath,
+    pub direct_path: E::WidgetPath,
     pub stor: &'a E::Storage,
 }
 /// A mutable reference to a resolved [`Widget`][WidgetMut]
 pub struct ResolvedMut<'a,E> where E: Env {
     pub wref: WidgetRefMut<'a,E>,
     pub path: E::WidgetPath,
+    pub direct_path: E::WidgetPath,
 }
 
 impl<'a,E> Resolved<'a,E> where E: Env {
@@ -70,6 +72,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         Resolved{
             wref: Box::new(&*self.wref),
             path: self.path.clone(),
+            direct_path: self.direct_path.clone(),
             stor: &self.stor,
         }
     }
@@ -139,6 +142,8 @@ impl<'a,E> DerefMut for ResolvedMut<'a,E> where E: Env {
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
     #[inline]
     fn clone(&self) -> Self {
-        self.stor.widget(self.path.refc()).unwrap()
+        let mut s = self.stor.widget(self.direct_path.refc()).unwrap();
+        s.path = self.path.refc();
+        s
     }
 }

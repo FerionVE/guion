@@ -1,4 +1,4 @@
-//! The [`Link`] is used to interface [widgets](Widget) thru and tracks the current [path](Env::WidgetPath)
+//! The [`Link`] is used to interface [widgets](Widget) thru and tracks the current [master sword](Env::WidgetPath)
 use std::ops::DerefMut;
 use std::ops::Deref;
 use super::*;
@@ -21,7 +21,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline] 
     pub fn mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.path.refc(),f},o,p)
+        self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.direct_path.refc(),f},o,p)
     }
     /// Enqueue mutable access to this widget
     #[inline] 
@@ -30,7 +30,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline] 
     pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.path.refc(),f},o,p)
+        self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.direct_path.refc(),f},o,p)
     }
     /// Enqueue message-style invoking of [WidgetMut::message]
     #[inline]
@@ -40,7 +40,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     /// Enqueue message-style invoking of [WidgetMut::message]
     #[inline]
     pub fn message_mut_at<O>(&mut self, m: E::Message, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::MutMessage{path: self.widget.path.refc(),msg:m},o,p)
+        self.enqueue(StdEnqueueable::MutMessage{path: self.widget.direct_path.refc(),msg:m},o,p)
     }
     /// Enqueue immutable access to this widget
     #[inline] 
@@ -49,7 +49,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline] 
     pub fn later_at<O>(&mut self, f: fn(WidgetRef<E>,&mut E::Context), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.path.refc(),f},o,p)
+        self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.direct_path.refc(),f},o,p)
     }
     /// Enqueue immutable access to this widget
     #[inline] 
@@ -58,22 +58,22 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     #[inline] 
     pub fn later_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+Sync>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.path.refc(),f},o,p)
+        self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.direct_path.refc(),f},o,p)
     }
     #[inline]
     pub fn enqueue_invalidate(&mut self) {
-        self.enqueue(StdEnqueueable::InvalidateWidget{path: self.widget.path.refc()},StdOrder::PreRender,0)
+        self.enqueue(StdEnqueueable::InvalidateWidget{path: self.widget.direct_path.refc()},StdOrder::PreRender,0)
     }
     /// Mark the current widget as validated
     /// 
     /// This should and should only be called from widget's render fn
     #[inline]
     pub fn enqueue_validate_render(&mut self) {
-        self.enqueue(StdEnqueueable::ValidateWidgetRender{path: self.widget.path.refc()},StdOrder::RenderValidation,0)
+        self.enqueue(StdEnqueueable::ValidateWidgetRender{path: self.widget.direct_path.refc()},StdOrder::RenderValidation,0)
     }
     #[inline]
     pub fn enqueue_validate_size(&mut self, s: ESize<E>) {
-        self.enqueue(StdEnqueueable::ValidateWidgetSize{path: self.widget.path.refc(),size: s},StdOrder::RenderValidation,0)
+        self.enqueue(StdEnqueueable::ValidateWidgetSize{path: self.widget.direct_path.refc(),size: s},StdOrder::RenderValidation,0)
     }
 
     #[inline]
@@ -84,6 +84,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn path(&self) -> E::WidgetPath {
         self.widget.path.refc()
+    }
+
+    #[inline]
+    pub fn direct_path(&self) -> E::WidgetPath {
+        self.widget.direct_path.refc()
     }
 
     #[inline]
@@ -132,12 +137,12 @@ impl<'c,E> Link<'c,E> where E: Env {
         (**self.widget)._event_direct(w,e)
     }
     #[inline]
-    pub fn _send_event(&mut self, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
+    pub fn _send_event(&mut self, e: &EventCompound<E>, sub: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
         let e = EventCompound{
-            filter: e.filter.clone().attach_path_prefix(child.clone()),
+            filter: e.filter.clone().attach_path_prefix(sub.clone()),
             ..e.clone()
         };
-        let _ = self.widget.resolve(child)?;
+        let _ = self.widget.resolve(sub)?;
         let w = self.ctx.link(self.widget.reference());
         Ok( (**self.widget)._event_direct(w,&e) )
     }
@@ -192,20 +197,31 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// Get Link for specific child by index
     #[inline]
-    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,GuionError<E>> where 'c: 's { //TODO rename to child(i)
+    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,GuionError<E>> where 'c: 's { //TODO rename to child(i), use with_child_specific
         let path = self.widget.path.refc();
-        let stor = self.widget.stor;
 
         let c = self.widget.child(i)?;
+        let mut r;
 
-        let w = c.resolve_widget(stor)?;
-        let w = Resolved{
-            path: w.in_parent_path(path.refc()).into(),
-            wref: w,
-            stor,
-        };
+        match c {
+            Resolvable::Widget(w) => {
+                let cpath = w.in_parent_path(path.refc()).into();
+                r = Resolved {
+                    path: cpath.refc(),
+                    direct_path: cpath,
+                    wref: w,
+                    stor: self.widget.stor,
+                };
+            },
+            Resolvable::Path(w) => {
+                let cpath = path.for_child_widget_path(&w,false);
+                r = self.widget.stor.widget(w)?;
+                r.path = cpath;
+            }
+        }
+
         let l = Link{
-            widget: w,
+            widget: r,
             ctx: self.ctx,
         };
 
@@ -244,24 +260,35 @@ impl<'c,E> Link<'c,E> where E: Env {
     /// Current widget must be parent of rw
     #[inline]
     pub fn with_child_specific<'s>(&'s mut self, rw: Resolvable<'s,E>) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
-        let path = rw.in_parent_path(self.path());
+        let path = rw.in_parent_path(self.path(),false);
         self.with_resolvable(rw,path)
     }
 
     #[inline]
     pub fn with_resolvable<'s>(&'s mut self, rw: Resolvable<'s,E>, path: E::WidgetPath) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
-        let rw = rw.resolve_widget(&self.widget.stor)?;
-        let w = Resolved{
-            path,
-            wref: rw,
-            stor: self.widget.stor,
-        };
-        Ok(
-            Link{
-                widget: w,
-                ctx: self.ctx,
+        let mut r;
+
+        match rw {
+            Resolvable::Widget(w) => {
+                r = Resolved {
+                    path: path.refc(),
+                    direct_path: path,
+                    wref: w,
+                    stor: self.widget.stor,
+                };
+            },
+            Resolvable::Path(w) => {
+                r = self.widget.stor.widget(w)?;
+                r.path = path;
             }
-        )
+        }
+
+        let l = Link{
+            widget: r,
+            ctx: self.ctx,
+        };
+
+        Ok(l)
     }
 
     #[inline]
@@ -269,19 +296,29 @@ impl<'c,E> Link<'c,E> where E: Env {
         self.with_widget(WidgetPath::empty()).map_err(|_| ()) //TODO GuionError everywhere
     }
 
-    pub fn resolve_sub<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
-        let mut new_path = self.widget.path.refc().attached_subpath(&p); //TODO w h a t
-        let rw = self.widget.wref.resolve(p.refc())?;
-        rw.extract_path(&mut new_path); //TODO extract FINAL path
-        let rw = rw.resolve_widget(&self.widget.stor)?;
-        let w = Resolved{
-            path: new_path,
-            wref: rw,
-            stor: self.widget.stor,
-        };
+    pub fn resolve_sub<'s>(&'s mut self, sub: &E::WidgetPath) -> Result<Link<'s,E>,GuionError<E>> where 'c: 's {
+        let path = self.widget.path.refc().attached_subpath(sub);
+        let rw = self.widget.wref.resolve(sub.refc())?;
+        
+        let mut r;
+        match rw {
+            Resolvable::Widget(w) => {
+                r = Resolved {
+                    path: path.refc(),
+                    direct_path: path,
+                    wref: w,
+                    stor: self.widget.stor,
+                };
+            },
+            Resolvable::Path(w) => {
+                r = self.widget.stor.widget(w)?;
+                r.path = path;
+            }
+        }
+        
         Ok(
             Link{
-                widget: w,
+                widget: r,
                 ctx: self.ctx,
             }
         )
