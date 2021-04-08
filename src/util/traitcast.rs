@@ -68,7 +68,7 @@ macro_rules! impl_traitcast_mut {
 
 impl<E> dyn Widget<E>+'_ where E: Env {
     #[inline]
-    pub fn traitcast_ref<'s,T>(&'s self) -> Result<&'s T,GuionError<E>> where Self: Traitcast<T,E>, T: ?Sized {
+    pub fn traitcast_ref<'s,T>(&'s self) -> Result<&'s T,E::Error> where Self: Traitcast<T,E>, T: ?Sized {
         unsafe{Self::_traitcast_ref(self)}
     }
     #[inline]
@@ -78,7 +78,7 @@ impl<E> dyn Widget<E>+'_ where E: Env {
 }
 impl<E> dyn WidgetMut<E>+'_ where E: Env {
     #[inline]
-    pub fn traitcast_ref<'s,T>(&'s self) -> Result<&'s T,GuionError<E>> where Self: Traitcast<T,E>, T: ?Sized {
+    pub fn traitcast_ref<'s,T>(&'s self) -> Result<&'s T,E::Error> where Self: Traitcast<T,E>, T: ?Sized {
         unsafe{Self::_traitcast_ref(self.erase())}
     }
     #[inline]
@@ -86,7 +86,7 @@ impl<E> dyn WidgetMut<E>+'_ where E: Env {
         unsafe{Self::_try_traitcast_ref(self.erase())}
     }
     #[inline]
-    pub fn traitcast_mut<'s,T>(&'s mut self) -> Result<&'s mut T,GuionError<E>> where Self: TraitcastMut<T,E>, T: ?Sized {
+    pub fn traitcast_mut<'s,T>(&'s mut self) -> Result<&'s mut T,E::Error> where Self: TraitcastMut<T,E>, T: ?Sized {
         unsafe{Self::_traitcast_mut(self)}
     }
     #[inline]
@@ -103,7 +103,7 @@ pub unsafe trait Traitcast<T,E>: Widget<E> where T: ?Sized, E: Env {
     type DestTypeID: ?Sized + 'static;
 
     #[inline]
-    unsafe fn _traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Result<&'s T,GuionError<E>> {
+    unsafe fn _traitcast_ref<'s>(senf: &'s dyn Widget<E>) -> Result<&'s T,E::Error> {
         Self::_try_traitcast_ref(senf)
             .map_err(|_| traitcast_error_info::<E,Self::DestTypeID>(senf,"traitcast") )
     }
@@ -130,7 +130,7 @@ pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
     type DestTypeID: ?Sized + 'static;
 
     #[inline]
-    unsafe fn _traitcast_mut<'s>(senf: &'s mut dyn WidgetMut<E>) -> Result<&'s mut T,GuionError<E>> {
+    unsafe fn _traitcast_mut<'s>(senf: &'s mut dyn WidgetMut<E>) -> Result<&'s mut T,E::Error> {
         // god plz fix https://github.com/rust-lang/rust/issues/51826
         let e = traitcast_error_info_mut::<E,Self::DestTypeID>(senf,"traitcast_mut");
         Self::_try_traitcast_mut(senf)
@@ -187,17 +187,17 @@ macro_rules! traitcast_for {
     };
 }
 
-fn traitcast_error_info<E,DestTypeID>(senf: &(dyn Widget<E>+'_), op: &'static str) -> GuionError<E> where E: Env, DestTypeID: ?Sized + 'static {
+fn traitcast_error_info<E,DestTypeID>(senf: &(dyn Widget<E>+'_), op: &'static str) -> E::Error where E: Env, DestTypeID: ?Sized + 'static {
     GuionError::TraitcastError(Box::new(TraitcastError{
         op,
         src_type: senf.debugged_type_name(),
         dest_trait_type: type_name::<DestTypeID>(),
-    }))
+    })).into()
 }
-fn traitcast_error_info_mut<E,DestTypeID>(senf: &mut (dyn WidgetMut<E>+'_), op: &'static str) -> GuionError<E> where E: Env, DestTypeID: ?Sized + 'static {
+fn traitcast_error_info_mut<E,DestTypeID>(senf: &mut (dyn WidgetMut<E>+'_), op: &'static str) -> E::Error where E: Env, DestTypeID: ?Sized + 'static {
     GuionError::TraitcastError(Box::new(TraitcastError{
         op,
         src_type: senf.debugged_type_name_mut(),
         dest_trait_type: type_name::<DestTypeID>(),
-    }))
+    })).into()
 }

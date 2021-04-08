@@ -47,19 +47,19 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
         (**self).child_paths(own_path)
     }
     #[inline]
-    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> {
+    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,E::Error> {
         (**self).resolve(i)
     }
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         (**self).resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error>  {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[allow(deprecated)]
@@ -155,19 +155,19 @@ impl<E> Widget<E> for &mut (dyn Widget<E>+'_) where E: Env {
         (**self).child_paths(own_path)
     }
     #[inline]
-    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> {
+    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,E::Error> {
         (**self).resolve(i)
     }
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         (**self).resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error>  {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[allow(deprecated)]
@@ -263,19 +263,19 @@ impl<E> Widget<E> for &(dyn WidgetMut<E>+'_) where E: Env {
         (**self).child_paths(own_path)
     }
     #[inline]
-    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> {
+    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,E::Error> {
         (**self).resolve(i)
     }
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         (**self).resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error>  {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[allow(deprecated)]
@@ -372,19 +372,19 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         (**self).child_paths(own_path)
     }
     #[inline]
-    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> {
+    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,E::Error> {
         (**self).resolve(i)
     }
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         (**self).resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error>  {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[allow(deprecated)]
@@ -451,15 +451,15 @@ impl<E> WidgetMut<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         (**self)._set_invalid(v)
     }
     #[inline]
-    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<ResolvableMut<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<ResolvableMut<E>,E::Error> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         (**self).resolve_mut(i)
     }
     #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
         (**self).resolve_mut(i)
     }
     #[inline]
-    fn resolve_child_mut(&mut self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
+    fn resolve_child_mut(&mut self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error>  {
         (**self).resolve_child_mut(p)
     }
     #[inline]
@@ -540,19 +540,19 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
         (**self).child_paths(own_path)
     }
     #[inline]
-    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> {
+    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,E::Error> {
         (**self).resolve(i)
     }
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         (*self).into_resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error>  {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[allow(deprecated)]
@@ -647,19 +647,19 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
         (**self).child_paths(own_path)
     }
     #[inline]
-    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,GuionError<E>> where {
+    fn resolve(&self, i: E::WidgetPath) -> Result<Resolvable<E>,E::Error> where {
         (**self).resolve(i)
     }
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         (*self).into_resolve(i)
     }
     #[inline]
-    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
+    fn resolve_child(&self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error>  {
         (**self).resolve_child(p)
     }
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         (**self).trace_bounds(l, i, b,e, force)
     }
     #[allow(deprecated)]
@@ -724,15 +724,15 @@ impl<E> WidgetMut<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
         (**self)._set_invalid(v)
     }
     #[inline]
-    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<ResolvableMut<E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+    fn resolve_mut(&mut self, i: E::WidgetPath) -> Result<ResolvableMut<E>,E::Error> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         (**self).resolve_mut(i)
     }
     #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
         (*self).into_resolve_mut(i)
     }
     #[inline]
-    fn resolve_child_mut(&mut self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>>  {
+    fn resolve_child_mut(&mut self, p: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error>  {
         (**self).resolve_child_mut(p)
     }
     #[inline]

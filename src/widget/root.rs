@@ -7,11 +7,11 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
     /// Resolve Widget by [path](WidgetPath)
     /// 
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) Implementations often can just call [`resolve_in_root`](resolve_in_root)
-    fn widget(&self, i: E::WidgetPath) -> Result<Resolved<E>,GuionError<E>>;
+    fn widget(&self, i: E::WidgetPath) -> Result<Resolved<E>,E::Error>;
     /// Resolve Widget by [path](WidgetPath)
     /// 
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) Implementations often can just call [`resolve_in_root_mut`](resolve_in_root_mut)
-    fn widget_mut(&mut self, i: E::WidgetPath) -> Result<ResolvedMut<E>,GuionError<E>>;
+    fn widget_mut(&mut self, i: E::WidgetPath) -> Result<ResolvedMut<E>,E::Error>;
 
     #[inline]
     fn has_widget(&self, i: E::WidgetPath) -> bool {
@@ -19,7 +19,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
     }
 
     #[deprecated] 
-    fn trace_bounds(&self, ctx: &mut E::Context, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>>;
+    fn trace_bounds(&self, ctx: &mut E::Context, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error>;
 
     #[deprecated] #[inline] fn tune_path(&self, _i: &mut E::WidgetPath) {}
     #[deprecated] #[inline] fn tune_path_mut(&mut self, _i: &mut E::WidgetPath) {}
@@ -31,7 +31,7 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
 }
 //#[doc(hidden)]
 /// Used by [`Widgets::widget`] implementations
-pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage) -> Result<Resolved<'s,E>,GuionError<E>> where E: Env, 'l: 's {
+pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage) -> Result<Resolved<'s,E>,E::Error> where E: Env, 'l: 's {
     let r = root.resolve(sub.refc())?;
     
     match r {
@@ -56,7 +56,7 @@ pub fn resolve_in_root_mut<E: Env>(
     root_in_stor: impl FnOnce(&E::Storage) -> &dyn Widget<E>,
     root_in_stor_mut: impl FnOnce(&mut E::Storage) -> &mut dyn WidgetMut<E>,
     sub: E::WidgetPath, abs_path: E::WidgetPath,
-) -> Result<ResolvedMut<E>,GuionError<E>> {
+) -> Result<ResolvedMut<E>,E::Error> {
     
     let final_path = resolve_in_root::<E>(root_in_stor(stor), sub, abs_path.refc(), stor)
         .map(#[inline] |e| e.direct_path )?;

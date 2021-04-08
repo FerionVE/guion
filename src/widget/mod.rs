@@ -75,7 +75,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,GuionError<E>> {
+    fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,E::Error> {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_ref()))
         }
@@ -89,7 +89,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_box()))
         }
@@ -103,7 +103,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve_child(&self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+    fn resolve_child(&self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
             if let Some(r) = self.child(c).unwrap().resolved_by_path(sub_path) {
                 return Ok((c,r.sub_path));
@@ -113,7 +113,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,GuionError<E>> {
+    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         if i.is_empty() {
             return Ok(*b)
         }
@@ -179,12 +179,12 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         }
     }
 
-    fn _tabulate(&self, mut l: Link<E>, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,GuionError<E>> {
+    fn _tabulate(&self, mut l: Link<E>, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,E::Error> {
         // fn to tabulate to the next child away from the previous child (child_id None = self)
-        let enter_child_sub = |l: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
+        let enter_child_sub = |l: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
             l.for_child(child_id).unwrap()._tabulate(to,dir)
         };
-        let next_child = |l: &mut Link<E>, mut child_id: Option<usize>| -> Result<TabulateResponse<E>,GuionError<E>> {
+        let next_child = |l: &mut Link<E>, mut child_id: Option<usize>| -> Result<TabulateResponse<E>,E::Error> {
             loop {
                 // determine the targeted next child
                 let targeted_child = self._tabulate_next_child(
@@ -217,7 +217,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
             Ok(TabulateResponse::Leave)
         };
         // tabulate into specific child, either in resolve phase or enter
-        let enter_child = |l: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,GuionError<E>> {
+        let enter_child = |l: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
             match enter_child_sub(l,child_id,to)? {
                 TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
                 TabulateResponse::Leave => return next_child(l,Some(child_id)),
@@ -310,7 +310,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     }
 
     #[inline(never)]
-    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str) -> GuionError<E> {
+    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str) -> E::Error {
         /*
         Failed to resolve 3/5/2 in Pane<Vec<WidgetRefMut<E>>>
             Child #0: 6 Button<E,Label<&str>>
@@ -329,7 +329,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
             sub_path: sub_path.clone(),
             widget_type,
             child_info,
-        }))
+        })).into()
     }
 }
 
@@ -367,7 +367,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,GuionError<E>> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,E::Error> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
@@ -382,7 +382,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> where Self: 'w {
+    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
@@ -397,7 +397,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve_child_mut(&mut self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),GuionError<E>> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+    fn resolve_child_mut(&mut self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
             if let Some(r) = self.child(c).unwrap().resolved_by_path(sub_path) {
                 return Ok((c,r.sub_path));
@@ -455,7 +455,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     }
 
     #[inline(never)]
-    fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, op: &'static str) -> GuionError<E> {
+    fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, op: &'static str) -> E::Error {
         let widget_type = self.debugged_type_name_mut();
         let child_info = (0..self.childs())
             .map(#[inline] |i| self.child_mut(i).unwrap().guion_resolve_error_child_info(i) )
@@ -465,7 +465,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
             sub_path: sub_path.clone(),
             widget_type,
             child_info,
-        }))
+        })).into()
     }
 }
 

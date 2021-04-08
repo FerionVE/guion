@@ -67,13 +67,13 @@ pub enum StdOrder {
 
 /// to be executed by the queue impl, always DIRECTLY before rendering
 #[deprecated]
-pub fn invalidate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),GuionError<E>> {
+pub fn invalidate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),E::Error> {
     stor.widget_mut(i)
         .map(#[inline] |mut w| w._set_invalid(true) )
 }
 #[deprecated]
 /// to be executed by the queue impl, always DIRECTLY after rendering
-pub fn validate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),GuionError<E>> {
+pub fn validate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),E::Error> {
     stor.widget_mut(i)
         .map(#[inline] |mut w| w._set_invalid(false) )
 }
