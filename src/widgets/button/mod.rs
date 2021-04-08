@@ -7,12 +7,12 @@ use label::Label;
 pub mod widget;
 pub mod imp;
 
-pub struct Button<'w,E,Text> where
+pub struct Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     Text: 'w,
 {
-    pub trigger: Box<dyn Fn(Link<'_,E>)+'w>,
-    pub trigger_mut: Box<dyn FnMut()+'w>,
+    pub trigger: Tr,
+    pub trigger_mut: TrMut,
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
@@ -22,18 +22,18 @@ pub struct Button<'w,E,Text> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>> where
+impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>,(),()> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {
     #[inline]
     pub fn new(id: E::WidgetID) -> Self {
-        Self{
+        Button{
             id,
             size: constraint!(0|0).into(),
             style: Default::default(),
-            trigger: Box::new(|_|{}),
-            trigger_mut: Box::new(||{}),
+            trigger: (),
+            trigger_mut: (),
             locked: false,
             text: Label::new(E::WidgetID::new_id()),
             p: PhantomData,
@@ -41,7 +41,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>> where
     }
 }
 
-impl<'w,E,Text> Button<'w,E,Text> where
+impl<'w,E,Text> Button<'w,E,Text,(),()> where
     E: Env,
     Text: 'w,
 {
@@ -51,8 +51,8 @@ impl<'w,E,Text> Button<'w,E,Text> where
             id,
             size: constraint!(0|0).into(),
             style: Default::default(),
-            trigger: Box::new(|_|{}),
-            trigger_mut: Box::new(||{}),
+            trigger: (),
+            trigger_mut: (),
             locked: false,
             text,
             p: PhantomData,
@@ -60,22 +60,38 @@ impl<'w,E,Text> Button<'w,E,Text> where
     }
 }
 
-impl<'w,E,Text> Button<'w,E,Text> where
+impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     Text: 'w,
 {
     #[inline]
-    pub fn with_trigger(mut self, fun: impl Fn(Link<'_,E>)+'w) -> Self {
-        self.trigger = Box::new(fun);
-        self
+    pub fn with_trigger<T>(self, fun: T) -> Button<'w,E,Text,T,TrMut> where T: Trigger<E> {
+        Button{
+            id: self.id,
+            size: self.size,
+            style: self.style,
+            trigger: fun,
+            trigger_mut: self.trigger_mut,
+            locked: self.locked,
+            text: self.text,
+            p: PhantomData,
+        }
     }
     #[inline]
-    pub fn with_trigger_mut(mut self, fun: impl FnMut()+'w) -> Self {
-        self.trigger_mut = Box::new(fun);
-        self
+    pub fn with_trigger_mut<T>(self, fun: T) -> Button<'w,E,Text,Tr,T> where T: TriggerMut<E> {
+        Button{
+            id: self.id,
+            size: self.size,
+            style: self.style,
+            trigger: self.trigger,
+            trigger_mut: fun,
+            locked: self.locked,
+            text: self.text,
+            p: PhantomData,
+        }
     }
     #[inline]
-    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T> where T: 'w {
+    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T,Tr,TrMut> where T: 'w {
         Button{
             id: self.id,
             size: self.size,
@@ -105,11 +121,11 @@ impl<'w,E,Text> Button<'w,E,Text> where
     }
 }
 
-impl<'w,E,T,LC> Button<'w,E,Label<'w,E,T,LC>> where
+impl<'w,E,T,LC,Tr,TrMut> Button<'w,E,Label<'w,E,T,LC>,Tr,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LC>> where TT: Caption<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LC>,Tr,TrMut> where TT: Caption<E>+Validation<E>+'w {
         Button{
             id: self.id,
             size: self.size,
@@ -123,16 +139,48 @@ impl<'w,E,T,LC> Button<'w,E,Label<'w,E,T,LC>> where
     }
 }
 
-pub trait TriggerFn<E,W> where E: Env {
-    fn call(&mut self, w: &W, l: Link<E>);
+/// blanket-implemented on all `Fn(Link<E>)`
+pub trait Trigger<E> where E: Env {
+    fn trigger(&self, l: Link<E>);
+    /// Returns if [`Button`] should attempt to execute its [`TriggerMut`] after executing this [`Trigger`]
+    fn run_mut_trigger(&self, l: Link<E>) -> bool;
 }
-impl<T,E,W> TriggerFn<E,W> for T where T: FnMut(&W,Link<E>), E: Env {
+
+impl<E> Trigger<E> for () where E: Env {
     #[inline]
-    fn call(&mut self, w: &W, l: Link<E>) {
-        self(w,l)
+    fn trigger(&self, _: Link<E>) {}
+    #[inline]
+    fn run_mut_trigger(&self, _: Link<E>) -> bool {
+        true
     }
 }
-impl<E,W> TriggerFn<E,W> for () where E: Env {
+
+impl<T,E> Trigger<E> for T where T: Fn(Link<E>), E: Env {
     #[inline]
-    fn call(&mut self, _: &W, _: Link<E>) {}
+    fn trigger(&self, l: Link<E>) {
+        (self)(l)
+    }
+    #[inline]
+    fn run_mut_trigger(&self, _: Link<E>) -> bool {
+        false
+    }
 }
+
+/// blanket-implemented on all `FnMut(&mut E::Context)`
+pub trait TriggerMut<E> where E: Env {
+    fn trigger_mut(&mut self, c: &mut E::Context);
+}
+
+impl<E> TriggerMut<E> for () where E: Env {
+    #[inline]
+    fn trigger_mut(&mut self, _: &mut E::Context) {}
+}
+
+impl<T,E> TriggerMut<E> for T where T: FnMut(&mut E::Context), E: Env {
+    #[inline]
+    fn trigger_mut(&mut self, c: &mut E::Context) {
+        (self)(c)
+    }
+}
+
+traitcast_for!(Trigger<E>;TriggerMut<E>);

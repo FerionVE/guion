@@ -1,19 +1,33 @@
 use super::*;
 
 pub trait IButton<E> where E: Env {
+    fn trigger_auto(&self, l: &mut Link<E>);
     fn trigger(&self, l: Link<E>);
-    fn trigger_mut(&mut self);
+    fn trigger_mut(&mut self, c: &mut E::Context);
 }
 
-impl<'w,E,Text> IButton<E> for Button<'w,E,Text> where
+impl<'w,E,Text,Tr,TrMut> IButton<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     Text: 'w,
+    Tr: Trigger<E>,
+    TrMut: TriggerMut<E>,
 {
-    fn trigger(&self, l: Link<E>) {
-        (self.trigger)(l)
+    #[inline]
+    fn trigger_auto(&self, l: &mut Link<E>) {
+        self.trigger(l.reference());
+        if self.trigger.run_mut_trigger(l.reference()) {
+            l.mutate_closure(Box::new(move |mut w,c,_|
+                w.traitcast_mut::<dyn TriggerMut<E>>().unwrap().trigger_mut(c)
+            ));
+        }
     }
-    fn trigger_mut(&mut self) {
-        (self.trigger_mut)()
+    #[inline]
+    fn trigger(&self, l: Link<E>) {
+        self.trigger.trigger(l)
+    }
+    #[inline]
+    fn trigger_mut(&mut self, c: &mut E::Context) {
+        self.trigger_mut.trigger_mut(c)
     }
 }
 
