@@ -11,12 +11,12 @@ impl<S,E> StdState<E> for StdHandler<S,E> where
 {
     type K = StdPressedKey<E>;
     #[inline]
-    fn hovered(&self) -> Option<E::WidgetID> { //TODO eventually WidgetIdent return in trait
-        self.s.mouse.hovered.as_ref().map(#[inline] |p| p.id.clone() )
+    fn hovered(&self) -> Option<E::WidgetPath> { //TODO eventually WidgetIdent return in trait
+        self.s.mouse.hovered.as_ref().map(#[inline] |p| p.clone() )
     }
     #[inline]
-    fn selected(&self) -> Option<E::WidgetID> {
-        self.s.kbd.focused.as_ref().map(#[inline] |p| p.id.clone() )
+    fn selected(&self) -> Option<E::WidgetPath> {
+        self.s.kbd.focused.as_ref().map(#[inline] |p| p.clone() )
     }
     #[inline]
     fn pressed(&self) -> &[Self::K] {

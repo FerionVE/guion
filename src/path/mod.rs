@@ -50,14 +50,13 @@ where E: Env {
     /// Returns the targeted widget ID if available
     /// 
     /// NOTE this function is implemented optionally, so it may never return ID, even if possible
-    fn _dest_widget(&self) -> Option<E::WidgetID> {
+    #[deprecated]
+    fn _tip(&self) -> Option<E::WidgetID> {
         None
     }
-    #[deprecated]
-    fn exact_eq(&self, o: &Self) -> bool;
 
-    /// If self and o would resolve to the same widget
-    fn dest_eq(&self, o: &Self) -> bool;
+    // TODO refactor to Eq trait
+    fn exact_eq(&self, o: &Self) -> bool;
 
     /// The path which would resolve to the parent widget
     /// 

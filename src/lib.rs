@@ -64,7 +64,6 @@ pub(crate) use widget::link::*;
 pub(crate) use widget::resolvable::*;
 pub(crate) use widget::resolved::*;
 pub(crate) use widget::root::*;
-pub(crate) use widget::ident::*;
 pub(crate) use widget::*;
 
 pub type EventResp = bool;

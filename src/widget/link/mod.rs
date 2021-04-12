@@ -92,11 +92,6 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn ident(&self) -> WidgetIdent<E> {
-        self.widget.ident()
-    }
-
-    #[inline]
     pub fn render(&mut self, r: &mut RenderLink<E>) {
         self.ctx.render(self.widget.reference(),r)
     }
@@ -172,11 +167,11 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     #[inline]
     pub fn is_hovered(&self) -> bool where E::Context: CtxStdState<E> {
-        self.ctx.state().is_hovered(&self.id())
+        self.ctx.state().is_hovered(&self.path())
     }
     #[inline]
     pub fn is_focused(&self) -> bool where E::Context: CtxStdState<E> {
-        self.ctx.state().is_focused(&self.id())
+        self.ctx.state().is_focused(&self.path())
     }
 
     #[deprecated]

@@ -15,7 +15,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
     #[inline] 
     fn _event_direct(mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         if let Some(_) = e.event.is::<MouseMove>() {
-            l.as_mut().s.mouse.hovered = Some(l.ident());
+            l.as_mut().s.mouse.hovered = Some(l.path());
         }
         S::_event_direct(l,e)
         //todo!()
@@ -36,7 +36,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                 RootEvent::KbdDown{key} => {
                     //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = l.as_ref().s.kbd.focused.clone() {
-                        if !l.widget.stor.has_widget(id.refc().path) {
+                        if !l.widget.stor.has_widget(id.refc()) {
                             //drop event if widget is gone
                             return false;
                         }
@@ -52,7 +52,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                         };
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(event)),
-                            id.refc().path
+                            id.refc()
                         ).unwrap();
                         /*let event = KbdPress{
                             key: key.clone(),
@@ -75,13 +75,13 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                         if let Some(id) = l.as_ref().s.kbd.focused.clone() {
                             passed |= l.send_event(
                                 &e.default_filter().with_event(Event::from(event.clone())),
-                                id.path,
+                                id,
                             ).unwrap_or(false);
                         }
                         //drop up if widget is gone TODO check if this is correct
                         passed |=  l.send_event(
                             &e.default_filter().with_event(Event::from(event.clone())),
-                            p.down.refc().path,
+                            p.down.refc(),
                         ).unwrap_or(false);
                     }
                 },
@@ -97,10 +97,10 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                         if let Some(id) = l.as_ref().s.kbd.focused.clone() {
                             passed |= l.send_event(
                                 &e.default_filter().with_event(Event::from(event.clone())),
-                                id.path.refc(),
+                                id.refc(),
                             ).unwrap_or(false);
                             let mut do_tab = false;
-                            if let Ok(l) = l.with_widget(id.path.refc()) {
+                            if let Ok(l) = l.with_widget(id.refc()) {
                                 if key == EEKey::<E>::TAB && l.widget._tabulate_by_tab() {
                                     do_tab = true;
                                 }
@@ -108,9 +108,9 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                             if do_tab {
                                 let reverse = l.state().is_pressed(&[EEKey::<E>::SHIFT]).is_some();
                                 let dir = if reverse {TabulateDirection::Backward} else {TabulateDirection::Forward};
-                                let path = tabi(l.reference(),id.path,dir).expect("TODO");
+                                let path = tabi(l.reference(),id,dir).expect("TODO");
                                 //better way than this hack to get the ident
-                                l.as_mut().s.kbd.focused = Some(WidgetIdent::from_path(path,l.widget.stor).expect("TODO"));
+                                l.as_mut().s.kbd.focused = Some(path);
                             }
                         }
                     }
@@ -127,20 +127,20 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
 
                             passed |= l.send_event(
                                 &e.default_filter().with_event(Event::from(MouseDown{key,pos})),
-                                hovered.path.refc(),
+                                hovered.refc(),
                             ).unwrap_or(false);
 
 
                             //passed |= Self::focus(l,hovered.path.refc(),e.1,e.2).unwrap_or(false);
 
-                            let focus = if let Ok(w) = l.with_widget(hovered.path.refc()) {
+                            let focus = if let Ok(w) = l.with_widget(hovered.refc()) {
                                 w.widget._focus_on_mouse_down()
                             }else{
                                 false
                             };
 
                             if focus {
-                                passed |= Self::focus(l,hovered.path,e.bounds,e.ts).unwrap();
+                                passed |= Self::focus(l,hovered,e.bounds,e.ts).unwrap();
                             }
                         }
                     }
@@ -158,17 +158,17 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                                 down_ts: p.ts
                             };
                             if let Some(hovered) = l.as_ref().s.mouse.hovered.clone() {
-                                if hovered != p.down {
+                                if !hovered.exact_eq(&p.down) {
                                     passed |= l.send_event(
                                         &e.default_filter().with_event(Event::from(event.clone())),
-                                        hovered.path,
+                                        hovered,
                                     ).unwrap_or(false);
                                 }
                             }
                             //event dropped if widget gone
                             passed |= l.send_event(
                                 &e.default_filter().with_event(Event::from(event)),
-                                p.down.refc().path,
+                                p.down.refc(),
                             ).unwrap_or(false);
                         }
                     }
@@ -180,7 +180,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     if let Some(p) = l.as_mut().s.mouse.hovered.take() {
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(MouseLeave{})),
-                            p.path,
+                            p,
                         ).unwrap_or(false);
                     }
                     //hover state will be updated as the event passes through the widget tree
@@ -188,7 +188,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(MouseEnter{})),
-                            p.path,
+                            p,
                         ).unwrap_or(false);
                     }
                     
@@ -197,7 +197,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     if let Some(p) = l.as_ref().s.mouse.hovered.clone() {//TODO optimize clone
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(MouseLeave{})),
-                            p.path,
+                            p,
                         ).unwrap_or(false);
                     }
                     let mouse = &mut l.as_mut().s.mouse;
@@ -214,7 +214,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     if let Some(id) = l.as_ref().s.kbd.focused.clone() {
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(TextInput{text})),
-                            id.path,
+                            id,
                         ).unwrap_or(false);
                     }
                 }
@@ -222,7 +222,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     if let Some(hovered) = l.as_ref().s.mouse.hovered.clone() {
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(MouseScroll{x,y})),
-                            hovered.path,
+                            hovered,
                         ).unwrap_or(false);
                     }
                 }

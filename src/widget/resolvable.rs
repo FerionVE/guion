@@ -68,7 +68,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
                 child_idx,
                 widget_type: vec![type_name::<E::WidgetPath>()],
                 widget_path_if_path: Some(w.clone()),
-                widget_id: w._dest_widget(),
+                widget_id: w._tip(),
             },
         }
     }
@@ -137,7 +137,7 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
                 child_idx,
                 widget_type: vec![type_name::<E::WidgetPath>()],
                 widget_path_if_path: Some(w.clone()),
-                widget_id: w._dest_widget(),
+                widget_id: w._tip(),
             },
         }
     }

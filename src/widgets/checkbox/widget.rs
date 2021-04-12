@@ -22,7 +22,7 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with_style(&self.style);
         let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
-        if l.state().is_hovered(&self.id) {
+        if l.is_hovered() {
             r.set_cursor_specific(&StdCursor::Hand.into(),l.ctx);
         }
         let size = r.bounds().size.h;
@@ -73,14 +73,14 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
             l.enqueue_invalidate()
         }
         if let Some(ee) = e.event.is_mouse_up() {
-            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
+            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.exact_eq(&l.path()) && l.is_hovered() && !self.locked {
                 let new = !self.state.get(l.ctx);
                 (self.trigger)(l.reference(),new);
                 Self::set(l,new);
                 return true;
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
-            if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
+            if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.exact_eq(&l.path()) {
                 let new = !self.state.get(l.ctx);
                 (self.trigger)(l.reference(),new);
                 Self::set(l,new);

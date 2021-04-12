@@ -4,7 +4,7 @@ use std::fmt::Debug;
 pub trait PressedKey<E> where E: Env {
     fn key(&self) -> EEKey<E>;
     /// the widget at which the keypress started
-    fn widget(&self) -> WidgetIdent<E>;
+    fn widget(&self) -> E::WidgetPath;
     /// the timestamp at which the keypress started
     fn ts(&self) -> u64;
     fn cursor(&self) -> Option<Offset>;

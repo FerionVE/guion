@@ -50,37 +50,22 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
     }
     #[inline]
     fn strip_prefix(&self, prefix: &Self) -> Result<Self,()> {
-        /*if prefix.v.len() > self.v.len() {return Err(());}
+        // TODO use new slice.strip_prefix
+        if prefix.v.len() > self.v.len() {return Err(());}
         if self.v[..prefix.v.len()] != prefix.v[..] {return Err(());}
-        Ok(self.slice(prefix.v.len()..))*/
-        let ptip = match prefix.tip() {
-            Some(v) => v,
-            None => return Ok(self.clone()),
-        };
-        if self.tip().is_none() {return Err(());}
-        let idx = self.v.iter().enumerate()
-            .find(|(i,v)| v.resolve_to_same_widget(ptip) )
-            .map(|(i,_)| i );
-        match idx {
-            Some(i) => Ok(self.slice(i+1..)),
-            None => Err(()),
-        }
+        Ok(self.slice(prefix.v.len()..))
     }
     #[inline]
-    fn _dest_widget(&self) -> Option<E::WidgetID> {
+    fn _tip(&self) -> Option<E::WidgetID> {
         self.v.get(self.v.len()-1).cloned().map(SubPath::into_id)
     }
     #[inline]
-    fn exact_eq(&self, o: &Self) -> bool {
-        self.v[..] == o.v[..]
-    }
-    #[inline]
-    fn dest_eq(&self, o: &Self) -> bool {
-        if self.tip().is_none() && o.tip().is_none() {todo!();} //return true;
-        if let (Some(s),Some(o)) = (self.tip(),o.tip()) {
-            return s.resolve_to_same_widget(o);
+    fn exact_eq(&self, other: &Self) -> bool {
+        if let (Some(s),Some(o)) = (self.tip(),other.tip()) {
+            s.resolve_to_same_widget(o) && self.v[..] == other.v[..]
+        } else {
+            self.v[..] == other.v[..]
         }
-        false
     }
     #[inline]
     fn parent(&self) -> Option<Self> {

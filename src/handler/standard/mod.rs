@@ -32,7 +32,7 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self
                     style: Default::default(),
                     flag: false,
                 }, //TODO check if default stylevariant here is correct
-                p.refc().path,
+                p.refc(),
             ).unwrap_or(false)
         }else{
             false
@@ -41,7 +41,7 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self
 
     pub fn focus(mut root: Link<E>, p: E::WidgetPath, root_bounds: Bounds, ts: u64) -> Result<EventResp,E::Error> {
         Self::unfocus(root.reference(),root_bounds,ts);
-        root.as_mut().s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),root.widget.stor)?);
+        root.as_mut().s.kbd.focused = Some(p.refc());
         root.send_event(
             &EventCompound{
                 event: Event::from(Focus{}),

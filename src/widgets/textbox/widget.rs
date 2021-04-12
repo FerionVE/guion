@@ -47,7 +47,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 .with(StdSelectag::ObjActive)
                 .fill_rect(l.ctx);
         }
-        if l.state().is_hovered(&self.id) {
+        if l.is_hovered() {
             r.set_cursor_specific(&StdCursor::IBeam.into(),l.ctx);
         }
 
@@ -172,7 +172,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
             if let Some(mouse) = l.state().cursor_pos() { //TODO strange event handling
 
                 let mouse_down = e.event.is_mouse_down();
-                let mouse_pressed = l.is_hovered() && l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()).is_some();
+                let mouse_pressed = l.is_hovered() && l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],l.path()).is_some();
                 let b = b.clone();
 
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {

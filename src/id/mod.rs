@@ -14,15 +14,6 @@ pub trait WidgetID: Clone + PartialEq + Sized + Debug + 'static { //should also 
         Any::downcast_ref::<Self>(o)
             .map_or(false, #[inline] |r| self.eq(r) )
     }
-
-    #[inline]
-    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E> {
-        c.state().is_hovered(self)
-    }
-    #[inline]
-    fn is_focused<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E> {
-        c.state().is_focused(self)
-    }
 }
 
 pub trait WidgetIDAlloc: WidgetID {

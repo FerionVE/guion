@@ -77,14 +77,6 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         }
     }
 
-    #[inline]
-    pub fn ident(&self) -> WidgetIdent<E> {
-        WidgetIdent{
-            id: self.id().clone(),
-            path: self.path.refc(),
-        }
-    }
-
     /*#[inline]
     pub fn childs(&self) -> Vec<Resolved<E>> {
         (**self)._childs(self.path)

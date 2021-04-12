@@ -18,7 +18,7 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
     fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
         let mut r = r.with_style(&self.style);
         let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
-        if l.state().is_hovered(&self.id) {
+        if l.is_hovered() {
             r.set_cursor_specific(&StdCursor::Hand.into(),l.ctx);
         }
         r.with(&[
@@ -58,12 +58,12 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
             l.enqueue_invalidate()
         }
         if let Some(ee) = e.event.is_mouse_up() {
-            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
+            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.exact_eq(&l.path()) && l.is_hovered() && !self.locked {
                 (self.trigger)(l);
                 return true;
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
-            if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
+            if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.exact_eq(&l.path()) {
                 (self.trigger)(l);
                 return true;
             }
@@ -134,13 +134,12 @@ impl<'w,E,S> Button<'w,E,S> where
     S: AsWidget<E>,
 {
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
-        let id = l.id();
-        l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],id.clone())
+        l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],l.path())
             .or_else(||
-                l.state().is_pressed_and_id(&[EEKey::<E>::ENTER],id.clone())
+                l.state().is_pressed_and_id(&[EEKey::<E>::ENTER],l.path())
             )
             .or_else(||
-                l.state().is_pressed_and_id(&[EEKey::<E>::SPACE],id)
+                l.state().is_pressed_and_id(&[EEKey::<E>::SPACE],l.path())
             )
     }
 }

@@ -18,7 +18,6 @@ pub mod resolved;
 pub mod resolvable;
 pub mod root;
 pub mod array;
-pub mod ident;
 
 /// Core Trait of guion ™️
 pub trait Widget<E>: WBase<E> where E: Env + 'static {

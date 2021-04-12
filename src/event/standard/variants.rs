@@ -8,13 +8,13 @@ pub struct KbdDown<E> where E: Env {
 #[derive(Clone,Debug)]
 pub struct KbdUp<E> where E: Env {
     pub key: EEKey<E>,
-    pub down_widget: WidgetIdent<E>,
+    pub down_widget: E::WidgetPath,
     pub down_ts: u64,
 }
 #[derive(Clone,Debug)]
 pub struct KbdPress<E> where E: Env {
     pub key: EEKey<E>,
-    pub down_widget: WidgetIdent<E>,
+    pub down_widget: E::WidgetPath,
     pub down_ts: u64,
 }
 #[derive(Clone,Debug)]
@@ -32,7 +32,7 @@ pub struct MouseUp<E> where E: Env {
     pub key: EEKey<E>,
     pub pos: Offset,
     pub down_pos: Offset,
-    pub down_widget: WidgetIdent<E>,
+    pub down_widget: E::WidgetPath,
     pub down_ts: u64,
 }
 

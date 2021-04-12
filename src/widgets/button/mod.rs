@@ -32,7 +32,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>> where
             style: Default::default(),
             trigger: |_|{},
             locked: false,
-            text: Label::new(E::WidgetID::new_id()),
+            text: Label::new(E::WidgetID::new_id()), //TODO const id "ButtonSubLabel"
             p: PhantomData,
         }
     }

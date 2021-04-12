@@ -18,16 +18,16 @@ pub trait CtxStdState<E>: Context<E> + Sized where E: Env<Context=Self> {
 pub trait StdState<E>: 'static where E: Env {
     type K: PressedKey<E>;
     
-    fn hovered(&self) -> Option<E::WidgetID>;
-    fn selected(&self) -> Option<E::WidgetID>;
+    fn hovered(&self) -> Option<E::WidgetPath>;
+    fn selected(&self) -> Option<E::WidgetPath>;
 
     #[inline]
-    fn is_hovered(&self, i: &E::WidgetID) -> bool {
-        self.hovered().map_or(false, #[inline] |w| w == *i )
+    fn is_hovered(&self, i: &E::WidgetPath) -> bool {
+        self.hovered().map_or(false, #[inline] |w| w.exact_eq(i) )
     }
     #[inline]
-    fn is_focused(&self, i: &E::WidgetID) -> bool {
-        self.selected().map_or(false, #[inline] |w| w == *i )
+    fn is_focused(&self, i: &E::WidgetPath) -> bool {
+        self.selected().map_or(false, #[inline] |w| w.exact_eq(i) )
     }
 
     /*fn pressed(&self) -> &[Self::K];
@@ -44,10 +44,10 @@ pub trait StdState<E>: 'static where E: Env {
             .find(#[inline] |p| p.key() == c[0] )
     }
     #[inline]
-    fn is_pressed_and_id(&self, c: &[EEKey<E>], id: E::WidgetID) -> Option<&Self::K> {
+    fn is_pressed_and_id(&self, c: &[EEKey<E>], id: E::WidgetPath) -> Option<&Self::K> {
         //todo!() implement all c handling
         self.pressed().iter()
-            .find(#[inline] |p| p.key() == c[0] && p.widget().is(id.clone()) )
+            .find(#[inline] |p| p.key() == c[0] && p.widget().exact_eq(&id) )
     }
 
     fn cursor_pos(&self) -> Option<Offset>;
