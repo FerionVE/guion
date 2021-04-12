@@ -53,23 +53,34 @@ pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs
 /// Used by [`Widgets::widget_mut`](Widgets::widget_mut) implementations
 pub fn resolve_in_root_mut<E: Env>(
     stor: &mut E::Storage,
-    root_in_stor: impl FnOnce(&E::Storage) -> &dyn Widget<E>,
-    root_in_stor_mut: impl FnOnce(&mut E::Storage) -> &mut dyn WidgetMut<E>,
+    mut root_in_stor_mut: impl FnMut(&mut E::Storage) -> &mut dyn WidgetMut<E>,
     sub: E::WidgetPath, abs_path: E::WidgetPath,
 ) -> Result<ResolvedMut<E>,E::Error> {
-    
-    let final_path = resolve_in_root::<E>(root_in_stor(stor), sub, abs_path.refc(), stor)
-        .map(#[inline] |e| e.direct_path )?;
 
-    let w = root_in_stor_mut(stor)
-        .resolve_mut(final_path.refc())
-        .unwrap()
-        .as_widget()
-        .unwrap_nodebug(); 
+    let final_path;
 
-    Ok(ResolvedMut {
-        wref: w,
-        path: abs_path,
-        direct_path: final_path,
-    })
+    match root_in_stor_mut(stor).resolve_mut(sub.clone())? {
+        ResolvableMut::Widget(w) => 
+            final_path = Ok(abs_path.clone()),
+        ResolvableMut::Path(p) => 
+            final_path = Err(p),
+    }
+
+    match final_path {
+        Ok(p) => {
+            let w = root_in_stor_mut(stor).resolve_mut(sub)?
+                .as_widget().unwrap();
+            Ok(ResolvedMut {
+                wref: w,
+                path: p.clone(),
+                direct_path: p,
+            })
+        },
+        Err(p) => 
+            stor.widget_mut(p)
+                .map(|mut r| {
+                    r.path = abs_path;
+                    r
+                }),
+    }
 }
