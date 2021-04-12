@@ -193,7 +193,7 @@ impl Cursor {
     }
     pub fn unselect_add(&mut self, o: u32, skip_unselect: bool) {
         self.caret += o;
-        if !skip_unselect {     
+        if !skip_unselect {
             self.select = self.caret;
         }
     }

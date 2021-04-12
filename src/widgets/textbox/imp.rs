@@ -46,7 +46,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
             cursor.del_selection(&mut self.text);
         }
         self.text.push(cursor.caret as usize,&s);
-        cursor.unselect_add(s.len() as u32,false);
+        cursor.unselect_add(s.chars().count() as u32,false);
         cursor.limit(self.text.len() as u32);
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move

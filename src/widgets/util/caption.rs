@@ -7,7 +7,7 @@ pub trait Caption<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str>;
     #[inline]
     fn len(&self) -> usize {
-        self.caption().len()
+        self.caption().chars().count()
     }
 }
 
@@ -111,17 +111,26 @@ pub trait CaptionMut<E>: Caption<E> {
 
 impl<E> CaptionMut<E> for String {
     fn push(&mut self, off: usize, s: &str) {
-        self.insert_str(off,s);
+        let off = char_off(&self, off);
+
+        self.insert_str(off, s);
     }
     fn pop_left(&mut self, off: usize, n: usize) {
-        let popable = n.min(off).min(Caption::<E>::len(self));
+        let len = Caption::<E>::len(self);
+        let popable = n.min(off).min(len);
         let pop_start = off - popable;
-        for _ in 0..popable { //TODO VERY INEFFICIENT optimize
-            self.remove(pop_start);
-        }
+        let pop_end = off;
+
+        let pop_start_bin = char_off(&self, pop_start);
+        let pop_end_bin = char_off(&self, pop_end);
+
+        assert!(pop_end_bin >= pop_start_bin);
+
+        self.drain(pop_start_bin..pop_end_bin);
     }
     fn replace(&mut self, s: &str) {
-        *self = s.to_owned(); //TODO more efficient alloc-keeping replace
+        self.clear();
+        self.push_str(s);
     }
 }
 
@@ -145,3 +154,11 @@ unsafe impl<E> Statize<E> for dyn CaptionMut<E> where E: 'static {
 }
 
 traitcast_for!(Caption<E>;CaptionMut<E>);
+
+fn char_off(s: impl AsRef<str>, o: usize) -> usize {
+    let s = s.as_ref();
+    match s.char_indices().skip(o).next() {
+        Some((i,_)) => i,
+        None => s.len(),
+    }
+}
