@@ -365,17 +365,17 @@ qwutils::opion!(bitand(Bounds,Bounds) |s,r| {
 });
 
 impl Debug for Bounds {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f,"X{}Y{}W{}H{}",self.off.x,self.off.y,self.size.w,self.size.h)
     }
 }
 impl Debug for Offset {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f,"X{}Y{}",self.x,self.y)
     }
 }
 impl Debug for Dims {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f,"W{}H{}",self.w,self.h)
     }
 }

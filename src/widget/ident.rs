@@ -60,7 +60,7 @@ impl<E> RefClonable for WidgetIdent<E> where E: Env {
 
 impl<E> Debug for WidgetIdent<E> where E: Env {
     #[inline]
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _: &mut std::fmt::Formatter) -> std::fmt::Result {
         Ok(())
     }
 }

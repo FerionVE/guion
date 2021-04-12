@@ -12,9 +12,9 @@ impl<S,T,E> StyleSelectagInto<S,E> for T where
     }
 }
 
-impl<S,E> StyleSelectag<E> for &'_ S where S: StyleSelectag<E> {
+impl<S,E> StyleSelectag<E> for &S where S: StyleSelectag<E> {
 
 }
-impl<S,E> StyleSelectag<E> for &'_ [S] where S: StyleSelectag<E> {
+impl<S,E> StyleSelectag<E> for &[S] where S: StyleSelectag<E> {
     
 }

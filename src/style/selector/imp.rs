@@ -2,7 +2,7 @@ use crate::style::selectag::StyleSelectag;
 
 use super::StyleSelectorAppend;
 
-impl<S,T,E> StyleSelectorAppend<&'_ S,E> for T where
+impl<S,T,E> StyleSelectorAppend<&S,E> for T where
     T: StyleSelectorAppend<S,E>,
     S: StyleSelectag<E>,
 {

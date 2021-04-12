@@ -85,7 +85,7 @@ mod const_id_test {
 }
 
 impl Debug for StdID {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Dyn(v) => v.fmt(f),
             Self::Const(v) => v.fmt(f), //TODO what if const int is same than dyn int?

@@ -29,7 +29,7 @@ impl<'a> Translate<'a> {
     }
     
     #[inline]
-    pub fn reverse(&self) -> Translate<'_> {
+    pub fn reverse(&self) -> Translate {
         Translate(self.1,self.0)
     }
 }

@@ -44,7 +44,7 @@ impl<E> From<()> for GuionError<E> where E: Env {
 }
 
 impl<E> Display for GuionError<E> where E: Env {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::TraitcastError(e) => {
                 write!(f,"\n\nFailed to {}\n\n",e.op)?;
@@ -81,7 +81,7 @@ impl<E> Display for GuionError<E> where E: Env {
 }
 
 impl<E> Debug for GuionError<E> where E: Env {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         Display::fmt(self,f)
     }
 }

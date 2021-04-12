@@ -50,13 +50,13 @@ impl<E> Caption<E> for OsString {
     }
 }
 
-impl<E,T> Caption<E> for &'_ T where T: Caption<E>+?Sized {
+impl<E,T> Caption<E> for &T where T: Caption<E>+?Sized {
     #[inline]
     fn caption(&self) -> Cow<str> {
         (**self).caption()
     }
 }
-impl<'l,E,T> Caption<E> for &'_ mut T where T: Caption<E>+?Sized {
+impl<'l,E,T> Caption<E> for &mut T where T: Caption<E>+?Sized {
     #[inline]
     fn caption(&self) -> Cow<str> {
         (**self).caption()
@@ -125,7 +125,7 @@ impl<E> CaptionMut<E> for String {
     }
 }
 
-impl<E,T> CaptionMut<E> for &'_ mut T where T: CaptionMut<E>+?Sized {
+impl<E,T> CaptionMut<E> for &mut T where T: CaptionMut<E>+?Sized {
     fn push(&mut self, off: usize, s: &str) {
         (**self).push(off,s)
     }
