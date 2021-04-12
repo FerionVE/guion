@@ -166,7 +166,7 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     Text: AsWidget<E>,
 {
     pub fn set(mut l: Link<E>, v: bool) {
-        l.mutate_closure(Box::new(move |mut w,c,_|{
+        l.mutate_closure_try(Box::new(move |mut w,c,_|{
             //w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
             let w = w.traitcast_mut::<dyn ICheckBoxMut<E>>().unwrap();
             w.state_mut().set(v,c);
