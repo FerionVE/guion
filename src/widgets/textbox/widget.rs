@@ -1,8 +1,12 @@
 use crate::style::standard::cursor::StdCursor;
+use crate::text::layout::TxtLayout;
+use crate::text::layout::TxtLayoutFromStor;
+use crate::text::stor::*;
 
 use super::*;
+use state::max_off;
 use util::{state::*, caption::CaptionMut, LocalGlyphCache};
-use state::{Cursor, TBState};
+use state::{Cursor};
 use super::imp::*;
 use validation::*;
 
@@ -11,7 +15,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: Caption<E>+Validation<E>+'w,
+    Text: TextStor<E>+Validation<E>+'w,
+    E::TextBoxor: TxtLayoutFromStor<E,Text>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
     CursorStickX: AtomState<E,Option<u32>>,
@@ -33,20 +38,26 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
         ][..])
             .fill_border_inner(l.ctx);
         let mut r = r.inside_border_by_mul(StdSelectag::BorderVisual,2,l.ctx);
-        let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
-        for b in s.selection_box() {
-            let b = b - s.off2();
+
+        let g = self.glyphs(l.reference());
+        //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
+        let cursor = self.cursor.get(l.ctx);
+        let off: Offset = self.scroll.get(l.ctx).into();
+
+        for b in g.selection_bounds(cursor.range_usize()) {
+            let b = b - off;
             r.slice(&b)
                 .with(StdSelectag::ObjForeground)
                 .fill_rect(l.ctx);
         }
-        if let Some(c) = s.cursor_display_pos(s.cursor.caret) { //TODO fix as it should work if cursor is at end
-            let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
-            let b = b - s.off2();
-            r.slice(&b)
-                .with(StdSelectag::ObjActive)
-                .fill_rect(l.ctx);
-        }
+        let mut b = g.display_of_char(cursor.caret as usize); //TODO fix as it should work if cursor is at end
+        b.size.w = 2;
+        //let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
+        let b = b - off;
+        r.slice(&b)
+            .with(StdSelectag::ObjActive)
+            .fill_rect(l.ctx);
+
         if l.state().is_hovered(&self.id) {
             r.set_cursor_specific(&StdCursor::IBeam.into(),l.ctx);
         }
@@ -55,7 +66,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 StdSelectag::ObjForeground,
                 StdSelectag::ObjText,
             ][..])
-                .render_preprocessed_text(&s.glyphs, s.off2(), &mut l.ctx);
+                .render_preprocessed_text(&g, off, &mut l.ctx);
     }
     fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
         let e = e.with_style(&self.style);
@@ -102,9 +113,9 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 passed = true;
             }else if ee.key == EEKey::<E>::A && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let wc = w.traitcast_mut::<dyn CaptionMut<E>>().unwrap();
+                    let wc = w.traitcast_mut::<dyn TextStorMut<E>>().unwrap();
                     cursor.select = 0;
-                    cursor.caret = wc.len() as u32;
+                    cursor.caret = wc.chars() as u32;
                     w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
                     w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
                 }));
@@ -156,13 +167,22 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 passed = true;
             }
         } else if let Some(ee) = e.event.is_mouse_scroll() {
-            let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
-            
+            //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
+            let g = self.glyphs(l.reference());
+            let cursor = self.cursor.get(l.ctx);
+            let off = self.scroll.get(l.ctx);
+            let max_off = max_off::<E>(&g,&b);
+
             let off = (
-                s.off.0 as i32 + ee.x,
-                s.off.1 as i32 + ee.y,
+                off.0 as i32 + ee.x,
+                off.1 as i32 + ee.y,
             );
-            let off = s.bound_off((off.0.max(0) as u32, off.1.max(0) as u32));
+            //let off = s.bound_off((off.0.max(0) as u32, off.1.max(0) as u32));
+            let off = (
+                off.0.max(0).min(max_off.x) as u32,
+                off.1.max(0).min(max_off.y) as u32,
+            );
+
             l.mutate_closure(Box::new(move |mut w,ctx,_| {
                 let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
                 w.set(off,ctx);
@@ -215,7 +235,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
     }
 
     impl_traitcast!(
-        dyn Caption<E> => |s| &s.text;
+        dyn TextStor<E> => |s| &s.text;
         dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
         dyn AtomState<E,Cursor> => |s| &s.cursor;
         dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
@@ -230,7 +250,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: CaptionMut<E>+ValidationMut<E>+'w,
+    Text: TextStorMut<E>+ValidationMut<E>+'w,
+    E::TextBoxor: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
@@ -250,8 +271,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,
     }
 
     impl_traitcast_mut!(
-        dyn Caption<E> => |s| &mut s.text;
-        dyn CaptionMut<E> => |s| &mut s.text;
+        dyn TextStor<E> => |s| &mut s.text;
+        dyn TextStorMut<E> => |s| &mut s.text;
         dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
         dyn AtomState<E,Cursor> => |s| &mut s.cursor;
         dyn AtomState<E,Option<u32>> => |s| &mut s.cursor_stick_x;

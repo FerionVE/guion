@@ -28,4 +28,4 @@ impl<E> SizeCache<E> where E: Env {
     }
 }
 
-pub type LocalGlyphCache<E: Env> = Option<(Arc<ESGlyphs<E>>,Arc<dyn Any>)>;
+pub type LocalGlyphCache<E: Env> = Option<(Arc<E::TextBoxor>,Arc<dyn Any>)>;

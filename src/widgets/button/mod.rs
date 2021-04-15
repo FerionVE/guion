@@ -1,4 +1,5 @@
 use super::*;
+use crate::text::stor::TextStor;
 use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
 use util::{LocalGlyphCache, caption::Caption};
@@ -125,7 +126,7 @@ impl<'w,E,T,LC,Tr,TrMut> Button<'w,E,Label<'w,E,T,LC>,Tr,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LC>,Tr,TrMut> where TT: Caption<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LC>,Tr,TrMut> where TT: TextStor<E>+Validation<E>+'w {
         Button{
             id: self.id,
             size: self.size,

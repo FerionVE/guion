@@ -1,3 +1,4 @@
+use crate::text::stor::TextStor;
 use crate::validation::Validation;
 
 use super::*;
@@ -40,7 +41,7 @@ impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
 impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
     E: Env,
     E::Context: DynState<E>,
-    Text: Caption<E>+Validation<E>+'w,
+    Text: TextStor<E>+Validation<E>+'w,
 {
     #[inline]
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {
@@ -62,7 +63,7 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     GlyphCache: 'w,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,GlyphCache> where T: Caption<E>+Validation<E>+'w {
+    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,GlyphCache> where T: TextStor<E>+Validation<E>+'w {
         Label{
             id: self.id,
             size: self.size,

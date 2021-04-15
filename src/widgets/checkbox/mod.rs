@@ -1,6 +1,7 @@
 use super::*;
 use super::util::LocalGlyphCache;
 use super::label::Label;
+use crate::text::stor::TextStor;
 use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
 use util::{state::*, caption::Caption};
@@ -85,7 +86,7 @@ impl<'w,E,State,T,LC> CheckBox<'w,E,State,Label<'w,E,T,LC>> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT,LC>> where TT: Caption<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT,LC>> where TT: TextStor<E>+Validation<E>+'w {
         CheckBox{
             trigger: self.trigger,
             id: self.id,
