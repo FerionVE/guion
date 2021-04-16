@@ -22,7 +22,7 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
         Self::Handler::_event_direct(self.link(w),e)
     }
     #[inline]
-    fn send_event(&mut self, w: Resolved<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
+    fn send_event(&mut self, w: Resolved<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
         Self::Handler::_send_event(self.link(w),e,child)
     }
     #[inline] 

@@ -9,7 +9,7 @@ pub trait Handler<E>: Sized + 'static where E: Env {
     fn _event_direct(l: Link<E>, e: &EventCompound<E>) -> EventResp;
     fn _event_root(l: Link<E>, e: &EventCompound<E>) -> EventResp;
     fn _size(l: Link<E>, e: &EStyle<E>) -> ESize<E>;
-    fn _send_event(l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,GuionError<E>>;
+    fn _send_event(l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error>;
 }
 
 impl<E> Handler<E> for () where E: Env {
@@ -34,7 +34,7 @@ impl<E> Handler<E> for () where E: Env {
         l._size(e)
     }
     #[inline]
-    fn _send_event(mut l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,GuionError<E>> {
+    fn _send_event(mut l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
         l._send_event(e,child)
     }
 }

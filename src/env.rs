@@ -14,6 +14,7 @@ pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'stat
     type WidgetPath: WidgetPath<Self>;
     type ValidState: ValidState;
     type Message: 'static;
+    type Error: std::error::Error + From<GuionError<Self>> + From<()>;
     //type Commit: Eq + Ord;
 }
 

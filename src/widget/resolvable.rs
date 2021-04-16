@@ -17,7 +17,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     /// 
     /// Meant to be used inside widget's resolve fn
     #[inline]
-    pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'w,E>,GuionError<E>> {
+    pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> {
         match self {
             Self::Widget(w) => w.into_resolve(sub),
             Self::Path(p) => Ok(Self::Path(p.attached_subpath(&sub))),
@@ -25,7 +25,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     }
     /// Completely resolve using the storage
     #[inline]
-    pub fn resolve_widget<'a>(self, stor: &'a E::Storage) -> Result<WidgetRef<'w,E>,GuionError<E>> where 'a: 'w {
+    pub fn resolve_widget<'a>(self, stor: &'a E::Storage) -> Result<WidgetRef<'w,E>,E::Error> where 'a: 'w {
         match self {
             Self::Widget(w) => Ok(w),
             Self::Path(p) => Ok(stor.widget(p)?.wref),
@@ -95,7 +95,7 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     /// 
     /// Meant to be used inside widget's resolve fn
     #[inline]
-    pub fn resolve_child_mut(self, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,GuionError<E>> {
+    pub fn resolve_child_mut(self, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> {
         match self {
             Self::Widget(w) => w.into_resolve_mut(i),
             Self::Path(p) => Ok(Self::Path(p.attached_subpath(&i))),
@@ -103,7 +103,7 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     }
     #[deprecated]
     #[inline]
-    pub fn resolve_widget<'a>(self, stor: &'a mut E::Storage) -> Result<WidgetRefMut<'w,E>,GuionError<E>> where 'a: 'w {
+    pub fn resolve_widget<'a>(self, stor: &'a mut E::Storage) -> Result<WidgetRefMut<'w,E>,E::Error> where 'a: 'w {
         match self {
             Self::Widget(w) => Ok(w),
             Self::Path(p) => Ok(stor.widget_mut(p)?.wref),
