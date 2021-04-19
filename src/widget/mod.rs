@@ -371,7 +371,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
-        let (c,sub) = self.resolve_child(&i)?;
+        let (c,sub) = self.resolve_child_mut(&i)?;
         self.child_mut(c).unwrap().resolve_child_mut(sub)
     }
 
@@ -382,11 +382,11 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
+    fn into_resolve_mut<'w>(mut self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
-        let (c,sub) = self.resolve_child(&i)?;
+        let (c,sub) = self.resolve_child_mut(&i)?;
         self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(sub)
     }
 
@@ -399,7 +399,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     #[inline]
     fn resolve_child_mut(&mut self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
-            if let Some(r) = self.child(c).unwrap().resolved_by_path(sub_path) {
+            if let Some(r) = self.child_mut(c).unwrap().resolved_by_path(sub_path) {
                 return Ok((c,r.sub_path));
             }
         }
