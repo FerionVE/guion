@@ -25,6 +25,22 @@ pub trait TxtLayout<E>: TxtLayoutFromStor<E,str>+TxtLayoutFromStor<E,String>+for
     fn cursor_pos_reverse_line_centric(&self, line: u32, x: i32) -> Option<u32>;
     fn line_count(&self) -> u32;
     fn chars(&self) -> usize;
+
+    fn len(&self) -> usize;
+
+    fn move_cursor(&self, dir: Direction, off: usize) -> usize; //TODO re-implement cursor_stick
+
+    /// How many bytes are n chars to the left from off?
+    fn char_len_l(&self, off: usize, chars: usize) -> usize;
+
+    fn fix_boundary(&self, off: usize) -> usize;
+}
+
+pub enum Direction {
+    Left,
+    Right,
+    Up,
+    Down,
 }
 
 pub trait TxtLayoutFromStor<E,S> where E: Env, S: TextStor<E>+?Sized {

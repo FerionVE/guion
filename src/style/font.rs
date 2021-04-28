@@ -5,6 +5,7 @@ pub trait Font<E>: Sized where E: Env {
 }
 
 /// Text in a optimized form for faster frequent rendering and iterating
+#[deprecated]
 pub trait Glyphs<E>: Sized where E: Env {
     type Glyph: Glyph;
 

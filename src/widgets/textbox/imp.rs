@@ -1,4 +1,4 @@
-use crate::text::layout::TxtLayoutFromStor;
+use crate::text::layout::{Direction, TxtLayoutFromStor};
 use crate::text::stor::{TextStor, TextStorMut};
 use crate::text::layout::TxtLayout;
 
@@ -26,8 +26,8 @@ pub trait ITextBoxMut<E>: ITextBox<E> where E: Env {
     fn insert_text(&mut self, t: &str, ctx: &mut E::Context);
     fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context);
     fn remove_selection(&mut self, ctx: &mut E::Context) -> bool;
-    fn move_cursor_x(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context);
-    fn move_cursor_y(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context, widget_bounds: &Bounds);
+    fn move_cursor_x(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context);
+    fn move_cursor_y(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context, widget_bounds: &Bounds);
     fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context);
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
 }
@@ -45,26 +45,33 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
+        let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
+        cursor.fix_boundaries(&*g);
         if cursor.is_selection() {
             cursor.del_selection(&mut self.text);
         }
         self.text.push_chars(cursor.caret as usize,&s);
-        cursor.unselect_add(s.chars().count() as u32,false);
-        cursor.limit(self.text.chars() as u32);
+        cursor.unselect_add(s.len() as u32,false);
+        cursor.limit(self.text.len() as u32);
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
     fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context) {
+        let g = self.glyphs2(ctx);
         if self.remove_selection(ctx) {return;}
         let mut cursor = self.cursor.get(ctx);
-        self.text.remove_chars_old(cursor.caret as usize,n as usize);
-        cursor.unselect_sub(n,false);
+        cursor.fix_boundaries(&*g);
+        let to_remove = g.char_len_l(cursor.caret as usize, n as usize);
+        self.text.remove_chars_old(cursor.caret as usize,to_remove);
+        cursor.unselect_sub(to_remove as u32,false);
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
     fn remove_selection(&mut self, ctx: &mut E::Context) -> bool {
+        let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
+        cursor.fix_boundaries(&*g);
         if cursor.is_selection() {
             cursor.del_selection(&mut self.text);
             self.cursor.set(cursor,ctx);
@@ -74,14 +81,18 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
             false
         }
     }
-    fn move_cursor_x(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context) {
+    fn move_cursor_x(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context) {
+        let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
-        cursor.unselect_addi(o,skip_unselect);
+        cursor.fix_boundaries(&*g);
+        cursor.caret = g.move_cursor(o,cursor.caret as usize) as u32;
+        if !skip_unselect {cursor.unselect();}
+        cursor.limit(self.text.len() as u32);
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn move_cursor_y(&mut self, o: i32, skip_unselect: bool, ctx: &mut E::Context, b: &Bounds) {
-        let g = self.glyphs2(ctx);
+    fn move_cursor_y(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context, b: &Bounds) {
+        /*let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
 
         if g.line_count() != 0 {
@@ -109,11 +120,20 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
 
             self.cursor.set(cursor,ctx);
             self.cursor_stick_x.set(new_stick_x,ctx);
-        }
+        }*/
+        let g = self.glyphs2(ctx);
+        let mut cursor = self.cursor.get(ctx);
+        cursor.fix_boundaries(&*g);
+        cursor.caret = g.move_cursor(o,cursor.caret as usize) as u32;
+        if !skip_unselect {cursor.unselect();}
+        cursor.limit(self.text.len() as u32);
+        self.cursor.set(cursor,ctx);
+        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
     fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context) {
         let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
+        cursor.fix_boundaries(&*g);
         let off = self.scroll.get(ctx);
 
         let mut tpos = mouse - b.off + Offset::from(off);
@@ -127,13 +147,14 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
             cursor.caret = g.char_at_display(tpos) as u32;
             //cursor.unselect();
         }
-        assert!(cursor.caret <= g.chars() as u32); //TODO FIXME äöü crash. the whole unicode char handling is borked.
+        assert!(cursor.caret <= g.len() as u32); //TODO FIXME äöü crash. the whole unicode char handling is borked.
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds) {
         let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
+        cursor.fix_boundaries(&*g);
         let off = self.scroll.get(ctx);
         
         let cb = g.display_of_char(cursor.caret as usize); //TODO fix as it should work if cursor is at end

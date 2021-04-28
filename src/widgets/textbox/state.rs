@@ -228,4 +228,8 @@ impl Cursor {
         self.caret = start;
         self.unselect();
     }
+    pub fn fix_boundaries<E>(&mut self, t: &impl TxtLayout<E>) where E: Env {
+        self.caret = t.fix_boundary(self.caret as usize) as u32;
+        self.select = t.fix_boundary(self.select as usize) as u32;
+    }
 }

@@ -1,5 +1,5 @@
 use crate::style::standard::cursor::StdCursor;
-use crate::text::layout::TxtLayout;
+use crate::text::layout::{Direction, TxtLayout};
 use crate::text::layout::TxtLayoutFromStor;
 use crate::text::stor::*;
 
@@ -41,7 +41,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
 
         let g = self.glyphs(l.reference());
         //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
-        let cursor = self.cursor.get(l.ctx);
+        let mut cursor = self.cursor.get(l.ctx);
+        cursor.fix_boundaries(&*g);
         let off: Offset = self.scroll.get(l.ctx).into();
 
         for b in g.selection_bounds(cursor.range_usize()) {
@@ -73,20 +74,24 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
         let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
 
         //e.0._debug_type_name();
+        let g = self.glyphs(l.reference());
         let mut cursor = self.cursor.get(l.ctx);
+        cursor.fix_boundaries(&*g);
         let border = e.style.border(&StdSelectag::BorderVisual.into_selector(),l.ctx)*2;
         let b = e.bounds.inside_border(&border);
 
         let mut passed = false;
 
         if let Some(ee) = e.event.is_text_input() {
-            let s = ee.text;
-            l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
-                w.insert_text(&s,ctx);
-                w.scroll_to_cursor(ctx,&b);
-            }));
-            passed = true;
+            if !l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+                let s = ee.text;
+                l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                    let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
+                    w.insert_text(&s,ctx);
+                    w.scroll_to_cursor(ctx,&b);
+                }));
+                passed = true;
+            }
         } else if let Some(ee) = e.event.is_kbd_press() {
             if
                 ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE ||
@@ -103,10 +108,10 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                         w.insert_text("\n",ctx);
                     }
                     if ee.key == EEKey::<E>::LEFT {
-                        w.move_cursor_x(-1,ctrl,ctx);
+                        w.move_cursor_x(Direction::Left,ctrl,ctx);
                     }
                     if ee.key == EEKey::<E>::RIGHT {
-                        w.move_cursor_x(1,ctrl,ctx);
+                        w.move_cursor_x(Direction::Right,ctrl,ctx);
                     }
                     w.scroll_to_cursor(ctx,&b);
                 }));
@@ -115,24 +120,18 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let wc = w.traitcast_mut::<dyn TextStorMut<E>>().unwrap();
                     cursor.select = 0;
-                    cursor.caret = wc.chars() as u32;
+                    cursor.caret = wc.len() as u32;
                     w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
                     w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
                 }));
                 passed = true;
             }else if ee.key == EEKey::<E>::V && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
                 if let Some(text) = l.clipboard_get_text() {
-                    self._event_direct(
-                        l,
-                        &EventCompound{
-                            event: Event::from(TextInput{text}),
-                            bounds: e.bounds,
-                            ts: e.ts,
-                            filter: Default::default(),
-                            style: e.style.clone(),
-                            flag: e.flag,
-                        },
-                    );
+                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                        let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
+                        w.insert_text(&text,ctx);
+                        w.scroll_to_cursor(ctx,&b);
+                    }));
                 }
                 passed = true;
             }else if (ee.key == EEKey::<E>::C || ee.key == EEKey::<E>::X) && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
@@ -152,15 +151,17 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 }
                 passed = true;
             }else if ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN {
+                let ctrl = l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some();
+
                 let b = b.clone();
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
 
                     if ee.key == EEKey::<E>::UP {
-                        w.move_cursor_y(-1,false,ctx,&b);
+                        w.move_cursor_y(Direction::Up,ctrl,ctx,&b);
                     }
                     if ee.key == EEKey::<E>::DOWN {
-                        w.move_cursor_y(1,false,ctx,&b);
+                        w.move_cursor_y(Direction::Down,ctrl,ctx,&b);
                     }
                     w.scroll_to_cursor(ctx,&b);
                 }));
@@ -168,8 +169,6 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
             }
         } else if let Some(ee) = e.event.is_mouse_scroll() {
             //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
-            let g = self.glyphs(l.reference());
-            let cursor = self.cursor.get(l.ctx);
             let off = self.scroll.get(l.ctx);
             let max_off = max_off::<E>(&g,&b);
 
