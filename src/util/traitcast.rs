@@ -151,39 +151,66 @@ pub unsafe trait TraitcastMut<T,E>: WidgetMut<E> where T: ?Sized, E: Env {
     }
 }
 
+/// Syntax:  
+/// `traitcast_for_immu!([<...>] Trait[<...>] [where ...]);`  
 #[macro_export]
 macro_rules! traitcast_for_immu {
-    ($trait:path) => {
-        unsafe impl<'w,E> $crate::util::traitcast::Traitcast<dyn $trait+'w,E> for dyn $crate::widget::Widget<E>+'w where E: $crate::env::Env {
-            type DestTypeID = dyn $trait+'static;
-        }
-    }
-}
-#[macro_export]
-macro_rules! traitcast_for_mut {
-    ($trait:path) => {
-        unsafe impl<'w,E> $crate::util::traitcast::TraitcastMut<dyn $trait+'w,E> for dyn $crate::widget::WidgetMut<E>+'w where E: $crate::env::Env {
+    (
+        $( < $($args:ident),* $(,)* > )?
+        $trait:path
+        $(where $($preds:tt)+)?
+    ) => {
+        unsafe impl<'w,E,$( $($args),* )?> $crate::util::traitcast::Traitcast<dyn $trait+'w,E> for dyn $crate::widget::Widget<E>+'w where E: $crate::env::Env, $( $($preds)+ )? {
             type DestTypeID = dyn $trait+'static;
         }
     }
 }
 
-/// Implement [`Traitcast`] for traits to be traitcasted from [`Widget`]
+/// Syntax:  
+/// `traitcast_for_mut!([<...>] Trait[<...>] [where ...]);`  
+#[macro_export]
+macro_rules! traitcast_for_mut {
+    (
+        $( < $($args:ident),* $(,)* > )?
+        $trait:path
+        $(where $($preds:tt)+)?
+    ) => {
+        unsafe impl<'w,E,$( $($args),* )?> $crate::util::traitcast::TraitcastMut<dyn $trait+'w,E> for dyn $crate::widget::WidgetMut<E>+'w where E: $crate::env::Env, $( $($preds)+ )? {
+            type DestTypeID = dyn $trait+'static;
+        }
+    }
+}
+
+/// Implement [`Traitcast`] and [`TraitcastMut`] for traits to be traitcasted from [`Widget`]
 /// 
 /// Syntax:  
-/// `traitcast_for!(trait_path;mut_trait_path);`
-/// 
-/// 
-/// Implements for: Widget -> Trait, WidgetMut -> Trait, WidgetMut -> TraitMut
+/// `traitcast_for!([<...>] Trait[<...>] [;Trait[<...>]] [where ...]);`  
+/// `traitcast_for!(trait_path; mut_trait_path);` implements Traitcast & TraitcastMut for trait_path, and only TraitcastMut for mut_trait_path  
+/// `traitcast_for!(trait_path);` implements Traitcast and TraitcastMut for trait_path
 /// 
 /// Example:  
-/// `traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);`
+/// `traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);`  
+/// `traitcast_for!(<T> NuclearGet<T> where T: Clone);`
 #[macro_export]
 macro_rules! traitcast_for {
-    ($trait_immu:path;$trait_mut:path) => {
-        $crate::traitcast_for_immu!($trait_immu);
-        $crate::traitcast_for_mut!($trait_immu);
-        $crate::traitcast_for_mut!($trait_mut);
+    (
+        $( < $($args:ident),* $(,)* > )?
+        $trait_a:path
+        ;
+        $trait_b:path
+        $(where $($preds:tt)+)?
+    ) => {
+        $crate::traitcast_for_immu!( $(<$($args),*>)? $trait_a $(where $($preds)+)? );
+        $crate::traitcast_for_mut!( $(<$($args),*>)? $trait_a $(where $($preds)+)? );
+        $crate::traitcast_for_mut!( $(<$($args),*>)? $trait_b $(where $($preds)+)? );
+    };
+    (
+        $( < $($args:ident),* $(,)* > )?
+        $trait:path
+        $(where $($preds:tt)+)?
+    ) => {
+        $crate::traitcast_for_immu!( $(<$($args),*>)? $trait $(where $($preds)+)? );
+        $crate::traitcast_for_mut!( $(<$($args),*>)? $trait $(where $($preds)+)? );
     };
 }
 

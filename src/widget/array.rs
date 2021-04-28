@@ -149,7 +149,15 @@ impl<T,E> WidgetArrayMut<E> for &mut [T] where T: AsWidgetMut<E>, E: Env {
 }
 
 macro_rules! impl_wpps_tuple {
-    {$n:expr;$senf:ident;$t:ident $($tt:ident)+;$l:ident $($ll:ident)+;$m:pat => $x:expr,$($mm:pat => $xx:expr),+} => {
+    {
+        $n:expr;
+        $senf:ident;
+
+        $t:ident $($tt:ident)+;
+        $l:ident $($ll:ident)+;
+        
+        $m:pat => $x:expr, $($mm:pat => $xx:expr),+
+    } => {
         impl_wpps_tuple!(($n-1);$senf;$($tt)+;$($ll)+;$($mm => $xx),+);
 
         impl<E,$t,$($tt),+> WidgetArray<E> for ($t,$($tt),+) where
@@ -226,7 +234,13 @@ macro_rules! impl_wpps_tuple {
             }
         }
     };
-    {$n:expr;$senf:ident;$t:ident;$l:ident;$m:pat => $x:expr} => {}
+    {
+        $n:expr;
+        $senf:ident;
+        
+        $t:ident;$l:ident;
+        $m:pat => $x:expr
+    } => {}
 }
 
 impl_wpps_tuple!(
