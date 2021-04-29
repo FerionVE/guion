@@ -3,6 +3,8 @@
 //! The Traits features interface for querying e.g. id or style, and also accessing or resolving child widgets
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
+use self::imp::{AWidgetMut, AWidget};
+
 use super::*;
 use std::any::{TypeId, type_name};
 use traitcast::TraitObject;
@@ -489,15 +491,15 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     }
     #[inline]
     fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
-        Box::new(self.erase())
+        AWidget::Ref(self)
     }
     #[inline]
     fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
-        self
+        AWidget::Box(self)
     }
     #[inline]
     fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
-        Box::new(self)
+        AWidget::Box(Box::new(self))
     }
 }
 
@@ -521,14 +523,14 @@ impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
     }
     #[inline]
     fn _box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
-        Box::new(self.erase_mut())
+        AWidgetMut::Mut(self)
     }
     #[inline]
     fn _box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
-        self
+        AWidgetMut::Box(self)
     }
     #[inline]
     fn _boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized + 'w {
-        Box::new(self)
+        AWidgetMut::Box(Box::new(self))
     }
 }

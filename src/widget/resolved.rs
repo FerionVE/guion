@@ -45,17 +45,17 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _render(&self, c: &mut E::Context, r: &mut RenderLink<E>) {
-        (***self)._render(c.link(self.clone()),r)
+        (**self)._render(c.link(self.clone()),r)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _event_direct(&self, c: &mut E::Context, e: &EventCompound<E>) -> EventResp {
-        (***self)._event_direct(c.link(self.clone()),e)
+        (**self)._event_direct(c.link(self.clone()),e)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _size(&self, c: &mut E::Context, e: &EStyle<E>) -> ESize<E> {
-        (***self)._size(c.link(self.clone()),e)
+        (**self)._size(c.link(self.clone()),e)
     }
     #[inline]
     pub fn link(&self, c: &'a mut E::Context) -> Link<'a,E> {
@@ -70,7 +70,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     #[inline]
     pub fn reference(&self) -> Resolved<E> {
         Resolved{
-            wref: Box::new(&*self.wref),
+            wref: self.wref.reference(),
             path: self.path.clone(),
             direct_path: self.direct_path.clone(),
             stor: &self.stor,
@@ -97,7 +97,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     #[allow(deprecated)]
     #[inline]
     pub fn child_paths(&self) -> Vec<E::WidgetPath> {
-        (***self).child_paths(self.path.refc())
+        (**self).child_paths(self.path.refc())
     }
 
     #[inline]
