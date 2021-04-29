@@ -1,5 +1,7 @@
 //! Aliases for deep/nested types inside Env
 #![allow(type_alias_bounds)]
+use crate::widget::imp::{AWidgetMut, AWidget};
+
 use super::*;
 
 pub type ERenderer<E: Env> = <E::Backend as Backend<E>>::Renderer;
@@ -27,6 +29,6 @@ pub type CtxRefR<'a,E: Env> = (&'a E::Storage,&'a E::Context);
 pub type CtxRefM<'a,E: Env> = (&'a mut E::Storage,&'a mut E::Context);
 
 /// Reference to a [`Widget`](Widget) or [immediate widget](AsWidget)
-pub type WidgetRef<'a,E: Env> = Box<(dyn Widget<E>+'a)>;
+pub type WidgetRef<'a,E: Env> = AWidget<'a,E>;
 /// Reference to a [`Widget`](WidgetMut) or [immediate widget](AsWidgetMut)
-pub type WidgetRefMut<'a,E: Env> = Box<(dyn WidgetMut<E>+'a)>;
+pub type WidgetRefMut<'a,E: Env> = AWidgetMut<'a,E>;

@@ -31,7 +31,7 @@ impl<E,T> AsWidget<E> for T where T: Widget<E>, E: Env {
     }
     #[inline]
     fn into_ref<'w>(self) -> Resolvable<'w,E> where Self: 'w {
-        Resolvable::Widget(Box::new(self))
+        Resolvable::Widget(self.boxed())
     }
 }
 impl<E,T> AsWidgetMut<E> for T where T: WidgetMut<E>, E: Env {
@@ -41,6 +41,6 @@ impl<E,T> AsWidgetMut<E> for T where T: WidgetMut<E>, E: Env {
     }
     #[inline]
     fn into_mut<'w>(self) -> ResolvableMut<'w,E> where Self: 'w {
-        ResolvableMut::Widget(Box::new(self))
+        ResolvableMut::Widget(self.boxed_mut())
     }
 }

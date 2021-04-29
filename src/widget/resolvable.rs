@@ -124,6 +124,15 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
             Self::Path(w) => E::WidgetPath::resolves_thru_child_path(w,p)
         }
     }
+    /// Extend the path representing the parent of this widget to resolve to this widget
+    #[deprecated]
+    #[inline]
+    pub fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
+        match self {
+            Self::Widget(w) => w.in_parent_path(parent),
+            Self::Path(w) => w.refc().into(), //TODO WRONG use widget's fns
+        }
+    }
 
     pub fn guion_resolve_error_child_info(&mut self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
         match self {
