@@ -22,7 +22,9 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
     }
     #[inline]
     fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
-        Ok(self.get(i).ok_or(())?.as_ref())
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
     }
     #[inline]
     fn into_child<'w>(mut self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
@@ -35,7 +37,7 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
     #[inline]
     fn childs(&self) -> Vec<Resolvable<E>> {
         self.iter()
-            .map(#[inline] |w| w.as_ref() )
+            .map(AsWidget::as_ref)
             .collect::<Vec<_>>()
     }
     #[inline]
@@ -48,7 +50,9 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
 impl<T,E> WidgetArrayMut<E> for Vec<T> where T: AsWidgetMut<E>, E: Env {
     #[inline]
     fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        Ok(self.get_mut(i).ok_or(())?.as_mut())
+        self.get_mut(i)
+            .map(AsWidgetMut::as_mut)
+            .ok_or(())
     }
     #[inline]
     fn into_child_mut<'w>(mut self, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
@@ -79,22 +83,26 @@ impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
     }
     #[inline]
     fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
-        Ok(self.get(i).ok_or(())?.as_ref())
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
     }
     #[inline]
     fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
-        Ok(self.get(i).ok_or(())?.as_ref())
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
     }
     #[inline]
     fn childs(&self) -> Vec<Resolvable<E>> {
         self.iter()
-            .map(#[inline] |w| w.as_ref() )
+            .map(AsWidget::as_ref)
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w {
         self.into_iter()
-            .map(#[inline] |w: &'w T| w.as_ref() )
+            .map(AsWidget::as_ref)
             .collect::<Vec<_>>()
     }
 }
@@ -106,44 +114,52 @@ impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>, E: Env {
     }
     #[inline]
     fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
-        Ok(self.get(i).ok_or(())?.as_ref())
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
     }
     #[inline]
     fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
-        Ok(self.get(i).ok_or(())?.as_ref())
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
     }
     #[inline]
     fn childs(&self) -> Vec<Resolvable<E>> {
         self.iter()
-            .map(#[inline] |w| w.as_ref() )
+            .map(AsWidget::as_ref)
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w {
         self.into_iter()
-            .map(#[inline] |w: &'w mut T| w.as_ref() )
+            .map(#[inline] |w| w.as_ref() )
             .collect::<Vec<_>>()
     }
 }
 impl<T,E> WidgetArrayMut<E> for &mut [T] where T: AsWidgetMut<E>, E: Env {
     #[inline]
     fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        Ok(self.get_mut(i).ok_or(())?.as_mut())
+        self.get_mut(i)
+            .map(AsWidgetMut::as_mut)
+            .ok_or(())
     }
     #[inline]
     fn into_child_mut<'w>(self, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
-        Ok(self.get_mut(i).ok_or(())?.as_mut())
+        self.get_mut(i)
+            .map(AsWidgetMut::as_mut)
+            .ok_or(())
     }
     #[inline]
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         self.iter_mut()
-            .map(#[inline] |w| w.as_mut() )
+            .map(AsWidgetMut::as_mut)
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs_mut<'w>(self) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
         self.into_iter()
-            .map(#[inline] |w: &'w mut T| w.as_mut() )
+            .map(AsWidgetMut::as_mut)
             .collect::<Vec<_>>()
     }
 }
@@ -190,7 +206,6 @@ macro_rules! impl_wpps_tuple {
                 vec![$l.into_ref(), $( $ll .into_ref() ),* ]
             }
         }
-
         impl<E,$t,$($tt),+> WidgetArrayMut<E> for ($t,$($tt),+) where
             E: Env,
             $t: AsWidgetMut<E>,
@@ -225,6 +240,118 @@ macro_rules! impl_wpps_tuple {
                 vec![$l.into_mut(), $( $ll .into_mut() ),* ]
             }
         }
+
+        impl<E,$t,$($tt),+> WidgetArray<E> for &($t,$($tt),+) where
+            E: Env,
+            $t: AsWidget<E>,
+            $($tt: AsWidget<E>),+ 
+        {
+            #[inline]
+            fn len(&self) -> usize {
+                $n
+            }
+            #[inline]
+            fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidget::as_ref(& $x),
+                    $($mm => AsWidget::as_ref(& $xx)),+ ,
+                    _ => return Err(()),
+                })
+            }
+            #[inline]
+            fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidget::as_ref(& $x),
+                    $($mm => AsWidget::as_ref(& $xx)),+ ,
+                    _ => return Err(()),
+                })
+            }
+            #[inline]
+            fn childs(&self) -> Vec<Resolvable<E>> {
+                let ($l,$($ll),*) = self;
+                vec![$l.as_ref(), $( $ll .as_ref() ),* ]
+            }
+            #[inline]
+            fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w {
+                let ($l,$($ll),*) = self;
+                vec![$l.as_ref(), $( $ll .as_ref() ),* ]
+            }
+        }
+
+        impl<E,$t,$($tt),+> WidgetArray<E> for &mut ($t,$($tt),+) where
+            E: Env,
+            $t: AsWidget<E>,
+            $($tt: AsWidget<E>),+ 
+        {
+            #[inline]
+            fn len(&self) -> usize {
+                $n
+            }
+            #[inline]
+            fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidget::as_ref(& $x),
+                    $($mm => AsWidget::as_ref(& $xx)),+ ,
+                    _ => return Err(()),
+                })
+            }
+            #[inline]
+            fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidget::as_ref(& $x),
+                    $($mm => AsWidget::as_ref(& $xx)),+ ,
+                    _ => return Err(()),
+                })
+            }
+            #[inline]
+            fn childs(&self) -> Vec<Resolvable<E>> {
+                let ($l,$($ll),*) = self;
+                vec![$l.as_ref(), $( $ll .as_ref() ),* ]
+            }
+            #[inline]
+            fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w {
+                let ($l,$($ll),*) = self;
+                vec![$l.as_ref(), $( $ll .as_ref() ),* ]
+            }
+        }
+        impl<E,$t,$($tt),+> WidgetArrayMut<E> for &mut ($t,$($tt),+) where
+            E: Env,
+            $t: AsWidgetMut<E>,
+            $($tt: AsWidgetMut<E>),+ 
+        {
+            #[inline]
+            fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidgetMut::as_mut(&mut $x),
+                    $($mm => AsWidgetMut::as_mut(&mut $xx)),+ ,
+                    _ => return Err(()),
+                })
+            }
+            #[inline]
+            fn into_child_mut<'w>(self, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
+                let $senf = self;
+                Ok(match i {
+                    $m => AsWidgetMut::as_mut(&mut $x),
+                    $($mm => AsWidgetMut::as_mut(&mut $xx)),+ ,
+                    _ => return Err(()),
+                })
+            }
+            #[inline]
+            fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
+                let ($l,$($ll),*) = self;
+                vec![$l.as_mut(), $( $ll .as_mut() ),* ]
+            }
+            #[inline]
+            fn into_childs_mut<'w>(self) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
+                let ($l,$($ll),*) = self;
+                vec![$l.as_mut(), $( $ll .as_mut() ),* ]
+            }
+        }
     };
     {$n:expr;$senf:ident;$t:ident;$l:ident;$m:pat => $x:expr} => {}
 }
@@ -242,3 +369,149 @@ impl_wpps_tuple!(
     07 => senf. 7,06 => senf. 6,05 => senf. 5,04 => senf. 4,
     03 => senf. 3,02 => senf. 2,01 => senf. 1,00 => senf. 0
 );
+
+
+impl<T,E,const N: usize> WidgetArray<E> for [T;N] where T: AsWidget<E>, E: Env {
+    #[inline]
+    fn len(&self) -> usize {
+        N
+    }
+    #[inline]
+    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
+    }
+    #[inline]
+    fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
+        std::array::IntoIter::new(self)
+            .skip(i).next()
+            .map(AsWidget::into_ref)
+            .ok_or(())
+    }
+    #[inline]
+    fn childs(&self) -> Vec<Resolvable<E>> {
+        self.iter()
+            .map(#[inline] |w| w.as_ref() )
+            .collect::<Vec<_>>()
+    }
+    #[inline]
+    fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w {
+        std::array::IntoIter::new(self)
+            .map(#[inline] |w| w.into_ref() )
+            .collect::<Vec<_>>()
+    }
+}
+impl<T,E,const N: usize> WidgetArrayMut<E> for [T;N] where T: AsWidgetMut<E>, E: Env {
+    #[inline]
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
+        self.get_mut(i)
+            .map(AsWidgetMut::as_mut)
+            .ok_or(())
+    }
+    #[inline]
+    fn into_child_mut<'w>(self, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
+        std::array::IntoIter::new(self)
+            .skip(i).next()
+            .map(AsWidgetMut::into_mut)
+            .ok_or(())
+    }
+    #[inline]
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
+        self.iter_mut()
+            .map(AsWidgetMut::as_mut)
+            .collect::<Vec<_>>()
+    }
+    #[inline]
+    fn into_childs_mut<'w>(self) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
+        std::array::IntoIter::new(self)
+            .map(AsWidgetMut::into_mut)
+            .collect::<Vec<_>>()
+    }
+}
+impl<T,E,const N: usize> WidgetArray<E> for &[T;N] where T: AsWidget<E>, E: Env {
+    #[inline]
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+    #[inline]
+    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
+    }
+    #[inline]
+    fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
+    }
+    #[inline]
+    fn childs(&self) -> Vec<Resolvable<E>> {
+        self.iter()
+            .map(AsWidget::as_ref)
+            .collect::<Vec<_>>()
+    }
+    #[inline]
+    fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w {
+        self.into_iter()
+            .map(AsWidget::as_ref)
+            .collect::<Vec<_>>()
+    }
+}
+impl<T,E,const N: usize> WidgetArray<E> for &mut [T;N] where T: AsWidget<E>, E: Env {
+    #[inline]
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+    #[inline]
+    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
+    }
+    #[inline]
+    fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w {
+        self.get(i)
+            .map(AsWidget::as_ref)
+            .ok_or(())
+    }
+    #[inline]
+    fn childs(&self) -> Vec<Resolvable<E>> {
+        self.iter()
+            .map(AsWidget::as_ref)
+            .collect::<Vec<_>>()
+    }
+    #[inline]
+    fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w {
+        self.into_iter()
+            .map(#[inline] |w| w.as_ref() )
+            .collect::<Vec<_>>()
+    }
+}
+impl<T,E,const N: usize> WidgetArrayMut<E> for &mut [T;N] where T: AsWidgetMut<E>, E: Env {
+    #[inline]
+    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
+        self.get_mut(i)
+            .map(AsWidgetMut::as_mut)
+            .ok_or(())
+    }
+    #[inline]
+    fn into_child_mut<'w>(self, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
+        self.get_mut(i)
+            .map(AsWidgetMut::as_mut)
+            .ok_or(())
+    }
+    #[inline]
+    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
+        self.iter_mut()
+            .map(AsWidgetMut::as_mut)
+            .collect::<Vec<_>>()
+    }
+    #[inline]
+    fn into_childs_mut<'w>(self) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
+        self.into_iter()
+            .map(AsWidgetMut::as_mut)
+            .collect::<Vec<_>>()
+    }
+}
