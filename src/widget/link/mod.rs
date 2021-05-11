@@ -350,7 +350,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     
     #[inline]
-    pub fn with_ctx<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F>, E::Storage: Widgets<F> {
+    pub fn with_ctx<'a,F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage<'a>>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F>, E::Storage<'a>: Widgets<F> {
         Link{
             widget: self.widget.with_env::<F>(),
             ctx,

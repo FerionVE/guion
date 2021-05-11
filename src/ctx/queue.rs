@@ -15,12 +15,12 @@ pub enum StdEnqueueable<E> where E: Env {
     Event{event: EEvent<E>, ts: u64},
     MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)},
     MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>},
-    MutateRoot{f: fn(&mut E::Storage,&mut E::Context)},
-    MutateRootClosure{f: Box<dyn FnOnce(&mut E::Storage,&mut E::Context)+'static>},
+    MutateRoot{f: fn(&mut E::Storage<'_>,&mut E::Context)},
+    MutateRootClosure{f: Box<dyn FnOnce(&mut E::Storage<'_>,&mut E::Context)+'static>},
     AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context)},
     AccessWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+'static>},
-    AccessRoot{f: fn(&E::Storage,&mut E::Context)},
-    AccessRootClosure{f: Box<dyn FnOnce(&E::Storage,&mut E::Context)+'static>},
+    AccessRoot{f: fn(&E::Storage<'_>,&mut E::Context)},
+    AccessRootClosure{f: Box<dyn FnOnce(&E::Storage<'_>,&mut E::Context)+'static>},
     MutMessage{path: E::WidgetPath, msg: E::Message},
     InvalidateWidget{path: E::WidgetPath},
     ValidateWidgetRender{path: E::WidgetPath},
@@ -67,13 +67,13 @@ pub enum StdOrder {
 
 /// to be executed by the queue impl, always DIRECTLY before rendering
 #[deprecated]
-pub fn invalidate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),E::Error> {
+pub fn invalidate<E: Env>(stor: &mut E::Storage<'_>, i: E::WidgetPath) -> Result<(),E::Error> {
     stor.widget_mut(i)
         .map(#[inline] |mut w| w._set_invalid(true) )
 }
 #[deprecated]
 /// to be executed by the queue impl, always DIRECTLY after rendering
-pub fn validate<E: Env>(stor: &mut E::Storage, i: E::WidgetPath) -> Result<(),E::Error> {
+pub fn validate<E: Env>(stor: &mut E::Storage<'_>, i: E::WidgetPath) -> Result<(),E::Error> {
     stor.widget_mut(i)
         .map(#[inline] |mut w| w._set_invalid(false) )
 }

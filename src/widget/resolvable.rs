@@ -25,7 +25,7 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     }
     /// Completely resolve using the storage
     #[inline]
-    pub fn resolve_widget<'a>(self, stor: &'a E::Storage) -> Result<WidgetRef<'w,E>,E::Error> where 'a: 'w {
+    pub fn resolve_widget<'a>(self, stor: &'a E::Storage<'_>) -> Result<WidgetRef<'w,E>,E::Error> where 'a: 'w {
         match self {
             Self::Widget(w) => Ok(w),
             Self::Path(p) => Ok(stor.widget(p)?.wref),
@@ -103,7 +103,7 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     }
     #[deprecated]
     #[inline]
-    pub fn resolve_widget<'a>(self, stor: &'a mut E::Storage) -> Result<WidgetRefMut<'w,E>,E::Error> where 'a: 'w {
+    pub fn resolve_widget<'a>(self, stor: &'a mut E::Storage<'_>) -> Result<WidgetRefMut<'w,E>,E::Error> where 'a: 'w {
         match self {
             Self::Widget(w) => Ok(w),
             Self::Path(p) => Ok(stor.widget_mut(p)?.wref),

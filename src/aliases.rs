@@ -22,9 +22,9 @@ pub type ECQueue<E: Env> = <E::Context as Context<E>>::Queue;
 pub type ECStdState<E: Env> = <E::Context as CtxStdState<E>>::T;
 pub type EPressedKey<E: Env> = <ECStdState<E> as StdState<E>>::K;
 
-pub type CtxRef<'a,E: Env> = (&'a E::Storage,&'a mut E::Context);
-pub type CtxRefR<'a,E: Env> = (&'a E::Storage,&'a E::Context);
-pub type CtxRefM<'a,E: Env> = (&'a mut E::Storage,&'a mut E::Context);
+pub type CtxRef<'a,'s:'a,E: Env> = (&'a E::Storage<'s>,&'a mut E::Context);
+pub type CtxRefR<'a,'s:'a,E: Env> = (&'a E::Storage<'s>,&'a E::Context);
+pub type CtxRefM<'a,'s:'a,E: Env> = (&'a mut E::Storage<'s>,&'a mut E::Context);
 
 /// Reference to a [`Widget`](Widget) or [immediate widget](AsWidget)
 pub type WidgetRef<'a,E: Env> = Box<(dyn Widget<E>+'a)>;

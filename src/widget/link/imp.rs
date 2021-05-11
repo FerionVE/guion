@@ -1,7 +1,7 @@
 use super::*;
 
 pub struct Parents<'a,E> where E: Env {
-    pub(super) stor: &'a E::Storage,
+    pub(super) stor: &'a E::Storage<'a>,
     pub(super) next: Option<E::WidgetPath>,
 }
 

@@ -3,7 +3,7 @@ use super::*;
 
 /// Implemented on the root of the widget tree  
 /// Represents the root of a widget tree and being a starting point for widget resolving
-pub trait Widgets<E>: Sized + 'static where E: Env {
+pub trait Widgets<E>: Sized where E: Env {
     /// Resolve Widget by [path](WidgetPath)
     /// 
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square) Implementations often can just call [`resolve_in_root`](resolve_in_root)
@@ -25,13 +25,13 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
     #[deprecated] #[inline] fn tune_path_mut(&mut self, _i: &mut E::WidgetPath) {}
 
     #[inline]
-    fn with_env<F: Env<Storage=Self>>(&self) -> &F::Storage where Self: Widgets<F> {
+    fn with_env<F: Env<Storage=Self>>(&self) -> &F::Storage<'_> where Self: Widgets<F> {
         &self
     }
 }
 //#[doc(hidden)]
 /// Used by [`Widgets::widget`] implementations
-pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage) -> Result<Resolved<'s,E>,E::Error> where E: Env, 'l: 's {
+pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage<'_>) -> Result<Resolved<'s,E>,E::Error> where E: Env, 'l: 's {
     let r = root.resolve(sub.refc())?;
     
     match r {
@@ -51,11 +51,11 @@ pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs
 }
 //#[doc(hidden)]
 /// Used by [`Widgets::widget_mut`](Widgets::widget_mut) implementations
-pub fn resolve_in_root_mut<E: Env>(
-    stor: &mut E::Storage,
-    mut root_in_stor_mut: impl FnMut(&mut E::Storage) -> &mut dyn WidgetMut<E>,
+pub fn resolve_in_root_mut<'l:'s,'s,E: Env>(
+    stor: &'l mut E::Storage<'_>,
+    mut root_in_stor_mut: impl for<'a> FnMut(&'a mut E::Storage<'_>) -> &'a mut dyn WidgetMut<E>,
     sub: E::WidgetPath, abs_path: E::WidgetPath,
-) -> Result<ResolvedMut<E>,E::Error> {
+) -> Result<ResolvedMut<'s,E>,E::Error> {
 
     let final_path;
 

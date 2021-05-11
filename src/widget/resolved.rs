@@ -7,7 +7,7 @@ pub struct Resolved<'a,E> where E: Env {
     pub wref: WidgetRef<'a,E>,
     pub path: E::WidgetPath,
     pub direct_path: E::WidgetPath,
-    pub stor: &'a E::Storage,
+    pub stor: &'a E::Storage<'a>,
 }
 /// A mutable reference to a resolved [`Widget`][WidgetMut]
 pub struct ResolvedMut<'a,E> where E: Env {
@@ -101,7 +101,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     }
 
     #[inline]
-    pub fn with_env<F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage>>(self) -> Resolved<'a,F> where E::WidgetPath: WidgetPath<F>, E::Storage: Widgets<F> {
+    pub fn with_env<'s,F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage<'s>>>(self) -> Resolved<'a,F> where E::WidgetPath: WidgetPath<F>, E::Storage<'s>: Widgets<F> {
         let stor = self.stor.with_env::<F>();
         let path = rc_path_with_env::<E,F>(self.path.refc());
         stor.widget(path).unwrap()

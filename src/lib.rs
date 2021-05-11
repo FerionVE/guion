@@ -1,5 +1,8 @@
 #![doc(html_logo_url="https://raw.githubusercontent.com/FerionVE/guion/430c18e7/res/icon.svg")]
 #![doc(html_favicon_url="https://raw.githubusercontent.com/FerionVE/guion/8cc44b2e/res/favicon.svg")]
+
+#![feature(generic_associated_types)]
+
 //#![warn(clippy::all)]
 
 pub mod widget;

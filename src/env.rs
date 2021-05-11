@@ -5,15 +5,15 @@ use std::fmt::Debug;
 /// Type compound
 /// 
 /// Note the Trait bounds Clone, Default, PartialEq are not used and just for simplifying derives
-pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'static {
+pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync {
     type Backend: Backend<Self>;
     type Context: Context<Self>;
-    type Storage: Widgets<Self>;
+    type Storage<'a>: Widgets<Self>+'a;
     type WidgetID: WidgetID;
     /// Implementation of path to resolve [`Widget`]
     type WidgetPath: WidgetPath<Self>;
     type ValidState: ValidState;
-    type Message: 'static;
+    type Message;
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;
     //type Commit: Eq + Ord;
 }
@@ -53,4 +53,12 @@ macro_rules! impl_env_stds {
             }
         }
     };
+}
+
+trait Bar<T> where T: Foo {
+
+}
+
+trait Foo {
+    type Baz<'a>: Bar<Self>+'a;
 }
