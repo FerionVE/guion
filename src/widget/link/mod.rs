@@ -210,7 +210,7 @@ impl<'c,E> Link<'c,E> where E: Env {
                     path: cpath.refc(),
                     direct_path: cpath,
                     wref: w,
-                    stor: self.widget.stor,
+                    stor: self.widget.stor.lt_ref(),
                 };
             },
             Resolvable::Path(w) => {
@@ -230,7 +230,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn _with_link<'s>(ctx: &mut E::Context, w: Resolved<'s,E>, f: impl FnOnce(Link<E>)) where 'c: 's {
         let l = Link{
-            widget: w,
+            widget: w.lt(),
             ctx,
         };
         f(l);
@@ -274,7 +274,7 @@ impl<'c,E> Link<'c,E> where E: Env {
                     path: path.refc(),
                     direct_path: path,
                     wref: w,
-                    stor: self.widget.stor,
+                    stor: self.widget.stor.lt_ref(),
                 };
             },
             Resolvable::Path(w) => {
@@ -307,7 +307,7 @@ impl<'c,E> Link<'c,E> where E: Env {
                     path: path.refc(),
                     direct_path: path,
                     wref: w,
-                    stor: self.widget.stor,
+                    stor: self.widget.stor.lt_ref(),
                 };
             },
             Resolvable::Path(w) => {
@@ -334,7 +334,7 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     #[inline]
     pub fn childs<'s>(&'s self) -> impl Iterator<Item=Resolvable<'s,E>>+'s where 'c: 's {
-        let w = &self.widget; //TODO this looks like a fkn move and ref
+        let w = &**self.widget; //TODO this looks like a fkn move and ref
         (0..w.childs())
             .map(#[inline] move |i| w.child(i).unwrap() )
     }
@@ -348,14 +348,7 @@ impl<'c,E> Link<'c,E> where E: Env {
             next: Some(self.widget.path.refc()),
         }
     }
-    
-    #[inline]
-    pub fn with_ctx<'a,F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage<'a>>>(self, ctx: &'c mut F::Context) -> Link<'c,F> where E::WidgetPath: WidgetPath<F>, E::Storage<'a>: Widgets<F> {
-        Link{
-            widget: self.widget.with_env::<F>(),
-            ctx,
-        }
-    }
+
     #[inline]
     pub fn enqueue<I,O>(&mut self, i: I, o: O, p: i64) where ECQueue<E>: Queue<I,O> {
         self.ctx.queue_mut().push(i,o,p)

@@ -68,19 +68,9 @@ where E: Env {
     fn is_empty(&self) -> bool;
 
     fn empty() -> Self;
-
-    #[inline]
-    fn with_env<F: Env<WidgetPath=E::WidgetPath>>(self) -> Self where E::WidgetPath: WidgetPath<F> {
-        self
-    }
 }
 
 pub struct ResolvesThruResult<E> where E: Env {
     /// The sub path inside the current child widget which resolves further
     pub sub_path: E::WidgetPath,
-}
-
-#[inline]
-pub fn rc_path_with_env<E: Env, F: Env<WidgetPath=E::WidgetPath>>(e: E::WidgetPath) -> F::WidgetPath where E::WidgetPath: WidgetPath<F> {
-    e
 }

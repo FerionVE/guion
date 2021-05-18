@@ -69,11 +69,11 @@ impl<'a,E> Resolved<'a,E> where E: Env {
 
     #[inline]
     pub fn reference(&self) -> Resolved<E> {
-        Resolved{
+        Resolved {
             wref: Box::new(&*self.wref),
             path: self.path.clone(),
             direct_path: self.direct_path.clone(),
-            stor: &self.stor,
+            stor: self.stor.lt_ref(),
         }
     }
 
@@ -100,12 +100,14 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         (***self).child_paths(self.path.refc())
     }
 
-    #[inline]
-    pub fn with_env<'s,F: Env<WidgetPath=E::WidgetPath,Storage=E::Storage<'s>>>(self) -> Resolved<'a,F> where E::WidgetPath: WidgetPath<F>, E::Storage<'s>: Widgets<F> {
-        let stor = self.stor.with_env::<F>();
-        let path = rc_path_with_env::<E,F>(self.path.refc());
-        stor.widget(path).unwrap()
-    }
+    pub fn lt<'s>(self) -> Resolved<'s,E> where 'a: 's, Self: 'a {
+        Resolved {
+            wref: self.wref,
+            path: self.path,
+            direct_path: self.direct_path,
+            stor: self.stor.lt_ref(),
+        }
+    } 
 }
 
 impl<'a,E> Deref for Resolved<'a,E> where E: Env {

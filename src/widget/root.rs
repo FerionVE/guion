@@ -21,13 +21,11 @@ pub trait Widgets<E>: Sized where E: Env {
     #[deprecated] 
     fn trace_bounds(&self, ctx: &mut E::Context, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error>;
 
+    fn lt_ref<'l,'r,'s>(&'r self) -> &'r E::Storage<'s> where 's: 'r, 'l: 'r, 'l: 's, Self: 'l;
+    fn lt_mut<'l,'r,'s>(&'r mut self) -> &'r mut E::Storage<'s> where 's: 'r, 'l: 'r, 'l: 's, Self: 'l;
+
     #[deprecated] #[inline] fn tune_path(&self, _i: &mut E::WidgetPath) {}
     #[deprecated] #[inline] fn tune_path_mut(&mut self, _i: &mut E::WidgetPath) {}
-
-    #[inline]
-    fn with_env<F: Env<Storage=Self>>(&self) -> &F::Storage<'_> where Self: Widgets<F> {
-        &self
-    }
 }
 //#[doc(hidden)]
 /// Used by [`Widgets::widget`] implementations
@@ -40,7 +38,7 @@ pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs
                 wref: w,
                 path: abs_path.clone(),
                 direct_path: abs_path,
-                stor
+                stor: stor.lt_ref(),
             }),
         Resolvable::Path(p) => {
             let mut r = stor.widget(p)?;
@@ -52,8 +50,8 @@ pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs
 //#[doc(hidden)]
 /// Used by [`Widgets::widget_mut`](Widgets::widget_mut) implementations
 pub fn resolve_in_root_mut<'l:'s,'s,E: Env>(
-    stor: &'l mut E::Storage<'_>,
-    mut root_in_stor_mut: impl for<'a> FnMut(&'a mut E::Storage<'_>) -> &'a mut dyn WidgetMut<E>,
+    stor: &'l mut E::Storage<'l>,
+    mut root_in_stor_mut: impl for<'a> FnMut(&'a mut E::Storage<'l>) -> &'a mut dyn WidgetMut<E>,
     sub: E::WidgetPath, abs_path: E::WidgetPath,
 ) -> Result<ResolvedMut<'s,E>,E::Error> {
 

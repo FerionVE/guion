@@ -11,10 +11,10 @@ pub mod standard;
 pub mod imp;
 
 /// an Event holds one of the support [`Variant`] and can be downcasted to a specific Variant
-pub trait Event<E>: Sized + Clone + Debug where E: Env, E::Backend: Backend<E,Event=Self> {
+pub trait Event<E>: Sized + Clone + Debug where E: Env {
     type Dest: Destination;
     type Key: Key;
-
+    
     /// True if container widgets should sent this to only one widget  
     fn consuming(&self) -> bool;
     /// Where there Event should be initially injected into the context
