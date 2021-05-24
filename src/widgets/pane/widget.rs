@@ -7,7 +7,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         self._render_impl(l,r)
     }
     fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
@@ -66,7 +66,7 @@ impl<'w,E,T> Pane<'w,E,T> where
     E: Env,
     T: WidgetArray<E>,
 {
-    pub fn _render_impl(&self, mut l: Link<E>, r: &mut RenderLink<E>) where
+    pub fn _render_impl(&self, mut l: Link<E>, r: &mut ERenderer<'_,E>) where
         E: Env,
     {
         let mut r = r.with_style(&self.style);

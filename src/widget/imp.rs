@@ -7,7 +7,7 @@ impl<E> Widget<E> for &(dyn Widget<E>+'_) where E: Env {
         (**self).id()
     }
     #[inline]
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         (**self)._render(l,r)
     }
     #[inline]
@@ -115,7 +115,7 @@ impl<E> Widget<E> for &mut (dyn Widget<E>+'_) where E: Env {
         (**self).id()
     }
     #[inline]
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         (**self)._render(l,r)
     }
     #[inline]
@@ -223,7 +223,7 @@ impl<E> Widget<E> for &(dyn WidgetMut<E>+'_) where E: Env {
         (**self).id()
     }
     #[inline]
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         (**self)._render(l,r)
     }
     #[inline]
@@ -332,7 +332,7 @@ impl<E> Widget<E> for &mut (dyn WidgetMut<E>+'_) where E: Env {
         (**self).id()
     }
     #[inline]
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         (**self)._render(l,r)
     }
     #[inline]
@@ -501,7 +501,7 @@ impl<E> Widget<E> for Box<(dyn Widget<E>+'_)> where E: Env {
         (**self).id()
     }
     #[inline]
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         (**self)._render(l,r)
     }
     #[inline]
@@ -608,7 +608,7 @@ impl<E> Widget<E> for Box<(dyn WidgetMut<E>+'_)> where E: Env {
         (**self).id()
     }
     #[inline]
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         (**self)._render(l,r)
     }
     #[inline]

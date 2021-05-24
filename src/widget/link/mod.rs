@@ -97,7 +97,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn render(&mut self, r: &mut RenderLink<E>) {
+    pub fn render(&mut self, r: &mut ERenderer<'_,E>) {
         self.ctx.render(self.widget.reference(),r)
     }
     /// send event to this widget
@@ -126,7 +126,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
-    pub fn _render(&mut self, r: &mut RenderLink<E>) {
+    pub fn _render(&mut self, r: &mut ERenderer<'_,E>) {
         let w = self.ctx.link(self.widget.reference());
         (**self.widget)._render(w,r)
     }

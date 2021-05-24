@@ -8,7 +8,7 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         let mut r = r.with_style(&self.style);
         let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         r.with(StdSelectag::ObjBackground)

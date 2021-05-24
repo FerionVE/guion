@@ -19,7 +19,7 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, mut l: Link<E>, r: &mut ERenderer<'_,E>) {
         let mut r = r.with_style(&self.style);
         let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         if l.state().is_hovered(&self.id) {

@@ -20,7 +20,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::render`]
     #[inline]
-    pub fn render(&self, c: &mut E::Context, r: &mut RenderLink<E>) {
+    pub fn render(&self, c: &mut E::Context, r: &mut ERenderer<'_,E>) {
         c.render(self.clone(),r)
     }
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
@@ -44,7 +44,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
 
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
-    pub fn _render(&self, c: &mut E::Context, r: &mut RenderLink<E>) {
+    pub fn _render(&self, c: &mut E::Context, r: &mut ERenderer<'_,E>) {
         (***self)._render(c.link(self.clone()),r)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)

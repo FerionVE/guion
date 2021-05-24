@@ -16,7 +16,7 @@ pub trait Context<E>: AsRefMut<E::Context> + Sized + 'static where E: Env, E::Co
     fn queue(&self) -> &Self::Queue;
 
     #[inline] 
-    fn render(&mut self, w: Resolved<E>, r: &mut RenderLink<E>) {
+    fn render(&mut self, w: Resolved<E>, r: &mut ERenderer<'_,E>) {
         Self::Handler::_render(self.link(w),r)
     }
     #[inline] 

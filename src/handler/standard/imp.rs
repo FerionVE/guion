@@ -8,7 +8,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
     EEvent<E>: StdVarSup<E>
 {
     #[inline] 
-    fn _render(l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(l: Link<E>, r: &mut ERenderer<'_,E>) {
         S::_render(l,r)
         //todo!()
     }

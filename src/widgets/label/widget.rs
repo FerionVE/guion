@@ -16,7 +16,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
         let mut r = r.with_style(&self.style);
         r.with(&[
             StdSelectag::ObjForeground,

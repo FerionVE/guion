@@ -2,7 +2,7 @@
 #![allow(type_alias_bounds)]
 use super::*;
 
-pub type ERenderer<E: Env> = <E::Backend as Backend<E>>::Renderer;
+pub type ERenderer<'a,E: Env> = <E::Backend as Backend<E>>::Renderer<'a>;
 pub type EEvent<E: Env> = <E::Backend as Backend<E>>::Event;
 pub type EEDest<E: Env> = <EEvent<E> as Event<E>>::Dest;
 pub type EEKey<E: Env> = <EEvent<E> as Event<E>>::Key;

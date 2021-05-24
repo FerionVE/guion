@@ -29,7 +29,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::render`]
-    fn _render(&self, l: Link<E>, r: &mut RenderLink<E>);
+    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>);
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)

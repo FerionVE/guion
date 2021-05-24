@@ -15,7 +15,7 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, mut l: Link<E>, r: &mut ERenderer<'_,E>) {
         let mut r = r.with_style(&self.style);
         let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
         let bounds = self.calc_bounds(r.bounds(),self.state.get(l.ctx)); 

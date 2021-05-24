@@ -29,7 +29,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, _: Link<E>, r: &mut RenderLink<E>) {
+    fn _render(&self, _: Link<E>, r: &mut ERenderer<'_,E>) {
         r.fill_rect();
     }
     fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
