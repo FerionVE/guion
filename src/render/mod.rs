@@ -5,7 +5,7 @@ use super::*;
 
 pub mod widgets;
 
-pub trait Render<E>: Sized where E: Env, /*ERenderer<E>: AsRefMut<Self>*/ {
+pub trait Render<E>: Sized where E: Env, /*for<'r> ERenderer<'r,E>: AsRefMut<Self>*/ {
     /// If widgets should be rendered even if the don't require to
     fn force(&self) -> bool;
     /// Return false if rendered widgets should not be set rendered
@@ -47,12 +47,12 @@ pub trait Render<E>: Sized where E: Env, /*ERenderer<E>: AsRefMut<Self>*/ {
     /// Fork with area inside the [bounds](Self::bounds)
     fn inner_centered<'r>(&'r mut self, size: Dims) -> ERenderer<'r,E> where Self: 'r;
     /// Fork with area inside the [bounds](Self::bounds)
-    fn inner_align<'r>(&'r mut self, size: Dims, align: (f32,f32)) -> ERenderer<'r,E> where Self: 'r;
+    fn inner_aligned<'r>(&'r mut self, size: Dims, align: (f32,f32)) -> ERenderer<'r,E> where Self: 'r;
 
     /// Fork with attached [style](Self::style) variant [selectors](Self::selector)
     #[inline]
-    fn with<'r,S>(&'r mut self, selectags: S) -> ERenderer<'r,E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> {
-        self.with_style_selector(&self.selector.with(selectags))
+    fn with<'r,S>(&'r mut self, selectags: S) -> ERenderer<'r,E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E>, Self: 'r {
+        self.with_style_selector(&self.selector().with(selectags))
     }
     /// Fork with attached [style](Self::style) variant [selectors](Self::selector)
     fn with_style<'r>(&'r mut self, style: &EStyle<E>) -> ERenderer<'r,E>;
@@ -66,5 +66,10 @@ pub trait Render<E>: Sized where E: Env, /*ERenderer<E>: AsRefMut<Self>*/ {
     fn viewport(&self) -> &Bounds;
     fn style(&self) -> &EStyle<E>;
     fn selector(&self) -> &ESSelector<E>;
-    
+
+    #[deprecated]
+    fn render_widget(&mut self, w: Link<E>);
+
+    #[deprecated]
+    fn fork_with<'r>(&'r mut self, bounds: Option<Bounds>, viewport: Option<Bounds>, style: Option<EStyle<E>>, selector: Option<ESSelector<E>>) -> ERenderer<'r,E>;
 }

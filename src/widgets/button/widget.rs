@@ -4,7 +4,7 @@ use super::*;
 
 impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
     Text: AsWidget<E>,
@@ -105,7 +105,7 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
 
 impl<'w,E,Text> WidgetMut<E> for Button<'w,E,Text> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
     Text: AsWidgetMut<E>,
@@ -128,7 +128,7 @@ impl<'w,E,Text> WidgetMut<E> for Button<'w,E,Text> where
 
 impl<'w,E,S> Button<'w,E,S> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
     S: AsWidget<E>,

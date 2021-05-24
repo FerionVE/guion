@@ -1,7 +1,7 @@
 use super::*;
 
 //TODO refine standard render functions
-pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<Self>,*/ {
+pub trait RenderStdWidgets<E>: Render<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r {
     /// Fill the current bounds with the color derived from style
     fn fill_rect(&mut self, c: &mut E::Context);
 
@@ -12,11 +12,8 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<
     #[inline]
     fn render_text(&mut self, text: &str, align: (f32,f32), c: &mut E::Context) {
         let pp = ESGlyphs::<E>::generate(text,(20.0,20.0),c); //style.preprocess_text(text,c);
-        let oldb = self._bounds().clone();
-        let newb = oldb.inner_aligned(pp.size(),align);
-        self._set_bounds(&newb);
-        self.render_preprocessed_text(&pp,Offset::default(),c);
-        self._set_bounds(&oldb);
+        self.inner_aligned(pp.size(),align)
+            .render_preprocessed_text(&pp,Offset::default(),c);
     }
     fn render_preprocessed_text(&mut self, text: &ESGlyphs<E>, inner_offset: Offset, c: &mut E::Context);
 
@@ -25,7 +22,7 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<
     /// Set the cursor to the cursor derived from style
     #[inline]
     fn set_cursor(&mut self, c: &mut E::Context) {
-        self.set_cursor_specific(&self._style().cursor(self._selector(),c),c);
+        self.set_cursor_specific(&self.style().cursor(self.selector(),c),c);
     }
 
     //fn draw_text_button(&mut self, c: &mut E::Context, pressed: bool, caption: &str);

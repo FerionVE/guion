@@ -3,7 +3,7 @@ use super::super::util::state::*;
 
 impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -55,7 +55,7 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
 
 impl<'w,E> WidgetMut<E> for ProgressBar<'w,E> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![]

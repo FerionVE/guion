@@ -23,7 +23,7 @@ impl<E> Null<E> where E: Env {
 
 impl<'w,E> Widget<'w,E> for Null<E> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EStyle<E>: StyleVariantSupport<StdSelectag>,
 {
     fn id(&self) -> E::WidgetID {
@@ -74,7 +74,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
 
 impl<'w,E> WidgetMut<'w,E> for Null<E> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EStyle<E>: StyleVariantSupport<StdSelectag>,
 {
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> where 'w: 's {

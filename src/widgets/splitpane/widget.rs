@@ -5,7 +5,7 @@ use crate::style::standard::cursor::StdCursor; //TODO fix req of this import
 
 impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
     L: AsWidget<E>,
@@ -151,7 +151,7 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
 }
 impl<'w,E,L,R,V> WidgetMut<E> for SplitPane<'w,E,L,R,V> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
     L: AsWidgetMut<E>,

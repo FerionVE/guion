@@ -5,7 +5,7 @@ use validation::{ValidationMut, Validation};
 
 impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
     Text: Caption<E>+Validation<E>+'w,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
@@ -64,7 +64,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
 
 impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
     Text: CaptionMut<E>+ValidationMut<E>+'w,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
@@ -91,7 +91,7 @@ impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
 
 impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
     Text: Caption<E>+Validation<E>+'w,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
