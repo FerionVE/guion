@@ -1,13 +1,16 @@
 use crate::style::standard::cursor::StdCursor;
 
 use super::*;
+use super::imp::*;
 
-impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
+impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
     Text: AsWidget<E>,
+    Tr: Trigger<E>,
+    TrMut: TriggerMut<E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -59,12 +62,12 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
         }
         if let Some(ee) = e.event.is_mouse_up() {
             if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
-                (self.trigger)(l);
+                self.trigger_auto(&mut l);
                 return true;
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
             if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
-                (self.trigger)(l);
+                self.trigger_auto(&mut l);
                 return true;
             }
         }
@@ -101,14 +104,21 @@ impl<'w,E,Text> Widget<E> for Button<'w,E,Text> where
         if i != 0 {return Err(());}
         Ok(self.text.into_ref())
     }
+
+    impl_traitcast!(
+        dyn IButton<E> => |s| s;
+        dyn Trigger<E> => |s| &s.trigger;
+    );
 }
 
-impl<'w,E,Text> WidgetMut<E> for Button<'w,E,Text> where
+impl<'w,E,Text,Tr,TrMut> WidgetMut<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
     Text: AsWidgetMut<E>,
+    Tr: Trigger<E>,
+    TrMut: TriggerMut<E>,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![self.text.as_mut()]
@@ -124,14 +134,22 @@ impl<'w,E,Text> WidgetMut<E> for Button<'w,E,Text> where
         if i != 0 {return Err(());}
         Ok(self.text.into_mut())
     }
+
+    impl_traitcast_mut!(
+        dyn IButton<E> => |s| s;
+        dyn Trigger<E> => |s| &mut s.trigger;
+        dyn TriggerMut<E> => |s| &mut s.trigger_mut;
+    );
 }
 
-impl<'w,E,S> Button<'w,E,S> where
+impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E>,
     S: AsWidget<E>,
+    Tr: Trigger<E>,
+    TrMut: TriggerMut<E>,
 {
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
         let id = l.id();
