@@ -57,7 +57,7 @@ pub(crate) use util::error::*;
 pub(crate) use util::tabulate::*;
 pub(crate) use util::traitcast::*;
 pub(crate) use util::*;
-pub(crate) use widget::array::*;
+pub(crate) use widget::slice::*;
 pub(crate) use widget::as_widget::*;
 pub(crate) use widget::cast::*;
 pub(crate) use widget::link::*;

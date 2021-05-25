@@ -1,21 +1,21 @@
 //! Trait over types holding an array of AsWidget types
 use super::*;
 
-pub trait WidgetArray<E>: Sized where E: Env {
+pub trait WidgetSlice<E>: Sized where E: Env {
     fn len(&self) -> usize;
     fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()>;
     fn into_child<'w>(self, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'w;
     fn childs<'s>(&'s self) -> Vec<Resolvable<'s,E>>;
     fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w;
 }
-pub trait WidgetArrayMut<E>: WidgetArray<E> where E: Env {
+pub trait WidgetSliceMut<E>: WidgetSlice<E> where E: Env {
     fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()>;
     fn into_child_mut<'w>(self, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w;
     fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>>;
     fn into_childs_mut<'w>(self) -> Vec<ResolvableMut<'w,E>> where Self: 'w;
 }
 
-impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
+impl<T,E> WidgetSlice<E> for Vec<T> where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         self.len()
@@ -47,7 +47,7 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
             .collect::<Vec<_>>()
     }
 }
-impl<T,E> WidgetArrayMut<E> for Vec<T> where T: AsWidgetMut<E>, E: Env {
+impl<T,E> WidgetSliceMut<E> for Vec<T> where T: AsWidgetMut<E>, E: Env {
     #[inline]
     fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         self.get_mut(i)
@@ -76,7 +76,7 @@ impl<T,E> WidgetArrayMut<E> for Vec<T> where T: AsWidgetMut<E>, E: Env {
     }
 }
 
-impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
+impl<T,E> WidgetSlice<E> for &[T] where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -107,7 +107,7 @@ impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
     }
 }
 
-impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>, E: Env {
+impl<T,E> WidgetSlice<E> for &mut [T] where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -137,7 +137,7 @@ impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>, E: Env {
             .collect::<Vec<_>>()
     }
 }
-impl<T,E> WidgetArrayMut<E> for &mut [T] where T: AsWidgetMut<E>, E: Env {
+impl<T,E> WidgetSliceMut<E> for &mut [T] where T: AsWidgetMut<E>, E: Env {
     #[inline]
     fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         self.get_mut(i)
@@ -176,7 +176,7 @@ macro_rules! impl_wpps_tuple {
     } => {
         impl_wpps_tuple!(($n-1);$senf;$($tt)+;$($ll)+;$($mm => $xx),+);
 
-        impl<E,$t,$($tt),+> WidgetArray<E> for ($t,$($tt),+) where
+        impl<E,$t,$($tt),+> WidgetSlice<E> for ($t,$($tt),+) where
             E: Env,
             $t: AsWidget<E>,
             $($tt: AsWidget<E>),+ 
@@ -214,7 +214,7 @@ macro_rules! impl_wpps_tuple {
                 vec![$l.into_ref(), $( $ll .into_ref() ),* ]
             }
         }
-        impl<E,$t,$($tt),+> WidgetArrayMut<E> for ($t,$($tt),+) where
+        impl<E,$t,$($tt),+> WidgetSliceMut<E> for ($t,$($tt),+) where
             E: Env,
             $t: AsWidgetMut<E>,
             $($tt: AsWidgetMut<E>),+ 
@@ -249,7 +249,7 @@ macro_rules! impl_wpps_tuple {
             }
         }
 
-        impl<E,$t,$($tt),+> WidgetArray<E> for &($t,$($tt),+) where
+        impl<E,$t,$($tt),+> WidgetSlice<E> for &($t,$($tt),+) where
             E: Env,
             $t: AsWidget<E>,
             $($tt: AsWidget<E>),+ 
@@ -288,7 +288,7 @@ macro_rules! impl_wpps_tuple {
             }
         }
 
-        impl<E,$t,$($tt),+> WidgetArray<E> for &mut ($t,$($tt),+) where
+        impl<E,$t,$($tt),+> WidgetSlice<E> for &mut ($t,$($tt),+) where
             E: Env,
             $t: AsWidget<E>,
             $($tt: AsWidget<E>),+ 
@@ -326,7 +326,7 @@ macro_rules! impl_wpps_tuple {
                 vec![$l.as_ref(), $( $ll .as_ref() ),* ]
             }
         }
-        impl<E,$t,$($tt),+> WidgetArrayMut<E> for &mut ($t,$($tt),+) where
+        impl<E,$t,$($tt),+> WidgetSliceMut<E> for &mut ($t,$($tt),+) where
             E: Env,
             $t: AsWidgetMut<E>,
             $($tt: AsWidgetMut<E>),+ 
@@ -385,7 +385,7 @@ impl_wpps_tuple!(
 );
 
 
-impl<T,E,const N: usize> WidgetArray<E> for [T;N] where T: AsWidget<E>, E: Env {
+impl<T,E,const N: usize> WidgetSlice<E> for [T;N] where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         N
@@ -416,7 +416,7 @@ impl<T,E,const N: usize> WidgetArray<E> for [T;N] where T: AsWidget<E>, E: Env {
             .collect::<Vec<_>>()
     }
 }
-impl<T,E,const N: usize> WidgetArrayMut<E> for [T;N] where T: AsWidgetMut<E>, E: Env {
+impl<T,E,const N: usize> WidgetSliceMut<E> for [T;N] where T: AsWidgetMut<E>, E: Env {
     #[inline]
     fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         self.get_mut(i)
@@ -443,7 +443,7 @@ impl<T,E,const N: usize> WidgetArrayMut<E> for [T;N] where T: AsWidgetMut<E>, E:
             .collect::<Vec<_>>()
     }
 }
-impl<T,E,const N: usize> WidgetArray<E> for &[T;N] where T: AsWidget<E>, E: Env {
+impl<T,E,const N: usize> WidgetSlice<E> for &[T;N] where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -473,7 +473,7 @@ impl<T,E,const N: usize> WidgetArray<E> for &[T;N] where T: AsWidget<E>, E: Env 
             .collect::<Vec<_>>()
     }
 }
-impl<T,E,const N: usize> WidgetArray<E> for &mut [T;N] where T: AsWidget<E>, E: Env {
+impl<T,E,const N: usize> WidgetSlice<E> for &mut [T;N] where T: AsWidget<E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -503,7 +503,7 @@ impl<T,E,const N: usize> WidgetArray<E> for &mut [T;N] where T: AsWidget<E>, E: 
             .collect::<Vec<_>>()
     }
 }
-impl<T,E,const N: usize> WidgetArrayMut<E> for &mut [T;N] where T: AsWidgetMut<E>, E: Env {
+impl<T,E,const N: usize> WidgetSliceMut<E> for &mut [T;N] where T: AsWidgetMut<E>, E: Env {
     #[inline]
     fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
         self.get_mut(i)

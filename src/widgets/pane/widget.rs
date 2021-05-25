@@ -2,7 +2,7 @@ use super::*;
 
 impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     E: Env,
-    T: WidgetArray<E>,
+    T: WidgetSlice<E>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -42,7 +42,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
 }
 impl<'w,E,T> WidgetMut<E> for Pane<'w,E,T> where 
     E: Env,
-    T: WidgetArrayMut<E>+'w,
+    T: WidgetSliceMut<E>+'w,
 {
     fn _set_invalid(&mut self, v: bool) {
         let _ = v;
@@ -64,7 +64,7 @@ impl<'w,E,T> WidgetMut<E> for Pane<'w,E,T> where
 
 impl<'w,E,T> Pane<'w,E,T> where
     E: Env,
-    T: WidgetArray<E>,
+    T: WidgetSlice<E>,
 {
     pub fn _render_impl(&self, mut l: Link<E>, r: &mut RenderLink<E>) where
         E: Env,
