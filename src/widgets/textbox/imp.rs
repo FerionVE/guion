@@ -38,7 +38,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
-    E::TextBoxor: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
@@ -179,20 +179,20 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: TextStor<E>+Validation<E>+'w,
-    E::TextBoxor: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
     CursorStickX: AtomState<E,Option<u32>>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<E::TextBoxor> { //TODO FIX style mutation invalidating glyphs
+    pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<ETextLayout<E>> { //TODO FIX style mutation invalidating glyphs
         if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
             if self.text.valid(&c) {
                 return v;
             }
         }
 
-        let glyphs: Arc<E::TextBoxor> = Arc::new(
+        let glyphs: Arc<ETextLayout<E>> = Arc::new(
             TxtLayoutFromStor::<E,Text>::from(&self.text,l.ctx)
         );
 
@@ -214,20 +214,20 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
-    E::TextBoxor: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
-    pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<E::TextBoxor> {
+    pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<ETextLayout<E>> {
         if let Some((v,c)) = self.glyph_cache.get(ctx) {
             if self.text.valid(&c) {
                 return v;
             }
         }
 
-        let glyphs: Arc<E::TextBoxor> = Arc::new(
+        let glyphs: Arc<ETextLayout<E>> = Arc::new(
             TxtLayoutFromStor::<E,Text>::from(&self.text,ctx)
         );
 

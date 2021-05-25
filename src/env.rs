@@ -13,7 +13,6 @@ pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'stat
     /// Implementation of path to resolve [`Widget`]
     type WidgetPath: WidgetPath<Self>;
     type ValidState: ValidState;
-    type TextBoxor: crate::text::layout::TxtLayout<Self>; //TODO move to proper mod
     type Message: 'static;
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;
     //type Commit: Eq + Ord;

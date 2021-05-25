@@ -4,7 +4,7 @@ use crate::text::stor::*;
 use crate::text::layout::TxtLayout;
 use std::{sync::Arc, ops::{Range, RangeInclusive}};
 
-pub fn max_off<E>(g: &E::TextBoxor, b: &Bounds) -> Offset where E: Env {
+pub fn max_off<E>(g: &ETextLayout<E>, b: &Bounds) -> Offset where E: Env {
     let size = g.size();
     Offset {
         x: size.w.saturating_sub( b.w() ) as i32,
@@ -20,7 +20,7 @@ pub fn max_off<E>(g: &E::TextBoxor, b: &Bounds) -> Offset where E: Env {
 }
 
 impl<E> TBState<E> where E: Env {
-    pub fn retrieve<'a,S,P,C>(TextStor: &S, glyphs: Arc<E::TextBoxor>, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: TextStor<E>+'a, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
+    pub fn retrieve<'a,S,P,C>(TextStor: &S, glyphs: Arc<ETextLayout<E>>, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: TextStor<E>+'a, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
         let off = p.get(ctx);
         //assert_eq!(glyphs.chars() as usize,TextStor.len()+1);
         let siz = glyphs.size();

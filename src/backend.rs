@@ -9,4 +9,5 @@ pub trait Backend<E>: Sized + 'static where E: Env<Backend=Self> {
     type EventFilter: Filter<E>;
     type Style: Style<E>;
     type Size: Gonstraints;
+    type TextLayout: crate::text::layout::TxtLayout<E>;
 }

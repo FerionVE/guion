@@ -11,7 +11,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     Text: TextStor<E>+Validation<E>+'w,
-    E::TextBoxor: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -71,7 +71,7 @@ impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
-    E::TextBoxor: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
@@ -99,17 +99,17 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     Text: TextStor<E>+Validation<E>+'w,
-    E::TextBoxor: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    fn glyphs(&self, mut l: Link<E>) -> Arc<E::TextBoxor> {
+    fn glyphs(&self, mut l: Link<E>) -> Arc<ETextLayout<E>> {
         if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
             if self.text.valid(&c) {
                 return v;
             }
         }
 
-        let glyphs: Arc<E::TextBoxor> = Arc::new(
+        let glyphs: Arc<ETextLayout<E>> = Arc::new(
             TxtLayoutFromStor::<E,Text>::from(&self.text,l.ctx)
         );
 
