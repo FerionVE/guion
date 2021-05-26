@@ -1,6 +1,9 @@
 //! Traits for state types
 use super::*;
 use std::borrow::Cow;
+use std::cell::Cell;
+use std::cell::RefCell;
+use std::marker::PhantomData;
 
 /// Simple atomic type state
 pub trait AtomState<E,T> where E: Env {
@@ -9,6 +12,10 @@ pub trait AtomState<E,T> where E: Env {
         self.get_direct().unwrap()
     }
     fn get_direct(&self) -> Result<T,()>;
+
+    fn on_set<F>(self, f: F) -> AtomStateOnSet<E,Self,F,T> where Self: Sized, F: FnMut(T) {
+        AtomStateOnSet(self,f,PhantomData)
+    }
 }
 /// Simple atomic type state
 pub trait AtomStateMut<E,T>: AtomState<E,T> where E: Env {
@@ -63,6 +70,122 @@ impl<E,T> AtomStateMut<E,T> for Cow<'_,T> where T: Clone, E: Env {
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         *self.to_mut() = v;
         Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for RefCell<T> where T: Clone, E: Env {
+    fn get_direct(&self) -> Result<T,()> {
+        Ok(self.borrow().clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for RefCell<T> where T: Clone, E: Env {
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        *self.borrow_mut() = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &RefCell<T> where T: Clone, E: Env {
+    fn get_direct(&self) -> Result<T,()> {
+        Ok(self.borrow().clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &RefCell<T> where T: Clone, E: Env {
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        *self.borrow_mut() = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for RefCell<&mut T> where T: Clone, E: Env {
+    fn get_direct(&self) -> Result<T,()> {
+        Ok(self.borrow().clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for RefCell<&mut T> where T: Clone, E: Env {
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        **self.borrow_mut() = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &RefCell<&mut T> where T: Clone, E: Env {
+    fn get_direct(&self) -> Result<T,()> {
+        Ok(self.borrow().clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &RefCell<&mut T> where T: Clone, E: Env {
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        **self.borrow_mut() = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for Cell<T> where T: Copy, E: Env {
+    fn get_direct(&self) -> Result<T,()> {
+        Ok(Cell::get(self))
+    }
+}
+impl<E,T> AtomStateMut<E,T> for Cell<T> where T: Copy, E: Env {
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        Cell::set(self,v);
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &Cell<T> where T: Copy, E: Env {
+    fn get_direct(&self) -> Result<T,()> {
+        Ok(Cell::get(self))
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &Cell<T> where T: Copy, E: Env {
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        Cell::set(self,v);
+        Ok(())
+    }
+}
+
+pub struct AtomStateOnSet<E,A,F,T>(A,F,PhantomData<(T,E)>) where E: Env, A: AtomState<E,T>, F: FnMut(T);
+
+impl<E,A,F,T> AtomState<E,T> for AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    fn get_direct(&self) -> Result<T,()> {
+        self.0.get_direct()
+    }
+
+    fn get(&self, c: &mut E::Context) -> T {
+        self.0.get(c)
+    }
+}
+impl<E,A,F,T> AtomStateMut<E,T> for AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        self.1(v);
+        Ok(())
+    }
+}
+
+impl<E,A,F,T> AtomState<E,T> for &mut AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    fn get_direct(&self) -> Result<T,()> {
+        self.0.get_direct()
+    }
+
+    fn get(&self, c: &mut E::Context) -> T {
+        self.0.get(c)
+    }
+}
+impl<E,A,F,T> AtomStateMut<E,T> for &mut AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        self.1(v);
+        Ok(())
+    }
+}
+
+impl<E,A,F,T> AtomState<E,T> for &AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    fn get_direct(&self) -> Result<T,()> {
+        self.0.get_direct()
+    }
+
+    fn get(&self, c: &mut E::Context) -> T {
+        self.0.get(c)
     }
 }
 
