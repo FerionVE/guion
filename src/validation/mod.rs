@@ -1,4 +1,7 @@
+use crate::util::translate::immu::Immutable;
+
 use super::*;
+use std::marker::PhantomData;
 use std::sync::Arc;
 
 pub mod imp;
@@ -10,6 +13,12 @@ pub trait Validation<E> {
     //type Cached: Clone + Sized + 'static;
 
     fn valid(&self, v: &dyn Any) -> bool;
+    fn validation(&self) -> Arc<dyn Any>;
+
+    #[inline]
+    fn immutable(self) -> Immutable<E,Self,()> where Self: Sized {
+        Immutable(PhantomData,self)
+    }
 }
 
 pub trait ValidationMut<E>: Validation<E> {

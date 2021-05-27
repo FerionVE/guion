@@ -9,6 +9,7 @@ pub mod sma;
 //pub mod mapped;
 pub mod error;
 pub mod tabulate;
+pub mod immu;
 
 pub trait AsRefMut<T> {
     fn as_ref(&self) -> &T;

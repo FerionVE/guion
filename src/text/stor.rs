@@ -1,18 +1,19 @@
+use std::any::Any;
 use std::borrow::Cow;
+use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ops::Range;
+use std::sync::Arc;
 
 use crate::env::Env;
 use crate::traitcast_for;
+use crate::util::translate::immu::Immutable;
 use crate::validation::Validation;
 use crate::validation::ValidationMut;
 use crate::validation::validated::Validated;
 use crate::widgets::util::caption::Caption;
 use crate::widgets::util::caption::CaptionMut;
-use crate::widgets::util::state::AtomState;
-
-use super::layout::TxtLayout;
 
 pub trait TextStor<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str>;
@@ -24,6 +25,11 @@ pub trait TextStor<E> {
     #[inline]
     fn len(&self) -> usize {
         self.caption().len()
+    }
+
+    #[inline]
+    fn immutable(self) -> Immutable<E,Self,()> where Self: Sized {
+        Immutable(PhantomData,self)
     }
 }
 
@@ -50,8 +56,9 @@ pub trait TextStorMut<E>: TextStor<E> {
         self.push_chars(0,s);
     }
 
-    fn on_modification<F>(self, f: F) -> OnModification<Self,F> where Self: Sized, F: FnMut(&mut Self) {
-        OnModification(self,f)
+    #[inline]
+    fn on_modification<F>(self, f: F) -> OnModification<E,Self,F> where Self: Sized, F: FnMut(&mut Self) {
+        OnModification(f,PhantomData,self)
     }
 }
 
@@ -168,92 +175,111 @@ impl<E,T> TextStorMut<E> for Validated<E,T> where T: TextStorMut<E>, E: Env {
         (**self).replace(s)
     }
 }
+pub struct OnModification<E,S: ?Sized,F>(F,PhantomData<E>,S) where F: FnMut(&mut S);
 
-pub struct OnModification<S,F>(S,F) where F: FnMut(&mut S);
-
-impl<S,F> Deref for OnModification<S,F> where F: FnMut(&mut S) {
+impl<E,S,F> Deref for OnModification<E,S,F> where F: FnMut(&mut S) {
     type Target = S;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.2
     }
 }
-impl<S,F> DerefMut for OnModification<S,F> where F: FnMut(&mut S) {
+impl<E,S,F> DerefMut for OnModification<E,S,F> where F: FnMut(&mut S) {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.2
     }
 }
 
-impl<E,S,F> Validation<E> for OnModification<S,F> where S: Validation<E>, F: FnMut(&mut S) {
-    fn valid(&self, v: &dyn std::any::Any) -> bool {
+impl<E,S,F> Validation<E> for OnModification<E,S,F> where S: Validation<E>, F: FnMut(&mut S) {
+    #[inline]
+    fn valid(&self, v: &dyn Any) -> bool {
         (**self).valid(v)
     }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        (**self).validation()
+    }
 }
-impl<E,S,F> ValidationMut<E> for OnModification<S,F> where S: ValidationMut<E>, F: FnMut(&mut S) {
-    fn validate(&mut self) -> std::sync::Arc<dyn std::any::Any> {
+impl<E,S,F> ValidationMut<E> for OnModification<E,S,F> where S: ValidationMut<E>, F: FnMut(&mut S) {
+    #[inline]
+    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
         (**self).validate()
         //TODO trigger OnModification?
     }
 }
 
-impl<E,S,F> TextStor<E> for OnModification<S,F> where S: TextStor<E>, F: FnMut(&mut S) {
+impl<E,S,F> TextStor<E> for OnModification<E,S,F> where S: TextStor<E>, F: FnMut(&mut S) {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
     }
 
+    #[inline]
     fn chars(&self) -> usize {
         (**self).chars()
     }
 
+    #[inline]
     fn len(&self) -> usize {
         (**self).len()
     }
 }
-impl<E,S,F> TextStorMut<E> for OnModification<S,F> where S: TextStorMut<E>, F: FnMut(&mut S) {
+impl<E,S,F> TextStorMut<E> for OnModification<E,S,F> where S: TextStorMut<E>, F: FnMut(&mut S) {
+    #[inline]
     fn remove_chars(&mut self, range: Range<usize>) {
         (**self).remove_chars(range);
-        (self.1)(&mut self.0);
+        (self.0)(&mut self.2);
     }
 
+    #[inline]
     fn push_chars(&mut self, off: usize, chars: &str) {
         (**self).push_chars(off,chars);
-        (self.1)(&mut self.0);
+        (self.0)(&mut self.2);
     }
 
+    #[inline]
     fn remove_chars_old(&mut self, off: usize, n: usize) {
         (**self).remove_chars_old(off,n);
-        (self.1)(&mut self.0);
+        (self.0)(&mut self.2);
     }
 
+    #[inline]
     fn replace(&mut self, s: &str) {
         (**self).replace(s);
-        (self.1)(&mut self.0);
+        (self.0)(&mut self.2);
     }
 }
 
-impl<E,S,F> Caption<E> for OnModification<S,F> where S: Caption<E>, F: FnMut(&mut S) {
+impl<E,S,F> Caption<E> for OnModification<E,S,F> where S: Caption<E>, F: FnMut(&mut S) {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
     }
 
+    #[inline]
     fn len(&self) -> usize {
         (**self).len()
     }
 }
-impl<E,S,F> CaptionMut<E> for OnModification<S,F> where S: CaptionMut<E>, F: FnMut(&mut S) {
+impl<E,S,F> CaptionMut<E> for OnModification<E,S,F> where S: CaptionMut<E>, F: FnMut(&mut S) {
+    #[inline]
     fn push(&mut self, off: usize, s: &str) {
         (**self).push(off,s);
-        (self.1)(&mut self.0);
+        (self.0)(&mut self.2);
     }
 
+    #[inline]
     fn pop_left(&mut self, off: usize, n: usize) {
         (**self).pop_left(off,n);
-        (self.1)(&mut self.0);
+        (self.0)(&mut self.2);
     }
 
+    #[inline]
     fn replace(&mut self, s: &str) {
         (**self).replace(s);
-        (self.1)(&mut self.0);
+        (self.0)(&mut self.2);
     }
 }
 
