@@ -1,17 +1,21 @@
 //! RefCell-based Shared Mutable Access helper for mutable immediate widgets e.g. when multiple parts need to mutably reference to the same thing
-use crate::widgets::util::{caption::Caption, caption::CaptionMut, state::{AtomState, AtomStateMut}};
+use crate::{text::stor::{TextStor, TextStorMut}, validation::{Validation, ValidationMut}, widgets::util::{caption::Caption, caption::CaptionMut, state::{AtomState, AtomStateMut}}};
 
 use super::*;
 use std::{rc::Rc, cell::{RefMut, RefCell}, marker::PhantomData};
 
 /// RefCell-based Shared Mutable Access helper for mutable immediate widgets e.g. when multiple parts need to mutably reference to the same thing
-pub struct SMA<'a,T,U,F> where F: SMALens<T,U> {
+///
+/// Mutable: RefCell<T>
+/// Shared: Rc<RefCell<T>>
+/// Lens: Rc<RefCell<T>>, Fn(&mut T) -> &mut V
+pub struct SMA<'a,E,T,U,F> where F: SMALens<T,U> {
     inner: Rc<RefCell<&'a mut T>>,
     f: F,
-    p: PhantomData<U>,
+    p: PhantomData<(E,U)>,
 }
 
-impl<'a,T> SMA<'a,T,T,()> {
+impl<'a,E,T> SMA<'a,E,T,T,()> {
     #[inline]
     pub fn new(v: &'a mut T) -> Self {
         Self{
@@ -22,9 +26,9 @@ impl<'a,T> SMA<'a,T,T,()> {
     }
 }
 
-impl<'a,T,U,F> SMA<'a,T,U,F> where F: SMALens<T,U> {
+impl<'a,E,T,U,F> SMA<'a,E,T,U,F> where F: SMALens<T,U> {
     #[inline]
-    pub fn fork_with_lens<V,G>(&self, lens: G) -> SMA<'a,T,V,G> where G: SMALens<T,V> {
+    pub fn fork_with_lens<V,G>(&self, lens: G) -> SMA<'a,E,T,V,G> where G: Fn(&mut T) -> &mut V + Clone {
         SMA{
             inner: self.inner.refc(),
             f: lens,
@@ -36,7 +40,7 @@ impl<'a,T,U,F> SMA<'a,T,U,F> where F: SMALens<T,U> {
     pub fn borrow_mut(&self) -> RefMut<U> {
         let r = self.inner.borrow_mut();
         let f = &self.f;
-        RefMut::map(r,#[inline] move |v| f.lens_mut(v) )
+        RefMut::map(r,#[inline] move |v| f.lens_mut(v) ) //TODO more flexible Fn(&mut T) -> V, requires custom RefMut
     }
 
     #[inline]
@@ -54,7 +58,7 @@ impl<'a,T,U,F> SMA<'a,T,U,F> where F: SMALens<T,U> {
         }
     }
 }*/
-impl<'a,T,U,F> RefClonable for SMA<'a,T,U,F> where F: SMALens<T,U> {
+impl<'a,E,T,U,F> RefClonable for SMA<'a,E,T,U,F> where F: SMALens<T,U> {
     fn refc(&self) -> Self {
         Self{
             inner: self.inner.refc(),
@@ -82,7 +86,7 @@ impl<T> SMALens<T,T> for () {
     }
 }
 
-impl<'a,E,T,U,V,F> AtomState<E,V> for SMA<'a,T,U,F> where 
+impl<'a,E,T,U,V,F> AtomState<E,V> for SMA<'a,E,T,U,F> where 
     E: Env,
     U: AtomState<E,V>,
     F: SMALens<T,U>
@@ -94,8 +98,7 @@ impl<'a,E,T,U,V,F> AtomState<E,V> for SMA<'a,T,U,F> where
         self.borrow_mut().get(c)
     }
 }
-
-impl<'a,E,T,U,V,F> AtomStateMut<E,V> for SMA<'a,T,U,F> where 
+impl<'a,E,T,U,V,F> AtomStateMut<E,V> for SMA<'a,E,T,U,F> where 
     E: Env,
     U: AtomStateMut<E,V>,
     F: SMALens<T,U>
@@ -108,7 +111,7 @@ impl<'a,E,T,U,V,F> AtomStateMut<E,V> for SMA<'a,T,U,F> where
     }
 }
 
-impl<'w,'a,E,T,U,F> Caption<E> for SMA<'a,T,U,F> where 
+impl<'w,'a,E,T,U,F> Caption<E> for SMA<'a,E,T,U,F> where 
     E: Env,
     U: Caption<E>+'w,
     F: SMALens<T,U>
@@ -122,8 +125,7 @@ impl<'w,'a,E,T,U,F> Caption<E> for SMA<'a,T,U,F> where
         self.borrow_mut().len()
     }
 }
-
-impl<'w,'a,E,T,U,F> CaptionMut<E> for SMA<'a,T,U,F> where 
+impl<'w,'a,E,T,U,F> CaptionMut<E> for SMA<'a,E,T,U,F> where 
     E: Env,
     U: CaptionMut<E>+'w,
     F: SMALens<T,U>
@@ -136,5 +138,61 @@ impl<'w,'a,E,T,U,F> CaptionMut<E> for SMA<'a,T,U,F> where
     }
     fn replace(&mut self, s: &str) {
         self.borrow_mut().replace(s)
+    }
+}
+
+impl<'w,'a,E,T,U,F> TextStor<E> for SMA<'a,E,T,U,F> where 
+    E: Env,
+    U: TextStor<E>+'w,
+    F: SMALens<T,U>
+{
+    fn caption(&self) -> std::borrow::Cow<str> {
+        let g = self.borrow_mut();
+        let c = g.caption();
+        std::borrow::Cow::Owned( c.into_owned() )
+    }
+    fn len(&self) -> usize {
+        self.borrow_mut().len()
+    }
+    fn chars(&self) -> usize {
+        self.borrow_mut().chars()
+    }
+}
+impl<'w,'a,E,T,U,F> TextStorMut<E> for SMA<'a,E,T,U,F> where 
+    E: Env,
+    U: TextStorMut<E>+'w,
+    F: SMALens<T,U>
+{
+    fn remove_chars(&mut self, range: std::ops::Range<usize>) {
+        self.borrow_mut().remove_chars(range)
+    }
+    fn remove_chars_old(&mut self, off: usize, n: usize) {
+        self.borrow_mut().remove_chars_old(off,n)
+    }
+    fn push_chars(&mut self, off: usize, chars: &str) {
+        self.borrow_mut().push_chars(off,chars)
+    }
+
+    fn replace(&mut self, s: &str) {
+        self.borrow_mut().replace(s)
+    }
+}
+
+impl<'w,'a,E,T,U,F> Validation<E> for SMA<'a,E,T,U,F> where 
+    E: Env,
+    U: Validation<E>+'w,
+    F: SMALens<T,U>
+{
+    fn valid(&self, v: &dyn Any) -> bool {
+        self.borrow_mut().valid(v)
+    }
+}
+impl<'w,'a,E,T,U,F> ValidationMut<E> for SMA<'a,E,T,U,F> where 
+    E: Env,
+    U: ValidationMut<E>+'w,
+    F: SMALens<T,U>
+{
+    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
+        self.borrow_mut().validate()
     }
 }
