@@ -75,11 +75,13 @@ impl<E,T> AtomStateMut<E,T> for Cow<'_,T> where T: Clone, E: Env {
 }
 
 impl<E,T> AtomState<E,T> for RefCell<T> where T: Clone, E: Env {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok(self.borrow().clone())
     }
 }
 impl<E,T> AtomStateMut<E,T> for RefCell<T> where T: Clone, E: Env {
+    #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         *self.get_mut() = v;
         Ok(())
@@ -87,11 +89,13 @@ impl<E,T> AtomStateMut<E,T> for RefCell<T> where T: Clone, E: Env {
 }
 
 impl<E,T> AtomState<E,T> for &RefCell<T> where T: Clone, E: Env {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok(self.borrow().clone())
     }
 }
 impl<E,T> AtomStateMut<E,T> for &RefCell<T> where T: Clone, E: Env {
+    #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         *self.borrow_mut() = v;
         Ok(())
@@ -99,11 +103,13 @@ impl<E,T> AtomStateMut<E,T> for &RefCell<T> where T: Clone, E: Env {
 }
 
 impl<E,T> AtomState<E,T> for RefCell<&mut T> where T: Clone, E: Env {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok(self.borrow().clone())
     }
 }
 impl<E,T> AtomStateMut<E,T> for RefCell<&mut T> where T: Clone, E: Env {
+    #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         **self.get_mut() = v;
         Ok(())
@@ -111,11 +117,13 @@ impl<E,T> AtomStateMut<E,T> for RefCell<&mut T> where T: Clone, E: Env {
 }
 
 impl<E,T> AtomState<E,T> for &RefCell<&mut T> where T: Clone, E: Env {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok(self.borrow().clone())
     }
 }
 impl<E,T> AtomStateMut<E,T> for &RefCell<&mut T> where T: Clone, E: Env {
+    #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         **self.borrow_mut() = v;
         Ok(())
@@ -123,11 +131,13 @@ impl<E,T> AtomStateMut<E,T> for &RefCell<&mut T> where T: Clone, E: Env {
 }
 
 impl<E,T> AtomState<E,T> for Cell<T> where T: Copy, E: Env {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok(Cell::get(self))
     }
 }
 impl<E,T> AtomStateMut<E,T> for Cell<T> where T: Copy, E: Env {
+    #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         Cell::set(self,v);
         Ok(())
@@ -135,11 +145,13 @@ impl<E,T> AtomStateMut<E,T> for Cell<T> where T: Copy, E: Env {
 }
 
 impl<E,T> AtomState<E,T> for &Cell<T> where T: Copy, E: Env {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
         Ok(Cell::get(self))
     }
 }
 impl<E,T> AtomStateMut<E,T> for &Cell<T> where T: Copy, E: Env {
+    #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         Cell::set(self,v);
         Ok(())
