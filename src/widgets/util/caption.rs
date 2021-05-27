@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use std::{ffi::{OsStr,OsString}, path::*};
 use crate::validation::validated::Validated;
 
+#[deprecated]
 pub trait Caption<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str>;
     #[inline]
@@ -103,6 +104,7 @@ impl_caption_gen!(
     u8;u16;u32;u64;u128;usize
 );
 
+#[deprecated]
 pub trait CaptionMut<E>: Caption<E> {
     fn push(&mut self, off: usize, s: &str);
     fn pop_left(&mut self, off: usize, n: usize);
