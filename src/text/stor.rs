@@ -73,10 +73,12 @@ impl<E> TextStor<E> for String {
 
 impl<E> TextStorMut<E> for String {
     fn remove_chars(&mut self, range: Range<usize>) {
+        let range = fix_boundary(self, range.start) .. fix_boundary(self, range.end);
         self.drain(range);
     }
 
     fn push_chars(&mut self, off: usize, chars: &str) {
+        let off = fix_boundary(self, off);
         self.insert_str(off, chars);
     }
 }
@@ -276,3 +278,10 @@ impl_caption_gen!(
     i8;i16;i32;i64;i128;isize;
     u8;u16;u32;u64;u128;usize
 );
+
+pub fn fix_boundary(s: &str, mut off: usize) -> usize {
+    while !s.is_char_boundary(off) && off!=0 {
+        off = off.saturating_sub(1); //TODO efficient algorithm
+    }
+    off
+}

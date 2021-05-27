@@ -80,7 +80,7 @@ impl<E,T> AtomState<E,T> for RefCell<T> where T: Clone, E: Env {
 }
 impl<E,T> AtomStateMut<E,T> for RefCell<T> where T: Clone, E: Env {
     fn set_direct(&mut self, v: T) -> Result<(),()> {
-        *self.borrow_mut() = v;
+        *self.get_mut() = v;
         Ok(())
     }
 }
@@ -104,7 +104,7 @@ impl<E,T> AtomState<E,T> for RefCell<&mut T> where T: Clone, E: Env {
 }
 impl<E,T> AtomStateMut<E,T> for RefCell<&mut T> where T: Clone, E: Env {
     fn set_direct(&mut self, v: T) -> Result<(),()> {
-        **self.borrow_mut() = v;
+        **self.get_mut() = v;
         Ok(())
     }
 }
