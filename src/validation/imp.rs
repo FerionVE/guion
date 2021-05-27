@@ -8,6 +8,10 @@ impl<E,T> Validation<E> for &T where T: Validation<E> {
     fn valid(&self, v: &dyn Any) -> bool {
         (**self).valid(v)
     }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        (**self).validation()
+    }
 }
 
 impl<E,T> Validation<E> for &mut T where T: Validation<E> {
@@ -16,6 +20,10 @@ impl<E,T> Validation<E> for &mut T where T: Validation<E> {
     #[inline]
     fn valid(&self, v: &dyn Any) -> bool {
         (**self).valid(v)
+    }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        (**self).validation()
     }
 }
 impl<E,T> ValidationMut<E> for &mut T where T: ValidationMut<E> {
@@ -29,6 +37,10 @@ impl<E,T> Validation<E> for Box<T> where T: Validation<E> {
     #[inline]
     fn valid(&self, v: &dyn Any) -> bool {
         (**self).valid(v)
+    }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        (**self).validation()
     }
 }
 impl<E,T> ValidationMut<E> for Box<T> where T: ValidationMut<E> {
@@ -53,11 +65,15 @@ macro_rules! impl_validation_primitives {
                     false
                 }
             }
+            #[inline]
+            fn validation(&self) -> Arc<dyn Any> {
+                Arc::new((*self).clone())
+            }
         }
         impl<E> ValidationMut<E> for $t {
             #[inline]
             fn validate(&mut self) -> Arc<dyn Any> {
-                Arc::new((*self).clone())
+                Validation::<E>::validation(self)
             }
         }
     }
@@ -80,11 +96,15 @@ impl<E> Validation<E> for &str {
             false
         }
     }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        Arc::new((*self).to_owned())
+    }
 }
 impl<E> ValidationMut<E> for &str {
     #[inline]
     fn validate(&mut self) -> Arc<dyn Any> {
-        Arc::new((*self).to_owned())
+        Validation::<E>::validation(self)
     }
 }
 
@@ -97,11 +117,15 @@ impl<E> Validation<E> for &mut str {
             false
         }
     }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        Arc::new((*self).to_owned())
+    }
 }
 impl<E> ValidationMut<E> for &mut str {
     #[inline]
     fn validate(&mut self) -> Arc<dyn Any> {
-        Arc::new((*self).to_owned())
+        Validation::<E>::validation(self)
     }
 }
 
@@ -110,10 +134,14 @@ impl<E> Validation<E> for () {
     fn valid(&self, _: &dyn Any) -> bool {
         true
     }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        Arc::new(())
+    }
 }
 impl<E> ValidationMut<E> for () {
     #[inline]
     fn validate(&mut self) -> Arc<dyn Any> {
-        Arc::new(())
+        Validation::<E>::validation(self)
     }
 }

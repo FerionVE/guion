@@ -186,13 +186,18 @@ impl<'w,'a,E,T,U,F> Validation<E> for SMA<'a,E,T,U,F> where
     fn valid(&self, v: &dyn Any) -> bool {
         self.borrow_mut().valid(v)
     }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        self.borrow_mut().validation()
+    }
 }
 impl<'w,'a,E,T,U,F> ValidationMut<E> for SMA<'a,E,T,U,F> where 
     E: Env,
     U: ValidationMut<E>+'w,
     F: SMALens<T,U>
 {
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
+    #[inline]
+    fn validate(&mut self) -> Arc<dyn Any> {
         self.borrow_mut().validate()
     }
 }
