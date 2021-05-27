@@ -13,8 +13,9 @@ pub trait AtomState<E,T> where E: Env {
     }
     fn get_direct(&self) -> Result<T,()>;
 
+    #[inline]
     fn on_set<F>(self, f: F) -> AtomStateOnSet<E,Self,F,T> where Self: Sized, F: FnMut(T) {
-        AtomStateOnSet(self,f,PhantomData)
+        AtomStateOnSet(f,PhantomData,self)
     }
 }
 /// Simple atomic type state
@@ -145,47 +146,52 @@ impl<E,T> AtomStateMut<E,T> for &Cell<T> where T: Copy, E: Env {
     }
 }
 
-pub struct AtomStateOnSet<E,A,F,T>(A,F,PhantomData<(T,E)>) where E: Env, A: AtomState<E,T>, F: FnMut(T);
+pub struct AtomStateOnSet<E,A: ?Sized,F,T>(F,PhantomData<(T,E)>,A) where E: Env, A: AtomState<E,T>, F: FnMut(T);
 
 impl<E,A,F,T> AtomState<E,T> for AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
-        self.0.get_direct()
+        self.2.get_direct()
     }
-
+    #[inline]
     fn get(&self, c: &mut E::Context) -> T {
-        self.0.get(c)
+        self.2.get(c)
     }
 }
 impl<E,A,F,T> AtomStateMut<E,T> for AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
-        self.1(v);
+        self.0(v);
         Ok(())
     }
 }
 
 impl<E,A,F,T> AtomState<E,T> for &mut AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
-        self.0.get_direct()
+        self.2.get_direct()
     }
-
+    #[inline]
     fn get(&self, c: &mut E::Context) -> T {
-        self.0.get(c)
+        self.2.get(c)
     }
 }
 impl<E,A,F,T> AtomStateMut<E,T> for &mut AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
-        self.1(v);
+        self.0(v);
         Ok(())
     }
 }
 
 impl<E,A,F,T> AtomState<E,T> for &AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
+    #[inline]
     fn get_direct(&self) -> Result<T,()> {
-        self.0.get_direct()
+        self.2.get_direct()
     }
-
+    #[inline]
     fn get(&self, c: &mut E::Context) -> T {
-        self.0.get(c)
+        self.2.get(c)
     }
 }
 
