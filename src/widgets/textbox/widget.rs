@@ -191,13 +191,13 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
         let e = e.and(&self.style);
         self.size.clone()
     }
-    fn childs(&self) -> usize {
+    fn childs(&self, _: E::WidgetPath) -> usize {
         0
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
+    fn childs_ref(&self, _: E::WidgetPath) -> Vec<Resolvable<E>> {
         vec![]
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
+    fn into_childs<'a>(self: Box<Self>, _: E::WidgetPath) -> Vec<Resolvable<'a,E>> where Self: 'a {
         vec![]
     }
     
@@ -207,10 +207,10 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
     fn focusable(&self) -> bool {
         true
     }
-    fn child(&self, _: usize) -> Result<Resolvable<E>,()> {
+    fn child(&self, _: usize, _: E::WidgetPath) -> Result<Resolvable<E>,()> {
         Err(())
     }
-    fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
+    fn into_child<'a>(self: Box<Self>, _: usize, _: E::WidgetPath) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         Err(())
     }
 
@@ -236,16 +236,16 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,
     CursorStickX: AtomStateMut<E,Option<u32>>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
+    fn childs_mut(&mut self, _: E::WidgetPath) -> Vec<ResolvableMut<E>> {
         vec![]
     }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
+    fn into_childs_mut<'a>(self: Box<Self>, _: E::WidgetPath) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         vec![]
     }
-    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<E>,()> {
+    fn child_mut(&mut self, _: usize, _: E::WidgetPath) -> Result<ResolvableMut<E>,()> {
         Err(())
     }
-    fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
+    fn into_child_mut<'a>(self: Box<Self>, _: usize, _: E::WidgetPath) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         Err(())
     }
 

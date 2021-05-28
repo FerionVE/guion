@@ -124,13 +124,13 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         Ok(self.calc_bounds(b,self.state.get(l.ctx)))
     }
-    fn childs(&self) -> usize {
+    fn childs(&self, _: E::WidgetPath) -> usize {
         self.childs.len()
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
+    fn childs_ref(&self, _: E::WidgetPath) -> Vec<Resolvable<E>> {
         self.childs.childs()
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
+    fn into_childs<'a>(self: Box<Self>, _: E::WidgetPath) -> Vec<Resolvable<'a,E>> where Self: 'a {
         self.childs.into_childs()
     }
 
@@ -138,10 +138,10 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
         false
     }
 
-    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+    fn child(&self, i: usize, _: E::WidgetPath) -> Result<Resolvable<E>,()> {
         self.childs.child(i)
     }
-    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
+    fn into_child<'a>(self: Box<Self>, i: usize, _: E::WidgetPath) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         self.childs.into_child(i)
     }
 
@@ -162,16 +162,16 @@ impl<'w,E,L,R,V> WidgetMut<E> for SplitPane<'w,E,L,R,V> where
         let _ = v;
         //self.invalid = true
     }
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
+    fn childs_mut(&mut self, _: E::WidgetPath) -> Vec<ResolvableMut<E>> {
         self.childs.childs_mut()
     }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
+    fn into_childs_mut<'a>(self: Box<Self>, _: E::WidgetPath) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         self.childs.into_childs_mut()
     }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
+    fn child_mut(&mut self, i: usize, _: E::WidgetPath) -> Result<ResolvableMut<E>,()> {
         self.childs.child_mut(i)
     }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
+    fn into_child_mut<'a>(self: Box<Self>, i: usize, _: E::WidgetPath) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         self.childs.into_child_mut(i)
     }
 

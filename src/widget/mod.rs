@@ -46,27 +46,27 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E>;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn childs(&self) -> usize;
+    fn childs(&self, own_path: E::WidgetPath) -> usize;
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()>;
+    fn child<'s>(&'s self, i: usize, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,()>;
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_child<'s>(self: Box<Self>, i: usize) -> Result<Resolvable<'s,E>,()> where Self: 's;
+    fn into_child<'s>(self: Box<Self>, i: usize, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,()> where Self: 's;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> {
-        (0..self.childs())
-            .map(#[inline] |i| self.child(i).unwrap() )
+    fn childs_ref<'s>(&'s self, own_path: E::WidgetPath) -> Vec<Resolvable<'s,E>> {
+        (0..self.childs(own_path.clone()))
+            .map(#[inline] |i| self.child(i,own_path.clone()).unwrap() )
             .collect::<Vec<_>>()
     }
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_childs<'w>(self: Box<Self>) -> Vec<Resolvable<'w,E>> where Self: 'w;
+    fn into_childs<'w>(self: Box<Self>, own_path: E::WidgetPath) -> Vec<Resolvable<'w,E>> where Self: 'w;
     
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
-        (0..self.childs())
-            .map(#[inline] |i| self.child(i).unwrap().in_parent_path(own_path.refc(),todo!("TODO")) )
+        (0..self.childs(own_path.clone()))
+            .map(#[inline] |i| self.child(i,own_path.clone()).unwrap().in_parent_path(own_path.refc(),todo!("TODO")) )
             .collect::<Vec<_>>()
     }
 
@@ -77,12 +77,14 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,E::Error> {
+    fn resolve<'s>(&'s self, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,E::Error> {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_ref()))
         }
-        let (c,sub) = self.resolve_child(&i)?;
-        self.child(c).unwrap().resolve_child(sub)
+        let (c,sub) = self.resolve_child(i,own_path.clone())?;
+        let child = self.child(c,own_path.clone()).unwrap();
+        let child_path = child.in_parent_path(own_path,false);
+        child.resolve_child(sub,child_path)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Resolve a deep child item by the given relative path
@@ -91,12 +93,14 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         if i.is_empty() {
             return Ok(Resolvable::Widget(self.box_box()))
         }
-        let (c,sub) = self.resolve_child(&i)?;
-        self.into_child(c).unwrap_nodebug().resolve_child(sub)
+        let (c,sub) = self.resolve_child(i,own_path.clone())?;
+        let child = self.into_child(c,own_path.clone()).unwrap_nodebug();
+        let child_path = child.in_parent_path(own_path,false);
+        child.resolve_child(sub,child_path)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// To (or through) which child path would the given sub_path resolve?
@@ -105,26 +109,28 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve_child(&self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
-        for c in 0..self.childs() {
-            if let Some(r) = self.child(c).unwrap().resolved_by_path(sub_path) {
+    fn resolve_child(&self, sub_path: E::WidgetPath, own_path: E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+        for c in 0..self.childs(own_path.clone()) {
+            if let Some(r) = self.child(c,own_path.clone()).unwrap().resolved_by_path(&sub_path) {
                 return Ok((c,r.sub_path));
             }
         }
-        Err(self.gen_diag_error_resolve_fail(sub_path, "resolve"))
+        Err(self.gen_diag_error_resolve_fail(&sub_path,own_path, "resolve"))
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     #[inline]
+    #[deprecated]
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         if i.is_empty() {
             return Ok(*b)
         }
-        let (child,_) = self.resolve_child(&i)?;
+        let (child,_) = self.resolve_child(i,l.path())?;
         let bounds = self.child_bounds(l,b,e,force)?;
         
         Ok(bounds[child])
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
+    #[deprecated]
     fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()>;
     
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -159,21 +165,21 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     }
 
     /// Determines the next child in this widget in the tabulation step
-    fn _tabulate_next_child(&self, _l: Link<E>, origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse {
+    fn _tabulate_next_child(&self, l: Link<E>, origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse {
         match origin {
             TabulateNextChildOrigin::Enter => match dir {
                 TabulateDirection::Forward if self.focusable() => TabulateNextChildResponse::This,
-                TabulateDirection::Forward if self.childs() != 0 => TabulateNextChildResponse::Child(0),
-                TabulateDirection::Backward if self.childs() != 0 => TabulateNextChildResponse::Child(self.childs()-1),
+                TabulateDirection::Forward if self.childs(l.path()) != 0 => TabulateNextChildResponse::Child(0),
+                TabulateDirection::Backward if self.childs(l.path()) != 0 => TabulateNextChildResponse::Child(self.childs(l.path())-1),
                 TabulateDirection::Backward if self.focusable() => TabulateNextChildResponse::This,
                 _ => TabulateNextChildResponse::Leave,
             }
             TabulateNextChildOrigin::This => match dir {
-                TabulateDirection::Forward if self.childs() != 0 => TabulateNextChildResponse::Child(0),
+                TabulateDirection::Forward if self.childs(l.path()) != 0 => TabulateNextChildResponse::Child(0),
                 _ => TabulateNextChildResponse::Leave,
             }
             TabulateNextChildOrigin::Child(child_id) => match dir { //assert!(child_id < self.childs());
-                TabulateDirection::Forward if child_id < self.childs()-1 => TabulateNextChildResponse::Child(child_id+1),
+                TabulateDirection::Forward if child_id < self.childs(l.path())-1 => TabulateNextChildResponse::Child(child_id+1),
                 TabulateDirection::Backward if child_id != 0 => TabulateNextChildResponse::Child(child_id-1),
                 TabulateDirection::Backward if self.focusable() => TabulateNextChildResponse::This,
                 _ => TabulateNextChildResponse::Leave,
@@ -229,7 +235,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
             TabulateOrigin::Resolve(p) => {
                 if !p.is_empty() {
                     // pass 1: resolve to previous focused widget
-                    let (child_id,sub_path) = self.resolve_child(&p)?;
+                    let (child_id,sub_path) = self.resolve_child(p,l.path())?;
                     return enter_child(&mut l, child_id, TabulateOrigin::Resolve(sub_path));
                 }else{
                     // pass 2: we are the previous focused widget and should tabulate away
@@ -312,7 +318,7 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
     }
 
     #[inline(never)]
-    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str) -> E::Error {
+    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, own_path: E::WidgetPath, op: &'static str) -> E::Error {
         /*
         Failed to resolve 3/5/2 in Pane<Vec<WidgetRefMut<E>>>
             Child #0: 6 Button<E,Label<&str>>
@@ -323,8 +329,8 @@ pub trait Widget<E>: WBase<E> where E: Env + 'static {
         Traitcast(_mut) from Label<E,&str> to ICheckBox<E> not implemented (strip "dyn " prefix)
         */
         let widget_type = self.debugged_type_name();
-        let child_info = (0..self.childs())
-            .map(#[inline] |i| self.child(i).unwrap().guion_resolve_error_child_info(i) )
+        let child_info = (0..self.childs(own_path.clone()))
+            .map(#[inline] |i| self.child(i,own_path.clone()).unwrap().guion_resolve_error_child_info(i) )
             .collect::<Vec<_>>();
         GuionError::ResolveError(Box::new(ResolveError{
             op,
@@ -352,15 +358,15 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     }
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()>;
+    fn child_mut<'s>(&'s mut self, i: usize, own_path: E::WidgetPath) -> Result<ResolvableMut<'s,E>,()>;
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_child_mut<'w>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w;
+    fn into_child_mut<'w>(self: Box<Self>, i: usize, own_path: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> where Self: 'w;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>>;
+    fn childs_mut<'s>(&'s mut self, own_path: E::WidgetPath) -> Vec<ResolvableMut<'s,E>>;
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_childs_mut<'w>(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> where Self: 'w;
+    fn into_childs_mut<'w>(self: Box<Self>, own_path: E::WidgetPath) -> Vec<ResolvableMut<'w,E>> where Self: 'w;
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Resolve a deep child item by the given relative path
@@ -369,12 +375,14 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,E::Error> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<ResolvableMut<'s,E>,E::Error> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
-        let (c,sub) = self.resolve_child_mut(&i)?;
-        self.child_mut(c).unwrap().resolve_child_mut(sub)
+        let (c,sub) = self.resolve_child_mut(i,own_path.clone())?;
+        let child = self.child_mut(c,own_path.clone()).unwrap();
+        let child_path = child.in_parent_path(own_path,false);
+        child.resolve_child_mut(sub,child_path)
     }
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -384,12 +392,14 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn into_resolve_mut<'w>(mut self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
+    fn into_resolve_mut<'w>(mut self: Box<Self>, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
-        let (c,sub) = self.resolve_child_mut(&i)?;
-        self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(sub)
+        let (c,sub) = self.resolve_child_mut(i,own_path.clone())?;
+        let child = self.into_child_mut(c,own_path.clone()).unwrap_nodebug();
+        let child_path = child.in_parent_path(own_path,false);
+        child.resolve_child_mut(sub,child_path)
     }
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -399,13 +409,13 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve_child_mut(&mut self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
-        for c in 0..self.childs() {
-            if let Some(r) = self.child_mut(c).unwrap().resolved_by_path(sub_path) {
+    fn resolve_child_mut(&mut self, sub_path: E::WidgetPath, own_path: E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+        for c in 0..self.childs(own_path.clone()) {
+            if let Some(r) = self.child_mut(c,own_path.clone()).unwrap().resolved_by_path(&sub_path) {
                 return Ok((c,r.sub_path));
             }
         }
-        Err(self.gen_diag_error_resolve_fail_mut(sub_path,"resolve_mut"))
+        Err(self.gen_diag_error_resolve_fail_mut(&sub_path,own_path,"resolve_mut"))
     }
 
     #[inline]
@@ -457,10 +467,10 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     }
 
     #[inline(never)]
-    fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, op: &'static str) -> E::Error {
+    fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, own_path: E::WidgetPath, op: &'static str) -> E::Error {
         let widget_type = self.debugged_type_name_mut();
-        let child_info = (0..self.childs())
-            .map(#[inline] |i| self.child_mut(i).unwrap().guion_resolve_error_child_info(i) )
+        let child_info = (0..self.childs(own_path.clone()))
+            .map(#[inline] |i| self.child_mut(i,own_path.clone()).unwrap().guion_resolve_error_child_info(i) )
             .collect::<Vec<_>>();
         GuionError::ResolveError(Box::new(ResolveError{
             op,

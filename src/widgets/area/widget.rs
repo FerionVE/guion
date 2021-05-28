@@ -93,13 +93,13 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
         let e = e.and(&self.style);
         self.size.clone()
     }
-    fn childs(&self) -> usize {
+    fn childs(&self, _: E::WidgetPath) -> usize {
         1
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
+    fn childs_ref(&self, _: E::WidgetPath) -> Vec<Resolvable<E>> {
         vec![self.inner.as_ref()]
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
+    fn into_childs<'a>(self: Box<Self>, _: E::WidgetPath) -> Vec<Resolvable<'a,E>> where Self: 'a {
         vec![self.inner.into_ref()]
     }
     
@@ -109,11 +109,11 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     fn focusable(&self) -> bool {
         false //TODO
     }
-    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+    fn child(&self, i: usize, _: E::WidgetPath) -> Result<Resolvable<E>,()> {
         if i != 0 {return Err(());}
         Ok(self.inner.as_ref())
     }
-    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'a {
+    fn into_child<'a>(self: Box<Self>, i: usize, _: E::WidgetPath) -> Result<Resolvable<'w,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
         Ok(self.inner.into_ref())
     }
@@ -131,17 +131,17 @@ impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     W: AsWidgetMut<E>+'w,
     Scroll: AtomStateMut<E,(u32,u32)>,
 {
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
+    fn childs_mut(&mut self, _: E::WidgetPath) -> Vec<ResolvableMut<E>> {
         vec![self.inner.as_mut()]
     }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
+    fn into_childs_mut<'a>(self: Box<Self>, _: E::WidgetPath) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         vec![self.inner.into_mut()]
     }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
+    fn child_mut(&mut self, i: usize, _: E::WidgetPath) -> Result<ResolvableMut<E>,()> {
         if i != 0 {return Err(());}
         Ok(self.inner.as_mut())
     }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
+    fn into_child_mut<'a>(self: Box<Self>, i: usize, _: E::WidgetPath) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         if i != 0 {return Err(());}
         Ok(self.inner.into_mut())
     }

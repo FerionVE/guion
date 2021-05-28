@@ -19,13 +19,13 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         self.child_bounds_impl(l,b,e,force)
     }
-    fn childs(&self) -> usize {
+    fn childs(&self, _: E::WidgetPath) -> usize {
         self.childs.len()
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
+    fn childs_ref(&self, _: E::WidgetPath) -> Vec<Resolvable<E>> {
         self.childs.childs()
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
+    fn into_childs<'a>(self: Box<Self>, _: E::WidgetPath) -> Vec<Resolvable<'a,E>> where Self: 'a {
         self.childs.into_childs()
     }
 
@@ -33,10 +33,10 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         false
     }
 
-    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+    fn child(&self, i: usize, _: E::WidgetPath) -> Result<Resolvable<E>,()> {
         self.childs.child(i)
     }
-    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
+    fn into_child<'a>(self: Box<Self>, i: usize, _: E::WidgetPath) -> Result<Resolvable<'a,E>,()> where Self: 'a {
         self.childs.into_child(i)
     }
 }
@@ -48,16 +48,16 @@ impl<'w,E,T> WidgetMut<E> for Pane<'w,E,T> where
         let _ = v;
         //self.invalid = true
     }
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
+    fn childs_mut(&mut self, _: E::WidgetPath) -> Vec<ResolvableMut<E>> {
         self.childs.childs_mut()
     }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
+    fn into_childs_mut<'a>(self: Box<Self>, _: E::WidgetPath) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
         self.childs.into_childs_mut()
     }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
+    fn child_mut(&mut self, i: usize, _: E::WidgetPath) -> Result<ResolvableMut<E>,()> {
         self.childs.child_mut(i)
     }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
+    fn into_child_mut<'a>(self: Box<Self>, i: usize, _: E::WidgetPath) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
         self.childs.into_child_mut(i)
     }
 }
@@ -74,7 +74,7 @@ impl<'w,E,T> Pane<'w,E,T> where
         let sizes = l.child_sizes(r.style()).expect("Dead Path Inside Pane");
         let bounds = calc_bounds(&r.bounds().size,&sizes,self.orientation); 
 
-        for i in 0..self.childs() {
+        for i in 0..self.childs(l.path()) {
             let l = l.for_child(i).expect("Dead Path Inside Pane");
             let mut r = r.slice(&bounds[i]);
             r.render_widget(l);
@@ -92,7 +92,7 @@ impl<'w,E,T> Pane<'w,E,T> where
 
         let mut passed = false;
 
-        for i in 0..self.childs() {
+        for i in 0..self.childs(l.path()) {
             let mut l = l.for_child(i).expect("Dead Path Inside Pane");
             let sliced = e.slice_bounds(&bounds[i]);
             if let Some(ee) = sliced.filter(&l) {
