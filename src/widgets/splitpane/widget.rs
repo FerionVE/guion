@@ -88,7 +88,7 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
                         cx = cx - wx0;
                         let fcx = (cx as f32)/(ww as f32);
 
-                        l.mutate_closure(Box::new(move |mut w,c,_|{
+                        l.mutate_closure_try(Box::new(move |mut w,c,_|{
                             let w = w.traitcast_mut::<dyn AtomStateMut<E,f32>>().unwrap();
                             w.set(fcx,c);
                         }));

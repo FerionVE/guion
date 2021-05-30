@@ -70,7 +70,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
 
         if let Some(ee) = e.event.is_text_input() {
             let s = ee.text;
-            l.mutate_closure(Box::new(move |mut w,ctx,_| {
+            l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
                 let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
                 w.insert_text(&s,ctx);
                 w.scroll_to_cursor(ctx,&b);
@@ -83,7 +83,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
             {
                 let ctrl = l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some();
 
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
                     let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
                     if ee.key == EEKey::<E>::BACKSPACE {
                         w.remove_selection_or_n(1,ctx);
@@ -101,7 +101,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 }));
                 passed = true;
             }else if ee.key == EEKey::<E>::A && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
                     let wc = w.traitcast_mut::<dyn CaptionMut<E>>().unwrap();
                     cursor.select = 0;
                     cursor.caret = wc.len() as u32;
@@ -132,7 +132,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                     l.clipboard_set_text(text);
 
                     if ee.key == EEKey::<E>::X {
-                        l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                        l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
                             let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
                             w.remove_selection(ctx);
                             w.scroll_to_cursor(ctx,&b);
@@ -142,7 +142,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 passed = true;
             }else if ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN {
                 let b = b.clone();
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
                     let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
 
                     if ee.key == EEKey::<E>::UP {
@@ -163,7 +163,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 s.off.1 as i32 + ee.y,
             );
             let off = s.bound_off((off.0.max(0) as u32, off.1.max(0) as u32));
-            l.mutate_closure(Box::new(move |mut w,ctx,_| {
+            l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
                 let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
                 w.set(off,ctx);
             }));
@@ -175,7 +175,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                 let mouse_pressed = l.is_hovered() && l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()).is_some();
                 let b = b.clone();
 
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
+                l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
                     let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
                     w._m(mouse_down,mouse_pressed,mouse,b,ctx);
                     if mouse_pressed {

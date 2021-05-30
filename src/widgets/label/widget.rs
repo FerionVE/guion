@@ -107,7 +107,7 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
         let glyphs = Arc::new(ESGlyphs::<E>::generate(text.as_ref(),(20.0,20.0),l.ctx));
 
         let g = glyphs.refc();
-        l.mutate_closure(Box::new(move |mut w,ctx,_| {
+        l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
             let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
             let key = vali.validate();
             let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();

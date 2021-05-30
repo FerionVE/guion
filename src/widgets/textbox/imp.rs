@@ -170,7 +170,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
         let glyphs = Arc::new(ESGlyphs::<E>::generate(text.as_ref(),(20.0,20.0),l.ctx));
 
         let g = glyphs.refc();
-        l.mutate_closure(Box::new(move |mut w,ctx,_| {
+        l.mutate_closure_try(Box::new(move |mut w,ctx,_| {
             let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
             let key = vali.validate();
             let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();
