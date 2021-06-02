@@ -3,7 +3,7 @@ use crate::text::stor::{TextStor, TextStorMut};
 use crate::text::layout::TxtLayout;
 
 use super::*;
-use util::{state::{AtomState, AtomStateMut}, caption::CaptionMut, LocalGlyphCache};
+use util::{state::{AtomState, AtomStateMut}, LocalGlyphCache};
 use std::sync::Arc;
 use validation::*;
 

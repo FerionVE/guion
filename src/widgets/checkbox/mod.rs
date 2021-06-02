@@ -4,7 +4,7 @@ use super::label::Label;
 use crate::text::stor::TextStor;
 use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
-use util::{state::*, caption::Caption};
+use util::state::*;
 
 pub mod widget;
 pub mod imp;

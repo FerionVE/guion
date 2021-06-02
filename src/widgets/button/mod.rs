@@ -2,7 +2,7 @@ use super::*;
 use crate::text::stor::TextStor;
 use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
-use util::{LocalGlyphCache, caption::Caption};
+use util::{LocalGlyphCache};
 use label::Label;
 
 pub mod widget;

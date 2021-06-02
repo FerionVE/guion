@@ -5,7 +5,7 @@ use crate::text::stor::*;
 
 use super::*;
 use state::max_off;
-use util::{state::*, caption::CaptionMut, LocalGlyphCache};
+use util::{state::*, LocalGlyphCache};
 use state::{Cursor};
 use super::imp::*;
 use validation::*;
