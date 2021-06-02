@@ -3,7 +3,7 @@ use crate::text::stor::TextStorMut;
 
 use super::*;
 use std::sync::Arc;
-use util::{caption::CaptionMut, state::{AtomStateMut, AtomState}};
+use util::state::{AtomStateMut, AtomState};
 use validation::{ValidationMut, Validation};
 
 impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where

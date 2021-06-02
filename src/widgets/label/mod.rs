@@ -3,7 +3,7 @@ use crate::validation::Validation;
 
 use super::*;
 use std::marker::PhantomData;
-use util::{LocalGlyphCache, caption::Caption, remote_state::RemoteState};
+use util::{LocalGlyphCache, remote_state::RemoteState};
 
 pub mod widget;
 

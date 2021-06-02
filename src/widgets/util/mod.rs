@@ -1,7 +1,6 @@
 use super::*;
 use std::sync::Arc;
 
-pub mod caption;
 pub mod state;
 pub mod remote_state;
 

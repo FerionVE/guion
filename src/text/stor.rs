@@ -12,8 +12,6 @@ use crate::util::translate::immu::Immutable;
 use crate::validation::Validation;
 use crate::validation::ValidationMut;
 use crate::validation::validated::Validated;
-use crate::widgets::util::caption::Caption;
-use crate::widgets::util::caption::CaptionMut;
 
 pub trait TextStor<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str>;
@@ -242,37 +240,6 @@ impl<E,S,F> TextStorMut<E> for OnModification<E,S,F> where S: TextStorMut<E>, F:
     #[inline]
     fn remove_chars_old(&mut self, off: usize, n: usize) {
         (**self).remove_chars_old(off,n);
-        (self.0)(&mut self.2);
-    }
-
-    #[inline]
-    fn replace(&mut self, s: &str) {
-        (**self).replace(s);
-        (self.0)(&mut self.2);
-    }
-}
-
-impl<E,S,F> Caption<E> for OnModification<E,S,F> where S: Caption<E>, F: FnMut(&mut S) {
-    #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
-        (**self).caption()
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-        (**self).len()
-    }
-}
-impl<E,S,F> CaptionMut<E> for OnModification<E,S,F> where S: CaptionMut<E>, F: FnMut(&mut S) {
-    #[inline]
-    fn push(&mut self, off: usize, s: &str) {
-        (**self).push(off,s);
-        (self.0)(&mut self.2);
-    }
-
-    #[inline]
-    fn pop_left(&mut self, off: usize, n: usize) {
-        (**self).pop_left(off,n);
         (self.0)(&mut self.2);
     }
 

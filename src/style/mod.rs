@@ -22,12 +22,7 @@ pub trait Style<E>: Clone + Default where E: Env {
     type Font;
     type Cursor: From<StdCursor>+Clone+Default;
     type Color: Color+Clone;
-    type Glyphs: Glyphs<E>;
     
-    fn preprocess_text(&self, s: &str, c: &mut E::Context) -> Self::Glyphs;
-    //TODO fix partial eq impl
-    fn is_cached_valid(&self, s: &Self::Glyphs, _c: &mut E::Context) -> bool;
-
     fn and(&self, s: &Self) -> Self; //TODO clone efficiency
 
     fn font(&self, selector: &Self::Selector, c: &mut E::Context) -> Option<&Self::Font>;
