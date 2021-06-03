@@ -1,5 +1,5 @@
 //! RefCell-based Shared Mutable Access helper for mutable immediate widgets e.g. when multiple parts need to mutably reference to the same thing
-use crate::widgets::util::{caption::Caption, caption::CaptionMut, state::{AtomState, AtomStateMut}};
+use crate::widgets::util::{state::{AtomState, AtomStateMut}};
 
 use super::*;
 use std::{rc::Rc, cell::{RefMut, RefCell}, marker::PhantomData};
@@ -105,36 +105,5 @@ impl<'a,E,T,U,V,F> AtomStateMut<E,V> for SMA<'a,T,U,F> where
     }
     fn set(&mut self, v: V, c: &mut E::Context) {
         self.borrow_mut().set(v,c)
-    }
-}
-
-impl<'w,'a,E,T,U,F> Caption<E> for SMA<'a,T,U,F> where 
-    E: Env,
-    U: Caption<E>+'w,
-    F: SMALens<T,U>
-{
-    fn caption(&self) -> std::borrow::Cow<str> {
-        let g = self.borrow_mut();
-        let c = g.caption();
-        std::borrow::Cow::Owned( c.into_owned() )
-    }
-    fn len(&self) -> usize {
-        self.borrow_mut().len()
-    }
-}
-
-impl<'w,'a,E,T,U,F> CaptionMut<E> for SMA<'a,T,U,F> where 
-    E: Env,
-    U: CaptionMut<E>+'w,
-    F: SMALens<T,U>
-{
-    fn push(&mut self, off: usize, s: &str) {
-        self.borrow_mut().push(off,s)
-    }
-    fn pop_left(&mut self, off: usize, n: usize) {
-        self.borrow_mut().pop_left(off,n)
-    }
-    fn replace(&mut self, s: &str) {
-        self.borrow_mut().replace(s)
     }
 }

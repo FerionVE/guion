@@ -15,3 +15,10 @@ pub enum StdCursor {
     No,
     Hand,
 }
+
+impl Default for StdCursor {
+    #[inline]
+    fn default() -> Self {
+        Self::Default
+    }
+}

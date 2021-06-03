@@ -17,6 +17,7 @@ pub mod state;
 pub mod util;
 pub mod validation;
 pub mod aliases;
+pub mod text;
 pub mod widgets;
 
 pub(crate) use aliases::*;

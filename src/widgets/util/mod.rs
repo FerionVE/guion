@@ -1,7 +1,6 @@
 use super::*;
 use std::sync::Arc;
 
-pub mod caption;
 pub mod state;
 pub mod remote_state;
 
@@ -28,4 +27,4 @@ impl<E> SizeCache<E> where E: Env {
     }
 }
 
-pub type LocalGlyphCache<E: Env> = Option<(Arc<ESGlyphs<E>>,Arc<dyn Any>)>;
+pub type LocalGlyphCache<E: Env> = Option<(Arc<ETextLayout<E>>,Arc<dyn Any>)>;

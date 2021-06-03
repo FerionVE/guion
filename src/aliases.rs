@@ -5,6 +5,7 @@ use crate::widget::imp::{AWidgetMut, AWidget};
 use super::*;
 
 pub type ERenderer<E: Env> = <E::Backend as Backend<E>>::Renderer;
+pub type ETextLayout<E: Env> = <E::Backend as Backend<E>>::TextLayout;
 pub type EEvent<E: Env> = <E::Backend as Backend<E>>::Event;
 pub type EEDest<E: Env> = <EEvent<E> as Event<E>>::Dest;
 pub type EEKey<E: Env> = <EEvent<E> as Event<E>>::Key;
@@ -13,8 +14,6 @@ pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
 pub type ESize<E: Env> = <E::Backend as Backend<E>>::Size;
 
 pub type ESSelector<E: Env> = <EStyle<E> as Style<E>>::Selector;
-pub type ESGlyphs<E: Env> = <EStyle<E> as Style<E>>::Glyphs;
-pub type ESGlyph<E: Env> = <ESGlyphs<E> as Glyphs<E>>::Glyph;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;
