@@ -112,7 +112,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
             let i = g.at_coord((x,line)).unwrap();
 
             cursor.caret = i;
-            if !ctx.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+            if !ctx.state().is_pressed(&[MatchKeyCode::KbdCtrl]).is_some() {
                 cursor.select = cursor.caret;
             }
 

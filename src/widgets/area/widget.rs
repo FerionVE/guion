@@ -62,22 +62,22 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
         if !passed {
             if let Some(ee) = e.event.is_kbd_press() {
                 if
-                    ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN ||
-                    ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
+                    ee.key == MatchKeyCode::KbdUp || ee.key == MatchKeyCode::KbdDown ||
+                    ee.key == MatchKeyCode::KbdLeft || ee.key == MatchKeyCode::KbdRight
                 {
                     l.mutate_closure(Box::new(move |mut w,ctx,_| {
                         let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
                         let mut v = w.get(ctx);
-                        if ee.key == EEKey::<E>::UP {
+                        if ee.key == MatchKeyCode::KbdUp {
                             v.1 = v.1.saturating_sub(4);
                         }
-                        if ee.key == EEKey::<E>::DOWN {
+                        if ee.key == MatchKeyCode::KbdDown {
                             v.1 += 4;
                         }
-                        if ee.key == EEKey::<E>::LEFT {
+                        if ee.key == MatchKeyCode::KbdLeft {
                             v.0 = v.0.saturating_sub(4);
                         }
-                        if ee.key == EEKey::<E>::RIGHT {
+                        if ee.key == MatchKeyCode::KbdRight {
                             v.0 += 4;
                         }
                         w.set(v,ctx);
