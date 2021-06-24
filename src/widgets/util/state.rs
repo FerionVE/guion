@@ -214,12 +214,4 @@ unsafe impl<T,E> Statize<E> for dyn AtomStateMut<E,T> where T: 'static, E: Env {
     type Statur = dyn AtomStateMut<E,T>;
 }
 
-unsafe impl<'w,T,E> Traitcast<dyn AtomState<E,T>+'w,E> for dyn Widget<E>+'w where E: Env, T: 'static {
-    type DestTypeID = dyn AtomState<E,T>;
-}
-unsafe impl<'w,T,E> TraitcastMut<dyn AtomState<E,T>+'w,E> for dyn WidgetMut<E>+'w where E: Env, T: 'static {
-    type DestTypeID = dyn AtomState<E,T>;
-}
-unsafe impl<'w,T,E> TraitcastMut<dyn AtomStateMut<E,T>+'w,E> for dyn WidgetMut<E>+'w where E: Env, T: 'static {
-    type DestTypeID = dyn AtomStateMut<E,T>;
-}
+traitcast_for!(<T> AtomState<E,T>;AtomStateMut<E,T> where T: 'static);

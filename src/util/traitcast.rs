@@ -212,10 +212,6 @@ macro_rules! traitcast_for {
         $crate::traitcast_for_immu!( $(<$($args),*>)? $trait $(where $($preds)+)? );
         $crate::traitcast_for_mut!( $(<$($args),*>)? $trait $(where $($preds)+)? );
     };
-    ($trait_immu:path) => {
-        $crate::traitcast_for_immu!($trait_immu);
-        $crate::traitcast_for_mut!($trait_immu);
-    };
 }
 
 fn traitcast_error_info<E,DestTypeID>(senf: &(dyn Widget<E>+'_), op: &'static str) -> E::Error where E: Env, DestTypeID: ?Sized + 'static {
