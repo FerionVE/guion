@@ -1,5 +1,3 @@
-use selector::{StyleSelector, StyleSelectorAppend};
-
 use super::*;
 use std::ops::{DerefMut, Deref};
 

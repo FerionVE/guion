@@ -1,24 +1,23 @@
 //! [Style handler](Style), [Style specifier and selectors](StyleSelector)
-use self::selectag::standard::StdSelectag;
-use self::selector::{StyleSelector, StyleSelectorAppend};
+use self::selector::StyleSelectors;
+use self::selector::std::AppendStdSelector;
+use self::selected::SelectedStyle;
+use self::selected::std::StdAttributes;
 use self::standard::cursor::StdCursor;
 
 use super::*;
 
-pub mod selector;
-pub mod selectag;
 pub mod color;
 pub mod font;
 pub mod standard;
 
+pub mod selected;
+pub mod selector;
+
 pub trait Style<E>: Clone + Default where E: Env {
     // TODO pending [implied_bounds](https://github.com/rust-lang/rfcs/pull/2089) feature so that the messy StdSelectag deps can be moved into one trait
-    type Selector:
-        StyleSelector<E> +
-        StyleSelectorAppend<StdSelectag<E>,E> +
-        for<'a> StyleSelectorAppend<&'a StdSelectag<E>,E> +
-        for<'a> StyleSelectorAppend<&'a [StdSelectag<E>],E> +
-        for<'a,'b> StyleSelectorAppend<&'a [&'b StdSelectag<E>],E>;
+    type Selectors: StyleSelectors<E> + AppendStdSelector<E>;
+    type Selected: SelectedStyle<E> + StdAttributes<E>;
     type Font;
     type Cursor: From<StdCursor>+Clone+Default;
     type Color: Color+Clone;
