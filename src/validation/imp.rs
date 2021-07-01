@@ -1,54 +1,4 @@
 use super::*;
-use std::path::PathBuf;
-
-impl<E,T> Validation<E> for &T where T: Validation<E> {
-    //type Cached = T::Cached;
-
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
-    }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-
-impl<E,T> Validation<E> for &mut T where T: Validation<E> {
-    //type Cached = T::Cached;
-
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
-    }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-impl<E,T> ValidationMut<E> for &mut T where T: ValidationMut<E> {
-    #[inline]
-    fn validate(&mut self) -> Arc<dyn Any> {
-        (**self).validate()
-    }
-}
-
-impl<E,T> Validation<E> for Box<T> where T: Validation<E> {
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
-    }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-impl<E,T> ValidationMut<E> for Box<T> where T: ValidationMut<E> {
-    #[inline]
-    fn validate(&mut self) -> Arc<dyn Any> {
-        (**self).validate()
-    }
-}
 
 macro_rules! impl_validation_primitives {
     ($t:ty;$($tt:ty);+) => {
@@ -56,26 +6,7 @@ macro_rules! impl_validation_primitives {
         impl_validation_primitives!($($tt);*);
     };
     ($t:ty) => {
-        impl<E> Validation<E> for $t {
-            #[inline]
-            fn valid(&self, v: &dyn Any) -> bool {
-                if let Some(v) = v.downcast_ref::<Self>() {
-                    self == v
-                }else{
-                    false
-                }
-            }
-            #[inline]
-            fn validation(&self) -> Arc<dyn Any> {
-                Arc::new((*self).clone())
-            }
-        }
-        impl<E> ValidationMut<E> for $t {
-            #[inline]
-            fn validate(&mut self) -> Arc<dyn Any> {
-                Validation::<E>::validation(self)
-            }
-        }
+        
     }
 }
 
@@ -87,61 +18,45 @@ impl_validation_primitives!(
     String;PathBuf
 );
 
-impl<E> Validation<E> for &str {
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        if let Some(v) = v.downcast_ref::<String>() {
-            *self == v
-        }else{
-            false
-        }
+use super::*;
+
+impl<T,E> Validator<T,E> for () {
+    type Cache = ();
+
+    fn valid(value: &T, cache: &Self::Cache) -> bool {
+        false
     }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        Arc::new((*self).to_owned())
-    }
-}
-impl<E> ValidationMut<E> for &str {
-    #[inline]
-    fn validate(&mut self) -> Arc<dyn Any> {
-        Validation::<E>::validation(self)
+
+    fn validation(value: &T) -> Self::Cache {
+        ()
     }
 }
 
-impl<E> Validation<E> for &mut str {
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        if let Some(v) = v.downcast_ref::<String>() {
-            *self == v
-        }else{
-            false
-        }
+pub struct MirrorValidated;
+
+impl<T,E> Validator<T,E> for MirrorValidated where T: ToOwned, T::Owned: PartialEq<T> {
+    type Cache = T::Owned;
+
+    fn valid(value: &T, cache: &Self::Cache) -> bool {
+        cache == value
     }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        Arc::new((*self).to_owned())
-    }
-}
-impl<E> ValidationMut<E> for &mut str {
-    #[inline]
-    fn validate(&mut self) -> Arc<dyn Any> {
-        Validation::<E>::validation(self)
+
+    fn validation(value: &T) -> Self::Cache {
+        value.to_owned()
     }
 }
 
-impl<E> Validation<E> for () {
-    #[inline]
-    fn valid(&self, _: &dyn Any) -> bool {
-        true
+/// IT SHOULD ONLY USED FOR 'static refs/slices and types without interior mutation
+pub struct PtrValidated;
+
+impl<T,E> Validator<&T,E> for PtrValidated {
+    type Cache = usize;
+
+    fn valid(value: &&T, cache: &Self::Cache) -> bool {
+        Self::validation(value) == cache
     }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        Arc::new(())
-    }
-}
-impl<E> ValidationMut<E> for () {
-    #[inline]
-    fn validate(&mut self) -> Arc<dyn Any> {
-        Validation::<E>::validation(self)
+
+    fn validation(value: &&T) -> Self::Cache {
+        value as *const T as usize
     }
 }
