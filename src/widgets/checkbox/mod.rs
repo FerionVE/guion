@@ -2,7 +2,7 @@ use super::*;
 use super::util::LocalGlyphCache;
 use super::label::Label;
 use crate::text::stor::TextStor;
-use crate::{event::key::Key, validation::Validation};
+use crate::event::key::Key;
 use std::marker::PhantomData;
 use util::state::*;
 
@@ -25,7 +25,7 @@ pub struct CheckBox<'w,E,State,Text> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>> where
+impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E,()>,()>> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {
@@ -82,11 +82,11 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     }
 }
 
-impl<'w,E,State,T,LC> CheckBox<'w,E,State,Label<'w,E,T,LC>> where
+impl<'w,E,State,T,LC,TV> CheckBox<'w,E,State,Label<'w,E,T,LC,TV>> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT,LC>> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT,LC,TV>> where TT: TextStor<E>+'w {
         CheckBox{
             trigger: self.trigger,
             id: self.id,

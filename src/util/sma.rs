@@ -1,5 +1,5 @@
 //! RefCell-based Shared Mutable Access helper for mutable immediate widgets e.g. when multiple parts need to mutably reference to the same thing
-use crate::{text::stor::{TextStor, TextStorMut}, validation::{Validation, ValidationMut}, widgets::util::state::{AtomState, AtomStateMut}};
+use crate::{text::stor::{TextStor, TextStorMut}, widgets::util::state::{AtomState, AtomStateMut}};
 
 use super::*;
 use std::{cell::{RefMut, RefCell}, marker::PhantomData, rc::Rc, sync::Arc};
@@ -156,30 +156,5 @@ impl<'w,'a,E,T,U,F> TextStorMut<E> for SMA<'a,E,T,U,F> where
     #[inline]
     fn replace(&mut self, s: &str) {
         self.borrow_mut().replace(s)
-    }
-}
-
-impl<'w,'a,E,T,U,F> Validation<E> for SMA<'a,E,T,U,F> where 
-    E: Env,
-    U: Validation<E>+'w,
-    F: SMALens<T,U>
-{
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        self.borrow_mut().valid(v)
-    }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        self.borrow_mut().validation()
-    }
-}
-impl<'w,'a,E,T,U,F> ValidationMut<E> for SMA<'a,E,T,U,F> where 
-    E: Env,
-    U: ValidationMut<E>+'w,
-    F: SMALens<T,U>
-{
-    #[inline]
-    fn validate(&mut self) -> Arc<dyn Any> {
-        self.borrow_mut().validate()
     }
 }

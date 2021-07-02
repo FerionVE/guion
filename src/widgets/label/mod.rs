@@ -1,5 +1,5 @@
 use crate::text::stor::TextStor;
-use crate::validation::Validation;
+use crate::validation::Validator;
 
 use super::*;
 use std::marker::PhantomData;
@@ -7,7 +7,7 @@ use util::{LocalGlyphCache, remote_state::RemoteState};
 
 pub mod widget;
 
-pub struct Label<'w,E,Text,GlyphCache> where
+pub struct Label<'w,E,Text,GlyphCache,TextValidator> where
     E: Env,
     Text: 'w,
     GlyphCache: 'w,
@@ -18,10 +18,10 @@ pub struct Label<'w,E,Text,GlyphCache> where
     pub text: Text,
     pub align: (f32,f32),
     pub glyph_cache: GlyphCache,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w mut &'w TextValidator>,
 }
 
-impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
+impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E,()>,()> where
     E: Env,
 {
     #[inline]
@@ -38,10 +38,10 @@ impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
     }
 }
 
-impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
+impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E,()>>,()> where
     E: Env,
     E::Context: DynState<E>,
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+'w,
 {
     #[inline]
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {
@@ -57,13 +57,13 @@ impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
     }
 }
 
-impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
+impl<'w,E,Text,GlyphCache,TextValidator> Label<'w,E,Text,GlyphCache,TextValidator> where
     E: Env,
     Text: 'w,
     GlyphCache: 'w,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,GlyphCache> where T: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,GlyphCache,TextValidator> where T: TextStor<E>+'w {
         Label{
             id: self.id,
             size: self.size,

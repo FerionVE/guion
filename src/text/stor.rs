@@ -9,9 +9,6 @@ use std::sync::Arc;
 use crate::env::Env;
 use crate::traitcast_for;
 use crate::util::translate::immu::Immutable;
-use crate::validation::Validation;
-use crate::validation::ValidationMut;
-use crate::validation::validated::Validated;
 
 pub trait TextStor<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str>;
@@ -143,36 +140,6 @@ fn char_off(s: impl AsRef<str>, o: usize) -> usize {
     }
 }
 
-impl<E,T> TextStor<E> for Validated<E,T> where T: TextStor<E>, E: Env {
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
-        (**self).caption()
-    }
-
-    fn chars(&self) -> usize {
-        (**self).chars()
-    }
-
-    fn len(&self) -> usize {
-        (**self).len()
-    }
-}
-impl<E,T> TextStorMut<E> for Validated<E,T> where T: TextStorMut<E>, E: Env {
-    fn remove_chars(&mut self, range: Range<usize>) {
-        (**self).remove_chars(range)
-    }
-
-    fn push_chars(&mut self, off: usize, chars: &str) {
-        (**self).push_chars(off,chars)
-    }
-
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        (**self).remove_chars_old(off,n)
-    }
-
-    fn replace(&mut self, s: &str) {
-        (**self).replace(s)
-    }
-}
 pub struct OnModification<E,S: ?Sized,F>(F,PhantomData<E>,S) where F: FnMut(&mut S);
 
 impl<E,S,F> Deref for OnModification<E,S,F> where F: FnMut(&mut S) {
@@ -187,24 +154,6 @@ impl<E,S,F> DerefMut for OnModification<E,S,F> where F: FnMut(&mut S) {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.2
-    }
-}
-
-impl<E,S,F> Validation<E> for OnModification<E,S,F> where S: Validation<E>, F: FnMut(&mut S) {
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
-    }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-impl<E,S,F> ValidationMut<E> for OnModification<E,S,F> where S: ValidationMut<E>, F: FnMut(&mut S) {
-    #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
-        (**self).validate()
-        //TODO trigger OnModification?
     }
 }
 

@@ -7,7 +7,7 @@ pub mod widget;
 pub mod state;
 pub mod imp;
 
-pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     E: Env,
     Text: 'w,
     Scroll: 'w,
@@ -23,10 +23,10 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     pub cursor: Curs,
     pub cursor_stick_x: CursorStickX,
     pub glyph_cache: GlyphCache,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w mut &'w TC>,
 }
 
-impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>> where
+impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E,()>,()> where
     E: Env,
 {
     #[inline]
@@ -44,7 +44,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>> 
         }
     }
 }
-impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E>>> where
+impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E,()>>,()> where
     E: Env,
     E::Context: DynState<E>,
     Text: 'w,
@@ -65,7 +65,7 @@ impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     E: Env,
     Text: 'w,
     Scroll: 'w,
@@ -74,7 +74,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     GlyphCache: 'w,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,GlyphCache> where T: 'w {
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,CursorStickX,GlyphCache,TC> where T: 'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -90,7 +90,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
 
     //TODO use a unified state object
     #[inline]
-    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,GlyphCache> where PScroll: 'w, CCurs: 'w, XCursorStickX: 'w {
+    pub fn with_states<PScroll,CCurs,XCursorStickX>(self, scroll: PScroll, cursor: CCurs, cursor_stick_x: XCursorStickX) -> TextBox<'w,E,Text,PScroll,CCurs,XCursorStickX,GlyphCache,TC> where PScroll: 'w, CCurs: 'w, XCursorStickX: 'w {
         TextBox{
             id: self.id,
             size: self.size,

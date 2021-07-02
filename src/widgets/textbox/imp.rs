@@ -11,7 +11,7 @@ pub trait ITextBox<E> where E: Env {
 
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     E: Env,
     Text: 'w,
     Scroll: 'w,
@@ -32,17 +32,18 @@ pub trait ITextBoxMut<E>: ITextBox<E> where E: Env {
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: TextStorMut<E>+ValidationMut<E>+'w,
+    Text: TextStorMut<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E,TC::Cache>>+Clone,
+    TC: Validator<Text,E>,
 {
     fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
         let g = self.glyphs2(ctx);
@@ -173,21 +174,22 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
 
 traitcast_for!(ITextBox<E>;ITextBoxMut<E>);
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
     CursorStickX: AtomState<E,Option<u32>>,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E,TC::Cache>>+Clone,
+    TC: Validator<Text,E>,
 {
     pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<ETextLayout<E>> { //TODO FIX style mutation invalidating glyphs
         if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
-            if self.text.valid(&c) {
+            if TC::valid(&self.text,&c) {
                 return v;
             }
         }
@@ -198,9 +200,8 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
 
         let g = glyphs.refc();
         l.mutate_closure(Box::new(move |mut w,ctx,_| {
-            let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
-            let key = vali.validate();
-            let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();
+            let key = TC::validation(&self.text);
+            let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E,TC::Cache>>>().unwrap();
             cache.set( Some((g,key)) ,ctx);
         }));
 
@@ -208,17 +209,18 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: TextStorMut<E>+ValidationMut<E>+'w,
+    Text: TextStorMut<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E,TC::Cache>>+Clone,
+    TC: Validator<Text,E>,
 {
     pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<ETextLayout<E>> {
         if let Some((v,c)) = self.glyph_cache.get(ctx) {

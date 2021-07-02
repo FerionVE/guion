@@ -10,17 +10,18 @@ use state::{Cursor};
 use super::imp::*;
 use validation::*;
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
     CursorStickX: AtomState<E,Option<u32>>,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E,TC::Cache>>+Clone,
+    TC: Validator<Text,E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -240,21 +241,21 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
         dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
         dyn ITextBox<E> => |s| s;
         dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
-        dyn Validation<E> => |s| &s.text;
     );
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> WidgetMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: TextStorMut<E>+ValidationMut<E>+'w,
+    Text: TextStorMut<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E,TC::Cache>>+Clone,
+    TC: Validator<Text,E>,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![]
@@ -282,7 +283,5 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,
         dyn ITextBoxMut<E> => |s| s;
         dyn AtomState<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
         dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
-        dyn Validation<E> => |s| &mut s.text;
-        dyn ValidationMut<E> => |s| &mut s.text;
     );
 }

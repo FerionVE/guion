@@ -4,15 +4,15 @@ use crate::text::stor::TextStorMut;
 use super::*;
 use std::sync::Arc;
 use util::state::{AtomStateMut, AtomState};
-use validation::{ValidationMut, Validation};
 
-impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
+impl<'w,E,Text,GlyphCache,TextValidator> Widget<E> for Label<'w,E,Text,GlyphCache,TextValidator> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E,TextValidator::Cache>>+Clone,
+    TextValidator: Validator<Text,E>,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
         vec![]
@@ -61,18 +61,18 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
 
     impl_traitcast!(
         dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
-        dyn Validation<E> => |s| &s.text;
         dyn TextStor<E> => |s| &s.text;
     );
 }
 
-impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
+impl<'w,E,Text,GlyphCache,TextValidator> WidgetMut<E> for Label<'w,E,Text,GlyphCache,TextValidator> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    Text: TextStorMut<E>+ValidationMut<E>+'w,
+    Text: TextStorMut<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
+    GlyphCache: AtomStateMut<E,LocalGlyphCache<E,TextValidator::Cache>>+Clone,
+    TextValidator: Validator<Text,E>,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![]
@@ -89,22 +89,22 @@ impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
 
     impl_traitcast_mut!(
         dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
-        dyn ValidationMut<E> => |s| &mut s.text;
         dyn TextStorMut<E> => |s| &mut s.text;
     );
 }
 
-impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
+impl<'w,E,Text,GlyphCache,TextValidator> Label<'w,E,Text,GlyphCache,TextValidator> where
     E: Env,
     ERenderer<E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
+    GlyphCache: AtomState<E,LocalGlyphCache<E,TextValidator::Cache>>+Clone,
+    TextValidator: Validator<Text,E>,
 {
     fn glyphs(&self, mut l: Link<E>) -> Arc<ETextLayout<E>> {
         if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
-            if self.text.valid(&c) {
+            if TextValidator::valid(&self.text,&c) {
                 return v;
             }
         }
@@ -115,9 +115,8 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
 
         let g = glyphs.refc();
         l.mutate_closure(Box::new(move |mut w,ctx,_| {
-            let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
-            let key = vali.validate();
-            let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();
+            let key = TextValidator::validation(&self.text);
+            let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E,TextValidator::Cache>>>().unwrap();
             cache.set( Some((g,key)) ,ctx);
         }));
 

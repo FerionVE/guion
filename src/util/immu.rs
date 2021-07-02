@@ -3,7 +3,6 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut, Range};
 
 use crate::text::stor::{TextStor, TextStorMut};
-use crate::validation::{Validation, ValidationMut};
 use crate::widgets::util::state::AtomState;
 use crate::*;
 use crate::widgets::util::state::AtomStateMut;
@@ -62,29 +61,6 @@ impl<E,A,Z> TextStorMut<E> for &Immutable<E,A,Z> where A: TextStor<E>, E: Env {
     fn remove_chars_old(&mut self, off: usize, n: usize) {}
     #[inline]
     fn replace(&mut self, s: &str) {}
-}
-
-impl<E,A,Z> Validation<E> for Immutable<E,A,Z> where A: Validation<E> {
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
-    }
-    #[inline]
-    fn validation(&self) -> std::sync::Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-impl<E,A,Z> ValidationMut<E> for Immutable<E,A,Z> where A: Validation<E> {
-    #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
-        self.validation()
-    }
-}
-impl<E,A,Z> ValidationMut<E> for &Immutable<E,A,Z> where A: Validation<E> {
-    #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
-        self.validation()
-    }
 }
 
 impl<E,A,T> AtomState<E,T> for Immutable<E,A,T> where E: Env, A: AtomState<E,T> {

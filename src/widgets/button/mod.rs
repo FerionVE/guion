@@ -1,6 +1,6 @@
 use super::*;
 use crate::text::stor::TextStor;
-use crate::{event::key::Key, validation::Validation};
+use crate::event::key::Key;
 use std::marker::PhantomData;
 use util::LocalGlyphCache;
 use label::Label;
@@ -23,7 +23,7 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>,(),()> where
+impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E,()>,()>,(),()> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {
@@ -122,11 +122,11 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     }
 }
 
-impl<'w,E,T,LC,Tr,TrMut> Button<'w,E,Label<'w,E,T,LC>,Tr,TrMut> where
+impl<'w,E,T,LC,TV,Tr,TrMut> Button<'w,E,Label<'w,E,T,LC,TV>,Tr,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LC>,Tr,TrMut> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LC,TV>,Tr,TrMut> where TT: TextStor<E>+'w {
         Button{
             id: self.id,
             size: self.size,
