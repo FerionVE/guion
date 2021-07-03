@@ -31,8 +31,8 @@ pub trait Widgets<E>: Sized + 'static where E: Env {
 }
 //#[doc(hidden)]
 /// Used by [`Widgets::widget`] implementations
-pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage) -> Result<Resolved<'s,E>,E::Error> where E: Env, 'l: 's {
-    let r = root.resolve(sub.refc())?;
+pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, root_path: E::WidgetPath, stor: &'l E::Storage) -> Result<Resolved<'s,E>,E::Error> where E: Env, 'l: 's {
+    let r = root.resolve(sub.refc(),root_path)?;
     
     match r {
         Resolvable::Widget(w) => 
@@ -54,13 +54,13 @@ pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs
 pub fn resolve_in_root_mut<E: Env>(
     stor: &mut E::Storage,
     mut root_in_stor_mut: impl FnMut(&mut E::Storage) -> &mut dyn WidgetMut<E>,
-    sub: E::WidgetPath, abs_path: E::WidgetPath,
+    sub: E::WidgetPath, abs_path: E::WidgetPath, root_path: E::WidgetPath,
 ) -> Result<ResolvedMut<E>,E::Error> {
 
     let final_path;
 
-    match root_in_stor_mut(stor).resolve_mut(sub.clone())? {
-        ResolvableMut::Widget(w) => 
+    match root_in_stor_mut(stor).resolve_mut(sub.clone(),root_path.clone())? {
+        ResolvableMut::Widget(_) => 
             final_path = Ok(abs_path.clone()),
         ResolvableMut::Path(p) => 
             final_path = Err(p),
@@ -68,7 +68,7 @@ pub fn resolve_in_root_mut<E: Env>(
 
     match final_path {
         Ok(p) => {
-            let w = root_in_stor_mut(stor).resolve_mut(sub)?
+            let w = root_in_stor_mut(stor).resolve_mut(sub,root_path)?
                 .as_widget().unwrap();
             Ok(ResolvedMut {
                 wref: w,

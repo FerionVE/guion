@@ -17,9 +17,9 @@ impl<'w,E> Resolvable<'w,E> where E: Env + 'static {
     /// 
     /// Meant to be used inside widget's resolve fn
     #[inline]
-    pub fn resolve_child(self, sub: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> {
+    pub fn resolve_child(self, sub: E::WidgetPath, own_path: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> {
         match self {
-            Self::Widget(w) => w.into_resolve(sub),
+            Self::Widget(w) => w.into_resolve(sub,own_path),
             Self::Path(p) => Ok(Self::Path(p.attached_subpath(&sub))),
         }
     }
@@ -95,9 +95,9 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
     /// 
     /// Meant to be used inside widget's resolve fn
     #[inline]
-    pub fn resolve_child_mut(self, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> {
+    pub fn resolve_child_mut(self, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> {
         match self {
-            Self::Widget(w) => w.into_resolve_mut(i),
+            Self::Widget(w) => w.into_resolve_mut(i,own_path),
             Self::Path(p) => Ok(Self::Path(p.attached_subpath(&i))),
         }
     }
@@ -125,12 +125,12 @@ impl<'w,E> ResolvableMut<'w,E> where E: Env {
         }
     }
     /// Extend the path representing the parent of this widget to resolve to this widget
-    #[deprecated]
+    #[deprecated] //TODO stabilize
     #[inline]
-    pub fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
+    pub fn in_parent_path(&self, parent: E::WidgetPath, reduce: bool) -> E::WidgetPath {
         match self {
             Self::Widget(w) => w.in_parent_path(parent),
-            Self::Path(w) => w.refc().into(), //TODO WRONG use widget's fns
+            Self::Path(w) => parent.for_child_widget_path(w,reduce) //TODO WRONG use widget's fns
         }
     }
 

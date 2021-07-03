@@ -298,7 +298,7 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     pub fn resolve_sub<'s>(&'s mut self, sub: &E::WidgetPath) -> Result<Link<'s,E>,E::Error> where 'c: 's {
         let path = self.widget.path.refc().attached_subpath(sub);
-        let rw = self.widget.wref.resolve(sub.refc())?;
+        let rw = self.widget.resolve(sub.refc())?;
         
         let mut r;
         match rw {

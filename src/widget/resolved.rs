@@ -85,6 +85,60 @@ impl<'a,E> Resolved<'a,E> where E: Env {
         }
     }
 
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
+    pub fn childs(&self) -> usize {
+        (**self).childs(self.path.clone())
+    }
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
+    pub fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> {
+        (**self).child(i,self.path.clone())
+    }
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
+    pub fn into_child<'s>(self: Box<Self>, i: usize) -> Result<Resolvable<'s,E>,()> where Self: 's {
+        self.wref.into_child(i,self.path.clone())
+    }
+
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
+    #[deprecated]
+    pub fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> {
+        (**self).childs_ref(self.path.clone())
+    }
+    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
+    pub fn into_childs<'w>(self: Box<Self>) -> Vec<Resolvable<'w,E>> where Self: 'w {
+        self.wref.into_childs(self.path.clone())
+    }
+
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
+    /// Resolve a deep child item by the given relative path
+    /// 
+    /// An empty path will resolve to this widget
+    /// 
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
+    #[inline]
+    pub fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,E::Error> {
+        (**self).resolve(i,self.path.clone())
+    }
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
+    /// Resolve a deep child item by the given relative path
+    /// 
+    /// An empty path will resolve to this widget
+    /// 
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
+    #[inline]
+    pub fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
+        self.wref.into_resolve(i,self.path.clone())
+    }
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
+    /// To (or through) which child path would the given sub_path resolve?
+    /// 
+    /// Returns the child index and the subpath inside the child widget to resolve further
+    /// 
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
+    #[inline]
+    pub fn resolve_child(&self, sub_path: E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+        (**self).resolve_child(sub_path,self.path.clone())
+    }
+
     /*#[inline]
     pub fn childs(&self) -> Vec<Resolved<E>> {
         (**self)._childs(self.path)

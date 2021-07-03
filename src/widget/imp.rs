@@ -45,8 +45,8 @@ impl<'i,E> Widget<E> for AWidget<'i,E> where E: Env {
         match_view!(self|s| s.id() )
     }
     #[inline]
-    fn childs(&self) -> usize {
-        match_view!(self|s| s.childs() )
+    fn childs(&self, own_path: E::WidgetPath) -> usize {
+        match_view!(self|s| s.childs(own_path) )
     }
     #[inline]
     fn focusable(&self) -> bool {
@@ -86,27 +86,27 @@ impl<'i,E> Widget<E> for AWidget<'i,E> where E: Env {
         match_view!(self|s| s._size(l,e) )
     }
     #[inline]
-    fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> {
-        match_view!(self|s| s.child(i) )
+    fn child<'s>(&'s self, i: usize, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,()> {
+        match_view!(self|s| s.child(i,own_path) )
     }
     #[inline]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         match_view!(self|s| s.child_paths(own_path) )
     }
     #[inline]
-    fn into_child<'s>(self: Box<Self>, i: usize) -> Result<Resolvable<'s,E>,()> where Self: 's {
+    fn into_child<'s>(self: Box<Self>, i: usize, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,()> where Self: 's {
         match *self {
-            Self::Ref(s) => s.child(i),
-            Self::Mut(s) => s.child(i),
-            Self::Box(s) => s.into_child(i),
+            Self::Ref(s) => s.child(i,own_path),
+            Self::Mut(s) => s.child(i,own_path),
+            Self::Box(s) => s.into_child(i,own_path),
         }
     }
     #[inline]
-    fn into_childs<'w>(self: Box<Self>) -> Vec<Resolvable<'w,E>> where Self: 'w {
+    fn into_childs<'w>(self: Box<Self>, own_path: E::WidgetPath) -> Vec<Resolvable<'w,E>> where Self: 'w {
         match *self {
-            Self::Ref(s) => s.childs_ref(),
-            Self::Mut(s) => s.childs_ref(),
-            Self::Box(s) => s.into_childs(),
+            Self::Ref(s) => s.childs_ref(own_path),
+            Self::Mut(s) => s.childs_ref(own_path),
+            Self::Box(s) => s.into_childs(own_path),
         }
     }
     #[inline]
@@ -114,24 +114,24 @@ impl<'i,E> Widget<E> for AWidget<'i,E> where E: Env {
         match_view!(self|s| s.child_bounds(l,b,e,force) )
     }
     #[inline]
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> {
-        match_view!(self|s| s.childs_ref() )
+    fn childs_ref<'s>(&'s self, own_path: E::WidgetPath) -> Vec<Resolvable<'s,E>> {
+        match_view!(self|s| s.childs_ref(own_path) )
     }
     #[inline]
-    fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,E::Error> {
-        match_view!(self|s| s.resolve(i) )
+    fn resolve<'s>(&'s self, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,E::Error> {
+        match_view!(self|s| s.resolve(i,own_path) )
     }
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         match *self {
-            Self::Ref(s) => s.resolve(i),
-            Self::Mut(s) => s.resolve(i),
-            Self::Box(s) => s.into_resolve(i),
+            Self::Ref(s) => s.resolve(i,own_path),
+            Self::Mut(s) => s.resolve(i,own_path),
+            Self::Box(s) => s.into_resolve(i,own_path),
         }
     }
     #[inline]
-    fn resolve_child(&self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
-        match_view!(self|s| s.resolve_child(sub_path) )
+    fn resolve_child(&self, sub_path: E::WidgetPath, own_path: E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+        match_view!(self|s| s.resolve_child(sub_path,own_path) )
     }
     #[inline]
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
@@ -175,8 +175,8 @@ impl<'i,E> Widget<E> for AWidget<'i,E> where E: Env {
         }
     }
     #[inline]
-    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str) -> E::Error {
-        match_view!(self|s| s.gen_diag_error_resolve_fail(sub_path,op) )
+    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, own_path: E::WidgetPath, op: &'static str) -> E::Error {
+        match_view!(self|s| s.gen_diag_error_resolve_fail(sub_path,own_path,op) )
     }
 }
 
@@ -186,8 +186,8 @@ impl<'i,E> Widget<E> for AWidgetMut<'i,E> where E: Env {
         match_mut!(self|s| s.id() )
     }
     #[inline]
-    fn childs(&self) -> usize {
-        match_mut!(self|s| s.childs() )
+    fn childs(&self, own_path: E::WidgetPath) -> usize {
+        match_mut!(self|s| s.childs(own_path) )
     }
     #[inline]
     fn focusable(&self) -> bool {
@@ -227,25 +227,25 @@ impl<'i,E> Widget<E> for AWidgetMut<'i,E> where E: Env {
         match_mut!(self|s| s._size(l,e) )
     }
     #[inline]
-    fn child<'s>(&'s self, i: usize) -> Result<Resolvable<'s,E>,()> {
-        match_mut!(self|s| s.child(i) )
+    fn child<'s>(&'s self, i: usize, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,()> {
+        match_mut!(self|s| s.child(i,own_path) )
     }
     #[inline]
     fn child_paths(&self, own_path: E::WidgetPath) -> Vec<E::WidgetPath> {
         match_mut!(self|s| s.child_paths(own_path) )
     }
     #[inline]
-    fn into_child<'s>(self: Box<Self>, i: usize) -> Result<Resolvable<'s,E>,()> where Self: 's {
+    fn into_child<'s>(self: Box<Self>, i: usize, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,()> where Self: 's {
         match *self {
-            Self::Mut(s) => s.child(i),
-            Self::Box(s) => s.into_child(i),
+            Self::Mut(s) => s.child(i,own_path),
+            Self::Box(s) => s.into_child(i,own_path),
         }
     }
     #[inline]
-    fn into_childs<'w>(self: Box<Self>) -> Vec<Resolvable<'w,E>> where Self: 'w {
+    fn into_childs<'w>(self: Box<Self>, own_path: E::WidgetPath) -> Vec<Resolvable<'w,E>> where Self: 'w {
         match *self {
-            Self::Mut(s) => s.childs_ref(),
-            Self::Box(s) => s.into_childs(),
+            Self::Mut(s) => s.childs_ref(own_path),
+            Self::Box(s) => s.into_childs(own_path),
         }
     }
     #[inline]
@@ -253,23 +253,23 @@ impl<'i,E> Widget<E> for AWidgetMut<'i,E> where E: Env {
         match_mut!(self|s| s.child_bounds(l,b,e,force) )
     }
     #[inline]
-    fn childs_ref<'s>(&'s self) -> Vec<Resolvable<'s,E>> {
-        match_mut!(self|s| s.childs_ref() )
+    fn childs_ref<'s>(&'s self, own_path: E::WidgetPath) -> Vec<Resolvable<'s,E>> {
+        match_mut!(self|s| s.childs_ref(own_path) )
     }
     #[inline]
-    fn resolve<'s>(&'s self, i: E::WidgetPath) -> Result<Resolvable<'s,E>,E::Error> {
-        match_mut!(self|s| s.resolve(i) )
+    fn resolve<'s>(&'s self, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,E::Error> {
+        match_mut!(self|s| s.resolve(i,own_path) )
     }
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
+    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         match *self {
-            Self::Mut(s) => s.resolve(i),
-            Self::Box(s) => s.into_resolve(i),
+            Self::Mut(s) => s.resolve(i,own_path),
+            Self::Box(s) => s.into_resolve(i,own_path),
         }
     }
     #[inline]
-    fn resolve_child(&self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
-        match_mut!(self|s| s.resolve_child(sub_path) )
+    fn resolve_child(&self, sub_path: E::WidgetPath, own_path: E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+        match_mut!(self|s| s.resolve_child(sub_path,own_path) )
     }
     #[inline]
     fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
@@ -312,32 +312,32 @@ impl<'i,E> Widget<E> for AWidgetMut<'i,E> where E: Env {
         }
     }
     #[inline]
-    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str) -> E::Error {
-        match_mut!(self|s| s.gen_diag_error_resolve_fail(sub_path,op) )
+    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, own_path: E::WidgetPath, op: &'static str) -> E::Error {
+        match_mut!(self|s| s.gen_diag_error_resolve_fail(sub_path,own_path,op) )
     }
 }
 
 impl<'i,E> WidgetMut<E> for AWidgetMut<'i,E> where E: Env {
     #[inline]
-    fn child_mut<'s>(&'s mut self, i: usize) -> Result<ResolvableMut<'s,E>,()> {
-        match_mut!(self|s| s.child_mut(i) )
+    fn child_mut<'s>(&'s mut self, i: usize, own_path: E::WidgetPath) -> Result<ResolvableMut<'s,E>,()> {
+        match_mut!(self|s| s.child_mut(i,own_path) )
     }
     #[inline]
-    fn into_child_mut<'w>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
+    fn into_child_mut<'w>(self: Box<Self>, i: usize, own_path: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
         match *self {
-            Self::Mut(s) => s.child_mut(i),
-            Self::Box(s) => s.into_child_mut(i),
+            Self::Mut(s) => s.child_mut(i,own_path),
+            Self::Box(s) => s.into_child_mut(i,own_path),
         }
     }
     #[inline]
-    fn childs_mut<'s>(&'s mut self) -> Vec<ResolvableMut<'s,E>> {
-        match_mut!(self|s| s.childs_mut() )
+    fn childs_mut<'s>(&'s mut self, own_path: E::WidgetPath) -> Vec<ResolvableMut<'s,E>> {
+        match_mut!(self|s| s.childs_mut(own_path) )
     }
     #[inline]
-    fn into_childs_mut<'w>(self: Box<Self>) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
+    fn into_childs_mut<'w>(self: Box<Self>, own_path: E::WidgetPath) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
         match *self {
-            Self::Mut(s) => s.childs_mut(),
-            Self::Box(s) => s.into_childs_mut(),
+            Self::Mut(s) => s.childs_mut(own_path),
+            Self::Box(s) => s.into_childs_mut(own_path),
         }
     }
     #[inline]
@@ -349,19 +349,19 @@ impl<'i,E> WidgetMut<E> for AWidgetMut<'i,E> where E: Env {
         match_mut!(self|s| s._set_invalid(v) )
     }
     #[inline]
-    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath) -> Result<ResolvableMut<'s,E>,E::Error> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
-        match_mut!(self|s| s.resolve_mut(i) )
+    fn resolve_mut<'s>(&'s mut self, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<ResolvableMut<'s,E>,E::Error> { //TODO eventually use reverse "dont_invaldiate"/"keep_valid" bool
+        match_mut!(self|s| s.resolve_mut(i,own_path) )
     }
     #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
+    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
         match *self {
-            Self::Mut(s) => s.resolve_mut(i),
-            Self::Box(s) => s.into_resolve_mut(i),
+            Self::Mut(s) => s.resolve_mut(i,own_path),
+            Self::Box(s) => s.into_resolve_mut(i,own_path),
         }
     }
     #[inline]
-    fn resolve_child_mut(&mut self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
-        match_mut!(self|s| s.resolve_child_mut(sub_path) )
+    fn resolve_child_mut(&mut self, sub_path: E::WidgetPath, own_path: E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+        match_mut!(self|s| s.resolve_child_mut(sub_path,own_path) )
     }
     #[inline]
     fn inner_mut(&mut self) -> Option<&mut dyn WidgetMut<E>> {
@@ -396,8 +396,8 @@ impl<'i,E> WidgetMut<E> for AWidgetMut<'i,E> where E: Env {
         }
     }
     #[inline]
-    fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, op: &'static str) -> E::Error {
-        match_mut!(self|s| s.gen_diag_error_resolve_fail_mut(sub_path,op) )
+    fn gen_diag_error_resolve_fail_mut(&mut self, sub_path: &E::WidgetPath, own_path: E::WidgetPath, op: &'static str) -> E::Error {
+        match_mut!(self|s| s.gen_diag_error_resolve_fail_mut(sub_path,own_path,op) )
     }
 }
 
@@ -412,27 +412,27 @@ impl<'i,E> AWidget<'i,E> where E: Env {
     }
 
     #[inline]
-    pub fn into_child<'s>(self, i: usize) -> Result<Resolvable<'s,E>,()> where Self: 's {
+    pub fn into_child<'s>(self, i: usize, own_path: E::WidgetPath) -> Result<Resolvable<'s,E>,()> where Self: 's {
         match self {
-            Self::Ref(s) => s.child(i),
-            Self::Mut(s) => s.child(i),
-            Self::Box(s) => s.into_child(i),
+            Self::Ref(s) => s.child(i,own_path),
+            Self::Mut(s) => s.child(i,own_path),
+            Self::Box(s) => s.into_child(i,own_path),
         }
     }
     #[inline]
-    pub fn into_childs<'w>(self) -> Vec<Resolvable<'w,E>> where Self: 'w {
+    pub fn into_childs<'w>(self, own_path: E::WidgetPath) -> Vec<Resolvable<'w,E>> where Self: 'w {
         match self {
-            Self::Ref(s) => s.childs_ref(),
-            Self::Mut(s) => s.childs_ref(),
-            Self::Box(s) => s.into_childs(),
+            Self::Ref(s) => s.childs_ref(own_path),
+            Self::Mut(s) => s.childs_ref(own_path),
+            Self::Box(s) => s.into_childs(own_path),
         }
     }
     #[inline]
-    pub fn into_resolve<'w>(self, i: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
+    pub fn into_resolve<'w>(self, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<Resolvable<'w,E>,E::Error> where Self: 'w {
         match self {
-            Self::Ref(s) => s.resolve(i),
-            Self::Mut(s) => s.resolve(i),
-            Self::Box(s) => s.into_resolve(i),
+            Self::Ref(s) => s.resolve(i,own_path),
+            Self::Mut(s) => s.resolve(i,own_path),
+            Self::Box(s) => s.into_resolve(i,own_path),
         }
     }
 }
@@ -447,24 +447,24 @@ impl<'i,E> AWidgetMut<'i,E> where E: Env {
     }
 
     #[inline]
-    pub fn into_child_mut<'w>(self, i: usize) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
+    pub fn into_child_mut<'w>(self, i: usize, own_path: E::WidgetPath) -> Result<ResolvableMut<'w,E>,()> where Self: 'w {
         match self {
-            Self::Mut(s) => s.child_mut(i),
-            Self::Box(s) => s.into_child_mut(i),
+            Self::Mut(s) => s.child_mut(i,own_path),
+            Self::Box(s) => s.into_child_mut(i,own_path),
         }
     }
     #[inline]
-    pub fn into_childs_mut<'w>(self) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
+    pub fn into_childs_mut<'w>(self, own_path: E::WidgetPath) -> Vec<ResolvableMut<'w,E>> where Self: 'w {
         match self {
-            Self::Mut(s) => s.childs_mut(),
-            Self::Box(s) => s.into_childs_mut(),
+            Self::Mut(s) => s.childs_mut(own_path),
+            Self::Box(s) => s.into_childs_mut(own_path),
         }
     }
     #[inline]
-    pub fn into_resolve_mut<'w>(self, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
+    pub fn into_resolve_mut<'w>(self, i: E::WidgetPath, own_path: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
         match self {
-            Self::Mut(s) => s.resolve_mut(i),
-            Self::Box(s) => s.into_resolve_mut(i),
+            Self::Mut(s) => s.resolve_mut(i,own_path),
+            Self::Box(s) => s.into_resolve_mut(i,own_path),
         }
     }
 }
