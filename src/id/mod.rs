@@ -8,7 +8,7 @@ pub mod standard;
 /// Unique ID for [`Widgets`](Widget::id)
 /// 
 /// WidgetID shall be easily clonable
-pub trait WidgetID: Clone + PartialEq + Sized + Debug + 'static { //should also implement Eq + Hash + Send
+pub trait WidgetID: AsRefMut<Self> + Clone + PartialEq + Sized + Debug + 'static { //should also implement Eq + Hash + Send
     #[inline]
     fn id_eq<I: WidgetID + 'static>(&self, o: &I) -> bool where Self: 'static {
         Any::downcast_ref::<Self>(o)
@@ -16,12 +16,12 @@ pub trait WidgetID: Clone + PartialEq + Sized + Debug + 'static { //should also 
     }
 
     #[inline]
-    fn is_hovered<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E> {
-        c.state().is_hovered(self)
+    fn is_hovered<E: Env>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E>, Self: AsRefMut<E::WidgetID> {
+        c.state().is_hovered(self.as_ref())
     }
     #[inline]
-    fn is_focused<E: Env<WidgetID=Self>>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E> {
-        c.state().is_focused(self)
+    fn is_focused<E: Env>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E>, Self: AsRefMut<E::WidgetID> {
+        c.state().is_focused(self.as_ref())
     }
 }
 

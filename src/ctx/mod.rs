@@ -1,4 +1,6 @@
 //! The [`Context`] trait housing handlers, queue and other side stuff
+use std::ops::DerefMut;
+
 use super::*;
 
 pub mod queue;
@@ -6,7 +8,7 @@ pub mod clipboard;
 
 /// The Context contains the [`Handlers`](Handler), the [`Queue`] and other side data and is also the entry point for most actions.  
 /// A Context is regularly referenced in parallel with the [widget tree](Env::Storage)
-pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
+pub trait Context<E>: AsRefMut<E::Context> + Sized + 'static where E: Env, E::Context: AsRefMut<Self> {
     type Handler: Handler<E>;
     type Queue: Queue<StdEnqueueable<E>,StdOrder>;
 
@@ -37,7 +39,7 @@ pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
     #[inline]
     fn link<'l: 's,'s>(&'s mut self, w: Resolved<'l,E>) -> Link<'s,E> {
         Link{
-            ctx: self,
+            ctx: self.as_mut(),
             widget: w,
         }
     }

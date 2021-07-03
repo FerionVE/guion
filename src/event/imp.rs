@@ -49,7 +49,7 @@ pub trait StdVarSup<E>:
     VariantSupport<Focus,E> +
     VariantSupport<Unfocus,E> +
     VariantSupport<RootEvent<E>,E>
-where E: Env, E::Backend: Backend<E,Event=Self> {
+where E: Env {
     #[inline]
     fn is_kbd_down(&self) -> Option<KbdDown<E>> {
         self.is::<KbdDown<E>>()
