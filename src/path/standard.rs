@@ -159,10 +159,6 @@ impl<E,S> RefClonable for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Syn
     }
 }
 
-unsafe impl<E,S> Statize<E> for SimplePath<E,S> where E: Env, S: SubPath<E> + Send+Sync + 'static {
-    type Statur = Self;
-}
-
 //TODO fix the AsWidget generic impl
 /*impl<E,S> AsWidget<'static,E> for SimplePath<E,S> where E: Env {
     fn as_ref<'s>(&'s self) -> Resolvable<'s,E> where 'static: 's {

@@ -207,11 +207,4 @@ impl<E,A,F,T> AtomState<E,T> for &AtomStateOnSet<E,A,F,T> where E: Env, A: AtomS
     }
 }
 
-unsafe impl<T,E> Statize<E> for dyn AtomState<E,T> where T: 'static, E: Env {
-    type Statur = dyn AtomState<E,T>;
-}
-unsafe impl<T,E> Statize<E> for dyn AtomStateMut<E,T> where T: 'static, E: Env {
-    type Statur = dyn AtomStateMut<E,T>;
-}
-
 traitcast_for!(<T> AtomState<E,T>;AtomStateMut<E,T> where T: 'static);

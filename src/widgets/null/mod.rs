@@ -90,7 +90,3 @@ impl<'w,E> WidgetMut<'w,E> for Null<E> where
         Err(())
     }
 }
-
-unsafe impl<E> Statize<E> for Null<E> where E: Env {
-    type Statur = Self;
-}
