@@ -16,6 +16,7 @@ pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'stat
     type Message: 'static;
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;
     //type Commit: Eq + Ord;
+    type Log: crate::log::Logger;
 }
 
 pub trait EnvFlexCtxHandler: Env {
