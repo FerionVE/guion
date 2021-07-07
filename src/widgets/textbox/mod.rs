@@ -1,3 +1,5 @@
+use crate::validation::imp::MirrorValidated;
+
 use super::*;
 use std::marker::PhantomData;
 use util::{LocalGlyphCache, remote_state::RemoteState};
@@ -14,6 +16,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     Curs: 'w,
     CursorStickX: 'w,
     GlyphCache: 'w,
+    TC: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
@@ -26,7 +29,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> where
     p: PhantomData<&'w mut &'w TC>,
 }
 
-impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E,()>,()> where
+impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E,String>,MirrorValidated> where
     E: Env,
 {
     #[inline]
@@ -44,10 +47,11 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E,()
         }
     }
 }
-impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E,()>>,()> where
+impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E,Text::Owned>>,MirrorValidated> where
     E: Env,
     E::Context: DynState<E>,
-    Text: 'w,
+    Text: ToOwned+'w,
+    Text::Owned: Clone,
 {
     #[inline]
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {

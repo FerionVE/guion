@@ -60,7 +60,7 @@ impl<'w,E,Text,GlyphCache,TextValidator> Widget<E> for Label<'w,E,Text,GlyphCach
     }
 
     impl_traitcast!(
-        dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
+        dyn AtomState<E,LocalGlyphCache<E,TextValidator::Cache>> => |s| &s.glyph_cache;
         dyn TextStor<E> => |s| &s.text;
     );
 }
@@ -88,7 +88,7 @@ impl<'w,E,Text,GlyphCache,TextValidator> WidgetMut<E> for Label<'w,E,Text,GlyphC
     }
 
     impl_traitcast_mut!(
-        dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
+        dyn AtomStateMut<E,LocalGlyphCache<E,TextValidator::Cache>> => |s| &mut s.glyph_cache;
         dyn TextStorMut<E> => |s| &mut s.text;
     );
 }
@@ -114,8 +114,9 @@ impl<'w,E,Text,GlyphCache,TextValidator> Label<'w,E,Text,GlyphCache,TextValidato
         );
 
         let g = glyphs.refc();
-        l.mutate_closure(Box::new(move |mut w,ctx,_| {
-            let key = TextValidator::validation(&self.text);
+        let key = TextValidator::validation(&self.text);
+
+        l.mutate_closure(Box::new(move |mut w,ctx,_| {    
             let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E,TextValidator::Cache>>>().unwrap();
             cache.set( Some((g,key)) ,ctx);
         }));

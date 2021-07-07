@@ -3,6 +3,7 @@ use super::util::LocalGlyphCache;
 use super::label::Label;
 use crate::text::stor::TextStor;
 use crate::event::key::Key;
+use crate::validation::imp::MirrorValidated;
 use std::marker::PhantomData;
 use util::state::*;
 
@@ -25,7 +26,7 @@ pub struct CheckBox<'w,E,State,Text> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E,()>,()>> where
+impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E,String>,MirrorValidated>> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {

@@ -199,8 +199,9 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> TextBox<'w,E,Text,Scroll,
         );
 
         let g = glyphs.refc();
+        let key = TC::validation(&self.text);
+
         l.mutate_closure(Box::new(move |mut w,ctx,_| {
-            let key = TC::validation(&self.text);
             let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E,TC::Cache>>>().unwrap();
             cache.set( Some((g,key)) ,ctx);
         }));
@@ -224,7 +225,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> TextBox<'w,E,Text,Scroll,
 {
     pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<ETextLayout<E>> {
         if let Some((v,c)) = self.glyph_cache.get(ctx) {
-            if self.text.valid(&c) {
+            if TC::valid(&self.text,&c) {
                 return v;
             }
         }
@@ -233,7 +234,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> TextBox<'w,E,Text,Scroll,
             TxtLayoutFromStor::<E,Text>::from(&self.text,ctx)
         );
 
-        let key = self.text.validate();
+        let key = TC::validation(&self.text);
         self.glyph_cache.set( Some((glyphs.refc(),key)),ctx);
 
         glyphs

@@ -1,6 +1,7 @@
 use super::*;
 use crate::text::stor::TextStor;
 use crate::event::key::Key;
+use crate::validation::imp::MirrorValidated;
 use std::marker::PhantomData;
 use util::LocalGlyphCache;
 use label::Label;
@@ -23,7 +24,7 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E,()>,()>,(),()> where
+impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E,String>,MirrorValidated>,(),()> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {

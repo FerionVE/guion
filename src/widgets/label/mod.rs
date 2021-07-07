@@ -1,7 +1,9 @@
 use crate::text::stor::TextStor;
 use crate::validation::Validator;
+use crate::validation::imp::MirrorValidated;
 
 use super::*;
+use super::util::state::AtomState;
 use std::marker::PhantomData;
 use util::{LocalGlyphCache, remote_state::RemoteState};
 
@@ -21,11 +23,11 @@ pub struct Label<'w,E,Text,GlyphCache,TextValidator> where
     p: PhantomData<&'w mut &'w TextValidator>,
 }
 
-impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E,()>,()> where
+impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E,String>,MirrorValidated> where
     E: Env,
 {
     #[inline]
-    pub fn new(id: E::WidgetID) -> Self {
+    pub fn new(id: E::WidgetID) -> Self { //TODO: MirrorValidated is not a generic default
         Self{
             id,
             size: ESize::<E>::empty(),
@@ -38,10 +40,11 @@ impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E,()>,()> where
     }
 }
 
-impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E,()>>,()> where
+impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E,Text::Owned>>,MirrorValidated> where
     E: Env,
     E::Context: DynState<E>,
-    Text: TextStor<E>+'w,
+    Text: TextStor<E>+ToOwned+'w,
+    Text::Owned: Clone,
 {
     #[inline]
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {
@@ -69,6 +72,18 @@ impl<'w,E,Text,GlyphCache,TextValidator> Label<'w,E,Text,GlyphCache,TextValidato
             size: self.size,
             style: self.style,
             text,
+            align: self.align,
+            glyph_cache: self.glyph_cache,
+            p: PhantomData,
+        }
+    }
+
+    pub fn with_text_validator<TV,GC>(self) -> Label<'w,E,Text,GlyphCache,TV> where TV: Validator<Text,E>, GC: AtomState<E,LocalGlyphCache<E,TV::Cache>>+Clone {
+        Label{
+            id: self.id,
+            size: self.size,
+            style: self.style,
+            text: self.text,
             align: self.align,
             glyph_cache: self.glyph_cache,
             p: PhantomData,

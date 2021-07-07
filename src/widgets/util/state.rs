@@ -215,3 +215,24 @@ unsafe impl<T,E> Statize<E> for dyn AtomStateMut<E,T> where T: 'static, E: Env {
 }
 
 traitcast_for!(<T> AtomState<E,T>;AtomStateMut<E,T> where T: 'static);
+
+pub struct Discard;
+
+impl<T,E> AtomState<E,Option<T>> for Discard where E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<Option<T>,()> {
+        Ok(None)
+    }
+    #[inline]
+    fn get(&self, _: &mut E::Context) -> Option<T> {
+        None
+    }
+}
+impl<T,E> AtomStateMut<E,Option<T>> for Discard where E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: Option<T>) -> Result<(),()> {
+        Ok(())
+    }
+    #[inline]
+    fn set(&mut self, v: Option<T>, _: &mut E::Context) {}
+}

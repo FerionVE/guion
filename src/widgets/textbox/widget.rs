@@ -240,7 +240,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> Widget<E> for TextBox<'w,
         dyn AtomState<E,Cursor> => |s| &s.cursor;
         dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
         dyn ITextBox<E> => |s| s;
-        dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
+        dyn AtomState<E,LocalGlyphCache<E,TC::Cache>> => |s| &s.glyph_cache;
     );
 }
 
@@ -281,7 +281,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache,TC> WidgetMut<E> for TextBox<
         dyn AtomStateMut<E,Option<u32>> => |s| &mut s.cursor_stick_x;
         dyn ITextBox<E> => |s| s;
         dyn ITextBoxMut<E> => |s| s;
-        dyn AtomState<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
-        dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
+        dyn AtomState<E,LocalGlyphCache<E,TC::Cache>> => |s| &mut s.glyph_cache;
+        dyn AtomStateMut<E,LocalGlyphCache<E,TC::Cache>> => |s| &mut s.glyph_cache;
     );
 }
