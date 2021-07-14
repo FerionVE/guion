@@ -13,6 +13,8 @@ use crate::validation::Validation;
 use crate::validation::ValidationMut;
 use crate::validation::validated::Validated;
 
+use super::layout::TxtLayout;
+
 pub trait TextStor<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str>;
     #[inline]
@@ -277,4 +279,9 @@ pub fn fix_boundary(s: &str, mut off: usize) -> usize {
         off = off.saturating_sub(1); //TODO efficient algorithm
     }
     off
+}
+
+pub trait ToTextLayout<S,E>: TextStor<E> where E: Env, S: TxtLayout<E> {
+    fn to_text_layout(&self, c: &mut E::Context) -> S;
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context);
 }

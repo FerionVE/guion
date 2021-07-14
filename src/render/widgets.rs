@@ -13,7 +13,7 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, /*ERenderer<E>: AsRefMut<
     #[deprecated = "avoid this because stuff is not cached"]
     #[inline]
     fn render_text(&mut self, text: &str, align: (f32,f32), c: &mut E::Context) {
-        let g: ETextLayout<E> = TxtLayoutFromStor::<E,&str>::from(&text,c);
+        let g: ETextLayout<E> = TxtLayoutFromStor::<str,E>::from(text,c);
         let oldb = self._bounds().clone();
         let newb = oldb.inner_aligned(g.size(),align);
         self._set_bounds(&newb);
