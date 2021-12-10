@@ -4,7 +4,7 @@ use super::*;
 pub mod standard;
 
 /// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
-pub trait Handler<E>: Sized + 'static where E: Env {
+pub trait Handler<E>: Sized where E: Env {
     fn _render(l: Link<E>, r: &mut ERenderer<'_,E>);
     fn _event_direct(l: Link<E>, e: &EventCompound<E>) -> EventResp;
     fn _event_root(l: Link<E>, e: &EventCompound<E>) -> EventResp;

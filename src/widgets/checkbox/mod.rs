@@ -14,7 +14,7 @@ pub struct CheckBox<'w,E,State,Text> where
     State: 'w,
     Text: 'w,
 {
-    pub trigger: for<'a> fn(Link<'a,E>,bool),
+    pub trigger: for<'a,'cc> fn(Link<'a,'cc,E>,bool),
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,

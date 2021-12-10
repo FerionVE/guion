@@ -7,7 +7,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<E>,
     Text: AsWidget<E>,
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
@@ -115,7 +115,7 @@ impl<'w,E,Text,Tr,TrMut> WidgetMut<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<E>,
     Text: AsWidgetMut<E>,
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
@@ -146,12 +146,12 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<E>,
     S: AsWidget<E>,
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
 {
-    pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
+    pub fn pressed<'l:'s,'cc: 'l,'s>(l: &'s Link<'l,'cc,E>) -> Option<&'s EPressedKey<'cc,E>> {
         let id = l.id();
         l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],id.clone())
             .or_else(||

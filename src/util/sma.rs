@@ -97,7 +97,7 @@ impl<'a,E,T,U,V,F> AtomState<E,V> for SMA<'a,E,T,U,F> where
         self.borrow_mut().get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> V {
+    fn get(&self, c: &mut E::Context<'_>) -> V {
         self.borrow_mut().get(c)
     }
 }
@@ -111,7 +111,7 @@ impl<'a,E,T,U,V,F> AtomStateMut<E,V> for SMA<'a,E,T,U,F> where
         self.borrow_mut().set_direct(v)
     }
     #[inline]
-    fn set(&mut self, v: V, c: &mut E::Context) {
+    fn set(&mut self, v: V, c: &mut E::Context<'_>) {
         self.borrow_mut().set(v,c)
     }
 }

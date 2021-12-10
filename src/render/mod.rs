@@ -23,19 +23,19 @@ pub trait Render<E>: Sized where E: Env, /*for<'r> ERenderer<'r,E>: AsRefMut<Sel
     fn inside_border_specific<'r>(&'r mut self, s: &Border) -> ERenderer<'r,E> where Self: 'r;
     /// Fork with area inside the border defined by the [style](Self::style)
     #[inline]
-    fn inside_border<'r>(&'r mut self, c: &mut E::Context) -> ERenderer<'r,E> where Self: 'r {
+    fn inside_border<'r>(&'r mut self, c: &mut E::Context<'_>) -> ERenderer<'r,E> where Self: 'r {
         self.inside_border_specific(&self.style().border(&self.selector(),c))
     }
     /// Fork with area inside the border defined by the [style](Self::style)  
     /// Default style border is determined by the attached tags which **won't** be present on the forked RenderLink
     #[inline]
-    fn inside_border_by<'r,S>(&'r mut self, selectags: S, c: &mut E::Context) -> ERenderer<'r,E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E>, Self: 'r { //ESVariant<E>: StyleVariantSupport<V>
+    fn inside_border_by<'r,S>(&'r mut self, selectags: S, c: &mut E::Context<'_>) -> ERenderer<'r,E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E>, Self: 'r { //ESVariant<E>: StyleVariantSupport<V>
         self.inside_border_specific(&self.style().border(&self.selector().with(selectags),c))
     }
     /// Fork with area inside the border defined by the [style](Self::style)  
     /// Default style border is determined by the attached tags which **won't** be present on the forked RenderLink
     #[inline]
-    fn inside_border_by_mul<'r,S>(&'r mut self, selectags: S, multiplier: u32, c: &mut E::Context) -> ERenderer<'r,E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E>, Self: 'r { //ESVariant<E>: StyleVariantSupport<V>
+    fn inside_border_by_mul<'r,S>(&'r mut self, selectags: S, multiplier: u32, c: &mut E::Context<'_>) -> ERenderer<'r,E> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E>, Self: 'r { //ESVariant<E>: StyleVariantSupport<V>
         self.inside_border_specific(&(self.style().border(&self.selector().with(selectags),c)*multiplier))
     }
 

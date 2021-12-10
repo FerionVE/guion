@@ -23,20 +23,20 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBox<E> for TextBox<'w,E
 }
 
 pub trait ITextBoxMut<E>: ITextBox<E> where E: Env {
-    fn insert_text(&mut self, t: &str, ctx: &mut E::Context);
-    fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context);
-    fn remove_selection(&mut self, ctx: &mut E::Context) -> bool;
-    fn move_cursor_x(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context);
-    fn move_cursor_y(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context, widget_bounds: &Bounds);
-    fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context);
-    fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
+    fn insert_text(&mut self, t: &str, ctx: &mut E::Context<'_>);
+    fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context<'_>);
+    fn remove_selection(&mut self, ctx: &mut E::Context<'_>) -> bool;
+    fn move_cursor_x(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context<'_>);
+    fn move_cursor_y(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context<'_>, widget_bounds: &Bounds);
+    fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context<'_>);
+    fn scroll_to_cursor(&mut self, ctx: &mut E::Context<'_>, b: &Bounds);
 }
 
 impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
+    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,
@@ -44,7 +44,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
     CursorStickX: AtomStateMut<E,Option<u32>>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
-    fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
+    fn insert_text(&mut self, s: &str, ctx: &mut E::Context<'_>) {
         let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
         cursor.fix_boundaries(&*g);
@@ -57,7 +57,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context) {
+    fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context<'_>) {
         let g = self.glyphs2(ctx);
         if self.remove_selection(ctx) {return;}
         let mut cursor = self.cursor.get(ctx);
@@ -68,7 +68,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn remove_selection(&mut self, ctx: &mut E::Context) -> bool {
+    fn remove_selection(&mut self, ctx: &mut E::Context<'_>) -> bool {
         let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
         cursor.fix_boundaries(&*g);
@@ -81,7 +81,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
             false
         }
     }
-    fn move_cursor_x(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context) {
+    fn move_cursor_x(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context<'_>) {
         let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
         cursor.fix_boundaries(&*g);
@@ -91,7 +91,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn move_cursor_y(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context, b: &Bounds) {
+    fn move_cursor_y(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context<'_>, b: &Bounds) {
         /*let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
 
@@ -130,7 +130,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context) {
+    fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context<'_>) {
         let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
         cursor.fix_boundaries(&*g);
@@ -151,7 +151,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
         self.cursor.set(cursor,ctx);
         self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds) {
+    fn scroll_to_cursor(&mut self, ctx: &mut E::Context<'_>, b: &Bounds) {
         let g = self.glyphs2(ctx);
         let mut cursor = self.cursor.get(ctx);
         cursor.fix_boundaries(&*g);
@@ -177,7 +177,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: TextStor<E>+Validation<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomState<E,(u32,u32)>,
@@ -212,7 +212,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
+    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,
@@ -220,7 +220,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     CursorStickX: AtomStateMut<E,Option<u32>>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
-    pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<ETextLayout<E>> {
+    pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context<'_>) -> Arc<ETextLayout<E>> {
         if let Some((v,c)) = self.glyph_cache.get(ctx) {
             if self.text.valid(&c) {
                 return v;

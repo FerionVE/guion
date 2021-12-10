@@ -9,13 +9,13 @@ pub mod standard;
 
 //move StdState trait to standard StdState trait. StdState is not a core feature!
 
-pub trait CtxStdState<E>: Context<E> + Sized where E: Env, E::Context: AsRefMut<Self> {
+pub trait CtxStdState<E>: Context<E> + Sized where E: Env, for<'a> E::Context<'a>: AsRefMut<Self> {
     type T: StdState<E>;
     
     fn state_mut(&mut self) -> &mut Self::T;
     fn state(&self) -> &Self::T;
 } 
-pub trait StdState<E>: 'static where E: Env {
+pub trait StdState<E> where E: Env {
     type K: PressedKey<E>;
     
     fn hovered(&self) -> Option<E::WidgetID>;

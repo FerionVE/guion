@@ -44,7 +44,7 @@ mod imp {
     unsafe impl<'w,E> Statize<E> for dyn WidgetMut<E>+'_ where E: Env {
         type Statur = dyn WidgetMut<E>+'static;
     }
-    unsafe impl<E> Statize<E> for dyn Any {
+    unsafe impl<E> Statize<E> for dyn Any+'_ {
         type Statur = dyn Any;
     }
 

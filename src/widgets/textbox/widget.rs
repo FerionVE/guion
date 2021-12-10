@@ -14,7 +14,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: TextStor<E>+Validation<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomState<E,(u32,u32)>,
@@ -248,7 +248,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
+    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<E,Text>,
     Scroll: AtomStateMut<E,(u32,u32)>,

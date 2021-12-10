@@ -3,7 +3,7 @@ use super::*;
 pub trait IButton<E> where E: Env {
     fn trigger_auto(&self, l: &mut Link<E>);
     fn trigger(&self, l: Link<E>);
-    fn trigger_mut(&mut self, c: &mut E::Context);
+    fn trigger_mut(&mut self, c: &mut E::Context<'_>);
 }
 
 impl<'w,E,Text,Tr,TrMut> IButton<E> for Button<'w,E,Text,Tr,TrMut> where
@@ -26,7 +26,7 @@ impl<'w,E,Text,Tr,TrMut> IButton<E> for Button<'w,E,Text,Tr,TrMut> where
         self.trigger.trigger(l)
     }
     #[inline]
-    fn trigger_mut(&mut self, c: &mut E::Context) {
+    fn trigger_mut(&mut self, c: &mut E::Context<'_>) {
         self.trigger_mut.trigger_mut(c)
     }
 }

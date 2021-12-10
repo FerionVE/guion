@@ -1,7 +1,7 @@
 //! [`Queue`] trait and util fns for implementors
 use super::*;
 
-/// The Queue, accessible from [`E::Context`](Context), used to enqueue [events](Event) or actions from any thread
+/// The Queue, accessible from [`E::Context<'_>`](Context), used to enqueue [events](Event) or actions from any thread
 /// 
 /// Invalidations are always done right before rendering  
 /// Validations are always done right after rendering  
@@ -13,14 +13,14 @@ pub trait Queue<I,O> { //TODO probably remove mandatory StdEnqueueable bound
 pub enum StdEnqueueable<E> where E: Env {
     Render{force: bool},
     Event{event: EEvent<E>, ts: u64},
-    MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)},
-    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>},
-    MutateRoot{f: fn(&mut E::Storage<'_>,&mut E::Context)},
-    MutateRootClosure{f: Box<dyn FnOnce(&mut E::Storage<'_>,&mut E::Context)+'static>},
-    AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context)},
-    AccessWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+'static>},
-    AccessRoot{f: fn(&E::Storage<'_>,&mut E::Context)},
-    AccessRootClosure{f: Box<dyn FnOnce(&E::Storage<'_>,&mut E::Context)+'static>},
+    MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)},
+    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)+'static>},
+    MutateRoot{f: fn(&mut E::Storage<'_>,&mut E::Context<'_>)},
+    MutateRootClosure{f: Box<dyn FnOnce(&mut E::Storage<'_>,&mut E::Context<'_>)+'static>},
+    AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context<'_>)},
+    AccessWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context<'_>)+'static>},
+    AccessRoot{f: fn(&E::Storage<'_>,&mut E::Context<'_>)},
+    AccessRootClosure{f: Box<dyn FnOnce(&E::Storage<'_>,&mut E::Context<'_>)+'static>},
     MutMessage{path: E::WidgetPath, msg: E::Message},
     InvalidateWidget{path: E::WidgetPath},
     ValidateWidgetRender{path: E::WidgetPath},

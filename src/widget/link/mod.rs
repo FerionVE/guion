@@ -8,28 +8,28 @@ pub mod imp;
 use imp::*;
 
 /// Holds a immutable reference to the current [`Widget`] and the [widget tree](Env::Storage), also a mutable reference to the [`Context`](Env::Context)
-pub struct Link<'c,E> where E: Env {
-    pub ctx: &'c mut E::Context,
+pub struct Link<'c,'cc: 'c,E> where E: Env {
+    pub ctx: &'c mut E::Context<'cc>,
     pub widget: Resolved<'c,E>,
 }
 
-impl<'c,E> Link<'c,E> where E: Env {
+impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     /// Enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)) {
+    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)) {
         self.mutate_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context,E::WidgetPath), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+    pub fn mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath), o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.direct_path.refc(),f},o,p)
     }
     /// Enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>) {
+    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)+'static>) {
         self.mutate_closure_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context,E::WidgetPath)+'static>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)+'static>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.direct_path.refc(),f},o,p)
     }
     /// Enqueue message-style invoking of [WidgetMut::message]
@@ -39,25 +39,25 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// Enqueue message-style invoking of [WidgetMut::message]
     #[inline]
-    pub fn message_mut_at<O>(&mut self, m: E::Message, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+    pub fn message_mut_at<O>(&mut self, m: E::Message, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutMessage{path: self.widget.direct_path.refc(),msg:m},o,p)
     }
     /// Enqueue immutable access to this widget
     #[inline] 
-    pub fn later(&mut self, f: fn(WidgetRef<E>,&mut E::Context)) {
+    pub fn later(&mut self, f: fn(WidgetRef<E>,&mut E::Context<'_>)) {
         self.later_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn later_at<O>(&mut self, f: fn(WidgetRef<E>,&mut E::Context), o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+    pub fn later_at<O>(&mut self, f: fn(WidgetRef<E>,&mut E::Context<'_>), o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.direct_path.refc(),f},o,p)
     }
     /// Enqueue immutable access to this widget
     #[inline] 
-    pub fn later_closure(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+Sync>) {
+    pub fn later_closure(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context<'_>)+Sync>) {
         self.later_closure_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn later_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context)+Sync>, o: O, p: i64) where ECQueue<E>: Queue<StdEnqueueable<E>,O> {
+    pub fn later_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context<'_>)+Sync>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.direct_path.refc(),f},o,p)
     }
     #[inline]
@@ -171,11 +171,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn is_hovered(&self) -> bool where E::Context: CtxStdState<E> {
+    pub fn is_hovered(&self) -> bool where for<'a> E::Context<'a>: CtxStdState<E> {
         self.ctx.state().is_hovered(&self.id())
     }
     #[inline]
-    pub fn is_focused(&self) -> bool where E::Context: CtxStdState<E> {
+    pub fn is_focused(&self) -> bool where for<'a> E::Context<'a>: CtxStdState<E> {
         self.ctx.state().is_focused(&self.id())
     }
 
@@ -197,7 +197,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     /// Get Link for specific child by index
     #[inline]
-    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<E>,E::Error> where 'c: 's { //TODO rename to child(i), use with_child_specific
+    pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<'_,'cc,E>,E::Error> where 'c: 's { //TODO rename to child(i), use with_child_specific
         let path = self.widget.path.refc();
 
         let c = self.widget.child(i)?;
@@ -228,7 +228,7 @@ impl<'c,E> Link<'c,E> where E: Env {
         Ok(l)
     }
     #[inline]
-    pub fn _with_link<'s>(ctx: &mut E::Context, w: Resolved<'s,E>, f: impl FnOnce(Link<E>)) where 'c: 's {
+    pub fn _with_link<'s>(ctx: &mut E::Context<'_>, w: Resolved<'s,E>, f: impl FnOnce(Link<E>)) where 'c: 's {
         let l = Link{
             widget: w.lt(),
             ctx,
@@ -248,7 +248,7 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     /// Link for Widget by Path, resolves Widget by Path
     #[inline]
-    pub fn with_widget<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,E>,E::Error> where 'c: 's {
+    pub fn with_widget<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
         Ok(
             Link{
                 widget: self.widget.stor.widget(p)?,
@@ -259,13 +259,13 @@ impl<'c,E> Link<'c,E> where E: Env {
 
     /// Current widget must be parent of rw
     #[inline]
-    pub fn with_child_specific<'s>(&'s mut self, rw: Resolvable<'s,E>) -> Result<Link<'s,E>,E::Error> where 'c: 's {
+    pub fn with_child_specific<'s>(&'s mut self, rw: Resolvable<'s,E>) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
         let path = rw.in_parent_path(self.path(),false);
         self.with_resolvable(rw,path)
     }
 
     #[inline]
-    pub fn with_resolvable<'s>(&'s mut self, rw: Resolvable<'s,E>, path: E::WidgetPath) -> Result<Link<'s,E>,E::Error> where 'c: 's {
+    pub fn with_resolvable<'s>(&'s mut self, rw: Resolvable<'s,E>, path: E::WidgetPath) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
         let mut r;
 
         match rw {
@@ -292,11 +292,11 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn with_root<'s>(&'s mut self) -> Result<Link<'s,E>,()> where 'c: 's {
+    pub fn with_root<'s>(&'s mut self) -> Result<Link<'s,'cc,E>,()> where 'c: 's {
         self.with_widget(WidgetPath::empty()).map_err(|_| ()) //TODO GuionError everywhere
     }
 
-    pub fn resolve_sub<'s>(&'s mut self, sub: &E::WidgetPath) -> Result<Link<'s,E>,E::Error> where 'c: 's {
+    pub fn resolve_sub<'s>(&'s mut self, sub: &E::WidgetPath) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
         let path = self.widget.path.refc().attached_subpath(sub);
         let rw = self.widget.wref.resolve(sub.refc())?;
         
@@ -325,7 +325,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn reference<'s>(&'s mut self) -> Link<'s,E> where 'c: 's {
+    pub fn reference<'s>(&'s mut self) -> Link<'s,'cc,E> where 'c: 's {
         Link{
             widget: self.widget.reference(),
             ctx: self.ctx
@@ -350,19 +350,19 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
 
     #[inline]
-    pub fn enqueue<I,O>(&mut self, i: I, o: O, p: i64) where ECQueue<E>: Queue<I,O> {
+    pub fn enqueue<I,O>(&mut self, i: I, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<I,O> {
         self.ctx.queue_mut().push(i,o,p)
     }
 }
 
-impl<'a,E> Deref for Link<'a,E> where E: Env {
-    type Target = E::Context;
+impl<'a,'cc: 'a,E> Deref for Link<'a,'cc,E> where E: Env {
+    type Target = E::Context<'cc>;
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.ctx
     }
 }
-impl<'a,E> DerefMut for Link<'a,E> where E: Env {
+impl<'a,'cc: 'a,E> DerefMut for Link<'a,'cc,E> where E: Env {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.ctx

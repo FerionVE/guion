@@ -16,11 +16,11 @@ pub trait WidgetID: AsRefMut<Self> + Clone + PartialEq + Sized + Debug + 'static
     }
 
     #[inline]
-    fn is_hovered<E: Env>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E>, Self: AsRefMut<E::WidgetID> {
+    fn is_hovered<E: Env>(&self, c: &E::Context<'_>) -> bool where for<'a> E::Context<'a>: CtxStdState<E>, for<'a> EPressedKey<'a,E>: PressedKey<E>, Self: AsRefMut<E::WidgetID> {
         c.state().is_hovered(self.as_ref())
     }
     #[inline]
-    fn is_focused<E: Env>(&self, c: &E::Context) -> bool where E::Context: CtxStdState<E>, EPressedKey<E>: PressedKey<E>, Self: AsRefMut<E::WidgetID> {
+    fn is_focused<E: Env>(&self, c: &E::Context<'_>) -> bool where for<'a> E::Context<'a>: CtxStdState<E>, for<'a> EPressedKey<'a,E>: PressedKey<E>, Self: AsRefMut<E::WidgetID> {
         c.state().is_focused(self.as_ref())
     }
 }

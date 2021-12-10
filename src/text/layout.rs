@@ -44,6 +44,6 @@ pub enum Direction {
 }
 
 pub trait TxtLayoutFromStor<E,S> where E: Env, S: TextStor<E>+?Sized {
-    fn from(s: &S, c: &mut E::Context) -> Self;
-    fn update(&mut self, s: &S, c: &mut E::Context);
+    fn from(s: &S, c: &mut E::Context<'_>) -> Self;
+    fn update(&mut self, s: &S, c: &mut E::Context<'_>);
 }

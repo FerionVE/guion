@@ -167,19 +167,19 @@ impl<T,E> Trigger<E> for T where T: Fn(Link<E>), E: Env {
     }
 }
 
-/// blanket-implemented on all `FnMut(&mut E::Context)`
+/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
 pub trait TriggerMut<E> where E: Env {
-    fn trigger_mut(&mut self, c: &mut E::Context);
+    fn trigger_mut(&mut self, c: &mut E::Context<'_>);
 }
 
 impl<E> TriggerMut<E> for () where E: Env {
     #[inline]
-    fn trigger_mut(&mut self, _: &mut E::Context) {}
+    fn trigger_mut(&mut self, _: &mut E::Context<'_>) {}
 }
 
-impl<T,E> TriggerMut<E> for T where T: FnMut(&mut E::Context), E: Env {
+impl<T,E> TriggerMut<E> for T where T: FnMut(&mut E::Context<'_>), E: Env {
     #[inline]
-    fn trigger_mut(&mut self, c: &mut E::Context) {
+    fn trigger_mut(&mut self, c: &mut E::Context<'_>) {
         (self)(c)
     }
 }

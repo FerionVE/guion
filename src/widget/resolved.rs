@@ -20,50 +20,50 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::render`]
     #[inline]
-    pub fn render(&self, c: &mut E::Context, r: &mut ERenderer<'_,E>) {
+    pub fn render(&self, c: &mut E::Context<'_>, r: &mut ERenderer<'_,E>) {
         c.render(self.clone(),r)
     }
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::event`](Link::event_direct)
     #[inline]
-    pub fn event_direct(&self, c: &mut E::Context, e: &EventCompound<E>) -> EventResp {
+    pub fn event_direct(&self, c: &mut E::Context<'_>, e: &EventCompound<E>) -> EventResp {
         c.event_direct(self.clone(),e)
     }
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::event`](Link::send_event)
     #[inline]
-    pub fn send_event(&self, c: &mut E::Context, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
+    pub fn send_event(&self, c: &mut E::Context<'_>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
         c.send_event(self.clone(),e,child)
     }
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::size`]
     #[inline]
-    pub fn size(&self, c: &mut E::Context, e: &EStyle<E>) -> ESize<E> {
+    pub fn size(&self, c: &mut E::Context<'_>, e: &EStyle<E>) -> ESize<E> {
         c.size(self.clone(),e)
     }
 
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
-    pub fn _render(&self, c: &mut E::Context, r: &mut ERenderer<'_,E>) {
+    pub fn _render(&self, c: &mut E::Context<'_>, r: &mut ERenderer<'_,E>) {
         (**self)._render(c.link(self.clone()),r)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
-    pub fn _event_direct(&self, c: &mut E::Context, e: &EventCompound<E>) -> EventResp {
+    pub fn _event_direct(&self, c: &mut E::Context<'_>, e: &EventCompound<E>) -> EventResp {
         (**self)._event_direct(c.link(self.clone()),e)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
-    pub fn _size(&self, c: &mut E::Context, e: &EStyle<E>) -> ESize<E> {
+    pub fn _size(&self, c: &mut E::Context<'_>, e: &EStyle<E>) -> ESize<E> {
         (**self)._size(c.link(self.clone()),e)
     }
     #[inline]
-    pub fn link(&self, c: &'a mut E::Context) -> Link<'a,E> {
+    pub fn link<'cc>(&self, c: &'a mut E::Context<'cc>) -> Link<'a,'cc,E> {
         c.link(self.clone())
     }
 
     #[inline]
-    pub fn trace_bounds(&mut self, c: &mut E::Context, root_bounds: &Bounds, e: &EStyle<E>, force: bool) -> Bounds {
+    pub fn trace_bounds(&mut self, c: &mut E::Context<'_>, root_bounds: &Bounds, e: &EStyle<E>, force: bool) -> Bounds {
         self.stor.trace_bounds(c,self.path.refc(),root_bounds,e,force).unwrap()
     }
 

@@ -5,7 +5,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>+'w,
     Scroll: AtomState<E,(i32,i32)>,
 {
@@ -132,7 +132,7 @@ impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
+    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidgetMut<E>+'w,
     Scroll: AtomStateMut<E,(i32,i32)>,
 {

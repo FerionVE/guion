@@ -9,7 +9,7 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<E>,
     State: AtomState<E,bool>,
     Text: AsWidget<E>,
 {
@@ -130,7 +130,7 @@ impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<E>,
     State: AtomStateMut<E,bool>,
     Text: AsWidgetMut<E>,
 {
@@ -161,7 +161,7 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<E>,
     State: AtomState<E,bool>+'w,
     Text: AsWidget<E>,
 {

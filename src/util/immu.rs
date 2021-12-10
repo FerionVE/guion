@@ -93,7 +93,7 @@ impl<E,A,T> AtomState<E,T> for Immutable<E,A,T> where E: Env, A: AtomState<E,T> 
         (**self).get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         (**self).get(c)
     }
 }
@@ -110,7 +110,7 @@ impl<E,A,T> AtomState<E,T> for &mut Immutable<E,A,T> where E: Env, A: AtomState<
         (**self).get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         (**self).get(c)
     }
 }
@@ -127,7 +127,7 @@ impl<E,A,T> AtomState<E,T> for &Immutable<E,A,T> where E: Env, A: AtomState<E,T>
         (**self).get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         (**self).get(c)
     }
 }

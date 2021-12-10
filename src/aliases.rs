@@ -17,15 +17,15 @@ pub type ESSelector<E: Env> = <EStyle<E> as Style<E>>::Selector;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;
-pub type ECHandler<E: Env> = <E::Context as Context<E>>::Handler;
-pub type ECQueue<E: Env> = <E::Context as Context<E>>::Queue;
+pub type ECHandler<'cc,E: Env> = <E::Context<'cc> as Context<E>>::Handler;
+pub type ECQueue<'cc,E: Env> = <E::Context<'cc> as Context<E>>::Queue;
 
-pub type ECStdState<E: Env> = <E::Context as CtxStdState<E>>::T;
-pub type EPressedKey<E: Env> = <ECStdState<E> as StdState<E>>::K;
+pub type ECStdState<'cc,E: Env> = <E::Context<'cc> as CtxStdState<E>>::T;
+pub type EPressedKey<'cc,E: Env> = <ECStdState<'cc,E> as StdState<E>>::K;
 
-pub type CtxRef<'a,'s:'a,E: Env> = (&'a E::Storage<'s>,&'a mut E::Context);
-pub type CtxRefR<'a,'s:'a,E: Env> = (&'a E::Storage<'s>,&'a E::Context);
-pub type CtxRefM<'a,'s:'a,E: Env> = (&'a mut E::Storage<'s>,&'a mut E::Context);
+pub type CtxRef<'a,'s:'a,'cc:'a,E: Env> = (&'a E::Storage<'s>,&'a mut E::Context<'cc>);
+pub type CtxRefR<'a,'s:'a,'cc:'a,E: Env> = (&'a E::Storage<'s>,&'a E::Context<'cc>);
+pub type CtxRefM<'a,'s:'a,'cc:'a,E: Env> = (&'a mut E::Storage<'s>,&'a mut E::Context<'cc>);
 
 /// Reference to a [`Widget`](Widget) or [immediate widget](AsWidget)
 pub type WidgetRef<'a,E: Env> = AWidget<'a,E>;

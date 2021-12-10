@@ -6,13 +6,13 @@ use state::standard::StdStdState;
 pub mod imp;
 pub mod imps;
 
-pub struct StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self>, EEvent<E>: StdVarSup<E> {
+pub struct StdHandler<S,E> where S: Handler<E>, E: Env, for<'a> E::Context<'a>: AsRefMut<Self>, EEvent<E>: StdVarSup<E> {
     pub sup: S,
     pub s: StdStdState<E>,
     _c: PhantomData<E>,
 }
 
-impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: AsRefMut<Self>, EEvent<E>: StdVarSup<E> {
+impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, for<'a> E::Context<'a>: AsRefMut<Self>, EEvent<E>: StdVarSup<E> {
     pub fn new(sup: S) -> Self {
         Self{
             sup,

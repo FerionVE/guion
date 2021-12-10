@@ -46,7 +46,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),Cursor,Option<u32>,LocalGlyphCache<E>> 
 }
 impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,Cursor>,RemoteState<E,Option<u32>>,RemoteState<E,LocalGlyphCache<E>>> where
     E: Env,
-    E::Context: DynState<E>,
+    for<'a> E::Context<'a>: DynState<E>,
     Text: 'w,
 {
     #[inline]

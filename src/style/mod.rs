@@ -25,8 +25,8 @@ pub trait Style<E>: Clone + Default where E: Env {
     
     fn and(&self, s: &Self) -> Self; //TODO clone efficiency
 
-    fn font(&self, selector: &Self::Selector, c: &mut E::Context) -> Option<&Self::Font>;
-    fn color(&self, selector: &Self::Selector, c: &mut E::Context) -> Self::Color;
-    fn border(&self, selector: &Self::Selector, c: &mut E::Context) -> Border;
-    fn cursor(&self, selector: &Self::Selector, c: &mut E::Context) -> Self::Cursor; //TODO std specific trait
+    fn font(&self, selector: &Self::Selector, c: &mut E::Context<'_>) -> Option<&Self::Font>;
+    fn color(&self, selector: &Self::Selector, c: &mut E::Context<'_>) -> Self::Color;
+    fn border(&self, selector: &Self::Selector, c: &mut E::Context<'_>) -> Border;
+    fn cursor(&self, selector: &Self::Selector, c: &mut E::Context<'_>) -> Self::Cursor; //TODO std specific trait
 }

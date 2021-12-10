@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 /// Simple atomic type state
 pub trait AtomState<E,T> where E: Env {
     #[inline]
-    fn get(&self, _: &mut E::Context) -> T {
+    fn get(&self, _: &mut E::Context<'_>) -> T {
         self.get_direct().unwrap()
     }
     fn get_direct(&self) -> Result<T,()>;
@@ -21,7 +21,7 @@ pub trait AtomState<E,T> where E: Env {
 /// Simple atomic type state
 pub trait AtomStateMut<E,T>: AtomState<E,T> where E: Env {
     #[inline]
-    fn set(&mut self, v: T, _: &mut E::Context) {
+    fn set(&mut self, v: T, _: &mut E::Context<'_>) {
         self.set_direct(v).unwrap()
     }
     fn set_direct(&mut self, v: T) -> Result<(),()>;
@@ -166,7 +166,7 @@ impl<E,A,F,T> AtomState<E,T> for AtomStateOnSet<E,A,F,T> where E: Env, A: AtomSt
         self.2.get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         self.2.get(c)
     }
 }
@@ -184,7 +184,7 @@ impl<E,A,F,T> AtomState<E,T> for &mut AtomStateOnSet<E,A,F,T> where E: Env, A: A
         self.2.get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         self.2.get(c)
     }
 }
@@ -202,15 +202,15 @@ impl<E,A,F,T> AtomState<E,T> for &AtomStateOnSet<E,A,F,T> where E: Env, A: AtomS
         self.2.get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         self.2.get(c)
     }
 }
 
-unsafe impl<T,E> Statize<E> for dyn AtomState<E,T> where T: 'static, E: Env {
+unsafe impl<T,E> Statize<E> for dyn AtomState<E,T>+'_ where T: 'static, E: Env {
     type Statur = dyn AtomState<E,T>;
 }
-unsafe impl<T,E> Statize<E> for dyn AtomStateMut<E,T> where T: 'static, E: Env {
+unsafe impl<T,E> Statize<E> for dyn AtomStateMut<E,T>+'_ where T: 'static, E: Env {
     type Statur = dyn AtomStateMut<E,T>;
 }
 

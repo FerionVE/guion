@@ -4,7 +4,7 @@ use super::*;
 impl<S,E> Handler<E> for StdHandler<S,E> where
     S: Handler<E>,
     E: Env,
-    E::Context: AsRefMut<Self> + CtxStdState<E> + 'static,
+    for<'a> E::Context<'a>: AsRefMut<Self> + CtxStdState<E>,
     EEvent<E>: StdVarSup<E>
 {
     #[inline] 
@@ -239,20 +239,20 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
     }
 }
 
-/*impl<S,E> AsHandler<Self,E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: Context<E,Handler=Self> {
-    fn as_mut(c: &mut E::Context) -> &mut Self {
+/*impl<S,E> AsHandler<Self,E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context<'_>: Context<E,Handler=Self> {
+    fn as_mut(c: &mut E::Context<'_>) -> &mut Self {
         c._handler_mut()
     }
-    fn as_ref(c: &E::Context) -> &Self {
+    fn as_ref(c: &E::Context<'_>) -> &Self {
         c._handler()
     }
 }
 
-impl<S,E> AsHandler<S,E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context: Context<E,Handler=Self> {
-    fn as_mut(c: &mut E::Context) -> &mut S {
+impl<S,E> AsHandler<S,E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context<'_>: Context<E,Handler=Self> {
+    fn as_mut(c: &mut E::Context<'_>) -> &mut S {
         &mut c._handler_mut().sup
     }
-    fn as_ref(c: &E::Context) -> &S {
+    fn as_ref(c: &E::Context<'_>) -> &S {
         &c._handler().sup
     }
 }*/
