@@ -30,12 +30,16 @@ impl<E,T> Validation<E> for Validated<E,T> {
     fn valid(&self, _: &dyn Any) -> bool {
         self.valid
     }
+    #[inline]
+    fn validation(&self) -> Arc<dyn Any> {
+        Arc::new(())
+    }
 }
 impl<E,T> ValidationMut<E> for Validated<E,T> {
     #[inline]
     fn validate(&mut self) -> Arc<dyn Any> {
         self.valid = true;
-        Arc::new(())
+        Validation::<E>::validation(self)
     }
 }
 

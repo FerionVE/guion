@@ -19,20 +19,32 @@ impl StdID {
 }
 
 /// Macro for defining const [`StdIDs`](StdID)
+///
+/// Syntax: `const_std_id!([visibilty] ident [[visibility] ident]...);`
+///
+/// Example:
+/// ```rust
+///const_std_id!(LabelX);
+///
+///fn foo() -> StdID {
+///    LabelX()
+///}
+/// ```
 // 
 // This defines a dummy type and uses it's TypeID for `StdID::Const` variant
 #[macro_export]
 macro_rules! const_std_id {
-    ($n:ident) => {
+    ($v:vis $n:ident) => {
+        #[allow(non_snake_case)]
         #[inline]
-        pub fn $n() -> $crate::id::standard::StdID {
+        $v fn $n() -> $crate::id::standard::StdID {
             struct Ident;
             $crate::id::standard::StdID::Const(std::any::TypeId::of::<Ident>())
         }
     };
-    ($n:ident $($nn:ident)+) => {
-        $crate::const_std_id!($n);
-        $crate::const_std_id!($($nn)+);
+    ($v:vis $n:ident $($vv:vis$nn:ident)+) => {
+        $crate::const_std_id!($v $n);
+        $crate::const_std_id!($($vv $nn)+);
     };
 }
 

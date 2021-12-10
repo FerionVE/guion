@@ -7,7 +7,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>+'w,
-    Scroll: AtomState<E,(u32,u32)>,
+    Scroll: AtomState<E,(i32,i32)>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -30,6 +30,8 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
         let inner_size: ESize<E> = l.for_child(0).unwrap().size(r.style());
         let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
 
+        let (sx,sy) = fix_pox((sx,sy), (iw,ih).into(), rect.size);
+
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
         r.fork_with(Some(inner_rect), Some(rect), None, None)
@@ -46,6 +48,8 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
 
         let inner_size: ESize<E> = l.for_child(0).unwrap().size(&e.style);
         let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
+
+        let (sx,sy) = fix_pox((sx,sy), (iw,ih).into(), rect.size);
 
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
@@ -66,7 +70,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
                     ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
                 {
                     l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                        let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
+                        let w = w.traitcast_mut::<dyn AtomStateMut<E,(i32,i32)>>().unwrap();
                         let mut v = w.get(ctx);
                         if ee.key == EEKey::<E>::UP {
                             v.1 = v.1.saturating_sub(4);
@@ -80,6 +84,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
                         if ee.key == EEKey::<E>::RIGHT {
                             v.0 += 4;
                         }
+                        let v = fix_pox(v, (iw,ih).into(), rect.size);
                         w.set(v,ctx);
                     }));
                     passed = true;
@@ -119,7 +124,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     }
 
     impl_traitcast!(
-        dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
+        dyn AtomState<E,(i32,i32)> => |s| &s.scroll;
     );
 }
 
@@ -129,7 +134,7 @@ impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     EEvent<E>: StdVarSup<E>,
     E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidgetMut<E>+'w,
-    Scroll: AtomStateMut<E,(u32,u32)>,
+    Scroll: AtomStateMut<E,(i32,i32)>,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
         vec![self.inner.as_mut()]
@@ -147,7 +152,22 @@ impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     }
 
     impl_traitcast_mut!(
-        dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
-        dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
+        dyn AtomState<E,(i32,i32)> => |s| &mut s.scroll;
+        dyn AtomStateMut<E,(i32,i32)> => |s| &mut s.scroll;
     );
+}
+
+fn fix_pox(viewport_off: (i32,i32), inner_size: Dims, viewport_size: Dims) -> (i32,i32) {
+    (
+        fix_pos(inner_size.w, viewport_size.w, viewport_off.0),
+        fix_pos(inner_size.h, viewport_size.h, viewport_off.1),
+    )
+}
+
+fn fix_pos(inner_size: u32, viewport_size: u32, viewport_off: i32) -> i32 {
+    if viewport_size > inner_size {
+        viewport_off.min(0).max(inner_size as i32 - viewport_size as i32)
+    }else{
+        viewport_off.max(0).min(inner_size as i32 - viewport_size as i32)
+    }
 }

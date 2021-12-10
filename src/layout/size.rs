@@ -67,23 +67,23 @@ impl StdGonstraintAxis {
 ///
 /// Syntax:
 ///
-/// `constrant!( AXIS w [| AXIS y] )`  
+/// `constraint!( AXIS w [| AXIS y] )`  
 /// `AXIS [[min]~]preferred[-[max]]`  
 /// 
-/// `[]`: optional argument    
-/// `preferred`: the preferred size  
-/// `~`: if given, the minimum size can be smaller than preferred (default: 0)  
-/// `min`: additional to `~`, limis the minimum size to the specific min  
-/// `-`: if given, the maximum size can be bigger than preferred (default: infinity)  
-/// `max`: additional to `-`, limis the maximum size to the specific max  
+/// `[]`: Optional argument  
+/// `preferred`: The preferred size  
+/// `~`: If given, The minimum size can be smaller than preferred (default: 0)  
+/// `min`: Additional to `~`, limits the minimum size to the specific min  
+/// `-`: If given, the maximum size can be bigger than preferred (default: infinity)  
+/// `max`: Additional to `-`, limits the maximum size to the specific max  
 /// 
 /// Example:
 /// 
-/// `5`: fixed size 5  
-/// `~5`: preferred 5, can be smaller (shrinked)  
-/// `2~5`: preferred 5, can bes smaller, but not smaller than 2  
-/// `5-`: preferred 5, can be bigger (extended)  
-/// `5-8`: preferred 5, can be bigger, but not bigger than 8  
+/// `5`: Fixed size 5  
+/// `~5`: Preferred 5, can be smaller (shrinked)  
+/// `2~5`: Preferred 5, can bes smaller, but not smaller than 2  
+/// `5-`: Preferred 5, can be bigger (extended)  
+/// `5-8`: Preferred 5, can be bigger, but not bigger than 8  
 #[macro_export]
 macro_rules! constraint {
     (# $min:literal ~ $pref:literal - $max:tt @ $p:literal | $($m:tt)*) => {

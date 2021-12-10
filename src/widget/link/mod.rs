@@ -1,4 +1,4 @@
-//! The [`Link`] is used to interface [widgets](Widget) thru and tracks the current [master sword](Env::WidgetPath)
+//! The [`Link`] is used to interface [widgets](Widget) thru and tracks the current [path](Env::WidgetPath)
 use std::ops::DerefMut;
 use std::ops::Deref;
 use super::*;
@@ -128,13 +128,13 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[inline]
     pub fn _render(&mut self, r: &mut ERenderer<'_,E>) {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget)._render(w,r)
+        (*self.widget)._render(w,r)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _event_direct(&mut self, e: &EventCompound<E>) -> EventResp {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget)._event_direct(w,e)
+        (*self.widget)._event_direct(w,e)
     }
     #[inline]
     pub fn _send_event(&mut self, e: &EventCompound<E>, sub: E::WidgetPath) -> Result<EventResp,E::Error> {
@@ -144,18 +144,18 @@ impl<'c,E> Link<'c,E> where E: Env {
         };
         let _ = self.widget.resolve(sub)?;
         let w = self.ctx.link(self.widget.reference());
-        Ok( (**self.widget)._event_direct(w,&e) )
+        Ok( (*self.widget)._event_direct(w,&e) )
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _size(&mut self, e: &EStyle<E>) -> ESize<E> {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget)._size(w,e)
+        (*self.widget)._size(w,e)
     }
     #[inline]
     pub fn _tabulate(&mut self, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,E::Error> {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget)._tabulate(w,op,dir)
+        (*self.widget)._tabulate(w,op,dir)
     }
 
     #[deprecated="Not needed in OOF anymore"]
@@ -167,7 +167,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     #[deprecated="Not needed in OOF anymore"]
     pub fn _trace_bounds(&mut self, sub: E::WidgetPath, root_bounds: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget).trace_bounds(w,sub,root_bounds,e,force)
+        (*self.widget).trace_bounds(w,sub,root_bounds,e,force)
     }
 
     #[inline]
@@ -243,7 +243,7 @@ impl<'c,E> Link<'c,E> where E: Env {
     }
     pub fn child_bounds(&mut self, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
         let w = self.ctx.link(self.widget.reference());
-        (**self.widget).child_bounds(w,b,e,force)
+        (*self.widget).child_bounds(w,b,e,force)
     }
 
     /// Link for Widget by Path, resolves Widget by Path

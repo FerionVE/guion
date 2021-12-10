@@ -1,3 +1,5 @@
+use crate::text::layout::*;
+
 use super::*;
 
 //TODO refine standard render functions
@@ -11,11 +13,11 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, for<'r> ERenderer<'r,E>: 
     #[deprecated = "avoid this because stuff is not cached"]
     #[inline]
     fn render_text(&mut self, text: &str, align: (f32,f32), c: &mut E::Context) {
-        let pp = ESGlyphs::<E>::generate(text,(20.0,20.0),c); //style.preprocess_text(text,c);
-        self.inner_aligned(pp.size(),align)
-            .render_preprocessed_text(&pp,Offset::default(),c);
+        let g: ETextLayout<E> = TxtLayoutFromStor::<E,&str>::from(&text,c);
+        self.inner_aligned(g.size(),align)
+            .render_preprocessed_text(&g,Offset::default(),c);
     }
-    fn render_preprocessed_text(&mut self, text: &ESGlyphs<E>, inner_offset: Offset, c: &mut E::Context);
+    fn render_preprocessed_text(&mut self, text: &ETextLayout<E>, inner_offset: Offset, c: &mut E::Context);
 
     fn set_cursor_specific(&mut self, cursor: &ESCursor<E>, c: &mut E::Context);
 

@@ -3,6 +3,8 @@
 //! The Traits features interface for querying e.g. id or style, and also accessing or resolving child widgets
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
+use self::imp::{AWidgetMut, AWidget};
+
 use super::*;
 use std::any::{TypeId, type_name};
 use traitcast::TraitObject;
@@ -371,7 +373,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_mut()))
         }
-        let (c,sub) = self.resolve_child(&i)?;
+        let (c,sub) = self.resolve_child_mut(&i)?;
         self.child_mut(c).unwrap().resolve_child_mut(sub)
     }
 
@@ -382,11 +384,11 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn into_resolve_mut<'w>(self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
+    fn into_resolve_mut<'w>(mut self: Box<Self>, i: E::WidgetPath) -> Result<ResolvableMut<'w,E>,E::Error> where Self: 'w {
         if i.is_empty() {
             return Ok(ResolvableMut::Widget(self.box_box_mut()))
         }
-        let (c,sub) = self.resolve_child(&i)?;
+        let (c,sub) = self.resolve_child_mut(&i)?;
         self.into_child_mut(c).unwrap_nodebug().resolve_child_mut(sub)
     }
 
@@ -399,7 +401,7 @@ pub trait WidgetMut<E>: Widget<E> + WBaseMut<E> where E: Env + 'static {
     #[inline]
     fn resolve_child_mut(&mut self, sub_path: &E::WidgetPath) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
-            if let Some(r) = self.child(c).unwrap().resolved_by_path(sub_path) {
+            if let Some(r) = self.child_mut(c).unwrap().resolved_by_path(sub_path) {
                 return Ok((c,r.sub_path));
             }
         }
@@ -489,15 +491,15 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     }
     #[inline]
     fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
-        Box::new(self.erase())
+        AWidget::Ref(self)
     }
     #[inline]
     fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
-        self
+        AWidget::Box(self)
     }
     #[inline]
     fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
-        Box::new(self)
+        AWidget::Box(Box::new(self))
     }
 }
 
@@ -521,14 +523,14 @@ impl<T,E> WBaseMut<E> for T where T: WidgetMut<E>, E: Env {
     }
     #[inline]
     fn _box_mut<'s>(&'s mut self) -> WidgetRefMut<'s,E> {
-        Box::new(self.erase_mut())
+        AWidgetMut::Mut(self)
     }
     #[inline]
     fn _box_box_mut<'w>(self: Box<Self>) -> WidgetRefMut<'w,E> where Self: 'w {
-        self
+        AWidgetMut::Box(self)
     }
     #[inline]
     fn _boxed_mut<'w>(self) -> WidgetRefMut<'w,E> where Self: Sized + 'w {
-        Box::new(self)
+        AWidgetMut::Box(Box::new(self))
     }
 }

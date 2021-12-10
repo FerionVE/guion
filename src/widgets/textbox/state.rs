@@ -1,8 +1,18 @@
 use super::*;
-use util::{caption::CaptionMut, state::AtomState};
+use util::{state::AtomState};
+use crate::text::stor::*;
+use crate::text::layout::TxtLayout;
 use std::{sync::Arc, ops::{Range, RangeInclusive}};
 
-pub struct TBState<E> where E: Env {
+pub fn max_off<E>(g: &ETextLayout<E>, b: &Bounds) -> Offset where E: Env {
+    let size = g.size();
+    Offset {
+        x: size.w.saturating_sub( b.w() ) as i32,
+        y: size.h.saturating_sub( b.h() ) as i32,
+    }
+}
+
+/*pub struct TBState<E> where E: Env {
     pub off: (u32,u32), //TODO fix pub
     pub max_off: (u32,u32),
     pub cursor: Cursor,
@@ -10,16 +20,16 @@ pub struct TBState<E> where E: Env {
 }
 
 impl<E> TBState<E> where E: Env {
-    pub fn retrieve<'a,S,P,C>(caption: &S, glyphs: Arc<ESGlyphs<E>>, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: Caption<E>+'a, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
+    pub fn retrieve<'a,S,P,C>(TextStor: &S, glyphs: Arc<ETextLayout<E>>, p: &P, c: &C, ctx: &mut E::Context, b: &Bounds) -> Self where S: TextStor<E>+'a, P: AtomState<E,(u32,u32)>, C: AtomState<E,Cursor> {
         let off = p.get(ctx);
-        //assert_eq!(glyphs.chars() as usize,caption.len()+1);
+        //assert_eq!(glyphs.chars() as usize,TextStor.len()+1);
         let siz = glyphs.size();
         let max_off = (
             siz.w.saturating_sub( b.w() ),
             siz.h.saturating_sub( b.h() ),
         );
         let cursor = c.get(ctx);
-        let num_glyphs = caption.len() as u32;
+        let num_glyphs = TextStor.len() as u32;
         let cursor = cursor.min(num_glyphs);
         Self{
             off,
@@ -157,7 +167,7 @@ impl<E> TBState<E> where E: Env {
                 return last as u32;
             })
     }
-}
+}*/
 
 #[derive(Copy,Clone,Default)]
 pub struct Cursor {
@@ -193,7 +203,7 @@ impl Cursor {
     }
     pub fn unselect_add(&mut self, o: u32, skip_unselect: bool) {
         self.caret += o;
-        if !skip_unselect {     
+        if !skip_unselect {
             self.select = self.caret;
         }
     }
@@ -212,10 +222,14 @@ impl Cursor {
     pub fn limit(&mut self, min: u32) {
         *self = self.min(min);
     }
-    pub fn del_selection<'a,S,E>(&mut self, c: &mut S) where S: CaptionMut<E>+'a {
+    pub fn del_selection<'a,S,E>(&mut self, c: &mut S) where S: TextStorMut<E>+'a, E: Env {
         let (start,len) = self.start_len();
-        c.pop_left((start+len) as usize, len as usize);
+        c.remove_chars(self.range_usize());
         self.caret = start;
         self.unselect();
+    }
+    pub fn fix_boundaries<E>(&mut self, t: &impl TxtLayout<E>) where E: Env {
+        self.caret = t.fix_boundary(self.caret as usize) as u32;
+        self.select = t.fix_boundary(self.select as usize) as u32;
     }
 }

@@ -1,8 +1,11 @@
 //! Aliases for deep/nested types inside Env
 #![allow(type_alias_bounds)]
+use crate::widget::imp::{AWidgetMut, AWidget};
+
 use super::*;
 
 pub type ERenderer<'a,E: Env> = <E::Backend as Backend<E>>::Renderer<'a>;
+pub type ETextLayout<E: Env> = <E::Backend as Backend<E>>::TextLayout;
 pub type EEvent<E: Env> = <E::Backend as Backend<E>>::Event;
 pub type EEDest<E: Env> = <EEvent<E> as Event<E>>::Dest;
 pub type EEKey<E: Env> = <EEvent<E> as Event<E>>::Key;
@@ -11,8 +14,6 @@ pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
 pub type ESize<E: Env> = <E::Backend as Backend<E>>::Size;
 
 pub type ESSelector<E: Env> = <EStyle<E> as Style<E>>::Selector;
-pub type ESGlyphs<E: Env> = <EStyle<E> as Style<E>>::Glyphs;
-pub type ESGlyph<E: Env> = <ESGlyphs<E> as Glyphs<E>>::Glyph;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;
@@ -27,6 +28,6 @@ pub type CtxRefR<'a,'s:'a,E: Env> = (&'a E::Storage<'s>,&'a E::Context);
 pub type CtxRefM<'a,'s:'a,E: Env> = (&'a mut E::Storage<'s>,&'a mut E::Context);
 
 /// Reference to a [`Widget`](Widget) or [immediate widget](AsWidget)
-pub type WidgetRef<'a,E: Env> = Box<(dyn Widget<E>+'a)>;
+pub type WidgetRef<'a,E: Env> = AWidget<'a,E>;
 /// Reference to a [`Widget`](WidgetMut) or [immediate widget](AsWidgetMut)
-pub type WidgetRefMut<'a,E: Env> = Box<(dyn WidgetMut<E>+'a)>;
+pub type WidgetRefMut<'a,E: Env> = AWidgetMut<'a,E>;
