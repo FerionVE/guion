@@ -83,7 +83,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
         let mut passed = false;
 
         if let Some(ee) = e.event.is_text_input() {
-            if !l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+            if !l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 let s = ee.text;
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
@@ -94,29 +94,29 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
             if
-                ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::BACKSPACE ||
-                ee.key == EEKey::<E>::LEFT || ee.key == EEKey::<E>::RIGHT
+                ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdBackspace ||
+                ee.key == MatchKeyCode::KbdLeft || ee.key == MatchKeyCode::KbdRight
             {
-                let ctrl = l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some();
+                let ctrl = l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some();
 
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
-                    if ee.key == EEKey::<E>::BACKSPACE {
+                    if ee.key == MatchKeyCode::KbdBackspace {
                         w.remove_selection_or_n(1,ctx);
                     }
-                    if ee.key == EEKey::<E>::ENTER {
+                    if ee.key == MatchKeyCode::KbdReturn {
                         w.insert_text("\n",ctx);
                     }
-                    if ee.key == EEKey::<E>::LEFT {
+                    if ee.key == MatchKeyCode::KbdLeft {
                         w.move_cursor_x(Direction::Left,ctrl,ctx);
                     }
-                    if ee.key == EEKey::<E>::RIGHT {
+                    if ee.key == MatchKeyCode::KbdRight {
                         w.move_cursor_x(Direction::Right,ctrl,ctx);
                     }
                     w.scroll_to_cursor(ctx,&b);
                 }));
                 passed = true;
-            }else if ee.key == EEKey::<E>::A && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+            }else if ee.key == MatchKeyCode::KbdA && l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let wc = w.traitcast_mut::<dyn TextStorMut<E>>().unwrap();
                     cursor.select = 0;
@@ -125,7 +125,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                     w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
                 }));
                 passed = true;
-            }else if ee.key == EEKey::<E>::V && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+            }else if ee.key == MatchKeyCode::KbdV && l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 if let Some(text) = l.clipboard_get_text() {
                     l.mutate_closure(Box::new(move |mut w,ctx,_| {
                         let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
@@ -134,14 +134,14 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                     }));
                 }
                 passed = true;
-            }else if (ee.key == EEKey::<E>::C || ee.key == EEKey::<E>::X) && l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+            }else if (ee.key == MatchKeyCode::KbdC || ee.key == MatchKeyCode::KbdX) && l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 if cursor.is_selection() {
                     let range = cursor.range_usize();
                     let text = self.text.caption();
                     let text = &text.as_ref()[range];
                     l.clipboard_set_text(text);
 
-                    if ee.key == EEKey::<E>::X {
+                    if ee.key == MatchKeyCode::KbdX {
                         l.mutate_closure(Box::new(move |mut w,ctx,_| {
                             let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
                             w.remove_selection(ctx);
@@ -150,17 +150,17 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
                     }
                 }
                 passed = true;
-            }else if ee.key == EEKey::<E>::UP || ee.key == EEKey::<E>::DOWN {
-                let ctrl = l.state().is_pressed(&[EEKey::<E>::CTRL]).is_some();
+            }else if ee.key == MatchKeyCode::KbdUp || ee.key == MatchKeyCode::KbdDown {
+                let ctrl = l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some();
 
                 let b = b.clone();
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
                     let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
 
-                    if ee.key == EEKey::<E>::UP {
+                    if ee.key == MatchKeyCode::KbdUp {
                         w.move_cursor_y(Direction::Up,ctrl,ctx,&b);
                     }
-                    if ee.key == EEKey::<E>::DOWN {
+                    if ee.key == MatchKeyCode::KbdDown {
                         w.move_cursor_y(Direction::Down,ctrl,ctx,&b);
                     }
                     w.scroll_to_cursor(ctx,&b);
@@ -191,7 +191,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
             if let Some(mouse) = l.state().cursor_pos() { //TODO strange event handling
 
                 let mouse_down = e.event.is_mouse_down();
-                let mouse_pressed = l.is_hovered() && l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()).is_some();
+                let mouse_pressed = l.is_hovered() && l.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone()).is_some();
                 let b = b.clone();
 
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {

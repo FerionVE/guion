@@ -61,12 +61,12 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
             l.enqueue_invalidate()
         }
         if let Some(ee) = e.event.is_mouse_up() {
-            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
+            if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
                 self.trigger_auto(&mut l);
                 return true;
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
-            if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
+            if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.is(self.id()) {
                 self.trigger_auto(&mut l);
                 return true;
             }
@@ -153,12 +153,12 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
 {
     pub fn pressed<'l:'s,'s>(l: &'s Link<'l,E>) -> Option<&'s EPressedKey<E>> {
         let id = l.id();
-        l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],id.clone())
+        l.state().is_pressed_and_id(MatchKeyCode::MouseLeft,id.clone())
             .or_else(||
-                l.state().is_pressed_and_id(&[EEKey::<E>::ENTER],id.clone())
+                l.state().is_pressed_and_id(MatchKeyCode::KbdReturn,id.clone())
             )
             .or_else(||
-                l.state().is_pressed_and_id(&[EEKey::<E>::SPACE],id)
+                l.state().is_pressed_and_id(MatchKeyCode::KbdSpace,id)
             )
     }
 }
