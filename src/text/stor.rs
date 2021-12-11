@@ -62,12 +62,7 @@ pub trait TextStorMut<E>: TextStor<E> {
     }
 }
 
-impl<E> TextStor<E> for str  {
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
-        Cow::Borrowed(&self[..])
-    }
-}
-impl<E> TextStor<E> for &str {
+impl<E> TextStor<E> for str {
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         Cow::Borrowed(&self[..])
     }
@@ -90,7 +85,7 @@ impl<E> TextStorMut<E> for String {
     }
 }
 
-impl<E,A> TextStor<E> for &A where A: TextStor<E>, E: Env {
+impl<E,A> TextStor<E> for &A where A: TextStor<E> + ?Sized {
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
     }
@@ -104,7 +99,7 @@ impl<E,A> TextStor<E> for &A where A: TextStor<E>, E: Env {
     }
 }
 
-impl<E,A> TextStor<E> for &mut A where A: TextStor<E>, E: Env {
+impl<E,A> TextStor<E> for &mut A where A: TextStor<E> + ?Sized {
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
     }
@@ -117,7 +112,7 @@ impl<E,A> TextStor<E> for &mut A where A: TextStor<E>, E: Env {
         (**self).len()
     }
 }
-impl<E,A> TextStorMut<E> for &mut A where A: TextStorMut<E>, E: Env {
+impl<E,A> TextStorMut<E> for &mut A where A: TextStorMut<E> + ?Sized {
     fn remove_chars(&mut self, range: Range<usize>) {
         (**self).remove_chars(range)
     }
@@ -145,7 +140,7 @@ fn char_off(s: impl AsRef<str>, o: usize) -> usize {
     }
 }
 
-impl<E,T> TextStor<E> for Validated<E,T> where T: TextStor<E>, E: Env {
+impl<E,T> TextStor<E> for Validated<E,T> where T: TextStor<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
     }
@@ -158,7 +153,7 @@ impl<E,T> TextStor<E> for Validated<E,T> where T: TextStor<E>, E: Env {
         (**self).len()
     }
 }
-impl<E,T> TextStorMut<E> for Validated<E,T> where T: TextStorMut<E>, E: Env {
+impl<E,T> TextStorMut<E> for Validated<E,T> where T: TextStorMut<E> {
     fn remove_chars(&mut self, range: Range<usize>) {
         (**self).remove_chars(range)
     }
@@ -284,4 +279,44 @@ pub fn fix_boundary(s: &str, mut off: usize) -> usize {
 pub trait ToTextLayout<S,E>: TextStor<E> where E: Env, S: TxtLayout<E> {
     fn to_text_layout(&self, c: &mut E::Context) -> S;
     fn update_text_layout(&self, s: &mut S, c: &mut E::Context);
+}
+
+impl<T,S,E> ToTextLayout<S,E> for &T where E: Env, T: ToTextLayout<S,E> + ?Sized, S: TxtLayout<E> {
+    fn to_text_layout(&self, c: &mut E::Context) -> S {
+        (**self).to_text_layout(c)
+    }
+
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context) {
+        (**self).update_text_layout(s,c)
+    }
+}
+
+impl<T,S,E,F> ToTextLayout<S,E> for OnModification<E,T,F> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E>, F: FnMut(&mut T) {
+    fn to_text_layout(&self, c: &mut E::Context) -> S {
+        (**self).to_text_layout(c)
+    }
+
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context) {
+        (**self).update_text_layout(s,c)
+    }
+}
+
+impl<T,S,E> ToTextLayout<S,E> for Validated<E,T> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E> {
+    fn to_text_layout(&self, c: &mut E::Context) -> S {
+        (**self).to_text_layout(c)
+    }
+
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context) {
+        (**self).update_text_layout(s,c)
+    }
+}
+
+impl<T,S,E,Z> ToTextLayout<S,E> for Immutable<E,T,Z> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E> {
+    fn to_text_layout(&self, c: &mut E::Context) -> S {
+        (**self).to_text_layout(c)
+    }
+
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context) {
+        (**self).update_text_layout(s,c)
+    }
 }

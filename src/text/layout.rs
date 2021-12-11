@@ -48,7 +48,7 @@ pub trait TxtLayoutFromStor<S,E> where E: Env, S: TextStor<E>+?Sized {
     fn update(&mut self, s: &S, c: &mut E::Context);
 }
 
-impl<T,S,E> TxtLayoutFromStor<S,E> for T where T: TxtLayout<E>, S: ToTextLayout<T,E>, E: Env {
+impl<T,S,E> TxtLayoutFromStor<S,E> for T where T: TxtLayout<E>, S: ToTextLayout<T,E> + ?Sized, E: Env {
     #[inline]
     fn from(s: &S, c: &mut E::Context) -> Self {
         s.to_text_layout(c)
