@@ -1,6 +1,8 @@
 //! query some StdState from any Handler/Context tracking some StdState
 use super::*;
 
+use crate::event::key_combo::{KeyCombo, MatchKey, Matches};
+
 pub mod handler;
 pub mod dyn_state;
 pub mod standard;
@@ -38,16 +40,27 @@ pub trait StdState<E>: 'static where E: Env {
 
     fn pressed(&self) -> &[Self::K];
     #[inline]
-    fn is_pressed(&self, c: &[EEKey<E>]) -> Option<&Self::K> {
-        //todo!() implement all c handling
-        self.pressed().iter()
-            .find(#[inline] |p| p.key() == c[0] )
+    fn is_pressed(&self, c: impl KeyCombo<E>) -> Option<&Self::K> {
+        let getion = |e: MatchKey<'_,E>| {
+            self.pressed().iter().enumerate()
+                .find(|(_,v)| e.matches(&v.key()) )
+                .map(|(i,_)| (true,Some(Matches(vec![i]))) )
+                .unwrap_or((false,None))
+        };
+        if let (true,Some(k)) = c.match_in(getion) {
+            Some(&self.pressed()[k.max()])
+        } else {
+            None
+        }
     }
     #[inline]
-    fn is_pressed_and_id(&self, c: &[EEKey<E>], id: E::WidgetID) -> Option<&Self::K> {
-        //todo!() implement all c handling
-        self.pressed().iter()
-            .find(#[inline] |p| p.key() == c[0] && p.widget().is(id.clone()) )
+    fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: E::WidgetID) -> Option<&Self::K> {
+        if let Some(v) = self.is_pressed(c) {
+            if v.widget().is(id.clone()) {
+                return Some(v);
+            }
+        }
+        None
     }
 
     fn cursor_pos(&self) -> Option<Offset>;

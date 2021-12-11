@@ -73,14 +73,14 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
             l.enqueue_invalidate()
         }
         if let Some(ee) = e.event.is_mouse_up() {
-            if ee.key == EEKey::<E>::MOUSE_LEFT && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
+            if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
                 let new = !self.state.get(l.ctx);
                 (self.trigger)(l.reference(),new);
                 Self::set(l,new);
                 return true;
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
-            if (ee.key == EEKey::<E>::ENTER || ee.key == EEKey::<E>::SPACE) && ee.down_widget.is(self.id()) {
+            if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.is(self.id()) {
                 let new = !self.state.get(l.ctx);
                 (self.trigger)(l.reference(),new);
                 Self::set(l,new);
