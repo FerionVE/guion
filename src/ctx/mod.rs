@@ -8,12 +8,14 @@ pub mod clipboard;
 
 /// The Context contains the [`Handlers`](Handler), the [`Queue`] and other side data and is also the entry point for most actions.  
 /// A Context is regularly referenced in parallel with the [widget tree](Env::Storage)
-pub trait Context<E>: for<'a> AsRefMut<E::Context<'a>> + Sized where E: Env, for<'a> E::Context<'a>: AsRefMut<Self> {
+pub trait Context<E>: Sized  where E: Env {
     type Handler: Handler<E>;
     type Queue: Queue<StdEnqueueable<E>,StdOrder>;
 
     fn queue_mut(&mut self) -> &mut Self::Queue;
     fn queue(&self) -> &Self::Queue;
+
+    fn lt_mut(&mut self) -> &mut E::Context<'_>;
 
     #[inline] 
     fn render(&mut self, w: Resolved<E>, r: &mut ERenderer<'_,E>) {
@@ -39,7 +41,7 @@ pub trait Context<E>: for<'a> AsRefMut<E::Context<'a>> + Sized where E: Env, for
     #[inline]
     fn link<'s,'l: 's,'t: 's,'cc: 's>(&'s mut self, w: Resolved<'t,E>) -> Link<'s,'cc,E> where Self: 'cc {
         Link{
-            ctx: self.as_mut(),
+            ctx: self.lt_mut(),
             widget: w.lt(),
         }
     }

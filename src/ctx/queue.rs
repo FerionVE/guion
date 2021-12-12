@@ -1,7 +1,7 @@
 //! [`Queue`] trait and util fns for implementors
 use super::*;
 
-/// The Queue, accessible from [`E::Context<'_>`](Context), used to enqueue [events](Event) or actions from any thread
+/// The Queue, accessible from [`E::Context`](Context), used to enqueue [events](Event) or actions from any thread
 /// 
 /// Invalidations are always done right before rendering  
 /// Validations are always done right after rendering  

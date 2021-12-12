@@ -18,7 +18,7 @@ pub trait CtxStdState<E>: Context<E> + Sized where E: Env, for<'a> E::Context<'a
     fn state(&self) -> &Self::T;
 } 
 pub trait StdState<E> where E: Env {
-    type K: PressedKey<E>;
+    type K: PressedKey<E> + 'static;
     
     fn hovered(&self) -> Option<E::WidgetID>;
     fn selected(&self) -> Option<E::WidgetID>;
