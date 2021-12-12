@@ -101,12 +101,12 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                             ).unwrap_or(false);
                             let mut do_tab = false;
                             if let Ok(l) = l.with_widget(id.path.refc()) {
-                                if key == EEKey::<E>::TAB && l.widget._tabulate_by_tab() {
+                                if key == MatchKeyCode::KbdTab && l.widget._tabulate_by_tab() {
                                     do_tab = true;
                                 }
                             }
                             if do_tab {
-                                let reverse = l.state().is_pressed(&[EEKey::<E>::SHIFT]).is_some();
+                                let reverse = l.state().is_pressed(MatchKeyCode::KbdShift).is_some();
                                 let dir = if reverse {TabulateDirection::Backward} else {TabulateDirection::Forward};
                                 let path = tabi(l.reference(),id.path,dir).expect("TODO");
                                 //better way than this hack to get the ident

@@ -13,7 +13,7 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, for<'r> ERenderer<'r,E>: 
     #[deprecated = "avoid this because stuff is not cached"]
     #[inline]
     fn render_text(&mut self, text: &str, align: (f32,f32), c: &mut E::Context<'_>) {
-        let g: ETextLayout<E> = TxtLayoutFromStor::<E,&str>::from(&text,c);
+        let g: ETextLayout<E> = TxtLayoutFromStor::<str,E>::from(text,c);
         self.inner_aligned(g.size(),align)
             .render_preprocessed_text(&g,Offset::default(),c);
     }

@@ -62,7 +62,7 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
         //if let Some(e) = e.slice_bounds(&bounds[1]).filter(&l) {
             if let Some(mm) = e.event.is_mouse_move() {
                 //if mouse is down and was pressed on us
-                if let Some(_) = l.state().is_pressed_and_id(&[EEKey::<E>::MOUSE_LEFT],self.id.clone()) {
+                if let Some(_) = l.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone()) {
                     let cursor = l.state().cursor_pos().expect("TODO");
                     let mut cx = cursor.par(o);
                     let (mut wx0, ww) = e.bounds.par(o);

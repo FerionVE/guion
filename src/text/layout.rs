@@ -3,9 +3,9 @@ use std::ops::Range;
 use crate::env::Env;
 use crate::util::bounds::*;
 
-use super::stor::TextStor;
+use super::stor::{TextStor, ToTextLayout};
 
-pub trait TxtLayout<E>: TxtLayoutFromStor<E,str>+TxtLayoutFromStor<E,String>+for<'a> TxtLayoutFromStor<E,&'a str> where E: Env {
+pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for<'a> TxtLayoutFromStor<&'a str,E> where E: Env {
     fn remove_chars(&mut self, range: Range<usize>);
     /// off in char units
     fn push_chars(&mut self, off: usize, chars: &str);
@@ -43,7 +43,18 @@ pub enum Direction {
     Down,
 }
 
-pub trait TxtLayoutFromStor<E,S> where E: Env, S: TextStor<E>+?Sized {
+pub trait TxtLayoutFromStor<S,E> where E: Env, S: TextStor<E>+?Sized {
     fn from(s: &S, c: &mut E::Context<'_>) -> Self;
     fn update(&mut self, s: &S, c: &mut E::Context<'_>);
+}
+
+impl<T,S,E> TxtLayoutFromStor<S,E> for T where T: TxtLayout<E>, S: ToTextLayout<T,E> + ?Sized, E: Env {
+    #[inline]
+    fn from(s: &S, c: &mut E::Context<'_>) -> Self {
+        s.to_text_layout(c)
+    }
+    #[inline]
+    fn update(&mut self, s: &S, c: &mut E::Context<'_>) {
+        s.update_text_layout(self, c)
+    }
 }

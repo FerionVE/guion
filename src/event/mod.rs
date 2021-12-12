@@ -7,6 +7,7 @@ pub mod compound;
 pub mod filter;
 pub mod variant;
 pub mod key;
+pub mod key_combo;
 pub mod standard;
 pub mod imp;
 

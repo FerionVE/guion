@@ -1,5 +1,5 @@
 //! RefCell-based Shared Mutable Access helper for mutable immediate widgets e.g. when multiple parts need to mutably reference to the same thing
-use crate::{text::stor::{TextStor, TextStorMut}, validation::{Validation, ValidationMut}, widgets::util::state::{AtomState, AtomStateMut}};
+use crate::{text::{stor::{TextStor, TextStorMut, ToTextLayout}, layout::TxtLayout}, validation::{Validation, ValidationMut}, widgets::util::state::{AtomState, AtomStateMut}};
 
 use super::*;
 use std::{cell::{RefMut, RefCell}, marker::PhantomData, rc::Rc, sync::Arc};
@@ -156,6 +156,21 @@ impl<'w,'a,E,T,U,F> TextStorMut<E> for SMA<'a,E,T,U,F> where
     #[inline]
     fn replace(&mut self, s: &str) {
         self.borrow_mut().replace(s)
+    }
+}
+
+impl<'w,'a,E,S,T,U,F> ToTextLayout<S,E> for SMA<'a,E,T,U,F> where 
+    E: Env,
+    S: TxtLayout<E>,
+    U: ToTextLayout<S,E>+'w,
+    F: SMALens<T,U>
+{
+    fn to_text_layout(&self, c: &mut E::Context<'_>) -> S {
+        self.borrow_mut().to_text_layout(c)
+    }
+
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context<'_>) {
+        self.borrow_mut().update_text_layout(s,c)
     }
 }
 

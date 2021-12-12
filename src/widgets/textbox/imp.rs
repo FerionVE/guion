@@ -38,7 +38,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
-    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
@@ -112,7 +112,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
             let i = g.at_coord((x,line)).unwrap();
 
             cursor.caret = i;
-            if !ctx.state().is_pressed(&[EEKey::<E>::CTRL]).is_some() {
+            if !ctx.state().is_pressed(&[MatchKeyCode::KbdCtrl]).is_some() {
                 cursor.select = cursor.caret;
             }
 
@@ -179,7 +179,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: TextStor<E>+Validation<E>+'w,
-    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
     CursorStickX: AtomState<E,Option<u32>>,
@@ -193,7 +193,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
         }
 
         let glyphs: Arc<ETextLayout<E>> = Arc::new(
-            TxtLayoutFromStor::<E,Text>::from(&self.text,l.ctx)
+            TxtLayoutFromStor::<Text,E>::from(&self.text,l.ctx)
         );
 
         let g = glyphs.refc();
@@ -214,7 +214,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
-    ETextLayout<E>: TxtLayoutFromStor<E,Text>,
+    ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
     CursorStickX: AtomStateMut<E,Option<u32>>,
@@ -228,7 +228,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
         }
 
         let glyphs: Arc<ETextLayout<E>> = Arc::new(
-            TxtLayoutFromStor::<E,Text>::from(&self.text,ctx)
+            TxtLayoutFromStor::<Text,E>::from(&self.text,ctx)
         );
 
         let key = self.text.validate();
