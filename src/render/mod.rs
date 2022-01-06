@@ -17,7 +17,9 @@ pub trait Render<E>: Sized where E: Env, /*for<'r> ERenderer<'r,E>: AsRefMut<Sel
     fn with_force<'r>(&'r mut self, force: bool) -> ERenderer<'r,E> where Self: 'r;
 
     /// Fork with [force](Self::force) set to true
-    fn enforced<'r>(&'r mut self) -> ERenderer<'r,E> where Self: 'r;
+    fn enforced<'r>(&'r mut self) -> ERenderer<'r,E> where Self: 'r {
+        self.with_force(true)
+    }
 
     /// Fork with area inside the border
     fn inside_border_specific<'r>(&'r mut self, s: &Border) -> ERenderer<'r,E> where Self: 'r;
