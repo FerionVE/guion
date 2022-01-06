@@ -3,7 +3,7 @@ use crate::text::layout::*;
 use super::*;
 
 //TODO refine standard render functions
-pub trait RenderStdWidgets<E>: Render<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r {
+pub trait RenderStdWidgets<E>: Render<E> where E: Env {
     /// Fill the current bounds with the color derived from style
     fn fill_rect(&mut self, c: &mut E::Context<'_>);
 
@@ -12,7 +12,7 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env, for<'r> ERenderer<'r,E>: 
 
     #[deprecated = "avoid this because stuff is not cached"]
     #[inline]
-    fn render_text(&mut self, text: &str, align: (f32,f32), c: &mut E::Context<'_>) {
+    fn render_text(&mut self, text: &str, align: (f32,f32), c: &mut E::Context<'_>) where for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r {
         let g: ETextLayout<E> = TxtLayoutFromStor::<str,E>::from(text,c);
         self.inner_aligned(g.size(),align)
             .render_preprocessed_text(&g,Offset::default(),c);

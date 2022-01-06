@@ -3,7 +3,7 @@ use util::{state::*};
 
 impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>+'w,
@@ -130,7 +130,7 @@ impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
 
 impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
     W: AsWidgetMut<E>+'w,

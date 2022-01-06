@@ -177,7 +177,7 @@ impl<E> TriggerMut<E> for () where E: Env {
     fn trigger_mut(&mut self, _: &mut E::Context<'_>) {}
 }
 
-impl<T,E> TriggerMut<E> for T where T: FnMut(&mut E::Context<'_>), E: Env {
+impl<T,E> TriggerMut<E> for T where T: for<'a,'b> FnMut(&'a mut E::Context<'b>), E: Env {
     #[inline]
     fn trigger_mut(&mut self, c: &mut E::Context<'_>) {
         (self)(c)

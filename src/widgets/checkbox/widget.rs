@@ -7,7 +7,7 @@ use super::imp::ICheckBoxMut;
 
 impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E>,
     State: AtomState<E,bool>,
@@ -128,7 +128,7 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
 
 impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E>,
     State: AtomStateMut<E,bool>,
@@ -159,7 +159,7 @@ impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
 
 impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E>,
     State: AtomState<E,bool>+'w,

@@ -12,7 +12,7 @@ use validation::*;
 
 impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: TextStor<E>+Validation<E>+'w,
@@ -246,7 +246,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
 
 impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,

@@ -40,7 +40,6 @@ impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
 
 impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
     E: Env,
-    for<'a> E::Context<'a>: DynState<E>,
     Text: TextStor<E>+Validation<E>+'w,
 {
     #[inline]

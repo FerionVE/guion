@@ -8,7 +8,7 @@ use validation::{ValidationMut, Validation};
 
 impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     Text: TextStor<E>+Validation<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
@@ -68,7 +68,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
 
 impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     Text: TextStorMut<E>+ValidationMut<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
@@ -96,7 +96,7 @@ impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
 
 impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     Text: TextStor<E>+Validation<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,

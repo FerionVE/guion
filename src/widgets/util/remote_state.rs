@@ -3,12 +3,12 @@ use std::marker::PhantomData;
 use state::*;
 
 #[derive(Clone)]
-pub struct RemoteState<E,T> where E: Env, T: Clone + Default + 'static, for<'a> E::Context<'a>: DynState<E> {
+pub struct RemoteState<E,T> where E: Env, T: Clone + Default + 'static {
     id: E::WidgetID,
     _p: PhantomData<T>,
 }
 
-impl<E,T> RemoteState<E,T> where E: Env, T: Clone + Default + 'static, for<'a> E::Context<'a>: DynState<E> {
+impl<E,T> RemoteState<E,T> where E: Env, T: Clone + Default + 'static {
     #[inline]
     pub fn for_widget(id: E::WidgetID) -> Self {
         Self{

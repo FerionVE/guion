@@ -5,7 +5,7 @@ use super::imp::*;
 
 impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E>,
     Text: AsWidget<E>,
@@ -113,7 +113,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
 
 impl<'w,E,Text,Tr,TrMut> WidgetMut<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E>,
     Text: AsWidgetMut<E>,
@@ -144,7 +144,7 @@ impl<'w,E,Text,Tr,TrMut> WidgetMut<E> for Button<'w,E,Text,Tr,TrMut> where
 
 impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E>,
     S: AsWidget<E>,
