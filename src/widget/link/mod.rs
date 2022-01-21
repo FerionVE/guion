@@ -142,7 +142,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
             filter: e.filter.clone().attach_path_prefix(sub.clone()),
             ..e.clone()
         };
-        let _ = self.widget.resolve(sub)?;
+        let _ = self.widget.resolve(sub,self.widget.root.fork(),self.ctx)?;
         let w = self.ctx.link(self.widget.reference());
         Ok( (*self.widget)._event_direct(w,&e) )
     }
@@ -183,7 +183,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     #[allow(deprecated)]
     #[inline]
     pub fn child_paths(&self) -> Vec<E::WidgetPath> {
-        self.widget.child_paths()
+        self.widget.child_paths(self.widget.root.fork(),self.ctx)
     }
 
     /// Run closure for every child
@@ -200,25 +200,16 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     pub fn for_child<'s>(&'s mut self, i: usize) -> Result<Link<'_,'cc,E>,E::Error> where 'c: 's { //TODO rename to child(i), use with_child_specific
         let path = self.widget.path.refc();
 
-        let c = self.widget.child(i)?;
+        let w = self.widget.child(i,self.widget.root.fork(),self.ctx)?;
         let mut r;
 
-        match c {
-            Resolvable::Widget(w) => {
-                let cpath = w.in_parent_path(path.refc()).into();
-                r = Resolved {
-                    path: cpath.refc(),
-                    direct_path: cpath,
-                    wref: w,
-                    stor: self.widget.stor.lt_ref(),
-                };
-            },
-            Resolvable::Path(w) => {
-                let cpath = path.for_child_widget_path(&w,false);
-                r = self.widget.stor.widget(w)?;
-                r.path = cpath;
-            }
-        }
+        let cpath = w.in_parent_path(path.refc()).into();
+        r = Resolved {
+            path: cpath.refc(),
+            direct_path: cpath,
+            wref: w,
+            root: self.widget.root.fork(),
+        };
 
         let l = Link{
             widget: r,
@@ -259,29 +250,21 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
 
     /// Current widget must be parent of rw
     #[inline]
-    pub fn with_child_specific<'s>(&'s mut self, rw: Resolvable<'s,E>) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
-        let path = rw.in_parent_path(self.path(),false);
+    pub fn with_child_specific<'s>(&'s mut self, rw: WidgetRef<'s,E>) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
+        let path = rw.in_parent_path(self.path());
         self.with_resolvable(rw,path)
     }
 
     #[inline]
-    pub fn with_resolvable<'s>(&'s mut self, rw: Resolvable<'s,E>, path: E::WidgetPath) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
+    pub fn with_resolvable<'s>(&'s mut self, rw: WidgetRef<'s,E>, path: E::WidgetPath) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
         let mut r;
 
-        match rw {
-            Resolvable::Widget(w) => {
-                r = Resolved {
-                    path: path.refc(),
-                    direct_path: path,
-                    wref: w,
-                    stor: self.widget.stor.lt_ref(),
-                };
-            },
-            Resolvable::Path(w) => {
-                r = self.widget.stor.widget(w)?;
-                r.path = path;
-            }
-        }
+        r = Resolved {
+            path: path.refc(),
+            direct_path: path,
+            wref: rw,
+            root: self.widget.root.fork(),
+        };
 
         let l = Link{
             widget: r,
@@ -298,23 +281,16 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
 
     pub fn resolve_sub<'s>(&'s mut self, sub: &E::WidgetPath) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
         let path = self.widget.path.refc().attached_subpath(sub);
-        let rw = self.widget.wref.resolve(sub.refc())?;
+        let rw = self.widget.wref.resolve(sub.refc(),self.widget.root.fork(),self.ctx)?;
         
         let mut r;
-        match rw {
-            Resolvable::Widget(w) => {
-                r = Resolved {
-                    path: path.refc(),
-                    direct_path: path,
-                    wref: w,
-                    stor: self.widget.stor.lt_ref(),
-                };
-            },
-            Resolvable::Path(w) => {
-                r = self.widget.stor.widget(w)?;
-                r.path = path;
-            }
-        }
+
+        r = Resolved {
+            path: path.refc(),
+            direct_path: path,
+            wref: rw,
+            root: self.widget.root.fork(),
+        };
         
         Ok(
             Link{
@@ -333,10 +309,10 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     }
 
     #[inline]
-    pub fn childs<'s>(&'s self) -> impl Iterator<Item=Resolvable<'s,E>>+'s where 'c: 's {
+    pub fn childs<'s>(&'s self) -> impl Iterator<Item=WidgetRef<'s,E>>+'s where 'c: 's {
         let w = &**self.widget; //TODO this looks like a fkn move and ref
         (0..w.childs())
-            .map(#[inline] move |i| w.child(i).unwrap() )
+            .map(#[inline] move |i| w.child(i,self.widget.root.fork(),self.ctx).unwrap() )
     }
 
 

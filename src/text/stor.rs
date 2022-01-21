@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use crate::env::Env;
 use crate::traitcast_for;
+use crate::traitcast_for_from_widget;
 use crate::util::translate::immu::Immutable;
 use crate::validation::Validation;
 use crate::validation::ValidationMut;
@@ -130,7 +131,7 @@ impl<E,A> TextStorMut<E> for &mut A where A: TextStorMut<E> + ?Sized {
     }
 }
 
-traitcast_for!(TextStor<E>;TextStorMut<E>);
+traitcast_for_from_widget!(TextStor<E>); //TODO mutable Traitcast
 
 fn char_off(s: impl AsRef<str>, o: usize) -> usize {
     let s = s.as_ref();

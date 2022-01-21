@@ -2,6 +2,7 @@
 #![doc(html_favicon_url="https://raw.githubusercontent.com/FerionVE/guion/8cc44b2e/res/favicon.svg")]
 
 #![feature(generic_associated_types)]
+#![feature(type_alias_impl_trait)]
 
 //#![warn(clippy::all)]
 
@@ -22,6 +23,11 @@ pub mod validation;
 pub mod aliases;
 pub mod text;
 pub mod widgets;
+
+pub mod root;
+pub mod traitcast;
+pub mod view;
+pub mod error;
 
 pub(crate) use aliases::*;
 pub(crate) use backend::*;
@@ -58,13 +64,11 @@ pub(crate) use util::bounded_widget::*;
 pub(crate) use util::bounds::*;
 pub(crate) use util::error::*;
 pub(crate) use util::tabulate::*;
-pub(crate) use util::traitcast::*;
+pub(crate) use traitcast::*;
 pub(crate) use util::*;
 pub(crate) use widget::array::*;
 pub(crate) use widget::as_widget::*;
-pub(crate) use widget::cast::*;
 pub(crate) use widget::link::*;
-pub(crate) use widget::resolvable::*;
 pub(crate) use widget::resolved::*;
 pub(crate) use widget::root::*;
 pub(crate) use widget::ident::*;

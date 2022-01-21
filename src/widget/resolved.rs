@@ -7,13 +7,7 @@ pub struct Resolved<'a,E> where E: Env {
     pub wref: WidgetRef<'a,E>,
     pub path: E::WidgetPath,
     pub direct_path: E::WidgetPath,
-    pub stor: &'a E::Storage<'a>,
-}
-/// A mutable reference to a resolved [`Widget`][WidgetMut]
-pub struct ResolvedMut<'a,E> where E: Env {
-    pub wref: WidgetRefMut<'a,E>,
-    pub path: E::WidgetPath,
-    pub direct_path: E::WidgetPath,
+    pub root: E::RootRef<'a>,
 }
 
 impl<'a,E> Resolved<'a,E> where E: Env {
@@ -73,7 +67,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
             wref: self.wref.reference(),
             path: self.path.clone(),
             direct_path: self.direct_path.clone(),
-            stor: self.stor.lt_ref(),
+            root: self.stor.fork(),
         }
     }
 
@@ -96,8 +90,8 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     #[deprecated]
     #[allow(deprecated)]
     #[inline]
-    pub fn child_paths(&self) -> Vec<E::WidgetPath> {
-        (**self).child_paths(self.path.refc())
+    pub fn child_paths(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
+        (**self).child_paths(self.path.refc(),root,ctx)
     }
 
     pub fn lt<'s>(self) -> Resolved<'s,E> where 'a: 's, Self: 'a {
@@ -105,7 +99,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
             wref: self.wref,
             path: self.path,
             direct_path: self.direct_path,
-            stor: self.stor.lt_ref(),
+            root: self.root.fork(),
         }
     } 
 }
@@ -116,28 +110,6 @@ impl<'a,E> Deref for Resolved<'a,E> where E: Env {
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.wref
-    }
-}
-
-impl<'a,E> ResolvedMut<'a,E> where E: Env {
-    #[inline]
-    pub fn widget(&mut self) -> &mut (dyn WidgetMut<E>+'_) {
-        &mut *self.wref
-    }
-}
-
-impl<'a,E> Deref for ResolvedMut<'a,E> where E: Env {
-    type Target = WidgetRefMut<'a,E>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.wref
-    }
-}
-impl<'a,E> DerefMut for ResolvedMut<'a,E> where E: Env {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.wref
     }
 }
 

@@ -1,6 +1,6 @@
 //! Aliases for deep/nested types inside Env
 #![allow(type_alias_bounds)]
-use crate::widget::imp::{AWidgetMut, AWidget};
+use crate::widget::imp::AWidget;
 
 use super::*;
 
@@ -23,11 +23,13 @@ pub type ECQueue<'cc,E: Env> = <E::Context<'cc> as Context<E>>::Queue;
 pub type ECStdState<'cc,E: Env> = <E::Context<'cc> as CtxStdState<E>>::T;
 pub type EPressedKey<'cc,E: Env> = <ECStdState<'cc,E> as StdState<E>>::K;
 
-pub type CtxRef<'a,'s:'a,'cc:'a,E: Env> = (&'a E::Storage<'s>,&'a mut E::Context<'cc>);
-pub type CtxRefR<'a,'s:'a,'cc:'a,E: Env> = (&'a E::Storage<'s>,&'a E::Context<'cc>);
-pub type CtxRefM<'a,'s:'a,'cc:'a,E: Env> = (&'a mut E::Storage<'s>,&'a mut E::Context<'cc>);
+pub type CtxRef<'a,'rr,'cc:'a,E: Env> = (E::RootRef<'rr>,&'a mut E::Context<'cc>);
+pub type CtxRefR<'a,'rr,'cc:'a,E: Env> = (E::RootRef<'rr>,&'a E::Context<'cc>);
+pub type CtxRefM<'a,'rr,'cc:'a,E: Env> = (E::RootMut<'rr>,&'a mut E::Context<'cc>);
 
 /// Reference to a [`Widget`](Widget) or [immediate widget](AsWidget)
 pub type WidgetRef<'a,E: Env> = AWidget<'a,E>;
-/// Reference to a [`Widget`](WidgetMut) or [immediate widget](AsWidgetMut)
-pub type WidgetRefMut<'a,E: Env> = AWidgetMut<'a,E>;
+
+
+// TODO this is HORRIBLE temp hack
+pub type RefDynAsWidget<'a,E: Env> = &'a dyn AsWidget<E,Widget=dyn Widget<E>+'a>;

@@ -1,4 +1,6 @@
 //! The Env type defines a compound over any generic types
+use crate::root::{RootRef, RootMut};
+
 use super::*;
 use std::fmt::Debug;
 
@@ -8,7 +10,8 @@ use std::fmt::Debug;
 pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'static {
     type Backend: Backend<Self>;
     type Context<'a>: Context<Self>+'a;
-    type Storage<'a>: Widgets<Self>+'a;
+    type RootRef<'a>: RootRef<Self>+'a;
+    type RootMut<'a>: RootMut<Self>+'a;
     type WidgetID: WidgetID;
     /// Implementation of path to resolve [`Widget`]
     type WidgetPath: WidgetPath<Self>;
