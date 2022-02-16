@@ -1,46 +1,71 @@
 use crate::*;
 use super::*;
 
-impl<S,E> Handler<E> for StdHandler<S,E> where
-    S: Handler<E>,
+impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
+    SB: HandlerBuilder<E>,
     E: Env,
-    for<'a> E::Context<'a>: AsRefMut<Self> + CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<E>,
     EEvent<E>: StdVarSup<E>
 {
+    fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's {
+        &self.sup
+    }
+
     #[inline] 
-    fn _render(l: Link<E>, r: &mut ERenderer<'_,E>) {
-        S::_render(l,r)
+    fn _render(
+        &self,
+        l: Link<E>,
+        r: &mut ERenderer<'_,E>,
+        tail: &mut dyn FnMut(Link<E>,&mut ERenderer<'_,E>),
+    ) {
+        self.sup._render(l,r,tail)
         //todo!()
     }
     #[inline] 
-    fn _event_direct(mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
+    fn _event_direct(
+        &self,
+        l: Link<E>,
+        e: &EventCompound<E>,
+        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>)->EventResp,
+    ) -> EventResp {
         if let Some(_) = e.event.is::<MouseMove>() {
-            (l.as_mut() as &mut Self).s.mouse.hovered = Some(l.ident());
+            (self.f)(l.ctx).s.mouse.hovered = Some(l.ident());
         }
-        S::_event_direct(l,e)
+        self.sup._event_direct(l,e,tail)
         //todo!()
     }
     #[inline] 
-    fn _send_event(l: Link<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
+    fn _send_event(
+        &self,
+        l: Link<E>,
+        e: &EventCompound<E>,
+        child: E::WidgetPath,
+        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>,E::WidgetPath)->Result<EventResp,E::Error>
+    ) -> Result<EventResp,E::Error> {
         /*if let Some(_) = e.0.is::<MouseMove>() {
-            (l.as_mut() as &mut Self).s.mouse.hovered = Some(l.ident());
+            (self.f)(l.ctx).s.mouse.hovered = Some(l.ident());
         }*/
-        S::_send_event(l,e,child)
+        self.sup._send_event(l,e,child,tail)
     }
     //#[inline] 
-    fn _event_root(mut l: Link<E>, e: &EventCompound<E>) -> EventResp { //TODO BUG handle sudden invalidation of hovered widget
+    fn _event_root(
+        &self,
+        l: Link<E>,
+        e: &EventCompound<E>,
+        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>)->EventResp,
+    ) -> EventResp { //TODO BUG handle sudden invalidation of hovered widget
         assert!(l.path().is_empty());
         if let Some(ee) = e.event.is::<RootEvent<E>>() {
             let mut passed = false;
             match ee {
                 RootEvent::KbdDown{key} => {
                     //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
-                    if let Some(id) = (l.as_ref() as &Self).s.kbd.focused.clone() {
-                        if !l.widget.stor.has_widget(id.refc().path) {
+                    if let Some(id) = (self.f)(l.ctx).s.kbd.focused.clone() {
+                        if !l.widget.root.has_widget(id.refc().path) {
                             //drop event if widget is gone
                             return false;
                         }
-                        (l.as_mut() as &mut Self).s.key.down(
+                        (self.f)(l.ctx).s.key.down(
                             key.clone(),
                             id.clone(),
                             e.ts,
@@ -65,14 +90,14 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     //l._event_root((Event::from(RootEvent::KbdPress{key}),e.1,e.2));
                 },
                 RootEvent::KbdUp{key} => {
-                    let old = (l.as_mut() as &mut Self).s.key.up(key);
+                    let old = (self.f)(l.ctx).s.key.up(key);
                     if let Some(p) = old {
                         let event = KbdUp{
                             key: p.key,
                             down_widget: p.down.refc(),
                             down_ts: p.ts,
                         };
-                        if let Some(id) = (l.as_ref() as &Self).s.kbd.focused.clone() {
+                        if let Some(id) = (self.f)(l.ctx).s.kbd.focused.clone() {
                             passed |= l.send_event(
                                 &e.default_filter().with_event(Event::from(event.clone())),
                                 id.path,
@@ -86,7 +111,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     }
                 },
                 RootEvent::KbdPress{key} => {
-                    let old = (l.as_mut() as &mut Self).s.key.get(key.clone());
+                    let old = (self.f)(l.ctx).s.key.get(key.clone());
                     //TODO send up event to the widget which downed it
                     if let Some(p) = old {
                         let event = KbdPress{
@@ -94,7 +119,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                             down_widget: p.down.refc(),
                             down_ts: p.ts,
                         };
-                        if let Some(id) = (l.as_ref() as &Self).s.kbd.focused.clone() {
+                        if let Some(id) = (self.f)(l.ctx).s.kbd.focused.clone() {
                             passed |= l.send_event(
                                 &e.default_filter().with_event(Event::from(event.clone())),
                                 id.path.refc(),
@@ -110,20 +135,20 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                                 let dir = if reverse {TabulateDirection::Backward} else {TabulateDirection::Forward};
                                 let path = tabi(l.reference(),id.path,dir).expect("TODO");
                                 //better way than this hack to get the ident
-                                (l.as_mut() as &mut Self).s.kbd.focused = Some(WidgetIdent::from_path(path,l.widget.stor).expect("TODO"));
+                                (self.f)(l.ctx).s.kbd.focused = Some(WidgetIdent::from_path(path,&l.widget.root).expect("TODO"));
                             }
                         }
                     }
                 }
                 RootEvent::MouseDown{key} => {
-                    passed |= Self::_event_root(l.reference(),&e.with_event(Event::from(RootEvent::MouseUp{key: key.clone()})));
+                    passed |= self._event_root(l.reference(),&e.with_event(Event::from(RootEvent::MouseUp{key: key.clone()})),&mut |_,_|todo!());
                     //unfocus previously focused widget
-                    passed |= Self::unfocus(l.reference(),e.bounds,e.ts);
+                    passed |= self.unfocus(l.reference(),e.bounds,e.ts);
 
                     //the currently hovered widget
-                    if let Some(pos) = (l.as_ref() as &Self).s.mouse.pos {
-                        if let Some(hovered) = (l.as_ref() as &Self).s.mouse.hovered.clone() {
-                            (l.as_mut() as &mut Self).s.key.down(key.clone(),hovered.clone(),e.ts,Some(pos));
+                    if let Some(pos) = (self.f)(l.ctx).s.mouse.pos {
+                        if let Some(hovered) = (self.f)(l.ctx).s.mouse.hovered.clone() {
+                            (self.f)(l.ctx).s.key.down(key.clone(),hovered.clone(),e.ts,Some(pos));
 
                             passed |= l.send_event(
                                 &e.default_filter().with_event(Event::from(MouseDown{key,pos})),
@@ -140,16 +165,16 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                             };
 
                             if focus {
-                                passed |= Self::focus(l,hovered.path,e.bounds,e.ts).unwrap();
+                                passed |= self.focus(l,hovered.path,e.bounds,e.ts).unwrap();
                             }
                         }
                     }
                 }
                 RootEvent::MouseUp{key} => {
-                    let old = (l.as_mut() as &mut Self).s.key.up(key);
+                    let old = (self.f)(l.ctx).s.key.up(key);
                     //TODO send up event to the widget which downed it
                     if let Some(p) = old {
-                        if let Some(pos) = (l.as_ref() as &Self).s.mouse.pos {
+                        if let Some(pos) = (self.f)(l.ctx).s.mouse.pos {
                             let event = MouseUp{
                                 key: p.key,
                                 pos,
@@ -157,7 +182,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                                 down_widget: p.down.refc(),
                                 down_ts: p.ts
                             };
-                            if let Some(hovered) = (l.as_ref() as &Self).s.mouse.hovered.clone() {
+                            if let Some(hovered) = (self.f)(l.ctx).s.mouse.hovered.clone() {
                                 if hovered != p.down {
                                     passed |= l.send_event(
                                         &e.default_filter().with_event(Event::from(event.clone())),
@@ -175,9 +200,9 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                 }
                 RootEvent::MouseMove{pos} => {
                     //set pos
-                    (l.as_mut() as &mut Self).s.mouse.pos = Some(pos);
+                    (self.f)(l.ctx).s.mouse.pos = Some(pos);
                     //previous hovered widget
-                    if let Some(p) = (l.as_mut() as &mut Self).s.mouse.hovered.take() {
+                    if let Some(p) = (self.f)(l.ctx).s.mouse.hovered.take() {
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(MouseLeave{})),
                             p.path,
@@ -185,7 +210,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     }
                     //hover state will be updated as the event passes through the widget tree
                     passed |= l._event_root(&e.with_event(Event::from(MouseMove{pos})));
-                    if let Some(p) = (l.as_ref() as &Self).s.mouse.hovered.clone() {//TODO optimize clone
+                    if let Some(p) = (self.f)(l.ctx).s.mouse.hovered.clone() {//TODO optimize clone
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(MouseEnter{})),
                             p.path,
@@ -194,13 +219,13 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     
                 }
                 RootEvent::MouseLeaveWindow{} => {
-                    if let Some(p) = (l.as_ref() as &Self).s.mouse.hovered.clone() {//TODO optimize clone
+                    if let Some(p) = (self.f)(l.ctx).s.mouse.hovered.clone() {//TODO optimize clone
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(MouseLeave{})),
                             p.path,
                         ).unwrap_or(false);
                     }
-                    let mouse = &mut (l.as_mut() as &mut Self).s.mouse;
+                    let mouse = &mut (self.f)(l.ctx).s.mouse;
                     mouse.pos = None;
                     mouse.hovered = None;
                 }
@@ -211,7 +236,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     passed |= l._event_root(&e.with_event(Event::from(WindowResize{size})))
                 }
                 RootEvent::TextInput{text} => {
-                    if let Some(id) = (l.as_ref() as &Self).s.kbd.focused.clone() {
+                    if let Some(id) = (self.f)(l.ctx).s.kbd.focused.clone() {
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(TextInput{text})),
                             id.path,
@@ -219,7 +244,7 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
                     }
                 }
                 RootEvent::MouseScroll{x,y} => {
-                    if let Some(hovered) = (l.as_ref() as &Self).s.mouse.hovered.clone() {
+                    if let Some(hovered) = (self.f)(l.ctx).s.mouse.hovered.clone() {
                         passed |= l.send_event(
                             &e.default_filter().with_event(Event::from(MouseScroll{x,y})),
                             hovered.path,
@@ -229,13 +254,18 @@ impl<S,E> Handler<E> for StdHandler<S,E> where
             }
             passed
         }else{
-            S::_event_root(l,e)
+            self.sup._event_root(l,e,tail)
         }
     }
     #[inline] 
-    fn _size(l: Link<E>, e: &EStyle<E>) -> ESize<E> {
+    fn _size(
+        &self,
+        l: Link<E>,
+        e: &EStyle<E>,
+        tail: &mut dyn FnMut(Link<E>,&EStyle<E>)->ESize<E>,
+    ) -> ESize<E> {
         //todo!();
-        S::_size(l,e)
+        self.sup._size(l,e,tail)
     }
 }
 

@@ -70,7 +70,6 @@ pub(crate) use widget::array::*;
 pub(crate) use widget::as_widget::*;
 pub(crate) use widget::link::*;
 pub(crate) use widget::resolved::*;
-pub(crate) use widget::root::*;
 pub(crate) use widget::ident::*;
 pub(crate) use widget::*;
 

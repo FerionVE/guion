@@ -3,7 +3,8 @@
 //! The Traits features interface for querying e.g. id or style, and also accessing or resolving child widgets
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
-use self::imp::AWidget;
+
+use crate::root::RootRef;
 
 use super::*;
 use std::any::{TypeId, type_name};
@@ -15,7 +16,7 @@ pub mod ext;
 #[doc(hidden)]
 pub mod imp;
 pub mod resolved;
-pub mod root;
+//pub mod root;
 pub mod array;
 pub mod ident;
 
@@ -78,8 +79,9 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(self.box_ref())
         }
+        //TODO resolve_child could also return it's ref resolve
         let (c,sub) = self.resolve_child(&i,root,ctx)?;
-        self.child(c).unwrap().resolve_child(sub,root,ctx)
+        self.child(c,root,ctx).unwrap().resolve_child(sub,root,ctx)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Resolve a deep child item by the given relative path
@@ -93,7 +95,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
             return Ok(self.box_box())
         }
         let (c,sub) = self.resolve_child(&i,root,ctx)?;
-        self.into_child(c).unwrap_nodebug().resolve_child(sub,root,ctx)
+        self.into_child(c,root,ctx).unwrap_nodebug().resolve_child(sub,root,ctx)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// To (or through) which child path would the given sub_path resolve?
@@ -116,7 +118,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
         if i.is_empty() {
             return Ok(*b)
         }
-        let (child,_) = self.resolve_child(&i)?;
+        let (child,_) = self.resolve_child(&i,l.widget.root.fork(),l.ctx)?;
         let bounds = self.child_bounds(l,b,e,force)?;
         
         Ok(bounds[child])
@@ -226,7 +228,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
             TabulateOrigin::Resolve(p) => {
                 if !p.is_empty() {
                     // pass 1: resolve to previous focused widget
-                    let (child_id,sub_path) = self.resolve_child(&p)?;
+                    let (child_id,sub_path) = self.resolve_child(&p,l.widget.root.fork(),l.ctx)?;
                     return enter_child(&mut l, child_id, TabulateOrigin::Resolve(sub_path));
                 }else{
                     // pass 2: we are the previous focused widget and should tabulate away
@@ -341,10 +343,11 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
 #[doc(hidden)]
 pub trait WBase<E> where E: Env {
     fn type_name(&self) -> &'static str;
-    fn erase(&self) -> &dyn Widget<E>;
+    fn erase<'s>(&self) -> &(dyn Widget<E>+'s) where Self: 's;
     fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E>;
     fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
     fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
+    fn as_any(&self) -> &dyn std::any::Any where Self: 'static;
 }
 impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     #[inline]
@@ -352,7 +355,7 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
         type_name::<Self>()
     }
     #[inline]
-    fn erase(&self) -> &dyn Widget<E> {
+    fn erase<'s>(&self) -> &(dyn Widget<E>+'s) where Self: 's {
         self
     }
     #[inline]
@@ -367,5 +370,9 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
         let b = Box::<dyn Widget<E>+'_>::new(self);
         WCow::Owned(b)
+    }
+    #[inline]
+    fn as_any(&self) -> &dyn std::any::Any where Self: 'static {
+        self
     }
 }

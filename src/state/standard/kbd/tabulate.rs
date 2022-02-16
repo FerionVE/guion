@@ -3,7 +3,7 @@ use widget::Widget;
 
 #[deprecated]
 #[allow(deprecated)]
-pub fn tabulate<E: Env>(s: &E::Storage<'_>, selected: E::WidgetPath, reverse: bool) -> E::WidgetPath {
+pub fn tabulate<E: Env>(s: &E::RootRef<'_>, selected: E::WidgetPath, reverse: bool) -> E::WidgetPath {
     let initial_selected = selected.refc();
     let mut current = selected;
 
@@ -24,7 +24,7 @@ pub fn tabulate<E: Env>(s: &E::Storage<'_>, selected: E::WidgetPath, reverse: bo
         }
     }
 
-    fn walk_forward<E: Env>(current: &mut E::WidgetPath, s: &E::Storage<'_>) {
+    fn walk_forward<E: Env>(current: &mut E::WidgetPath, s: &E::RootRef<'_>) {
         {
             let w = s.widget(current.refc()).expect("Lost Widget");
             let pc = w.child_paths();
@@ -51,7 +51,7 @@ pub fn tabulate<E: Env>(s: &E::Storage<'_>, selected: E::WidgetPath, reverse: bo
             break;
         }
     }
-    fn walk_reverse<E: Env>(current: &mut E::WidgetPath, s: &E::Storage<'_>) {
+    fn walk_reverse<E: Env>(current: &mut E::WidgetPath, s: &E::RootRef<'_>) {
         if let Some(parent) = current.parent() {
             if let Ok(w) = s.widget(parent.refc()) {
                 let pc = w.child_paths();

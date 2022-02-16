@@ -8,7 +8,7 @@ use super::{TraitcastImpl, TraitcastImplBase, TraitObject};
 pub trait TraitcastWidget<E>: Widget<E> where E: Env {
     #[inline]
     fn try_traitcast_ref<'a,'b,T>(&'a self) -> Result<&'a T,()> where T: ?Sized + 'b, dyn Widget<E>+'b: TraitcastImpl<'b,T> + 'b, Self: 'b, 'b: 'a {
-        if let Ok(e) = _try_traitcast_ref(self.self_as_dyn_widget()) {
+        if let Ok(e) = _try_traitcast_ref(self.erase()) {
             Ok(e)
         } else {
             if let Some(s) = self.inner() {
@@ -20,7 +20,7 @@ pub trait TraitcastWidget<E>: Widget<E> where E: Env {
     }
     #[inline]
     fn try_traitcast_ref_nonrecursive<'a,'b,T>(&'a self) -> Result<&'a T,()> where T: ?Sized + 'b, dyn Widget<E>+'b: TraitcastImpl<'b,T> + 'b, Self: 'b, 'b: 'a {
-        _try_traitcast_ref(self.self_as_dyn_widget())
+        _try_traitcast_ref(self.erase())
     }
 }
 

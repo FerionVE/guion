@@ -11,30 +11,31 @@ pub struct Resolved<'a,E> where E: Env {
 }
 
 impl<'a,E> Resolved<'a,E> where E: Env {
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::render`]
-    #[inline]
-    pub fn render(&self, c: &mut E::Context<'_>, r: &mut ERenderer<'_,E>) {
-        c.render(self.clone(),r)
-    }
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::event`](Link::event_direct)
-    #[inline]
-    pub fn event_direct(&self, c: &mut E::Context<'_>, e: &EventCompound<E>) -> EventResp {
-        c.event_direct(self.clone(),e)
-    }
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::event`](Link::send_event)
-    #[inline]
-    pub fn send_event(&self, c: &mut E::Context<'_>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
-        c.send_event(self.clone(),e,child)
-    }
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
-    /// generally not called directly, rather through [`Link::size`]
-    #[inline]
-    pub fn size(&self, c: &mut E::Context<'_>, e: &EStyle<E>) -> ESize<E> {
-        c.size(self.clone(),e)
-    }
+    //TODO fix
+    // /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    // /// generally not called directly, rather through [`Link::render`]
+    // #[inline]
+    // pub fn render(&self, c: &mut E::Context<'_>, r: &mut ERenderer<'_,E>) {
+    //     c.render(self.clone(),r)
+    // }
+    // /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    // /// generally not called directly, rather through [`Link::event`](Link::event_direct)
+    // #[inline]
+    // pub fn event_direct(&self, c: &mut E::Context<'_>, e: &EventCompound<E>) -> EventResp {
+    //     c.event_direct(self.clone(),e)
+    // }
+    // /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    // /// generally not called directly, rather through [`Link::event`](Link::send_event)
+    // #[inline]
+    // pub fn send_event(&self, c: &mut E::Context<'_>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
+    //     c.send_event(self.clone(),e,child)
+    // }
+    // /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
+    // /// generally not called directly, rather through [`Link::size`]
+    // #[inline]
+    // pub fn size(&self, c: &mut E::Context<'_>, e: &EStyle<E>) -> ESize<E> {
+    //     c.size(self.clone(),e)
+    // }
 
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
@@ -67,7 +68,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
             wref: self.wref.reference(),
             path: self.path.clone(),
             direct_path: self.direct_path.clone(),
-            root: self.stor.fork(),
+            root: self.root.fork(),
         }
     }
 
@@ -116,7 +117,7 @@ impl<'a,E> Deref for Resolved<'a,E> where E: Env {
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
     #[inline]
     fn clone(&self) -> Self {
-        let mut s = self.stor.widget(self.direct_path.refc()).unwrap();
+        let mut s = self.root.widget(self.direct_path.refc()).unwrap();
         s.path = self.path.refc();
         s
     }

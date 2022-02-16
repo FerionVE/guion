@@ -13,14 +13,12 @@ pub trait Queue<I,O> { //TODO probably remove mandatory StdEnqueueable bound
 pub enum StdEnqueueable<E> where E: Env {
     Render{force: bool},
     Event{event: EEvent<E>, ts: u64},
-    MutateWidget{path: E::WidgetPath, f: fn(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)},
-    MutateWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)+'static>},
-    MutateRoot{f: fn(&mut E::Storage<'_>,&mut E::Context<'_>)},
-    MutateRootClosure{f: Box<dyn FnOnce(&mut E::Storage<'_>,&mut E::Context<'_>)+'static>},
+    MutateRoot{f: fn(E::RootMut<'_>,&mut E::Context<'_>)},
+    MutateRootClosure{f: Box<dyn FnOnce(E::RootMut<'_>,&mut E::Context<'_>)+'static>},
     AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context<'_>)},
     AccessWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context<'_>)+'static>},
-    AccessRoot{f: fn(&E::Storage<'_>,&mut E::Context<'_>)},
-    AccessRootClosure{f: Box<dyn FnOnce(&E::Storage<'_>,&mut E::Context<'_>)+'static>},
+    AccessRoot{f: fn(E::RootRef<'_>,&mut E::Context<'_>)},
+    AccessRootClosure{f: Box<dyn FnOnce(E::RootRef<'_>,&mut E::Context<'_>)+'static>},
     MutMessage{path: E::WidgetPath, msg: E::Message},
     InvalidateWidget{path: E::WidgetPath},
     ValidateWidgetRender{path: E::WidgetPath},
@@ -65,15 +63,15 @@ pub enum StdOrder {
     PostCurrent,
 }
 
-/// to be executed by the queue impl, always DIRECTLY before rendering
-#[deprecated]
-pub fn invalidate<E: Env>(stor: &mut E::Storage<'_>, i: E::WidgetPath) -> Result<(),E::Error> {
-    stor.widget_mut(i)
-        .map(#[inline] |mut w| w._set_invalid(true) )
-}
-#[deprecated]
-/// to be executed by the queue impl, always DIRECTLY after rendering
-pub fn validate<E: Env>(stor: &mut E::Storage<'_>, i: E::WidgetPath) -> Result<(),E::Error> {
-    stor.widget_mut(i)
-        .map(#[inline] |mut w| w._set_invalid(false) )
-}
+// /// to be executed by the queue impl, always DIRECTLY before rendering
+// #[deprecated]
+// pub fn invalidate<E: Env>(stor: &mut E::Storage<'_>, i: E::WidgetPath) -> Result<(),E::Error> {
+//     stor.widget_mut(i)
+//         .map(#[inline] |mut w| w._set_invalid(true) )
+// }
+// #[deprecated]
+// /// to be executed by the queue impl, always DIRECTLY after rendering
+// pub fn validate<E: Env>(stor: &mut E::Storage<'_>, i: E::WidgetPath) -> Result<(),E::Error> {
+//     stor.widget_mut(i)
+//         .map(#[inline] |mut w| w._set_invalid(false) )
+// }

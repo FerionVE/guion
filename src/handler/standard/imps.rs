@@ -4,9 +4,8 @@ use std::any::TypeId;
 use std::hash::Hash;
 
 impl<S,E> StdState<E> for StdHandler<S,E> where
-    S: Handler<E>,
+    S: HandlerBuilder<E>,
     E: Env,
-    for<'a> E::Context<'a>: AsRefMut<Self> + CtxStdState<E>,
     EEvent<E>: StdVarSup<E>
 {
     type K = StdPressedKey<E>;
@@ -30,10 +29,9 @@ impl<S,E> StdState<E> for StdHandler<S,E> where
 }
 
 impl<S,E> DynState<E> for StdHandler<S,E> where
-    S: Handler<E>,
+    S: HandlerBuilder<E>,
     E: Env,
     E::WidgetID: Eq + Hash,
-    for<'a> E::Context<'a>: AsRefMut<Self> + CtxStdState<E>,
     EEvent<E>: StdVarSup<E>
 {
     fn remote_state_or_default<T>(&self, i: E::WidgetID) -> T where T: Default + Clone + 'static {

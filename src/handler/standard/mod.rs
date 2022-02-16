@@ -1,18 +1,19 @@
 //! Standard Handler featuring hovering/focusing of widgets and tracking of keyboard/mouse state
 use crate::*;
 use std::marker::PhantomData;
+use std::sync::Arc;
 use state::standard::StdStdState;
 
 pub mod imp;
 pub mod imps;
 
-pub struct StdHandler<S,E> where S: Handler<E>, E: Env, for<'a> E::Context<'a>: AsRefMut<Self>, EEvent<E>: StdVarSup<E> {
+pub struct StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
     pub sup: S,
     pub s: StdStdState<E>,
     _c: PhantomData<E>,
 }
 
-impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, for<'a> E::Context<'a>: AsRefMut<Self>, EEvent<E>: StdVarSup<E> {
+impl<S,E> StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
     pub fn new(sup: S) -> Self {
         Self{
             sup,
@@ -20,9 +21,11 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, for<'a> E::Context<'a>: A
             _c: PhantomData,
         }
     }
+}
 
-    pub fn unfocus(mut root: Link<E>, root_bounds: Bounds, ts: u64) -> EventResp {
-        if let Some(p) = root.ctx.as_mut().s.kbd.focused.take() {
+impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
+    pub fn unfocus(&self, mut root: Link<E>, root_bounds: Bounds, ts: u64) -> EventResp {
+        if let Some(p) = (self.f)(root.ctx).s.kbd.focused.take() {
             root.send_event(
                 &EventCompound{
                     event: Event::from(Unfocus{}),
@@ -39,9 +42,9 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, for<'a> E::Context<'a>: A
         }
     }
 
-    pub fn focus(mut root: Link<E>, p: E::WidgetPath, root_bounds: Bounds, ts: u64) -> Result<EventResp,E::Error> {
-        Self::unfocus(root.reference(),root_bounds,ts);
-        root.as_mut().s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),root.widget.stor)?);
+    pub fn focus(&self, mut root: Link<E>, p: E::WidgetPath, root_bounds: Bounds, ts: u64) -> Result<EventResp,E::Error> {
+        self.unfocus(root.reference(),root_bounds,ts);
+        (self.f)(root.ctx).s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root.widget.root)?);
         root.send_event(
             &EventCompound{
                 event: Event::from(Focus{}),
@@ -54,4 +57,23 @@ impl<S,E> StdHandler<S,E> where S: Handler<E>, E: Env, for<'a> E::Context<'a>: A
             p,
         )
     }
+}
+
+impl<S,E> HandlerBuilder<E> for StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, for<'a> E::Context<'a>: CtxStdState<E>, EEvent<E>: StdVarSup<E> {
+    type Built = StdHandlerLive<S,E>;
+
+    fn build(f: Arc<dyn for<'c,'cc> Fn(&'c mut <E as Env>::Context<'cc>)->&'c mut Self>) -> Self::Built {
+        let f2 = f.clone();
+        StdHandlerLive {
+            sup: S::build(Arc::new(move |c| &mut f2(c).sup )),
+            f: f,
+            _c: PhantomData,
+        }
+    }
+}
+
+pub struct StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
+    pub sup: SB::Built,
+    pub f: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut StdHandler<SB,E>>,
+    _c: PhantomData<E>,
 }

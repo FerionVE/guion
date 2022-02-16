@@ -33,8 +33,12 @@ impl<Wid,WFn,MFn,E> AsWidget<E> for ViewWidget<Wid,WFn,MFn,E> where
     E: Env,
 {
     type Widget = Wid::Viewed;
+    type WidgetOwned = Wid::Viewed;
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::WCow<'w,Self::Widget> {
+    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Owned( (self.0)().view(self.1.clone(), root,ctx) )
+    }
+    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
         WCow::Owned( (self.0)().view(self.1.clone(), root,ctx) )
     }
 }
@@ -49,9 +53,13 @@ impl<T,E> Widget<E> for DummyWidget<T> where T: AsWidget<E>, E: Env {
 
 impl<T,E> AsWidget<E> for DummyWidget<T> where T: AsWidget<E>, E: Env  {
     type Widget = Self;
+    type WidgetOwned = Self;
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget> {
+    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
         WCow::Borrowed(self)
+    }
+    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
+        WCow::Owned(self)
     }
 }
 

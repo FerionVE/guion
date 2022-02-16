@@ -1,6 +1,8 @@
 //! The [`Link`] is used to interface [widgets](Widget) thru and tracks the current [path](Env::WidgetPath)
 use std::ops::DerefMut;
 use std::ops::Deref;
+use crate::root::RootRef;
+
 use super::*;
 
 #[doc(hidden)]
@@ -16,21 +18,21 @@ pub struct Link<'c,'cc: 'c,E> where E: Env {
 impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     /// Enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)) {
+    pub fn mutate(&mut self, f: fn(E::RootMut<'_>,&mut E::Context<'_>)) {
         self.mutate_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_at<O>(&mut self, f: fn(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath), o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::MutateWidget{path: self.widget.direct_path.refc(),f},o,p)
+    pub fn mutate_at<O>(&mut self, f: fn(E::RootMut<'_>,&mut E::Context<'_>), o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::MutateRoot{f},o,p)
     }
     /// Enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)+'static>) {
+    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(E::RootMut<'_>,&mut E::Context<'_>)+'static>) {
         self.mutate_closure_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRefMut<E>,&mut E::Context<'_>,E::WidgetPath)+'static>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
-        self.enqueue(StdEnqueueable::MutateWidgetClosure{path: self.widget.direct_path.refc(),f},o,p)
+    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(E::RootMut<'_>,&mut E::Context<'_>)+'static>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
+        self.enqueue(StdEnqueueable::MutateRootClosure{f},o,p)
     }
     /// Enqueue message-style invoking of [WidgetMut::message]
     #[inline]
@@ -98,12 +100,24 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
 
     #[inline]
     pub fn render(&mut self, r: &mut ERenderer<'_,E>) {
-        self.ctx.render(self.widget.reference(),r)
+        E::Context::<'_>::build_handler()._render(
+            self.reference(),
+            r,
+            &mut |l,r| {
+                l._render(r)
+            }
+        )
     }
     /// send event to this widget
     #[inline]
     pub fn event_direct(&mut self, e: &EventCompound<E>) -> EventResp {
-        self.ctx.event_direct(self.widget.reference(),e)
+        E::Context::<'_>::build_handler()._event_direct(
+            self.reference(),
+            e,
+            &mut |l,e| {
+                l._event_direct(e)
+            }
+        )
     }
     /// Send event to subpath
     /// 
@@ -111,18 +125,37 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     /// generally not called directly, rather through [`Widgets::send_event`](Widgets::send_event)
     #[inline]
     pub fn send_event(&mut self, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
-        self.ctx.send_event(self.widget.reference(),e,child)
+        E::Context::<'_>::build_handler()._send_event(
+            self.reference(),
+            e,
+            child,
+            &mut |l,e,child| {
+                l._send_event(e,child)
+            }
+        )
     }
     /// [Layout](StdGonstraints) constraints of this widget
     #[inline]
     pub fn size(&mut self, e: &EStyle<E>) -> ESize<E> {
-        self.ctx.size(self.widget.reference(),e)
+        E::Context::<'_>::build_handler()._size(
+            self.reference(),
+            e,
+            &mut |l,e| {
+                l._size(e)
+            }
+        )
     }
     #[inline]
     #[deprecated="Non-root link is panic"]
     pub fn _event_root(&mut self, e: &EventCompound<E>) -> EventResp {
         assert!(self.path().is_empty());
-        self.ctx._event_root(self.widget.reference(),e)
+        E::Context::<'_>::build_handler()._event_root(
+            self.reference(),
+            e,
+            &mut |l,e| {
+                l._event_root(e)
+            }
+        )
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
@@ -160,7 +193,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
 
     #[deprecated="Not needed in OOF anymore"]
     pub fn trace_bounds(&mut self, root_bounds: &Bounds, e: &EStyle<E>, force: bool) -> Bounds {
-        self.widget.stor.trace_bounds(self.ctx,self.widget.path.refc(),root_bounds,e,force).unwrap()
+        self.widget.root.trace_bounds(self.ctx,self.widget.path.refc(),root_bounds,e,force).unwrap()
     }
 
     #[inline]
@@ -242,7 +275,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     pub fn with_widget<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
         Ok(
             Link{
-                widget: self.widget.stor.widget(p)?,
+                widget: self.widget.root.widget(p)?,
                 ctx: self.ctx
             }
         )
@@ -308,22 +341,22 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
         }
     }
 
-    #[inline]
-    pub fn childs<'s>(&'s self) -> impl Iterator<Item=WidgetRef<'s,E>>+'s where 'c: 's {
-        let w = &**self.widget; //TODO this looks like a fkn move and ref
-        (0..w.childs())
-            .map(#[inline] move |i| w.child(i,self.widget.root.fork(),self.ctx).unwrap() )
-    }
+    // #[inline]
+    // pub fn childs<'s>(&'s mut self) -> impl Iterator<Item=WidgetRef<'s,E>>+'s where 'c: 's {
+    //     let w = &**self.widget; //TODO this looks like a fkn move and ref
+    //     (0..w.childs())
+    //         .map(#[inline] move |i| w.child(i,self.widget.root.fork(),self.ctx).unwrap() )
+    // }
 
 
-    /// Iterate from current up to the root element
-    #[inline]
-    pub fn parents(&'c self) -> Parents<'c,E> {
-        Parents{
-            stor: self.widget.stor,
-            next: Some(self.widget.path.refc()),
-        }
-    }
+    // /// Iterate from current up to the root element
+    // #[inline]
+    // pub fn parents(&'c self) -> Parents<'c,E> {
+    //     Parents{
+    //         stor: self.widget.stor,
+    //         next: Some(self.widget.path.refc()),
+    //     }
+    // }
 
     #[inline]
     pub fn enqueue<I,O>(&mut self, i: I, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<I,O> {
