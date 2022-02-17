@@ -58,7 +58,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
             .collect::<Vec<_>>()
     }
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_childs<'w>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w;
+    fn into_childs<'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's;
     
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]

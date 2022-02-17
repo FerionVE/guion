@@ -40,17 +40,17 @@ impl<'a,E> Resolved<'a,E> where E: Env {
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _render(&self, c: &mut E::Context<'_>, r: &mut ERenderer<'_,E>) {
-        (**self)._render(c.link(self.clone()),r)
+        (*self.wref)._render(c.link(self.clone()),r)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _event_direct(&self, c: &mut E::Context<'_>, e: &EventCompound<E>) -> EventResp {
-        (**self)._event_direct(c.link(self.clone()),e)
+        (*self.wref)._event_direct(c.link(self.clone()),e)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _size(&self, c: &mut E::Context<'_>, e: &EStyle<E>) -> ESize<E> {
-        (**self)._size(c.link(self.clone()),e)
+        (*self.wref)._size(c.link(self.clone()),e)
     }
     #[inline]
     pub fn link<'cc>(&self, c: &'a mut E::Context<'cc>) -> Link<'a,'cc,E> {

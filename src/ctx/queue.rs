@@ -13,8 +13,8 @@ pub trait Queue<I,O> { //TODO probably remove mandatory StdEnqueueable bound
 pub enum StdEnqueueable<E> where E: Env {
     Render{force: bool},
     Event{event: EEvent<E>, ts: u64},
-    MutateRoot{f: fn(E::RootMut<'_>,&mut E::Context<'_>)},
-    MutateRootClosure{f: Box<dyn FnOnce(E::RootMut<'_>,&mut E::Context<'_>)+'static>},
+    MutateRoot{f: for<'r> fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>)},
+    MutateRootClosure{f: Box<dyn for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + 'static >},
     AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context<'_>)},
     AccessWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context<'_>)+'static>},
     AccessRoot{f: fn(E::RootRef<'_>,&mut E::Context<'_>)},

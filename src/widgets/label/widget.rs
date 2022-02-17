@@ -14,7 +14,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
+    fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
         vec![]
     }
     fn id(&self) -> E::WidgetID {
@@ -39,10 +39,10 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
+    fn childs_ref<'s>(&'s self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
         vec![]
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
+    fn into_childs<'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
         vec![]
     }
     
@@ -52,45 +52,17 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     fn focusable(&self) -> bool {
         false
     }
-    fn child(&self, _: usize) -> Result<Resolvable<E>,()> {
+    fn child<'s>(&'s self, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
         Err(())
     }
-    fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
+    fn into_child<'s>(self: Box<Self>, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
         Err(())
     }
 
-    impl_traitcast!(
+    impl_traitcast!( dyn Widget<E>:
         dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
         dyn Validation<E> => |s| &s.text;
         dyn TextStor<E> => |s| &s.text;
-    );
-}
-
-impl<'w,E,Text,GlyphCache> WidgetMut<E> for Label<'w,E,Text,GlyphCache> where
-    E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    Text: TextStorMut<E>+ValidationMut<E>+'w,
-    ETextLayout<E>: TxtLayoutFromStor<Text,E>,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
-{
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![]
-    }
-    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<E>,()> {
-        Err(())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        Err(())
-    }
-
-    impl_traitcast_mut!(
-        dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
-        dyn ValidationMut<E> => |s| &mut s.text;
-        dyn TextStorMut<E> => |s| &mut s.text;
     );
 }
 
@@ -114,13 +86,44 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
         );
 
         let g = glyphs.refc();
-        l.mutate_closure(Box::new(move |mut w,ctx,_| {
-            let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
-            let key = vali.validate();
-            let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();
-            cache.set( Some((g,key)) ,ctx);
-        }));
+        //TODO fix glyph caching as WidgetMut is GONE, label would require a mutor closure from the view using it
+        // l.mutate_closure(Box::new(move |mut w,ctx,_| {
+        //     let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
+        //     let key = vali.validate();
+        //     let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();
+        //     cache.set( Some((g,key)) ,ctx);
+        // }));
 
         glyphs
+    }
+}
+
+impl<'l,E,Text,GlyphCache> AsWidget<E> for Label<'l,E,Text,GlyphCache> where Self: Widget<E>, E: Env {
+    type Widget = Self;
+    type WidgetOwned = Self;
+
+    #[inline]
+    fn as_widget<'w>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget<'w>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
+        WCow::Owned(self)
+    }
+    #[inline]
+    fn box_into_widget<'w>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Owned(*self)
+    }
+    #[inline]
+    fn as_widget_dyn<'w,'s>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget_dyn<'w,'s>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+        WCow::Owned(Box::new(self))
+    }
+    #[inline]
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Owned(self)
     }
 }

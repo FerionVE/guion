@@ -6,9 +6,11 @@ use super::*;
 
 pub mod standard;
 
+//TODO SUPER DIFFICULT support non-'static handlers
 pub trait HandlerBuilder<E>: 'static where E: Env {
     type Built: Handler<E>;
 
+    //TODO arc slow
     fn build(f: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut Self>) -> Self::Built;
 }
 

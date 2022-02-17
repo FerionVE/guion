@@ -18,20 +18,20 @@ pub struct Link<'c,'cc: 'c,E> where E: Env {
 impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     /// Enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: fn(E::RootMut<'_>,&mut E::Context<'_>)) {
+    pub fn mutate(&mut self, f: for<'r> fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>)) {
         self.mutate_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_at<O>(&mut self, f: fn(E::RootMut<'_>,&mut E::Context<'_>), o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
+    pub fn mutate_at<O>(&mut self, f: for<'r> fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>), o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateRoot{f},o,p)
     }
     /// Enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: Box<dyn FnOnce(E::RootMut<'_>,&mut E::Context<'_>)+'static>) {
+    pub fn mutate_closure(&mut self, f: Box<dyn for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + 'static >) {
         self.mutate_closure_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn FnOnce(E::RootMut<'_>,&mut E::Context<'_>)+'static>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
+    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + 'static >, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateRootClosure{f},o,p)
     }
     /// Enqueue message-style invoking of [WidgetMut::message]
@@ -161,13 +161,13 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     #[inline]
     pub fn _render(&mut self, r: &mut ERenderer<'_,E>) {
         let w = self.ctx.link(self.widget.reference());
-        (*self.widget)._render(w,r)
+        (*self.widget.wref)._render(w,r)
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _event_direct(&mut self, e: &EventCompound<E>) -> EventResp {
         let w = self.ctx.link(self.widget.reference());
-        (*self.widget)._event_direct(w,e)
+        (*self.widget.wref)._event_direct(w,e)
     }
     #[inline]
     pub fn _send_event(&mut self, e: &EventCompound<E>, sub: E::WidgetPath) -> Result<EventResp,E::Error> {
@@ -177,13 +177,13 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
         };
         let _ = self.widget.resolve(sub,self.widget.root.fork(),self.ctx)?;
         let w = self.ctx.link(self.widget.reference());
-        Ok( (*self.widget)._event_direct(w,&e) )
+        Ok( (*self.widget.wref)._event_direct(w,&e) )
     }
     /// Bypasses [`Context`](Env::Context) and [Handler(s)](Context::Handler)
     #[inline]
     pub fn _size(&mut self, e: &EStyle<E>) -> ESize<E> {
         let w = self.ctx.link(self.widget.reference());
-        (*self.widget)._size(w,e)
+        (*self.widget.wref)._size(w,e)
     }
     #[inline]
     pub fn _tabulate(&mut self, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,E::Error> {

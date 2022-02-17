@@ -13,7 +13,7 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
     Text: 'w,
 {
     pub trigger: Tr,
-    pub trigger_mut: TrMut,
+    pub trigger_mut: Option<TrMut>,
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
@@ -34,7 +34,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>,(),()> where
             size: constraint!(0|0).into(),
             style: Default::default(),
             trigger: (),
-            trigger_mut: (),
+            trigger_mut: None,
             locked: false,
             text: Label::new(E::WidgetID::new_id()),
             p: PhantomData,
@@ -53,7 +53,7 @@ impl<'w,E,Text> Button<'w,E,Text,(),()> where
             size: constraint!(0|0).into(),
             style: Default::default(),
             trigger: (),
-            trigger_mut: (),
+            trigger_mut: None,
             locked: false,
             text,
             p: PhantomData,
@@ -79,13 +79,13 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, fun: T) -> Button<'w,E,Text,Tr,T> where T: TriggerMut<E> {
+    pub fn with_trigger_mut<T>(self, fun: T) -> Button<'w,E,Text,Tr,T> where T: for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static {
         Button{
             id: self.id,
             size: self.size,
             style: self.style,
             trigger: self.trigger,
-            trigger_mut: fun,
+            trigger_mut: Some(fun),
             locked: self.locked,
             text: self.text,
             p: PhantomData,
@@ -143,17 +143,11 @@ impl<'w,E,T,LC,Tr,TrMut> Button<'w,E,Label<'w,E,T,LC>,Tr,TrMut> where
 /// blanket-implemented on all `Fn(Link<E>)`
 pub trait Trigger<E> where E: Env {
     fn trigger(&self, l: Link<E>);
-    /// Returns if [`Button`] should attempt to execute its [`TriggerMut`] after executing this [`Trigger`]
-    fn run_mut_trigger(&self, l: Link<E>) -> bool;
 }
 
 impl<E> Trigger<E> for () where E: Env {
     #[inline]
     fn trigger(&self, _: Link<E>) {}
-    #[inline]
-    fn run_mut_trigger(&self, _: Link<E>) -> bool {
-        true
-    }
 }
 
 impl<T,E> Trigger<E> for T where T: Fn(Link<E>), E: Env {
@@ -161,27 +155,6 @@ impl<T,E> Trigger<E> for T where T: Fn(Link<E>), E: Env {
     fn trigger(&self, l: Link<E>) {
         (self)(l)
     }
-    #[inline]
-    fn run_mut_trigger(&self, _: Link<E>) -> bool {
-        false
-    }
 }
 
-/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
-pub trait TriggerMut<E> where E: Env {
-    fn trigger_mut(&mut self, c: &mut E::Context<'_>);
-}
-
-impl<E> TriggerMut<E> for () where E: Env {
-    #[inline]
-    fn trigger_mut(&mut self, _: &mut E::Context<'_>) {}
-}
-
-impl<T,E> TriggerMut<E> for T where T: for<'a,'b> FnMut(&'a mut E::Context<'b>), E: Env {
-    #[inline]
-    fn trigger_mut(&mut self, c: &mut E::Context<'_>) {
-        (self)(c)
-    }
-}
-
-traitcast_for!(Trigger<E>;TriggerMut<E>);
+traitcast_for_from_widget!(Trigger<E>);
