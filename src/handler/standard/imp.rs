@@ -62,7 +62,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                 RootEvent::KbdDown{key} => {
                     //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = (self.f)(l.ctx).s.kbd.focused.clone() {
-                        if !l.widget.root.has_widget(id.refc().path) {
+                        if !l.widget.root.has_widget(id.refc().path,l.ctx) {
                             //drop event if widget is gone
                             return false;
                         }
@@ -136,7 +136,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                                 let dir = if reverse {TabulateDirection::Backward} else {TabulateDirection::Forward};
                                 let path = tabi(l.reference(),id.path,dir).expect("TODO");
                                 //better way than this hack to get the ident
-                                (self.f)(l.ctx).s.kbd.focused = Some(WidgetIdent::from_path(path,&l.widget.root).expect("TODO"));
+                                (self.f)(l.ctx).s.kbd.focused = Some(WidgetIdent::from_path(path,&l.widget.root,l.ctx).expect("TODO"));
                             }
                         }
                     }

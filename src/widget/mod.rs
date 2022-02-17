@@ -46,19 +46,23 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn childs(&self) -> usize;
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn child<'s>(&'s self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()>;
+    fn child<'s>(&'s self, i: usize, root: E::RootRef<'s>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()>;
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_child<'s>(self: Box<Self>, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's;
+    fn into_child<'s>(self: Box<Self>, i: usize, root: E::RootRef<'s>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
-    fn childs_ref<'s>(&'s self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
+    fn childs_ref<'s>(&'s self, root: E::RootRef<'s>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
         (0..self.childs())
-            .map(#[inline] |i| self.child(i,root.fork(),ctx).unwrap() )
+            .map(#[inline] |i| {
+                let root: &E::RootRef<'s> = &root;
+                let root: E::RootRef<'s> = root.fork();
+                self.child(i,root,ctx).unwrap()
+            } )
             .collect::<Vec<_>>()
     }
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn into_childs<'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's;
+    fn into_childs<'s>(self: Box<Self>, root: E::RootRef<'s>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's;
     
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
@@ -75,7 +79,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn resolve<'s>(&'s self, i: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,E::Error> {
+    fn resolve<'s>(&'s self, i: E::WidgetPath, root: E::RootRef<'s>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,E::Error> {
         if i.is_empty() {
             return Ok(self.as_wcow())
         }
@@ -90,7 +94,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
-    fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,E::Error> where Self: 'w {
+    fn into_resolve<'s>(self: Box<Self>, i: E::WidgetPath, root: E::RootRef<'s>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,E::Error> where Self: 's {
         if i.is_empty() {
             return Ok(self.box_into_wcow())
         }

@@ -156,7 +156,7 @@ impl<'a,T,U> WCow<'a,T,U> where T: ?Sized + 'a, U: Borrow<T> + Sized + 'a {
 
 //TODO also for generic WCow<'_,T,U>
 impl<'a,E> WidgetRef<'a,E> where E: Env {
-    pub fn into_resolve(self, i: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'a,E>,E::Error> {
+    pub fn into_resolve<'s>(self, i: E::WidgetPath, root: E::RootRef<'s>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,E::Error> where Self: 's {
         match self {
             WCow::Borrowed(t) => t.resolve(i,root,ctx),
             WCow::Owned(t) => t.into_resolve(i,root,ctx),

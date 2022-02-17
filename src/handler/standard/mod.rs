@@ -44,7 +44,7 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
 
     pub fn focus(&self, mut root: Link<E>, p: E::WidgetPath, root_bounds: Bounds, ts: u64) -> Result<EventResp,E::Error> {
         self.unfocus(root.reference(),root_bounds,ts);
-        (self.f)(root.ctx).s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root.widget.root)?);
+        (self.f)(root.ctx).s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root.widget.root,root.ctx)?);
         root.send_event(
             &EventCompound{
                 event: Event::from(Focus{}),

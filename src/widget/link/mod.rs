@@ -153,7 +153,8 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
             self.reference(),
             e,
             &mut |mut l,e| {
-                l._event_root(e)
+                //TODO everything wrong here with event root propagation and tail
+                l.event_direct(e)
             }
         )
     }
@@ -275,7 +276,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     pub fn with_widget<'s>(&'s mut self, p: E::WidgetPath) -> Result<Link<'s,'cc,E>,E::Error> where 'c: 's {
         Ok(
             Link{
-                widget: self.widget.root.widget(p)?,
+                widget: self.widget.root.widget(p,self.ctx)?,
                 ctx: self.ctx
             }
         )

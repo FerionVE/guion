@@ -22,43 +22,22 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     fn childs(&self) -> usize {
         self.childs.len()
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
-        self.childs.childs()
+    fn childs_ref<'s>(&'s self, r: E::RootRef<'_>, c: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
+        self.childs.childs(r,c)
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
-        self.childs.into_childs()
+    fn into_childs<'s>(self: Box<Self>, r: E::RootRef<'_>, c: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
+        self.childs.into_childs(r,c)
     }
 
     fn focusable(&self) -> bool {
         false
     }
 
-    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
-        self.childs.child(i)
+    fn child<'s>(&'s self, i: usize, r: E::RootRef<'_>, c: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
+        self.childs.child(i,r,c)
     }
-    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
-        self.childs.into_child(i)
-    }
-}
-impl<'w,E,T> WidgetMut<E> for Pane<'w,E,T> where 
-    E: Env,
-    T: WidgetArrayMut<E>+'w,
-{
-    fn _set_invalid(&mut self, v: bool) {
-        let _ = v;
-        //self.invalid = true
-    }
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        self.childs.childs_mut()
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        self.childs.into_childs_mut()
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        self.childs.child_mut(i)
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        self.childs.into_child_mut(i)
+    fn into_child<'s>(self: Box<Self>, i: usize, r: E::RootRef<'_>, c: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
+        self.childs.into_child(i,r,c)
     }
 }
 
@@ -120,5 +99,35 @@ impl<'w,E,T> Pane<'w,E,T> where
         let bounds = calc_bounds(&b.size,&sizes,self.orientation); 
 
         Ok(bounds)
+    }
+}
+
+impl<'l,E,T> AsWidget<E> for Pane<'l,E,T> where Self: Widget<E>, E: Env {
+    type Widget = Self;
+    type WidgetOwned = Self;
+
+    #[inline]
+    fn as_widget<'w>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget<'w>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
+        WCow::Owned(self)
+    }
+    #[inline]
+    fn box_into_widget<'w>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Owned(*self)
+    }
+    #[inline]
+    fn as_widget_dyn<'w,'s>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget_dyn<'w,'s>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+        WCow::Owned(Box::new(self))
+    }
+    #[inline]
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Owned(self)
     }
 }

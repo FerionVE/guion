@@ -117,8 +117,9 @@ impl<'a,E> Deref for Resolved<'a,E> where E: Env {
 impl<'a,E> Clone for Resolved<'a,E> where E: Env {
     #[inline]
     fn clone(&self) -> Self {
-        let mut s = self.root.widget(self.direct_path.refc()).unwrap();
-        s.path = self.path.refc();
-        s
+        // let mut s = self.root.widget(self.direct_path.refc()).unwrap();
+        // s.path = self.path.refc();
+        // s
+        todo!()
     }
 }

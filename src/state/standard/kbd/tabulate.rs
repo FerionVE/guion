@@ -20,14 +20,14 @@ pub fn tabulate<E: Env>(s: &E::RootRef<'_>, selected: E::WidgetPath, reverse: bo
             return current;
         }
 
-        if s.widget(current.refc()).expect("Lost Widget").focusable() {
+        if s.widget(current.refc(),ctx).expect("Lost Widget").focusable() {
             return current;
         }
     }
 
     fn walk_forward<E: Env>(current: &mut E::WidgetPath, s: &E::RootRef<'_>, ctx: &mut E::Context<'_>) {
         {
-            let w = s.widget(current.refc()).expect("Lost Widget");
+            let w = s.widget(current.refc(),ctx).expect("Lost Widget");
             let pc = w.child_paths(s.fork(),ctx);
             if !pc.is_empty() {
                 *current = pc[0].refc();
@@ -36,7 +36,7 @@ pub fn tabulate<E: Env>(s: &E::RootRef<'_>, selected: E::WidgetPath, reverse: bo
         }
         loop {
             if let Some(parent) = current.parent() {
-                if let Ok(w) = s.widget(parent.refc()) {
+                if let Ok(w) = s.widget(parent.refc(),ctx) {
                     let pc = w.child_paths(s.fork(),ctx);
 
                     let idx = pc.iter().position(|c| c.dest_eq(current) ).expect("Parent Lost Child Widget");
@@ -54,7 +54,7 @@ pub fn tabulate<E: Env>(s: &E::RootRef<'_>, selected: E::WidgetPath, reverse: bo
     }
     fn walk_reverse<E: Env>(current: &mut E::WidgetPath, s: &E::RootRef<'_>, ctx: &mut E::Context<'_>) {
         if let Some(parent) = current.parent() {
-            if let Ok(w) = s.widget(parent.refc()) {
+            if let Ok(w) = s.widget(parent.refc(),ctx) {
                 let pc = w.child_paths(s.fork(),ctx);
 
                 let idx = pc.iter().position(|c| c.dest_eq(current) ).expect("Parent Lost Child Widget");
@@ -68,7 +68,7 @@ pub fn tabulate<E: Env>(s: &E::RootRef<'_>, selected: E::WidgetPath, reverse: bo
             }
         }
         loop {
-            let w = s.widget(current.refc()).expect("Lost Widget");
+            let w = s.widget(current.refc(),ctx).expect("Lost Widget");
             let pc = w.child_paths(s.fork(),ctx);
             if pc.is_empty() {break;}
             *current = pc[pc.len()-1].refc();

@@ -87,12 +87,13 @@ impl<E> Handler<E> for () where E: Env {
     #[inline] 
     fn _event_root(
         &self,
-        l: Link<E>,
+        mut l: Link<E>,
         e: &EventCompound<E>,
         tail: &mut dyn FnMut(Link<E>,&EventCompound<E>)->EventResp,
     ) -> EventResp {
         if !e.event._root_only() {//TODO warn eprint??
-            todo!()
+            //TODO everything wrong here with event root propagation and tail
+            l.event_direct(e)
             //l.ctx.event_direct(l.widget,e)
         }else{
             false
