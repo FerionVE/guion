@@ -2,7 +2,7 @@ use crate::env::Env;
 use crate::widget::Widget;
 
 pub mod view_widget;
-pub mod test;
+//pub mod test;
 
 pub trait View<E,MutFn> where MutFn: Clone + 'static, E: Env {
     type Viewed: Widget<E>;
@@ -81,9 +81,9 @@ macro_rules! decl_dyn_view_type {
     };
 }
 
-decl_dyn_view_type!(
-    pub type ADyn = <'a> &'a mut test::A
-);
-decl_dyn_view_type!(
-    pub type BDyn = <'a> <E as Env>::RootMut<'a> => &'a mut test::B
-);
+// decl_dyn_view_type!(
+//     pub type ADyn = <'a> &'a mut test::A
+// );
+// decl_dyn_view_type!(
+//     pub type BDyn = <'a> <E as Env>::RootMut<'a> => &'a mut test::B
+// );

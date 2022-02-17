@@ -103,7 +103,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
         E::Context::<'_>::build_handler()._render(
             self.reference(),
             r,
-            &mut |l,r| {
+            &mut |mut l,r| {
                 l._render(r)
             }
         )
@@ -114,7 +114,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
         E::Context::<'_>::build_handler()._event_direct(
             self.reference(),
             e,
-            &mut |l,e| {
+            &mut |mut l,e| {
                 l._event_direct(e)
             }
         )
@@ -129,7 +129,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
             self.reference(),
             e,
             child,
-            &mut |l,e,child| {
+            &mut |mut l,e,child| {
                 l._send_event(e,child)
             }
         )
@@ -140,7 +140,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
         E::Context::<'_>::build_handler()._size(
             self.reference(),
             e,
-            &mut |l,e| {
+            &mut |mut l,e| {
                 l._size(e)
             }
         )
@@ -152,7 +152,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
         E::Context::<'_>::build_handler()._event_root(
             self.reference(),
             e,
-            &mut |l,e| {
+            &mut |mut l,e| {
                 l._event_root(e)
             }
         )
@@ -215,7 +215,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     #[deprecated]
     #[allow(deprecated)]
     #[inline]
-    pub fn child_paths(&self) -> Vec<E::WidgetPath> {
+    pub fn child_paths(&mut self) -> Vec<E::WidgetPath> {
         self.widget.child_paths(self.widget.root.fork(),self.ctx)
     }
 

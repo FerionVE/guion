@@ -59,7 +59,7 @@ impl<'a,E> Resolved<'a,E> where E: Env {
 
     #[inline]
     pub fn trace_bounds(&mut self, c: &mut E::Context<'_>, root_bounds: &Bounds, e: &EStyle<E>, force: bool) -> Bounds {
-        self.stor.trace_bounds(c,self.path.refc(),root_bounds,e,force).unwrap()
+        self.root.trace_bounds(c,self.path.refc(),root_bounds,e,force).unwrap()
     }
 
     #[inline]

@@ -122,7 +122,7 @@ impl<E,MutFn> View<E,MutFn> for ViewC<'_> where
 // }
 
 // #[test]
-// fn suse() {
+// fn views() {
 //     let mut ctx = TestCtx{v: Vec::new()};
     
 //     {

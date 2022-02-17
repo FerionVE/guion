@@ -1,4 +1,5 @@
 use crate::*;
+use crate::root::RootRef;
 use super::*;
 
 impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
@@ -50,7 +51,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
     //#[inline] 
     fn _event_root(
         &self,
-        l: Link<E>,
+        mut l: Link<E>,
         e: &EventCompound<E>,
         tail: &mut dyn FnMut(Link<E>,&EventCompound<E>)->EventResp,
     ) -> EventResp { //TODO BUG handle sudden invalidation of hovered widget

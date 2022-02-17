@@ -1,12 +1,13 @@
+use crate::aliases::EStyle;
 use crate::env::Env;
 use crate::widget::resolved::Resolved;
 use crate::util::bounds::Bounds;
 
 pub trait RootRef<E> where E: Env {
-    fn fork<'s>(&'s self) -> E::RootRef<'s> where Self: 's;
+    fn fork<'s,'w:'s>(&'s self) -> E::RootRef<'w> where Self: 'w;
 
     //TODO fix old resolve stack
-    fn widget(&self, i: E::WidgetPath) -> Result<Resolved<E>,E::Error>;
+    fn widget<'s,'w:'s>(&'s self, i: E::WidgetPath) -> Result<Resolved<'w,E>,E::Error> where Self: 'w;
 
     #[inline]
     fn has_widget(&self, i: E::WidgetPath) -> bool {
@@ -22,11 +23,11 @@ pub trait RootMut<E> where E: Env {
 }
 
 impl<'a,T,E> RootRef<E> for &'a T where for<'z> E: Env<RootRef<'z>=&'z T> {
-    fn fork<'s>(&'s self) -> E::RootRef<'s> where Self: 's {
+    fn fork<'s,'w:'s>(&'s self) -> E::RootRef<'w> where Self: 'w {
         &**self
     }
 
-    fn widget(&self, i: <E as Env>::WidgetPath) -> Result<Resolved<E>,<E as Env>::Error> {
+    fn widget<'s,'w:'s>(&'s self, i: E::WidgetPath) -> Result<Resolved<'w,E>,E::Error> where Self: 'w {
         todo!()
     }
 
@@ -45,20 +46,20 @@ impl<'a,T,E> RootMut<E> for &'a mut T where for<'z> E: Env<RootMut<'z>=&'z mut T
     }
 }
 
-impl<'a,T,E> RootRef<E> for std::borrow::Cow<'a,T> where for<'z> E: Env<RootRef<'z>=std::borrow::Cow<'z,T>>, T: Clone {
-    fn fork<'s>(&'s self) -> E::RootRef<'s> where Self: 's {
-        std::borrow::Cow::Borrowed(self.as_ref())
-    }
+// impl<'a,T,E> RootRef<E> for std::borrow::Cow<'a,T> where for<'z> E: Env<RootRef<'z>=std::borrow::Cow<'z,T>>, T: Clone {
+//     fn fork<'s,'w:'s>(&'s self) -> E::RootRef<'w> where Self: 'w {
+//         std::borrow::Cow::Borrowed(self.as_ref())
+//     }
 
-    fn widget(&self, i: <E as Env>::WidgetPath) -> Result<Resolved<E>,<E as Env>::Error> {
-        todo!()
-    }
+//     fn widget<'s,'w:'s>(&'s self, i: E::WidgetPath) -> Result<Resolved<'w,E>,E::Error> where Self: 'w {
+//         todo!()
+//     }
 
-    fn has_widget(&self, i: E::WidgetPath) -> bool {
-        todo!()
-    }
+//     fn has_widget(&self, i: E::WidgetPath) -> bool {
+//         todo!()
+//     }
 
-    fn trace_bounds(&self, ctx: &mut <E as Env>::Context<'_>, i: <E as Env>::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,<E as Env>::Error> {
-        todo!()
-    }
-}
+//     fn trace_bounds(&self, ctx: &mut <E as Env>::Context<'_>, i: <E as Env>::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,<E as Env>::Error> {
+//         todo!()
+//     }
+// }

@@ -54,7 +54,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     #[deprecated]
     fn childs_ref<'s>(&'s self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
         (0..self.childs())
-            .map(#[inline] |i| self.child(i,root,ctx).unwrap() )
+            .map(#[inline] |i| self.child(i,root.fork(),ctx).unwrap() )
             .collect::<Vec<_>>()
     }
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
@@ -64,7 +64,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
         (0..self.childs())
-            .map(#[inline] |i| self.child(i,root,ctx).unwrap().in_parent_path(own_path.refc(),todo!("TODO")) )
+            .map(#[inline] |i| self.child(i,root.fork(),ctx).unwrap().in_parent_path(own_path.refc()) )
             .collect::<Vec<_>>()
     }
 
@@ -77,11 +77,11 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     #[inline]
     fn resolve<'s>(&'s self, i: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,E::Error> {
         if i.is_empty() {
-            return Ok(self.box_ref())
+            return Ok(self.as_wcow())
         }
         //TODO resolve_child could also return it's ref resolve
-        let (c,sub) = self.resolve_child(&i,root,ctx)?;
-        self.child(c,root,ctx).unwrap().resolve_child(sub,root,ctx)
+        let (c,sub) = self.resolve_child(&i,root.fork(),ctx)?;
+        self.child(c,root.fork(),ctx).unwrap().into_resolve(sub,root,ctx)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Resolve a deep child item by the given relative path
@@ -92,10 +92,10 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     #[inline]
     fn into_resolve<'w>(self: Box<Self>, i: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,E::Error> where Self: 'w {
         if i.is_empty() {
-            return Ok(self.box_box())
+            return Ok(self.box_into_wcow())
         }
-        let (c,sub) = self.resolve_child(&i,root,ctx)?;
-        self.into_child(c,root,ctx).unwrap_nodebug().resolve_child(sub,root,ctx)
+        let (c,sub) = self.resolve_child(&i,root.fork(),ctx)?;
+        self.into_child(c,root.fork(),ctx).unwrap_nodebug().into_resolve(sub,root,ctx)
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// To (or through) which child path would the given sub_path resolve?
@@ -106,11 +106,11 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     #[inline]
     fn resolve_child(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
-            if let Some(r) = self.child(c,root,ctx).unwrap().resolved_by_path(sub_path) {
+            if let Some(r) = self.child(c,root.fork(),ctx).unwrap().resolved_by_path(sub_path) {
                 return Ok((c,r.sub_path));
             }
         }
-        Err(self.gen_diag_error_resolve_fail(sub_path, "resolve"))
+        Err(self.gen_diag_error_resolve_fail(sub_path, "resolve",root,ctx))
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     #[inline]
@@ -299,24 +299,43 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// Box reference of this widget immutable. Use [`WidgetMut::box_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
-    fn box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
-        WBase::_box_ref(self)
+    fn as_wcow<'s>(&'s self) -> WidgetRef<'s,E> {
+        WBase::_as_wcow(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// Move widget into box immutable. Use [`WidgetMut::box_box_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
-    fn box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+    fn box_into_wcow<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+        WBase::_box_into_wcow(self)
+    }
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// Move widget into box immutable. Use [`WidgetMut::boxed_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
+    #[inline]
+    fn into_wcow<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
+        WBase::_into_wcow(self)
+    }
+
+    // /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    // /// Box reference of this widget immutable. Use [`WidgetMut::box_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
+    // #[inline]
+    // fn box_ref<'s>(&'s self) -> Box<dyn Widget<E>+'s> where Self: 's {
+    //     WBase::_box_ref(self)
+    // }
+    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
+    /// Move widget into box immutable. Use [`WidgetMut::box_box_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
+    #[inline]
+    fn box_box<'w>(self: Box<Self>) -> Box<dyn Widget<E>+'w> where Self: 'w {
         WBase::_box_box(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// Move widget into box immutable. Use [`WidgetMut::boxed_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
-    fn boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w {
+    fn boxed<'w>(self) -> Box<dyn Widget<E>+'w> where Self: Sized + 'w {
         WBase::_boxed(self)
     }
 
     #[inline(never)]
-    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str) -> E::Error {
+    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> E::Error {
         /*
         Failed to resolve 3/5/2 in Pane<Vec<WidgetRefMut<E>>>
             Child #0: 6 Button<E,Label<&str>>
@@ -328,7 +347,7 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
         */
         let widget_type = self.debugged_type_name();
         let child_info = (0..self.childs())
-            .map(#[inline] |i| self.child(i).unwrap().guion_resolve_error_child_info(i) )
+            .map(#[inline] |i| (*self.child(i,root.fork(),ctx).unwrap()).guion_resolve_error_child_info(i) )
             .collect::<Vec<_>>();
         GuionError::ResolveError(Box::new(ResolveError{
             op,
@@ -337,6 +356,16 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
             child_info,
         })).into()
     }
+
+    #[inline(never)]
+    fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
+        GuionResolveErrorChildInfo {
+            child_idx,
+            widget_type: self.debugged_type_name(),
+            widget_path_if_path: None,
+            widget_id: Some(self.id()),
+        }
+    }
 }
 
 /// This trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
@@ -344,9 +373,12 @@ pub trait Widget<E>: WBase<E> + AsWidgetImplemented<E> where E: Env + 'static {
 pub trait WBase<E> where E: Env {
     fn type_name(&self) -> &'static str;
     fn erase<'s>(&self) -> &(dyn Widget<E>+'s) where Self: 's;
-    fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E>;
-    fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
-    fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
+    fn _as_wcow<'s>(&'s self) -> WidgetRef<'s,E>;
+    fn _box_into_wcow<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
+    fn _into_wcow<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
+    // fn _box_ref<'s>(&'s self) -> Box<dyn Widget<E>+'s> where Self: 's;
+    fn _box_box<'w>(self: Box<Self>) -> Box<dyn Widget<E>+'w> where Self: 'w;
+    fn _boxed<'w>(self) -> Box<dyn Widget<E>+'w> where Self: Sized + 'w;
     fn as_any(&self) -> &dyn std::any::Any where Self: 'static;
 }
 impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
@@ -359,17 +391,29 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
         self
     }
     #[inline]
-    fn _box_ref<'s>(&'s self) -> WidgetRef<'s,E> {
+    fn _as_wcow<'s>(&'s self) -> WidgetRef<'s,E> {
         WCow::Borrowed(self)
     }
     #[inline]
-    fn _box_box<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
+    fn _box_into_wcow<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
         WCow::Owned(self)
     }
     #[inline]
-    fn _boxed<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
-        let b = Box::<dyn Widget<E>+'_>::new(self);
+    fn _into_wcow<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
+        let b = Box::new(self);
         WCow::Owned(b)
+    }
+    // #[inline]
+    // fn _box_ref<'s>(&'s self) -> Box<dyn Widget<E>+'s> where Self: 's {
+    //     Box::new(self)
+    // }
+    #[inline]
+    fn _box_box<'w>(self: Box<Self>) -> Box<dyn Widget<E>+'w> where Self: 'w {
+        self
+    }
+    #[inline]
+    fn _boxed<'w>(self) -> Box<dyn Widget<E>+'w> where Self: Sized + 'w {
+        Box::new(self)
     }
     #[inline]
     fn as_any(&self) -> &dyn std::any::Any where Self: 'static {

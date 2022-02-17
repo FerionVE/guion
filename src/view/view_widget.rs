@@ -41,11 +41,60 @@ impl<Wid,WFn,MFn,E> AsWidget<E> for ViewWidget<Wid,WFn,MFn,E> where
     fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
         WCow::Owned( (self.0)().view(self.1.clone(), root,ctx) )
     }
+
+    fn as_widget_dyn<'w,'s>(&'w self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
+        WCow::Owned( (self.0)().view(self.1.clone(), root,ctx).boxed() )
+    }
+    fn into_widget_dyn<'w,'s>(self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: Sized + 'w {
+        WCow::Owned( (self.0)().view(self.1.clone(), root,ctx).boxed() )
+    }
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
+        self.into_widget_dyn(root,ctx)
+    }
 }
 
 pub struct DummyWidget<T>(pub T);
 
 impl<T,E> Widget<E> for DummyWidget<T> where T: AsWidget<E>, E: Env {
+    fn id(&self) -> <E as Env>::WidgetID {
+        todo!()
+    }
+
+    fn _render(&self, l: crate::widget::link::Link<E>, r: &mut crate::aliases::ERenderer<'_,E>) {
+        todo!()
+    }
+
+    fn _event_direct(&self, l: crate::widget::link::Link<E>, e: &crate::event::compound::EventCompound<E>) -> crate::EventResp {
+        todo!()
+    }
+
+    fn _size(&self, l: crate::widget::link::Link<E>, e: &crate::aliases::EStyle<E>) -> crate::aliases::ESize<E> {
+        todo!()
+    }
+
+    fn childs(&self) -> usize {
+        todo!()
+    }
+
+    fn child<'s>(&'s self, i: usize, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Result<crate::aliases::WidgetRef<'s,E>,()> {
+        todo!()
+    }
+
+    fn into_child<'s>(self: Box<Self>, i: usize, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Result<crate::aliases::WidgetRef<'s,E>,()> where Self: 's {
+        todo!()
+    }
+
+    fn into_childs<'w>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Vec<crate::aliases::WidgetRef<'w,E>> where Self: 'w {
+        todo!()
+    }
+
+    fn child_bounds(&self, l: crate::widget::link::Link<E>, b: &crate::util::translate::bounds::Bounds, e: &crate::aliases::EStyle<E>, force: bool) -> Result<Vec<crate::util::translate::bounds::Bounds>,()> {
+        todo!()
+    }
+
+    fn focusable(&self) -> bool {
+        todo!()
+    }
     // fn run(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
     //     self.0.as_widget(root.fork(),ctx).run(root,ctx)
     // }
@@ -59,6 +108,16 @@ impl<T,E> AsWidget<E> for DummyWidget<T> where T: AsWidget<E>, E: Env  {
         WCow::Borrowed(self)
     }
     fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
+        WCow::Owned(self)
+    }
+
+    fn as_widget_dyn<'w,'s>(&'w self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    fn into_widget_dyn<'w,'s>(self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: Sized + 'w {
+        WCow::Owned(Box::new(self))
+    }
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
         WCow::Owned(self)
     }
 }

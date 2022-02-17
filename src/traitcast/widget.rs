@@ -56,8 +56,3 @@ macro_rules! traitcast_for_from_widget {
         );
     }
 }
-
-
-// fn sustest<E>(e: &(dyn Widget<E>+'_)) where E: Env {
-//     e.try_traitcast_ref::<(dyn crate::widget::render::ImplRenderWidget<E>+'_)>();
-// }

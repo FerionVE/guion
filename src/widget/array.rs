@@ -17,13 +17,13 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
     #[inline]
     fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn into_child<'w>(mut self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
         if self.len() > i {
-            Ok(self.swap_remove(i).into_widget(root,ctx))
+            Ok(self.swap_remove(i).into_widget_dyn(root,ctx))
         }else{
             Err(())
         }
@@ -31,13 +31,13 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
     #[inline]
     fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
         self.iter()
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
         self.into_iter()
-            .map(#[inline] |w| w.into_widget(root,ctx) )
+            .map(#[inline] |w| w.into_widget_dyn(root.fork(),ctx) )
             .collect::<Vec<_>>()
     }
 }
@@ -50,25 +50,25 @@ impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
     #[inline]
     fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn into_child<'w>(self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
         self.iter()
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
         self.iter()
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
 }
@@ -81,25 +81,25 @@ impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>, E: Env {
     #[inline]
     fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn into_child<'w>(self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
         self.iter()
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
         self.iter()
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
 }
@@ -129,8 +129,8 @@ macro_rules! impl_wpps_tuple {
             fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
                 let $senf = self;
                 Ok(match i {
-                    $m => AsWidget::as_widget(& $x ,root,ctx),
-                    $($mm => AsWidget::as_widget(& $xx ,root,ctx)),+ ,
+                    $m => AsWidget::as_widget_dyn(& $x ,root,ctx),
+                    $($mm => AsWidget::as_widget_dyn(& $xx ,root,ctx)),+ ,
                     _ => return Err(()),
                 })
             }
@@ -138,20 +138,20 @@ macro_rules! impl_wpps_tuple {
             fn into_child<'w>(self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
                 let $senf = self;
                 Ok(match i {
-                    $m => AsWidget::into_widget($x ,root,ctx),
-                    $($mm => AsWidget::into_widget($xx ,root,ctx)),+ ,
+                    $m => AsWidget::into_widget_dyn($x ,root,ctx),
+                    $($mm => AsWidget::into_widget_dyn($xx ,root,ctx)),+ ,
                     _ => return Err(()),
                 })
             }
             #[inline]
             fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
                 let ($l,$($ll),*) = self;
-                vec![$l.as_widget(root,ctx), $( $ll .as_widget(root,ctx) ),* ]
+                vec![$l.as_widget_dyn(root.fork(),ctx), $( $ll .as_widget_dyn(root.fork(),ctx) ),* ]
             }
             #[inline]
             fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
                 let ($l,$($ll),*) = self;
-                vec![$l.into_widget(root,ctx), $( $ll .into_widget(root,ctx) ),* ]
+                vec![$l.into_widget_dyn(root.fork(),ctx), $( $ll .into_widget_dyn(root.fork(),ctx) ),* ]
             }
         }
 
@@ -168,8 +168,8 @@ macro_rules! impl_wpps_tuple {
             fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
                 let $senf = self;
                 Ok(match i {
-                    $m => AsWidget::as_widget(& $x ,root,ctx),
-                    $($mm => AsWidget::as_widget(& $xx ,root,ctx)),+ ,
+                    $m => AsWidget::as_widget_dyn(& $x ,root,ctx),
+                    $($mm => AsWidget::as_widget_dyn(& $xx ,root,ctx)),+ ,
                     _ => return Err(()),
                 })
             }
@@ -177,20 +177,20 @@ macro_rules! impl_wpps_tuple {
             fn into_child<'w>(self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
                 let $senf = self;
                 Ok(match i {
-                    $m => AsWidget::as_widget(& $x ,root,ctx),
-                    $($mm => AsWidget::as_widget(& $xx ,root,ctx)),+ ,
+                    $m => AsWidget::as_widget_dyn(& $x ,root,ctx),
+                    $($mm => AsWidget::as_widget_dyn(& $xx ,root,ctx)),+ ,
                     _ => return Err(()),
                 })
             }
             #[inline]
             fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
                 let ($l,$($ll),*) = self;
-                vec![$l.as_widget(root,ctx), $( $ll .as_widget(root,ctx) ),* ]
+                vec![$l.as_widget_dyn(root.fork(),ctx), $( $ll .as_widget_dyn(root.fork(),ctx) ),* ]
             }
             #[inline]
             fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
                 let ($l,$($ll),*) = self;
-                vec![$l.as_widget(root,ctx), $( $ll .as_widget(root,ctx) ),* ]
+                vec![$l.as_widget_dyn(root.fork(),ctx), $( $ll .as_widget_dyn(root.fork(),ctx) ),* ]
             }
         }
 
@@ -207,8 +207,8 @@ macro_rules! impl_wpps_tuple {
             fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
                 let $senf = self;
                 Ok(match i {
-                    $m => AsWidget::as_widget(& $x ,root,ctx),
-                    $($mm => AsWidget::as_widget(& $xx ,root,ctx)),+ ,
+                    $m => AsWidget::as_widget_dyn(& $x ,root,ctx),
+                    $($mm => AsWidget::as_widget_dyn(& $xx ,root,ctx)),+ ,
                     _ => return Err(()),
                 })
             }
@@ -216,20 +216,20 @@ macro_rules! impl_wpps_tuple {
             fn into_child<'w>(self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
                 let $senf = self;
                 Ok(match i {
-                    $m => AsWidget::as_widget(& $x ,root,ctx),
-                    $($mm => AsWidget::as_widget(& $xx ,root,ctx)),+ ,
+                    $m => AsWidget::as_widget_dyn(& $x ,root,ctx),
+                    $($mm => AsWidget::as_widget_dyn(& $xx ,root,ctx)),+ ,
                     _ => return Err(()),
                 })
             }
             #[inline]
             fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
                 let ($l,$($ll),*) = self;
-                vec![$l.as_widget(root,ctx), $( $ll .as_widget(root,ctx) ),* ]
+                vec![$l.as_widget_dyn(root.fork(),ctx), $( $ll .as_widget_dyn(root.fork(),ctx) ),* ]
             }
             #[inline]
             fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
-                let ($l,$($ll),*) = self;
-                vec![$l.as_widget(root,ctx), $( $ll .as_widget(root,ctx) ),* ]
+                let ($l,$($ll),*) = &*self;
+                vec![$l.as_widget_dyn(root.fork(),ctx), $( $ll .as_widget_dyn(root.fork(),ctx) ),* ]
             }
         }
     };
@@ -265,26 +265,26 @@ impl<T,E,const N: usize> WidgetArray<E> for [T;N] where T: AsWidget<E>, E: Env {
     #[inline]
     fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn into_child<'w>(self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
         std::array::IntoIter::new(self)
             .skip(i).next()
-            .map(|w| w.into_widget(root,ctx))
+            .map(|w| w.into_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
         self.iter()
-            .map(#[inline] |w| w.as_widget(root,ctx) )
+            .map(#[inline] |w| w.as_widget_dyn(root.fork(),ctx) )
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
         std::array::IntoIter::new(self)
-            .map(#[inline] |w| w.into_widget(root,ctx) )
+            .map(#[inline] |w| w.into_widget_dyn(root.fork(),ctx) )
             .collect::<Vec<_>>()
     }
 }
@@ -297,25 +297,25 @@ impl<T,E,const N: usize> WidgetArray<E> for &[T;N] where T: AsWidget<E>, E: Env 
     #[inline]
     fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn into_child<'w>(self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
         self.iter()
-            .map(#[inline] |w| w.as_widget(root,ctx))
+            .map(#[inline] |w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
         self.into_iter()
-            .map(#[inline] |w| w.as_widget(root,ctx))
+            .map(#[inline] |w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
 }
@@ -327,25 +327,25 @@ impl<T,E,const N: usize> WidgetArray<E> for &mut [T;N] where T: AsWidget<E>, E: 
     #[inline]
     fn child(&self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<E>,()> {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn into_child<'w>(self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'w,E>,()> where Self: 'w {
         self.get(i)
-            .map(|w| w.as_widget(root,ctx))
+            .map(|w| w.as_widget_dyn(root,ctx))
             .ok_or(())
     }
     #[inline]
     fn childs(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<E>> {
         self.iter()
-            .map(#[inline] |w| w.as_widget(root,ctx))
+            .map(#[inline] |w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
     #[inline]
     fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w {
-        self.into_iter()
-            .map(#[inline] |w| w.as_widget(root,ctx))
+        (&*self).iter()
+            .map(#[inline] |w| w.as_widget_dyn(root.fork(),ctx))
             .collect::<Vec<_>>()
     }
 }
