@@ -64,12 +64,12 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     E: Env,
 {
     #[inline]
-    pub fn with_trigger<T>(self, fun: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(Link<E>) {
+    pub fn with_trigger<T>(self, mutor: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(Link<E>) {
         Button{
             id: self.id,
             size: self.size,
             style: self.style,
-            trigger: fun,
+            trigger: mutor,
             trigger_mut: self.trigger_mut,
             locked: self.locked,
             text: self.text,
@@ -77,13 +77,13 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, fun: T) -> Button<'w,E,Text,Tr,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + Send + Sync + 'static {
+    pub fn with_trigger_mut<T>(self, mutor: T) -> Button<'w,E,Text,Tr,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + Send + Sync + 'static {
         Button{
             id: self.id,
             size: self.size,
             style: self.style,
             trigger: self.trigger,
-            trigger_mut: fun,
+            trigger_mut: mutor,
             locked: self.locked,
             text: self.text,
             p: PhantomData,
@@ -109,8 +109,8 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     }
 
     #[inline]
-    pub fn with_size(mut self, s: ESize<E>) -> Self {
-        self.size = s;
+    pub fn with_size(mut self, size: ESize<E>) -> Self {
+        self.size = size;
         self
     }
     #[inline]

@@ -46,12 +46,12 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     }
 
     #[inline]
-    pub fn with_update<T>(self, fun: T) -> SplitPane<'w,E,L,R,V,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,f32) + Clone + Send + Sync + 'static {
+    pub fn with_update<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,f32) + Clone + Send + Sync + 'static {
         SplitPane{
             id: self.id,
             childs: self.childs,
             state: self.state,
-            updater: fun,
+            updater: mutor,
             orientation: self.orientation,
             width: self.width,
             style: self.style,
@@ -59,8 +59,8 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, fun: T) -> SplitPane<'w,E,L,R,V,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,f32>) + Clone + Send + Sync + 'static {
-        self.with_update(move |r,x,c,v| fun(r,x,c).set(v,c) )
+    pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,f32>) + Clone + Send + Sync + 'static {
+        self.with_update(move |r,x,c,v| mutor(r,x,c).set(v,c) )
     }
 }
 

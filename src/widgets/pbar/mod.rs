@@ -34,14 +34,14 @@ impl<'w,E> ProgressBar<'w,E> where
     E: Env,
 {
     #[inline]
-    pub fn with_value(mut self, v: f32) -> Self {
-        self.value = v;
+    pub fn with_value(mut self, value: f32) -> Self {
+        self.value = value;
         self
     }
 
     #[inline]
-    pub fn with_size(mut self, s: ESize<E>) -> Self {
-        self.size = s;
+    pub fn with_size(mut self, size: ESize<E>) -> Self {
+        self.size = size;
         self
     }
     #[inline]

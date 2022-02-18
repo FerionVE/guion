@@ -2,7 +2,7 @@ use super::*;
 use super::util::LocalGlyphCache;
 use super::label::Label;
 use crate::text::stor::TextStor;
-use crate::{event::key::Key, validation::Validation};
+use crate::validation::Validation;
 use std::marker::PhantomData;
 use util::state::*;
 
@@ -50,12 +50,12 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     
 
     #[inline]
-    pub fn with_update<T>(self, fun: T) -> CheckBox<'w,E,State,Text,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + Send + Sync + 'static {
+    pub fn with_update<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + Send + Sync + 'static {
         CheckBox{
             id: self.id,
             size: self.size,
             style: self.style,
-            updater: fun,
+            updater: mutor,
             locked: self.locked,
             text: self.text,
             state: self.state,
@@ -63,8 +63,8 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, fun: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,bool>) + Clone + Send + Sync + 'static {
-        self.with_update(move |r,x,c,v| fun(r,x,c).set(v,c) )
+    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,bool>) + Clone + Send + Sync + 'static {
+        self.with_update(move |r,x,c,v| mutor(r,x,c).set(v,c) )
     }
     #[inline]
     pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,TrMut> where T: AsWidget<E> {
@@ -81,8 +81,8 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     }
 
     #[inline]
-    pub fn with_size(mut self, s: ESize<E>) -> Self {
-        self.size = s;
+    pub fn with_size(mut self, size: ESize<E>) -> Self {
+        self.size = size;
         self
     }
     #[inline]

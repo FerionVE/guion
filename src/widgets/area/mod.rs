@@ -37,8 +37,6 @@ impl<'w,E,W> Area<'w,E,W,(i32,i32),()> where
 
 impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     E: Env,
-    W: 'w,
-    Scroll: 'w,
 {
     //TODO use a unified state object
     #[inline]
@@ -55,22 +53,22 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     }
 
     #[inline]
-    pub fn with_scroll_updater<T>(self, fun: T) -> Area<'w,E,W,Scroll,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,ScrollUpdate) + Clone + Send + Sync + 'static {
+    pub fn with_scroll_updater<T>(self, mutor: T) -> Area<'w,E,W,Scroll,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,ScrollUpdate) + Clone + Send + Sync + 'static {
         Area{
             id: self.id,
             size: self.size,
             style: self.style,
             inner: self.inner,
             scroll: self.scroll,
-            scroll_updater: fun,
+            scroll_updater: mutor,
             p: PhantomData,
         }
     }
 
     #[inline]
-    pub fn with_scroll_atomstate<T>(self, fun: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,(i32,i32)>) + Clone + Send + Sync + 'static {
+    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,(i32,i32)>) + Clone + Send + Sync + 'static {
         self.with_scroll_updater(move |r,x,c,ScrollUpdate { offset: (ax,ay) }| {
-            let state = fun(r,x,c);
+            let state = mutor(r,x,c);
             let (ox,oy) = state.get(c);
             state.set((ox+ax,oy+ay),c);
         })
