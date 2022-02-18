@@ -22,4 +22,4 @@ pub mod pbar;
 pub mod checkbox;
 pub mod splitpane;
 // pub mod textbox;
-// pub mod area;
+pub mod area;
