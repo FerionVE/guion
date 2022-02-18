@@ -3,17 +3,17 @@ use crate::style::standard::cursor::StdCursor;
 use super::*;
 use util::state::AtomStateMut;
 use imp::ICheckBox;
-use super::imp::ICheckBoxMut;
 
-impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
+impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<E>,
     State: AtomState<E,bool>,
     Text: AsWidget<E>,
+    TrMut: TriggerMut<E>,
 {
-    fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
+    fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
         vec![]
     }
     fn id(&self) -> E::WidgetID {
@@ -75,15 +75,13 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
         if let Some(ee) = e.event.is_mouse_up() {
             if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
                 let new = !self.state.get(l.ctx);
-                (self.trigger)(l.reference(),new);
-                Self::set(l,new);
+                self.set(l,new);
                 return true;
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
             if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.is(self.id()) {
                 let new = !self.state.get(l.ctx);
-                (self.trigger)(l.reference(),new);
-                Self::set(l,new);
+                self.set(l,new);
                 return true;
             }
         }
@@ -98,11 +96,11 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     fn childs(&self) -> usize {
         1
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
-        vec![self.text.as_ref()]
+    fn childs_ref<'s>(&'s self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
+        vec![self.text.as_widget_dyn(root,ctx)]
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
-        vec![self.text.into_ref()]
+    fn into_childs<'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
+        vec![self.text.into_widget_dyn(root,ctx)]
     }
     
     fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
@@ -111,65 +109,47 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     }
     fn focusable(&self) -> bool { true }
 
-    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
+    fn child<'s>(&'s self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
         if i != 0 {return Err(());}
-        Ok(self.text.as_ref())
+        Ok(self.text.as_widget_dyn(root,ctx))
     }
-    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
+    fn into_child<'s>(self: Box<Self>, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
         if i != 0 {return Err(());}
-        Ok(self.text.into_ref())
+        Ok(self.text.into_widget_dyn(root,ctx))
     }
 
-    impl_traitcast!(
+    impl_traitcast!( dyn Widget<E>:
         dyn ICheckBox<E> => |s| s;
         dyn AtomState<E,bool> => |s| &s.state;
     );
 }
 
-impl<'w,E,State,Text> WidgetMut<E> for CheckBox<'w,E,State,Text> where
-    E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    for<'a> E::Context<'a>: CtxStdState<E>,
-    State: AtomStateMut<E,bool>,
-    Text: AsWidgetMut<E>,
-{
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![self.text.as_mut()]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![self.text.into_mut()]
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        if i != 0 {return Err(());}
-        Ok(self.text.as_mut())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        if i != 0 {return Err(());}
-        Ok(self.text.into_mut())
-    }
+impl<'l,E,State,Text,TrMut> AsWidget<E> for CheckBox<'l,E,State,Text,TrMut> where Self: Widget<E>, E: Env {
+    type Widget = Self;
+    type WidgetOwned = Self;
 
-    impl_traitcast_mut!(
-        dyn ICheckBox<E> => |s| s;
-        dyn ICheckBoxMut<E> => |s| s;
-        dyn AtomState<E,bool> => |s| &mut s.state;
-        dyn AtomStateMut<E,bool> => |s| &mut s.state;
-    );
-}
-
-impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
-    E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    for<'a> E::Context<'a>: CtxStdState<E>,
-    State: AtomState<E,bool>+'w,
-    Text: AsWidget<E>,
-{
-    pub fn set(mut l: Link<E>, v: bool) {
-        l.mutate_closure(Box::new(move |mut w,c,_|{
-            //w.traitcast_mut::<dyn AtomStateMut<E,bool>>().unwrap().set(v,c);
-            let w = w.traitcast_mut::<dyn ICheckBoxMut<E>>().unwrap();
-            w.state_mut().set(v,c);
-        }));
+    #[inline]
+    fn as_widget<'w>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget<'w>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
+        WCow::Owned(self)
+    }
+    #[inline]
+    fn box_into_widget<'w>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Owned(*self)
+    }
+    #[inline]
+    fn as_widget_dyn<'w,'s>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget_dyn<'w,'s>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+        WCow::Owned(Box::new(self))
+    }
+    #[inline]
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Owned(self)
     }
 }

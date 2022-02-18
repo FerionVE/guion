@@ -13,17 +13,25 @@ pub trait Queue<I,O> { //TODO probably remove mandatory StdEnqueueable bound
 pub enum StdEnqueueable<E> where E: Env {
     Render{force: bool},
     Event{event: EEvent<E>, ts: u64},
-    MutateRoot{f: for<'r> fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>)},
-    MutateRootClosure{f: Box<dyn for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + 'static >},
-    AccessWidget{path: E::WidgetPath, f: fn(WidgetRef<E>,&mut E::Context<'_>)},
-    AccessWidgetClosure{path: E::WidgetPath, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context<'_>)+'static>},
-    AccessRoot{f: fn(E::RootRef<'_>,&mut E::Context<'_>)},
-    AccessRootClosure{f: Box<dyn FnOnce(E::RootRef<'_>,&mut E::Context<'_>)+'static>},
+    MutateRoot{f: PtrMutEvent<E>},
+    MutateRootClosure{f: BoxMutEvent<E>},
+    AccessWidget{path: E::WidgetPath, f: PtrAccessWidget<E>},
+    AccessWidgetClosure{path: E::WidgetPath, f: BoxAccessWidget<E>},
+    AccessRoot{f: PtrAccessRoot<E>},
+    AccessRootClosure{f: BoxAccessRoot<E>},
     MutMessage{path: E::WidgetPath, msg: E::Message},
     InvalidateWidget{path: E::WidgetPath},
     ValidateWidgetRender{path: E::WidgetPath},
     ValidateWidgetSize{path: E::WidgetPath, size: ESize<E>},
 }
+
+pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + 'static>;
+pub type PtrMutEvent<E> = for<'r> fn(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>);
+pub type BoxAccessWidget<E> = Box<dyn for<'r> FnOnce(WidgetRef<E>,<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>)+'static>;
+pub type PtrAccessWidget<E> = for<'r> fn(WidgetRef<E>,<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>);
+pub type BoxAccessRoot<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>)+'static>;
+pub type PtrAccessRoot<E> = for<'r> fn(<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>);
+
 
 /// event ordering in a standard loop
 ///

@@ -18,20 +18,20 @@ pub struct Link<'c,'cc: 'c,E> where E: Env {
 impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     /// Enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate(&mut self, f: for<'r> fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>)) {
+    pub fn mutate(&mut self, f: PtrMutEvent<E>) {
         self.mutate_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_at<O>(&mut self, f: for<'r> fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>), o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
+    pub fn mutate_at<O>(&mut self, f: PtrMutEvent<E>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateRoot{f},o,p)
     }
     /// Enqueue mutable access to this widget
     #[inline] 
-    pub fn mutate_closure(&mut self, f: Box<dyn for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + 'static >) {
+    pub fn mutate_closure(&mut self, f: BoxMutEvent<E>) {
         self.mutate_closure_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn mutate_closure_at<O>(&mut self, f: Box<dyn for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + 'static >, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
+    pub fn mutate_closure_at<O>(&mut self, f: BoxMutEvent<E>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::MutateRootClosure{f},o,p)
     }
     /// Enqueue message-style invoking of [WidgetMut::message]
@@ -46,20 +46,20 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     }
     /// Enqueue immutable access to this widget
     #[inline] 
-    pub fn later(&mut self, f: fn(WidgetRef<E>,&mut E::Context<'_>)) {
+    pub fn later(&mut self, f: PtrAccessWidget<E>) {
         self.later_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn later_at<O>(&mut self, f: fn(WidgetRef<E>,&mut E::Context<'_>), o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
+    pub fn later_at<O>(&mut self, f: PtrAccessWidget<E>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::AccessWidget{path: self.widget.direct_path.refc(),f},o,p)
     }
     /// Enqueue immutable access to this widget
     #[inline] 
-    pub fn later_closure(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context<'_>)+Sync>) {
+    pub fn later_closure(&mut self, f: BoxAccessWidget<E>) {
         self.later_closure_at(f,StdOrder::PostCurrent,0)
     }
     #[inline] 
-    pub fn later_closure_at<O>(&mut self, f: Box<dyn FnOnce(WidgetRef<E>,&mut E::Context<'_>)+Sync>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
+    pub fn later_closure_at<O>(&mut self, f: BoxAccessWidget<E>, o: O, p: i64) where for<'a> ECQueue<'a,E>: Queue<StdEnqueueable<E>,O> {
         self.enqueue(StdEnqueueable::AccessWidgetClosure{path: self.widget.direct_path.refc(),f},o,p)
     }
     #[inline]

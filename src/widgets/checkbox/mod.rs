@@ -9,12 +9,13 @@ use util::state::*;
 pub mod widget;
 pub mod imp;
 
-pub struct CheckBox<'w,E,State,Text> where
+pub struct CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     State: 'w,
     Text: 'w,
+    TrMut: 'w,
 {
-    pub trigger: for<'a,'cc> fn(Link<'a,'cc,E>,bool),
+    pub updater: TrMut,
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
@@ -25,7 +26,7 @@ pub struct CheckBox<'w,E,State,Text> where
     p: PhantomData<&'w mut &'w ()>,
 }
 
-impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>> where
+impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>,()> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {
@@ -35,7 +36,7 @@ impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>
             id,
             size: ESize::<E>::empty(),
             style: Default::default(),
-            trigger: |_,_|{},
+            updater: (),
             locked: false,
             text: Label::new(E::WidgetID::new_id())
                 .with_align((0.,0.5)),
@@ -45,24 +46,36 @@ impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>
     }
 }
 
-impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
+impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     Text: 'w,
 {
     
 
     #[inline]
-    pub fn with_trigger(mut self, fun: for<'a> fn(Link<E>,bool)) -> Self {
-        self.trigger = fun;
-        self
-    }
-    #[inline]
-    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T> where T: AsWidget<E> {
+    pub fn with_update<T>(self, fun: T) -> CheckBox<'w,E,State,Text,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + 'static {
         CheckBox{
             id: self.id,
             size: self.size,
             style: self.style,
-            trigger: self.trigger,
+            updater: fun,
+            locked: self.locked,
+            text: self.text,
+            state: self.state,
+            p: PhantomData,
+        }
+    }
+    #[inline]
+    pub fn with_atomstate<T>(self, fun: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,bool>) + Clone + 'static {
+        self.with_update(move |r,x,c,v| fun(r,x,c).set(v,c) )
+    }
+    #[inline]
+    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,TrMut> where T: AsWidget<E> {
+        CheckBox{
+            id: self.id,
+            size: self.size,
+            style: self.style,
+            updater: self.updater,
             locked: self.locked,
             text,
             state: self.state,
@@ -82,13 +95,13 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     }
 }
 
-impl<'w,E,State,T,LC> CheckBox<'w,E,State,Label<'w,E,T,LC>> where
+impl<'w,E,State,T,LC,TrMut> CheckBox<'w,E,State,Label<'w,E,T,LC>,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT,LC>> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT,LC>,TrMut> where TT: TextStor<E>+Validation<E>+'w {
         CheckBox{
-            trigger: self.trigger,
+            updater: self.updater,
             id: self.id,
             size: self.size,
             style: self.style,
@@ -97,5 +110,25 @@ impl<'w,E,State,T,LC> CheckBox<'w,E,State,Label<'w,E,T,LC>> where
             state: self.state,
             p: PhantomData,
         }
+    }
+}
+
+/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
+pub trait TriggerMut<E> where E: Env {
+    fn boxed(&self, value: bool) -> Option<BoxMutEvent<E>>;
+}
+
+impl<E> TriggerMut<E> for () where E: Env {
+    #[inline]
+    fn boxed(&self, value: bool) -> Option<BoxMutEvent<E>> {
+        None
+    }
+}
+
+impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + 'static, E: Env {
+    #[inline]
+    fn boxed(&self, value: bool) -> Option<BoxMutEvent<E>> {
+        let s = self.clone();
+        Some(Box::new(move |r,x,c| s(r,x,c,value) ))
     }
 }

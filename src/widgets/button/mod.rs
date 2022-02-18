@@ -79,7 +79,7 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, fun: T) -> Button<'w,E,Text,Tr,T> where T: for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static {
+    pub fn with_trigger_mut<T>(self, fun: T) -> Button<'w,E,Text,Tr,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static {
         Button{
             id: self.id,
             size: self.size,
@@ -159,19 +159,19 @@ impl<T,E> Trigger<E> for T where T: Fn(Link<E>), E: Env {
 
 /// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
 pub trait TriggerMut<E> where E: Env {
-    fn boxed(&self) -> Option<Box<dyn for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + 'static>>;
+    fn boxed(&self) -> Option<BoxMutEvent<E>>;
 }
 
 impl<E> TriggerMut<E> for () where E: Env {
     #[inline]
-    fn boxed(&self) -> Option<Box<dyn for<'r> Fn(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + 'static>> {
+    fn boxed(&self) -> Option<BoxMutEvent<E>> {
         None
     }
 }
 
-impl<T,E> TriggerMut<E> for T where T: for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static, E: Env {
+impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static, E: Env {
     #[inline]
-    fn boxed(&self) -> Option<Box<dyn for<'r> Fn(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + 'static>> {
+    fn boxed(&self) -> Option<BoxMutEvent<E>> {
         Some(Box::new(self.clone()))
     }
 }

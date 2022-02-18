@@ -2,30 +2,24 @@ use super::*;
 
 pub trait ICheckBox<E> where E: Env {
     fn state(&self) -> &dyn AtomState<E,bool>;
-}
-pub trait ICheckBoxMut<E>: ICheckBox<E> where E: Env {
-    fn state_mut(&mut self) -> &mut dyn AtomStateMut<E,bool>;
+    fn set(&self, l: Link<E>, v: bool);
 }
 
-impl<'w,E,State,Text> ICheckBox<E> for CheckBox<'w,E,State,Text> where
+impl<'w,E,State,Text,TrMut> ICheckBox<E> for CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     State: AtomState<E,bool>,
     Text: 'w,
+    TrMut: TriggerMut<E>,
 {
     #[inline]
     fn state(&self) -> &dyn AtomState<E,bool> {
         &self.state
     }
-}
-impl<'w,E,State,Text> ICheckBoxMut<E> for CheckBox<'w,E,State,Text> where
-    E: Env,
-    State: AtomStateMut<E,bool>,
-    Text: 'w,
-{
-    #[inline]
-    fn state_mut(&mut self) -> &mut dyn AtomStateMut<E,bool> {
-        &mut self.state
+    fn set(&self, mut l: Link<E>, v: bool) {
+        if let Some(t) = self.updater.boxed(v) {
+            l.mutate_closure(t)
+        }
     }
 }
 
-traitcast_for!(ICheckBox<E>;ICheckBoxMut<E>);
+traitcast_for_from_widget!(ICheckBox<E>);
