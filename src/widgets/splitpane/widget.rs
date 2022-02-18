@@ -3,7 +3,7 @@ use util::state::*;
 use crate::event::key::Key;
 use crate::style::standard::cursor::StdCursor; //TODO fix req of this import
 
-impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
+impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -11,6 +11,7 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     L: AsWidget<E>,
     R: AsWidget<E>,
     V: AtomState<E,f32>,
+    TrMut: TriggerMut<E>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -88,10 +89,9 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
                         cx = cx - wx0;
                         let fcx = (cx as f32)/(ww as f32);
 
-                        l.mutate_closure(Box::new(move |mut w,c,_|{
-                            let w = w.traitcast_mut::<dyn AtomStateMut<E,f32>>().unwrap();
-                            w.set(fcx,c);
-                        }));
+                        if let Some(t) = self.updater.boxed(fcx) {
+                            l.mutate_closure(t)
+                        }
 
                         bounds = self.calc_bounds(&e.bounds,fcx);
                     }
@@ -127,61 +127,30 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     fn childs(&self) -> usize {
         self.childs.len()
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
-        self.childs.childs()
+    fn childs_ref<'s>(&'s self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
+        self.childs.childs(root,ctx)
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
-        self.childs.into_childs()
+    fn into_childs<'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
+        self.childs.into_childs(root,ctx)
     }
 
     fn focusable(&self) -> bool {
         false
     }
 
-    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
-        self.childs.child(i)
+    fn child<'s>(&'s self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
+        self.childs.child(i,root,ctx)
     }
-    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
-        self.childs.into_child(i)
+    fn into_child<'s>(self: Box<Self>, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
+        self.childs.into_child(i,root,ctx)
     }
 
-    impl_traitcast!(
+    impl_traitcast!( dyn Widget<E>:
         dyn AtomState<E,f32> => |s| &s.state;
     );
 }
-impl<'w,E,L,R,V> WidgetMut<E> for SplitPane<'w,E,L,R,V> where
-    E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    for<'a> E::Context<'a>: CtxStdState<E>,
-    L: AsWidgetMut<E>,
-    R: AsWidgetMut<E>,
-    V: AtomStateMut<E,f32>,
-{
-    fn _set_invalid(&mut self, v: bool) {
-        let _ = v;
-        //self.invalid = true
-    }
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        self.childs.childs_mut()
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        self.childs.into_childs_mut()
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        self.childs.child_mut(i)
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        self.childs.into_child_mut(i)
-    }
 
-    impl_traitcast_mut!(
-        dyn AtomState<E,f32> => |s| &mut s.state;
-        dyn AtomStateMut<E,f32> => |s| &mut s.state;
-    );
-}
-
-impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
+impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     V: AtomState<E,f32>+'w,
 {
@@ -198,5 +167,35 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
         let center = Bounds::from_ori(x1, y, handle_width, h, o);
         let right = Bounds::from_ori(x2, y, w2, h, o);
         vec![left,center,right]
+    }
+}
+
+impl<'l,E,L,R,V,TrMut> AsWidget<E> for SplitPane<'l,E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
+    type Widget = Self;
+    type WidgetOwned = Self;
+
+    #[inline]
+    fn as_widget<'w>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget<'w>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
+        WCow::Owned(self)
+    }
+    #[inline]
+    fn box_into_widget<'w>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Owned(*self)
+    }
+    #[inline]
+    fn as_widget_dyn<'w,'s>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget_dyn<'w,'s>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+        WCow::Owned(Box::new(self))
+    }
+    #[inline]
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Owned(self)
     }
 }
