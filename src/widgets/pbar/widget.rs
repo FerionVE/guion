@@ -29,10 +29,10 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
+    fn childs_ref<'s>(&'s self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
         vec![]
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
+    fn into_childs<'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
         vec![]
     }
     fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
@@ -41,37 +41,15 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     fn focusable(&self) -> bool {
         false
     }
-    fn child(&self, _: usize) -> Result<Resolvable<E>,()> {
+    fn child<'s>(&'s self, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
         Err(())
     }
-    fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
+    fn into_child<'s>(self: Box<Self>, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
         Err(())
     }
 
-    impl_traitcast!(
+    impl_traitcast!( dyn Widget<E>:
         dyn AtomState<E,f32> => |s| &s.value;
-    );
-}
-
-impl<'w,E> WidgetMut<E> for ProgressBar<'w,E> where
-    E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
-{
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![]
-    }
-    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<E>,()> {
-        Err(())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        Err(())
-    }
-
-    impl_traitcast_mut!(
-        dyn AtomStateMut<E,f32> => |s| &mut s.value;
     );
 }
 
@@ -82,4 +60,34 @@ pub fn crop(i: &Bounds, v: f32, o: Orientation) -> Bounds {
     let w = ((w as f32) * v.clamp(0.0,1.0) ) as u32;
 
     Bounds::from_ori(x, y, w, h, o)
+}
+
+impl<'l,E> AsWidget<E> for ProgressBar<'l,E> where Self: Widget<E>, E: Env {
+    type Widget = Self;
+    type WidgetOwned = Self;
+
+    #[inline]
+    fn as_widget<'w>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget<'w>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
+        WCow::Owned(self)
+    }
+    #[inline]
+    fn box_into_widget<'w>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Owned(*self)
+    }
+    #[inline]
+    fn as_widget_dyn<'w,'s>(&'w self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget_dyn<'w,'s>(self, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+        WCow::Owned(Box::new(self))
+    }
+    #[inline]
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: <E as Env>::RootRef<'_>, _: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Owned(self)
+    }
 }
