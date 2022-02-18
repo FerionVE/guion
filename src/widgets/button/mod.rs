@@ -13,7 +13,7 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
     Text: 'w,
 {
     pub trigger: Tr,
-    pub trigger_mut: Option<TrMut>,
+    pub trigger_mut: TrMut,
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
@@ -34,7 +34,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>,(),()> where
             size: constraint!(0|0).into(),
             style: Default::default(),
             trigger: (),
-            trigger_mut: None,
+            trigger_mut: (),
             locked: false,
             text: Label::new(E::WidgetID::new_id()),
             p: PhantomData,
@@ -53,7 +53,7 @@ impl<'w,E,Text> Button<'w,E,Text,(),()> where
             size: constraint!(0|0).into(),
             style: Default::default(),
             trigger: (),
-            trigger_mut: None,
+            trigger_mut: (),
             locked: false,
             text,
             p: PhantomData,
@@ -66,7 +66,7 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     Text: 'w,
 {
     #[inline]
-    pub fn with_trigger<T>(self, fun: T) -> Button<'w,E,Text,T,TrMut> where T: Trigger<E> {
+    pub fn with_trigger<T>(self, fun: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(Link<E>) {
         Button{
             id: self.id,
             size: self.size,
@@ -85,7 +85,7 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
             size: self.size,
             style: self.style,
             trigger: self.trigger,
-            trigger_mut: Some(fun),
+            trigger_mut: fun,
             locked: self.locked,
             text: self.text,
             p: PhantomData,
@@ -154,6 +154,25 @@ impl<T,E> Trigger<E> for T where T: Fn(Link<E>), E: Env {
     #[inline]
     fn trigger(&self, l: Link<E>) {
         (self)(l)
+    }
+}
+
+/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
+pub trait TriggerMut<E> where E: Env {
+    fn boxed(&self) -> Option<Box<dyn for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + 'static>>;
+}
+
+impl<E> TriggerMut<E> for () where E: Env {
+    #[inline]
+    fn boxed(&self) -> Option<Box<dyn for<'r> Fn(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + 'static>> {
+        None
+    }
+}
+
+impl<T,E> TriggerMut<E> for T where T: for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static, E: Env {
+    #[inline]
+    fn boxed(&self) -> Option<Box<dyn for<'r> Fn(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + 'static>> {
+        Some(Box::new(self.clone()))
     }
 }
 

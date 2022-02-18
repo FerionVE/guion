@@ -8,13 +8,13 @@ impl<'w,E,Text,Tr,TrMut> IButton<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     Text: 'w,
     Tr: Trigger<E>,
-    TrMut: for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static,
+    TrMut: TriggerMut<E>,
 {
     #[inline]
     fn trigger(&self, l: &mut Link<E>) {
         self.trigger.trigger(l.reference());
-        if let Some(t) = &self.trigger_mut {
-            l.mutate_closure(Box::new(t.clone()));
+        if let Some(t) = self.trigger_mut.boxed() {
+            l.mutate_closure(t);
         }
     }
 }

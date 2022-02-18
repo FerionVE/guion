@@ -10,7 +10,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     for<'a> E::Context<'a>: CtxStdState<E>,
     Text: AsWidget<E>,
     Tr: Trigger<E>,
-    TrMut: for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static,
+    TrMut: TriggerMut<E>,
 {
     fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
         vec![]
@@ -118,7 +118,7 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     for<'a> E::Context<'a>: CtxStdState<E>,
     S: AsWidget<E>,
     Tr: Trigger<E>,
-    TrMut: for<'r> Fn(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static,
+    TrMut: TriggerMut<E>,
 {
     pub fn pressed<'l:'s,'cc: 'l,'s>(l: &'s Link<'l,'cc,E>) -> Option<&'s EPressedKey<'cc,E>> {
         let id = l.id();
