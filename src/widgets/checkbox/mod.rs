@@ -53,7 +53,7 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     
 
     #[inline]
-    pub fn with_update<T>(self, fun: T) -> CheckBox<'w,E,State,Text,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + 'static {
+    pub fn with_update<T>(self, fun: T) -> CheckBox<'w,E,State,Text,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + Send + Sync + 'static {
         CheckBox{
             id: self.id,
             size: self.size,
@@ -66,7 +66,7 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, fun: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,bool>) + Clone + 'static {
+    pub fn with_atomstate<T>(self, fun: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,bool>) + Clone + Send + Sync + 'static {
         self.with_update(move |r,x,c,v| fun(r,x,c).set(v,c) )
     }
     #[inline]
@@ -125,7 +125,7 @@ impl<E> TriggerMut<E> for () where E: Env {
     }
 }
 
-impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + 'static, E: Env {
+impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + Send + Sync + 'static, E: Env {
     #[inline]
     fn boxed(&self, value: bool) -> Option<BoxMutEvent<E>> {
         let s = self.clone();

@@ -4,7 +4,7 @@ use crate::widget::Widget;
 pub mod view_widget;
 //pub mod test;
 
-pub trait View<E,MutFn> where MutFn: Clone + 'static, E: Env {
+pub trait View<E,MutFn> where MutFn: Clone + Send + Sync + 'static, E: Env {
     type Viewed: Widget<E>;
 
     fn view(self, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Viewed;
@@ -24,7 +24,7 @@ macro_rules! impl_view {
     ) => {
         impl < E,MutFn, $( $($generics),* )? > $crate::view::View<E,MutFn>
         for $ontype where
-            MutFn: for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut E::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + Clone + 'static,
+            MutFn: for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut E::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + Clone + Send + Sync + 'static,
             E: $crate::env::Env,
             $($($bounds)*)?
 
@@ -65,7 +65,7 @@ macro_rules! decl_dyn_view_type {
         $dv type $dest<'view,E> = dyn $crate::view::View<
             E,
             std::sync::Arc<
-                dyn for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut <E as $crate::env::Env>::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + 'static
+                dyn for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut <E as $crate::env::Env>::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + Send + Sync + 'static
             >,
             Viewed=Box<dyn $crate::widget::Widget<E>+'view>
         >+'view;

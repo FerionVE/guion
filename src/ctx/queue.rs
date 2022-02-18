@@ -25,11 +25,11 @@ pub enum StdEnqueueable<E> where E: Env {
     ValidateWidgetSize{path: E::WidgetPath, size: ESize<E>},
 }
 
-pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + 'static>;
+pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
 pub type PtrMutEvent<E> = for<'r> fn(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>);
-pub type BoxAccessWidget<E> = Box<dyn for<'r> FnOnce(WidgetRef<E>,<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>)+'static>;
+pub type BoxAccessWidget<E> = Box<dyn for<'r> FnOnce(WidgetRef<E>,<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
 pub type PtrAccessWidget<E> = for<'r> fn(WidgetRef<E>,<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>);
-pub type BoxAccessRoot<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>)+'static>;
+pub type BoxAccessRoot<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
 pub type PtrAccessRoot<E> = for<'r> fn(<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>);
 
 

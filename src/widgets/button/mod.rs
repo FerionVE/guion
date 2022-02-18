@@ -79,7 +79,7 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, fun: T) -> Button<'w,E,Text,Tr,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static {
+    pub fn with_trigger_mut<T>(self, fun: T) -> Button<'w,E,Text,Tr,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + Send + Sync + 'static {
         Button{
             id: self.id,
             size: self.size,
@@ -169,7 +169,7 @@ impl<E> TriggerMut<E> for () where E: Env {
     }
 }
 
-impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + 'static, E: Env {
+impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + Send + Sync + 'static, E: Env {
     #[inline]
     fn boxed(&self) -> Option<BoxMutEvent<E>> {
         Some(Box::new(self.clone()))

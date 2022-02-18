@@ -9,19 +9,19 @@ use super::View;
 
 pub struct ViewWidget<Wid,WFn,MFn,E>(WFn,MFn,PhantomData<(Wid,E)>) where
     Wid: View<E,MFn>,
-    WFn: Fn()->Wid, MFn: Clone + 'static,
+    WFn: Fn()->Wid, MFn: Clone + Send + Sync + 'static,
     E: Env;
 
 pub fn view_widget_adv<Wid,WFn,MFn,E>(w: WFn, f: MFn) -> ViewWidget<Wid,WFn,MFn,E> where
     Wid: View<E,MFn>,
-    WFn: Fn()->Wid, MFn: Clone + 'static,
+    WFn: Fn()->Wid, MFn: Clone + Send + Sync + 'static,
     E: Env,
 {
     ViewWidget(w,f,PhantomData)
 }
 pub fn view_widget_dummy_adv<Wid,WFn,MFn,E>(w: WFn, f: MFn) -> DummyWidget<ViewWidget<Wid,WFn,MFn,E>> where
     Wid: View<E,MFn>,
-    WFn: Fn()->Wid, MFn: Clone + 'static,
+    WFn: Fn()->Wid, MFn: Clone + Send + Sync + 'static,
     E: Env,
 {
     DummyWidget(ViewWidget(w,f,PhantomData))
@@ -29,7 +29,7 @@ pub fn view_widget_dummy_adv<Wid,WFn,MFn,E>(w: WFn, f: MFn) -> DummyWidget<ViewW
 
 impl<Wid,WFn,MFn,E> AsWidget<E> for ViewWidget<Wid,WFn,MFn,E> where
     Wid: View<E,MFn>,
-    WFn: Fn()->Wid, MFn: Clone + 'static,
+    WFn: Fn()->Wid, MFn: Clone + Send + Sync + 'static,
     E: Env,
 {
     type Widget = Wid::Viewed;
