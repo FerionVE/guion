@@ -1,6 +1,7 @@
 use super::*;
 use super::util::LocalGlyphCache;
 use super::label::Label;
+use crate::error::ResolveResult;
 use crate::text::stor::TextStor;
 use crate::validation::Validation;
 use std::marker::PhantomData;
@@ -63,11 +64,11 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,bool>) + Clone + Send + Sync + 'static {
-        self.with_update(move |r,x,c,v| mutor(r,x,c).set(v,c) )
+    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> ResolveResult<&'r mut (dyn AtomStateMut<E,bool>)> + Clone + Send + Sync + 'static {
+        self.with_update(move |r,x,c,v| if let Ok(s) = mutor(r,x,c) {s.set(v,c)} )
     }
     #[inline]
-    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,TrMut> where T: AsWidget<E> {
+    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,TrMut> {
         CheckBox{
             id: self.id,
             size: self.size,

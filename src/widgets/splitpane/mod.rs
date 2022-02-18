@@ -1,3 +1,5 @@
+use crate::error::ResolveResult;
+
 use super::*;
 use super::util::state::AtomStateMut;
 use std::{marker::PhantomData};
@@ -59,8 +61,8 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,f32>) + Clone + Send + Sync + 'static {
-        self.with_update(move |r,x,c,v| mutor(r,x,c).set(v,c) )
+    pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> ResolveResult<&'r mut (dyn AtomStateMut<E,f32>)> + Clone + Send + Sync + 'static {
+        self.with_update(move |r,x,c,v| if let Ok(s) = mutor(r,x,c) {s.set(v,c)} )
     }
 }
 

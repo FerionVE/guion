@@ -1,3 +1,5 @@
+use crate::error::ResolveResult;
+
 use super::*;
 use super::util::state::AtomStateMut;
 use std::marker::PhantomData;
@@ -66,11 +68,12 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     }
 
     #[inline]
-    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> &'r mut (dyn AtomStateMut<E,(i32,i32)>) + Clone + Send + Sync + 'static {
+    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> ResolveResult<&'r mut (dyn AtomStateMut<E,(i32,i32)>)> + Clone + Send + Sync + 'static {
         self.with_scroll_updater(move |r,x,c,ScrollUpdate { offset: (ax,ay) }| {
-            let state = mutor(r,x,c);
-            let (ox,oy) = state.get(c);
-            state.set((ox+ax,oy+ay),c);
+            if let Ok(state) = mutor(r,x,c) {//TODO ResolveResult handling
+                let (ox,oy) = state.get(c);
+                state.set((ox+ax,oy+ay),c);
+            }
         })
     }
 
