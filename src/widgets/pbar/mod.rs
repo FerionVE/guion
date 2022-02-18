@@ -11,7 +11,7 @@ pub struct ProgressBar<'w,E> where
     pub style: EStyle<E>,
     pub value: f32,
     pub orientation: Orientation,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w ()>,
 }
 
 impl<'w,E> ProgressBar<'w,E> where 

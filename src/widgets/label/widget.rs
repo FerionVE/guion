@@ -10,7 +10,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+Validation<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
@@ -70,7 +70,7 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+Validation<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {

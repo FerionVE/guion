@@ -152,7 +152,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 
 impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
-    V: AtomState<E,f32>+'w,
+    V: AtomState<E,f32>,
 {
     fn calc_bounds(&self, b: &Bounds, v: f32) -> Vec<Bounds> {
         let handle_width = self.width.min(b.w());

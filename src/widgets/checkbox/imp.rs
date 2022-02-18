@@ -8,7 +8,6 @@ pub trait ICheckBox<E> where E: Env {
 impl<'w,E,State,Text,TrMut> ICheckBox<E> for CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     State: AtomState<E,bool>,
-    Text: 'w,
     TrMut: TriggerMut<E>,
 {
     #[inline]

@@ -7,8 +7,7 @@ pub mod imp;
 
 pub struct Area<'w,E,W,Scroll,TrMut> where
     E: Env,
-    W: 'w,
-    Scroll: 'w,
+    Self: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
@@ -16,12 +15,11 @@ pub struct Area<'w,E,W,Scroll,TrMut> where
     pub inner: W,
     pub scroll: Scroll,
     scroll_updater: TrMut,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w (W,Scroll,TrMut)>,
 }
 
-impl<'w,E,W> Area<'w,E,W,(u32,u32),()> where
+impl<'w,E,W> Area<'w,E,W,(i32,i32),()> where
     E: Env,
-    W: 'w,
 {
     #[inline]
     pub fn new(id: E::WidgetID, inner: W) -> Self {

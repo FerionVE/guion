@@ -6,10 +6,7 @@ pub mod widget;
 
 pub struct SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
-    L: 'w,
-    R: 'w,
-    V: 'w,
-    TrMut: 'w,
+    Self: 'w,
 {
     id: E::WidgetID,
     pub childs: (L,R),
@@ -18,14 +15,11 @@ pub struct SplitPane<'w,E,L,R,V,TrMut> where
     pub orientation: Orientation,
     pub width: u32, //TODO with from style
     pub style: EStyle<E>,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w (L,R,V,TrMut)>,
 }
 
 impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
     E: Env,
-    L: 'w,
-    R: 'w,
-    V: 'w,
 {
     #[inline]
     pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> Self {
@@ -44,9 +38,6 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
 
 impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
-    L: 'w,
-    R: 'w,
-    V: 'w,
 {   
     #[inline]
     pub fn with_style(mut self, style: EStyle<E>) -> Self {
@@ -80,7 +71,7 @@ pub trait TriggerMut<E> where E: Env {
 
 impl<E> TriggerMut<E> for () where E: Env {
     #[inline]
-    fn boxed(&self, value: f32) -> Option<BoxMutEvent<E>> {
+    fn boxed(&self, _: f32) -> Option<BoxMutEvent<E>> {
         None
     }
 }

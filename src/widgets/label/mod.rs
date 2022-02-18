@@ -9,8 +9,7 @@ pub mod widget;
 
 pub struct Label<'w,E,Text,GlyphCache> where
     E: Env,
-    Text: 'w,
-    GlyphCache: 'w,
+    Self: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
@@ -18,7 +17,7 @@ pub struct Label<'w,E,Text,GlyphCache> where
     pub text: Text,
     pub align: (f32,f32),
     pub glyph_cache: GlyphCache,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w (Text,GlyphCache)>,
 }
 
 impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
@@ -40,7 +39,7 @@ impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
 
 impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
     E: Env,
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+Validation<E>,
 {
     #[inline]
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {
@@ -58,8 +57,6 @@ impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
 
 impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     E: Env,
-    Text: 'w,
-    GlyphCache: 'w,
 {
     #[inline]
     pub fn with_text<T>(self, text: T) -> Label<'w,E,T,GlyphCache> where T: TextStor<E>+Validation<E>+'w {

@@ -6,7 +6,6 @@ pub trait IButton<E> where E: Env {
 
 impl<'w,E,Text,Tr,TrMut> IButton<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
-    Text: 'w,
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
 {

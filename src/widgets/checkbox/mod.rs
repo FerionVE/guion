@@ -11,9 +11,7 @@ pub mod imp;
 
 pub struct CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
-    State: 'w,
-    Text: 'w,
-    TrMut: 'w,
+    Self: 'w,
 {
     pub updater: TrMut,
     id: E::WidgetID,
@@ -23,7 +21,7 @@ pub struct CheckBox<'w,E,State,Text,TrMut> where
     //pressed: Option<EEKey<E>>,
     pub text: Text,
     pub state: State,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w (State,Text,TrMut)>,
 }
 
 impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>,()> where
@@ -48,7 +46,6 @@ impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>
 
 impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
-    Text: 'w,
 {
     
 
@@ -120,7 +117,7 @@ pub trait TriggerMut<E> where E: Env {
 
 impl<E> TriggerMut<E> for () where E: Env {
     #[inline]
-    fn boxed(&self, value: bool) -> Option<BoxMutEvent<E>> {
+    fn boxed(&self, _: bool) -> Option<BoxMutEvent<E>> {
         None
     }
 }

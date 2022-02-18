@@ -10,7 +10,7 @@ pub mod imp;
 
 pub struct Button<'w,E,Text,Tr,TrMut> where
     E: Env,
-    Text: 'w,
+    Self: 'w,
 {
     pub trigger: Tr,
     pub trigger_mut: TrMut,
@@ -20,7 +20,7 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub text: Text,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w (Text,Tr,TrMut)>,
 }
 
 impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>,(),()> where
@@ -44,7 +44,6 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>,(),()> where
 
 impl<'w,E,Text> Button<'w,E,Text,(),()> where
     E: Env,
-    Text: 'w,
 {
     #[inline]
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {
@@ -63,7 +62,6 @@ impl<'w,E,Text> Button<'w,E,Text,(),()> where
 
 impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     E: Env,
-    Text: 'w,
 {
     #[inline]
     pub fn with_trigger<T>(self, fun: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(Link<E>) {

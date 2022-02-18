@@ -1,7 +1,6 @@
 use crate::style::standard::cursor::StdCursor;
 
 use super::*;
-use util::state::AtomStateMut;
 use imp::ICheckBox;
 
 impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
