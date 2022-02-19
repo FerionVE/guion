@@ -36,10 +36,10 @@ impl<'a,E> AsWidget<E> for dyn Widget<E> + 'a where E: Env {
         WCow::Owned(self)
     }
 
-    fn as_widget_dyn<'w,'s>(&'w self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
         WCow::Borrowed(self)
     }
-    fn into_widget_dyn<'w,'s>(self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
         WCow::Owned(Box::new(self))
     }
     fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
@@ -58,13 +58,13 @@ impl<T,E> AsWidget<E> for &T where T: AsWidget<E> + ?Sized, E: Env {
         (*self).as_widget(root,ctx)
     }
 
-    fn as_widget_dyn<'w,'s>(&'w self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
         (**self).as_widget_dyn(root,ctx)
     }
-    fn into_widget_dyn<'w,'s>(self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
         (*self).as_widget_dyn(root,ctx)
     }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
         self.into_widget_dyn(root,ctx)
     }
 }
@@ -79,13 +79,13 @@ impl<T,E> AsWidget<E> for &mut T where T: AsWidget<E> + ?Sized, E: Env {
         (*self).as_widget(root,ctx)
     }
 
-    fn as_widget_dyn<'w,'s>(&'w self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
         (**self).as_widget_dyn(root,ctx)
     }
-    fn into_widget_dyn<'w,'s>(self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
         (*self).as_widget_dyn(root,ctx)
     }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
         self.into_widget_dyn(root,ctx)
     }
 }
@@ -100,13 +100,13 @@ impl<T,E> AsWidget<E> for Box<T> where T: AsWidget<E> + ?Sized, E: Env {
         <T as AsWidget<E>>::box_into_widget(self, root, ctx)
     }
 
-    fn as_widget_dyn<'w,'s>(&'w self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
         (**self).as_widget_dyn(root,ctx)
     }
-    fn into_widget_dyn<'w,'s>(self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
         <T as AsWidget<E>>::box_into_widget_dyn(self, root, ctx)
     }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
         self.into_widget_dyn(root,ctx)
     }
 }

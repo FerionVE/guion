@@ -42,13 +42,13 @@ impl<Wid,WFn,MFn,E> AsWidget<E> for ViewWidget<Wid,WFn,MFn,E> where
         WCow::Owned( (self.0)().view(self.1.clone(), root,ctx) )
     }
 
-    fn as_widget_dyn<'w,'s>(&'w self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
+    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
         WCow::Owned( (self.0)().view(self.1.clone(), root,ctx).boxed() )
     }
-    fn into_widget_dyn<'w,'s>(self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: Sized + 'w {
+    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: Sized + 'w {
         WCow::Owned( (self.0)().view(self.1.clone(), root,ctx).boxed() )
     }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
         self.into_widget_dyn(root,ctx)
     }
 }
@@ -56,7 +56,7 @@ impl<Wid,WFn,MFn,E> AsWidget<E> for ViewWidget<Wid,WFn,MFn,E> where
 pub struct DummyWidget<T>(pub T);
 
 impl<T,E> Widget<E> for DummyWidget<T> where T: AsWidget<E>, E: Env {
-    fn id(&self) -> <E as Env>::WidgetID {
+    fn id(&self) -> E::WidgetID {
         todo!()
     }
 
@@ -76,15 +76,15 @@ impl<T,E> Widget<E> for DummyWidget<T> where T: AsWidget<E>, E: Env {
         todo!()
     }
 
-    fn child<'s>(&'s self, i: usize, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Result<crate::aliases::WidgetRef<'s,E>,()> {
+    fn child<'s>(&'s self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<crate::aliases::WidgetRef<'s,E>,()> {
         todo!()
     }
 
-    fn into_child<'s>(self: Box<Self>, i: usize, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Result<crate::aliases::WidgetRef<'s,E>,()> where Self: 's {
+    fn into_child<'s>(self: Box<Self>, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<crate::aliases::WidgetRef<'s,E>,()> where Self: 's {
         todo!()
     }
 
-    fn into_childs<'w>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Vec<crate::aliases::WidgetRef<'w,E>> where Self: 'w {
+    fn into_childs<'w>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<crate::aliases::WidgetRef<'w,E>> where Self: 'w {
         todo!()
     }
 
@@ -111,13 +111,13 @@ impl<T,E> AsWidget<E> for DummyWidget<T> where T: AsWidget<E>, E: Env  {
         WCow::Owned(self)
     }
 
-    fn as_widget_dyn<'w,'s>(&'w self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
+    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
         WCow::Borrowed(self)
     }
-    fn into_widget_dyn<'w,'s>(self, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: Sized + 'w {
+    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: Sized + 'w {
         WCow::Owned(Box::new(self))
     }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
         WCow::Owned(self)
     }
 }
