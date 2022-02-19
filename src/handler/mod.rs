@@ -11,7 +11,7 @@ pub trait HandlerBuilder<E>: 'static where E: Env {
     type Built: Handler<E>;
 
     //TODO arc slow
-    fn build(f: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut Self>) -> Self::Built;
+    fn build(access: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut Self>, ctx: &mut E::Context<'_>) -> Self::Built;
 }
 
 /// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
@@ -131,7 +131,7 @@ impl<E> Handler<E> for () where E: Env {
 impl<E> HandlerBuilder<E> for () where E: Env {
     type Built = ();
 
-    fn build(_: Arc<dyn for<'c,'cc> Fn(&'c mut <E as Env>::Context<'cc>)->&'c mut Self>) {
+    fn build(_: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut Self>, _: &mut E::Context<'_>) {
         ()
     }
 }

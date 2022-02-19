@@ -62,11 +62,11 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
 impl<S,E> HandlerBuilder<E> for StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, for<'a> E::Context<'a>: CtxStdState<E>, EEvent<E>: StdVarSup<E> {
     type Built = StdHandlerLive<S,E>;
 
-    fn build(f: Arc<dyn for<'c,'cc> Fn(&'c mut <E as Env>::Context<'cc>)->&'c mut Self>) -> Self::Built {
-        let f2 = f.clone();
+    fn build(access: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut Self>, ctx: &mut E::Context<'_>) -> Self::Built {
+        let f2 = access.clone();
         StdHandlerLive {
-            sup: S::build(Arc::new(move |c| &mut f2(c).sup )),
-            f: f,
+            sup: S::build(Arc::new(move |c| &mut f2(c).sup ),ctx),
+            f: access,
             _c: PhantomData,
         }
     }
