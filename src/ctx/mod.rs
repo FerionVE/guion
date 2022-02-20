@@ -18,7 +18,7 @@ pub trait Context<E>: Sized where E: Env {
     //TODO this can't be done by Context impls without violating variance unless being 'static
     fn lt_mut<'a>(&mut self) -> &mut E::Context<'a> where Self: 'a;
 
-    fn build_handler() -> <Self::Handler as HandlerBuilder<E>>::Built where Self: Sized;
+    fn build_handler(&mut self) -> <Self::Handler as HandlerBuilder<E>>::Built where Self: Sized;
 
     #[inline]
     fn link<'s,'l: 's,'t: 's,'cc: 's>(&'s mut self, w: Resolved<'t,E>) -> Link<'s,'cc,E> where Self: 'cc {

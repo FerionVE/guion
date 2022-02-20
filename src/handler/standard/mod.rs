@@ -25,7 +25,7 @@ impl<S,E> StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarS
 
 impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
     pub fn unfocus(&self, mut root: Link<E>, root_bounds: Bounds, ts: u64) -> EventResp {
-        if let Some(p) = (self.f)(root.ctx).s.kbd.focused.take() {
+        if let Some(p) = (self.access)(root.ctx).s.kbd.focused.take() {
             root.send_event(
                 &EventCompound{
                     event: Event::from(Unfocus{}),
@@ -44,7 +44,7 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
 
     pub fn focus(&self, mut root: Link<E>, p: E::WidgetPath, root_bounds: Bounds, ts: u64) -> Result<EventResp,E::Error> {
         self.unfocus(root.reference(),root_bounds,ts);
-        (self.f)(root.ctx).s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root.widget.root,root.ctx)?);
+        (self.access)(root.ctx).s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root.widget.root,root.ctx)?);
         root.send_event(
             &EventCompound{
                 event: Event::from(Focus{}),
@@ -66,7 +66,7 @@ impl<S,E> HandlerBuilder<E> for StdHandler<S,E> where S: HandlerBuilder<E>, E: E
         let f2 = access.clone();
         StdHandlerLive {
             sup: S::build(Arc::new(move |c| &mut f2(c).sup ),ctx),
-            f: access,
+            access,
             _c: PhantomData,
         }
     }
@@ -74,6 +74,6 @@ impl<S,E> HandlerBuilder<E> for StdHandler<S,E> where S: HandlerBuilder<E>, E: E
 
 pub struct StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
     pub sup: SB::Built,
-    pub f: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut StdHandler<SB,E>>,
+    pub access: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut StdHandler<SB,E>>,
     _c: PhantomData<E>,
 }

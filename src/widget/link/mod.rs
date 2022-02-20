@@ -100,7 +100,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
 
     #[inline]
     pub fn render(&mut self, r: &mut ERenderer<'_,E>) {
-        E::Context::<'_>::build_handler()._render(
+        E::Context::<'_>::build_handler(self.ctx)._render(
             self.reference(),
             r,
             &mut |mut l,r| {
@@ -111,7 +111,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     /// send event to this widget
     #[inline]
     pub fn event_direct(&mut self, e: &EventCompound<E>) -> EventResp {
-        E::Context::<'_>::build_handler()._event_direct(
+        E::Context::<'_>::build_handler(self.ctx)._event_direct(
             self.reference(),
             e,
             &mut |mut l,e| {
@@ -125,7 +125,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     /// generally not called directly, rather through [`Widgets::send_event`](Widgets::send_event)
     #[inline]
     pub fn send_event(&mut self, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
-        E::Context::<'_>::build_handler()._send_event(
+        E::Context::<'_>::build_handler(self.ctx)._send_event(
             self.reference(),
             e,
             child,
@@ -137,7 +137,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     /// [Layout](StdGonstraints) constraints of this widget
     #[inline]
     pub fn size(&mut self, e: &EStyle<E>) -> ESize<E> {
-        E::Context::<'_>::build_handler()._size(
+        E::Context::<'_>::build_handler(self.ctx)._size(
             self.reference(),
             e,
             &mut |mut l,e| {
@@ -149,7 +149,7 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     #[deprecated="Non-root link is panic"]
     pub fn _event_root(&mut self, e: &EventCompound<E>) -> EventResp {
         assert!(self.path().is_empty());
-        E::Context::<'_>::build_handler()._event_root(
+        E::Context::<'_>::build_handler(self.ctx)._event_root(
             self.reference(),
             e,
             &mut |mut l,e| {
