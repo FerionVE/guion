@@ -5,7 +5,7 @@ use super::*;
 impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
     SB: HandlerBuilder<E>,
     E: Env,
-    for<'a> E::Context<'a>: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<'a,E>,
     EEvent<E>: StdVarSup<E>
 {
     fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's {

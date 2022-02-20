@@ -11,8 +11,8 @@ pub mod standard;
 
 //move StdState trait to standard StdState trait. StdState is not a core feature!
 
-pub trait CtxStdState<E>: Context<E> + Sized where E: Env {
-    type T: StdState<E>;
+pub trait CtxStdState<'cc,E>: Context<'cc,E> + Sized + 'cc where E: Env {
+    type T: StdState<E> + 'cc;
     
     fn state_mut(&mut self) -> &mut Self::T;
     fn state(&self) -> &Self::T;

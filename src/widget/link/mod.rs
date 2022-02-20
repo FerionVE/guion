@@ -205,11 +205,11 @@ impl<'c,'cc: 'c,E> Link<'c,'cc,E> where E: Env {
     }
 
     #[inline]
-    pub fn is_hovered(&self) -> bool where for<'a> E::Context<'a>: CtxStdState<E> {
+    pub fn is_hovered(&self) -> bool where for<'a> E::Context<'a>: CtxStdState<'a,E> {
         self.ctx.state().is_hovered(&self.id())
     }
     #[inline]
-    pub fn is_focused(&self) -> bool where for<'a> E::Context<'a>: CtxStdState<E> {
+    pub fn is_focused(&self) -> bool where for<'a> E::Context<'a>: CtxStdState<'a,E> {
         self.ctx.state().is_focused(&self.id())
     }
 

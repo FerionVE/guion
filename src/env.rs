@@ -9,7 +9,7 @@ use std::fmt::Debug;
 /// Note the Trait bounds Clone, Default, PartialEq are not used and just for simplifying derives
 pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'static {
     type Backend: Backend<Self>;
-    type Context<'a>: Context<Self>+'a;
+    type Context<'a>: Context<'a,Self>+'a;
     type RootRef<'a>: RootRef<Self>+'a;
     type RootMut<'a>: RootMut<Self>+'a;
     type WidgetID: WidgetID;

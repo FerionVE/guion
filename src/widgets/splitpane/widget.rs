@@ -7,7 +7,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    for<'a> E::Context<'a>: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<'a,E>,
     L: AsWidget<E>,
     R: AsWidget<E>,
     V: AtomState<E,f32>,

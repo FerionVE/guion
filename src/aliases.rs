@@ -15,10 +15,10 @@ pub type ESSelector<E: Env> = <EStyle<E> as Style<E>>::Selector;
 pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;
-pub type ECHandler<'cc,E: Env> = <E::Context<'cc> as Context<E>>::Handler;
-pub type ECQueue<'cc,E: Env> = <E::Context<'cc> as Context<E>>::Queue;
+pub type ECHandler<'cc,E: Env> = <E::Context<'cc> as Context<'cc,E>>::Handler;
+pub type ECQueue<'cc,E: Env> = <E::Context<'cc> as Context<'cc,E>>::Queue;
 
-pub type ECStdState<'cc,E: Env> = <E::Context<'cc> as CtxStdState<E>>::T;
+pub type ECStdState<'cc,E: Env> = <E::Context<'cc> as CtxStdState<'cc,E>>::T;
 pub type EPressedKey<'cc,E: Env> = <ECStdState<'cc,E> as StdState<E>>::K;
 
 pub type CtxRef<'a,'rr,'cc:'a,E: Env> = (E::RootRef<'rr>,&'a mut E::Context<'cc>);

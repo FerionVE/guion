@@ -7,7 +7,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    for<'a> E::Context<'a>: CtxStdState<E>,
+    for<'a> E::Context<'a>: CtxStdState<'a,E>,
     State: AtomState<E,bool>,
     Text: AsWidget<E>,
     TrMut: TriggerMut<E>,
