@@ -27,11 +27,4 @@ pub trait ValidationMut<E>: Validation<E> {
     fn validate(&mut self) -> Arc<dyn Any>;
 }
 
-unsafe impl<E> Statize<E> for dyn Validation<E> where E: 'static {
-    type Statur = dyn Validation<E>;
-}
-unsafe impl<E> Statize<E> for dyn ValidationMut<E> where E: 'static {
-    type Statur = dyn ValidationMut<E>;
-}
-
 traitcast_for!(Validation<E>;ValidationMut<E>);
