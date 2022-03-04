@@ -32,7 +32,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
         false
     }
     fn _size(&self, l: Link<E>, _: &EStyle<E>) -> ESize<E> {
-        let ms = self.glyphs(l).size();
+        let ms = self.glyphs(l).display_size();
         let ms = ESize::<E>::fixed(ms.w, ms.h);
         ms.max( &self.size )
     }

@@ -1,5 +1,3 @@
-use crate::text::layout::Direction;
-
 use super::*;
 use std::{fmt::Debug, ops::BitAnd};
 

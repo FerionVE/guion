@@ -15,6 +15,7 @@ use crate::validation::ValidationMut;
 use crate::validation::validated::Validated;
 
 use super::layout::TxtLayout;
+use super::update::TextUpdate;
 
 pub trait TextStor<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str>;
@@ -35,6 +36,15 @@ pub trait TextStor<E> {
 }
 
 pub trait TextStorMut<E>: TextStor<E> {
+    fn apply(&mut self, op: TextUpdate<'_>) {
+        match op {
+            TextUpdate::RemoveChars(range) => self.remove_chars(range),
+            TextUpdate::RemoveCharsOld { off, n } => self.remove_chars_old(off, n),
+            TextUpdate::PushChars(off, chars) => self.push_chars(off, chars.as_ref()),
+            TextUpdate::Replace(chars) => self.replace(chars.as_ref()),
+        }
+    }
+
     fn remove_chars(&mut self, range: Range<usize>);
 
     fn remove_chars_old(&mut self, off: usize, n: usize) {

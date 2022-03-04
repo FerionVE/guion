@@ -14,7 +14,7 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env {
     #[inline]
     fn render_text(&mut self, text: &str, align: (f32,f32), c: &mut E::Context<'_>) where for<'r> ERenderer<'r,E>: RenderStdWidgets<E>+'r {
         let g: ETextLayout<E> = TxtLayoutFromStor::<str,E>::from(text,c);
-        self.inner_aligned(g.size(),align)
+        self.inner_aligned(g.display_size(),align)
             .render_preprocessed_text(&g,Offset::default(),c);
     }
     fn render_preprocessed_text(&mut self, text: &ETextLayout<E>, inner_offset: Offset, c: &mut E::Context<'_>);
