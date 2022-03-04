@@ -7,7 +7,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>,
-    Scroll: AtomState<E,(i32,i32)>,
+    Scroll: AtomState<E,ScrollOff>,
     MutFn: TriggerMut<E>,
 {
     fn id(&self) -> E::WidgetID {
@@ -31,7 +31,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         let inner_size: ESize<E> = l.for_child(0).unwrap().size(r.style());
         let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
 
-        let (sx,sy) = fix_pox((sx,sy), (iw,ih).into(), rect.size);
+        let (sx,sy) = normalize_scroll_off((sx,sy), (iw,ih).into(), rect.size,true);
 
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
@@ -50,7 +50,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         let inner_size: ESize<E> = l.for_child(0).unwrap().size(&e.style);
         let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
 
-        let (sx,sy) = fix_pox((osx,osy), (iw,ih).into(), rect.size);
+        let (sx,sy) = normalize_scroll_off((osx,osy), (iw,ih).into(), rect.size,true);
 
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
@@ -85,13 +85,15 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
                         nx += 4;
                     }
 
-                    let (nx,ny) = fix_pox((nx,ny), (iw,ih).into(), rect.size);
+                    let (nx,ny) = normalize_scroll_off((nx,ny), (iw,ih).into(), rect.size,true);
 
                     let su = ScrollUpdate{offset:(nx-osx,ny-osy)};
 
-                    if let Some(t) = self.scroll_updater.boxed(su) {
-                        l.mutate_closure(t);
-                        passed = true;
+                    if su.offset != (0,0) {
+                        if let Some(t) = self.scroll_updater.boxed(su) {
+                            l.mutate_closure(t);
+                            passed = true;
+                        }
                     }
                 }
             }
@@ -129,23 +131,8 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     }
 
     impl_traitcast!( dyn Widget<E>:
-        dyn AtomState<E,(i32,i32)> => |s| &s.scroll;
+        dyn AtomState<E,ScrollOff> => |s| &s.scroll;
     );
-}
-
-fn fix_pox(viewport_off: (i32,i32), inner_size: Dims, viewport_size: Dims) -> (i32,i32) {
-    (
-        fix_pos(inner_size.w, viewport_size.w, viewport_off.0),
-        fix_pos(inner_size.h, viewport_size.h, viewport_off.1),
-    )
-}
-
-fn fix_pos(inner_size: u32, viewport_size: u32, viewport_off: i32) -> i32 {
-    if viewport_size > inner_size {
-        viewport_off.min(0).max(inner_size as i32 - viewport_size as i32)
-    }else{
-        viewport_off.max(0).min(inner_size as i32 - viewport_size as i32)
-    }
 }
 
 impl<'l,E,W,Scroll,MutFn> AsWidget<E> for Area<'l,E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {

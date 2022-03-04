@@ -16,11 +16,12 @@ pub struct Area<'w,E,W,Scroll,TrMut> where
     pub style: EStyle<E>,
     pub inner: W,
     pub scroll: Scroll,
+    pub negative_scroll: bool,
     scroll_updater: TrMut,
     p: PhantomData<&'w (W,Scroll,TrMut)>,
 }
 
-impl<'w,E,W> Area<'w,E,W,(i32,i32),()> where
+impl<'w,E,W> Area<'w,E,W,ScrollOff,()> where
     E: Env,
 {
     #[inline]
@@ -31,6 +32,7 @@ impl<'w,E,W> Area<'w,E,W,(i32,i32),()> where
             style: Default::default(),
             inner,
             scroll: (0,0),
+            negative_scroll: false,
             scroll_updater: (),
             p: PhantomData,
         }
@@ -49,6 +51,7 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
             style: self.style,
             inner: self.inner,
             scroll: scroll,
+            negative_scroll: self.negative_scroll,
             scroll_updater: self.scroll_updater,
             p: PhantomData,
         }
@@ -62,13 +65,14 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
             style: self.style,
             inner: self.inner,
             scroll: self.scroll,
+            negative_scroll: self.negative_scroll,
             scroll_updater: mutor,
             p: PhantomData,
         }
     }
 
     #[inline]
-    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> ResolveResult<&'r mut (dyn AtomStateMut<E,(i32,i32)>)> + Clone + Send + Sync + 'static {
+    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> ResolveResult<&'r mut (dyn AtomStateMut<E,ScrollOff>)> + Clone + Send + Sync + 'static {
         self.with_scroll_updater(move |r,x,c,ScrollUpdate { offset: (ax,ay) }| {
             if let Ok(state) = mutor(r,x,c) {//TODO ResolveResult handling
                 let (ox,oy) = state.get(c);
@@ -85,6 +89,11 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     #[inline]
     pub fn with_style(mut self, style: EStyle<E>) -> Self {
         self.style = style;
+        self
+    }
+    #[inline]
+    pub fn with_negative_scroll(mut self, negative_scroll: bool) -> Self {
+        self.negative_scroll = negative_scroll;
         self
     }
 }
@@ -110,5 +119,6 @@ impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut
 }
 
 pub struct ScrollUpdate {
+    /// scroll offset offset. offset from previous scroll offset to new scroll offset
     pub offset: (i32,i32),
 }
