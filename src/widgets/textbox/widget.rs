@@ -1,12 +1,11 @@
 use crate::style::standard::cursor::StdCursor;
-use crate::text::layout::{Direction, TxtLayout};
+use crate::text::layout::TxtLayout;
 use crate::text::layout::TxtLayoutFromStor;
 use crate::text::stor::*;
 
 use super::*;
 use state::max_off;
 use util::{state::*, LocalGlyphCache};
-use state::{Cursor};
 use super::imp::*;
 use validation::*;
 
@@ -14,11 +13,11 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     Text: TextStor<E>+Validation<E>+'w,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
-    Curs: AtomState<E,Cursor>,
+    Curs: AtomState<E,ETCurSel<E>>,
     TBUpd: TBMut<E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
@@ -241,48 +240,5 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
         dyn ITextBox<E> => |s| s;
         dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
         dyn Validation<E> => |s| &s.text;
-    );
-}
-
-impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> WidgetMut<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
-    E: Env,
-    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    for<'a> E::Context<'a>: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: TextStorMut<E>+ValidationMut<E>+'w,
-    ETextLayout<E>: TxtLayoutFromStor<Text,E>,
-    Scroll: AtomStateMut<E,(u32,u32)>,
-    Curs: AtomStateMut<E,Cursor>,
-    TBUpd: TBMut<E>,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
-{
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![]
-    }
-    fn child_mut(&mut self, _: usize) -> Result<ResolvableMut<E>,()> {
-        Err(())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, _: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        Err(())
-    }
-
-    impl_traitcast_mut!(
-        dyn TextStor<E> => |s| &mut s.text;
-        dyn TextStorMut<E> => |s| &mut s.text;
-        dyn AtomState<E,(u32,u32)> => |s| &mut s.scroll;
-        dyn AtomState<E,Cursor> => |s| &mut s.cursor;
-        dyn AtomState<E,Option<u32>> => |s| &mut s.cursor_stick_x;
-        dyn AtomStateMut<E,(u32,u32)> => |s| &mut s.scroll;
-        dyn AtomStateMut<E,Cursor> => |s| &mut s.cursor;
-        dyn AtomStateMut<E,Option<u32>> => |s| &mut s.cursor_stick_x;
-        dyn ITextBox<E> => |s| s;
-        dyn ITextBoxMut<E> => |s| s;
-        dyn AtomState<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
-        dyn AtomStateMut<E,LocalGlyphCache<E>> => |s| &mut s.glyph_cache;
-        dyn Validation<E> => |s| &mut s.text;
-        dyn ValidationMut<E> => |s| &mut s.text;
     );
 }

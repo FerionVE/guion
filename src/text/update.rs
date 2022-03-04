@@ -3,7 +3,6 @@ use std::ops::Range;
 
 pub enum TextUpdate<'a> {
     RemoveChars(Range<usize>),
-    RemoveCharsOld{off:usize,n:usize},
     PushChars(usize,Cow<'a,str>),
-    Replace(Cow<'a,str>),
+    Replace(Range<usize>,Cow<'a,str>),
 }

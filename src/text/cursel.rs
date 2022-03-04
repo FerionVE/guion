@@ -40,7 +40,9 @@ pub trait TxtCurSel<E>: Clone + Default /*+Send+Sync*/ {
     /// A change should always be applied to TextStor, and depending on the sync update method, synced/updated to TextLayout and TextCurSel
     fn sync_replace(&mut self, s: &str);
 
-    
+    fn attempt_insert_text(&self, insert_len_bytes: usize, base_text_len: usize) -> (usize,Self);
+    fn attempt_replace_text(&self, replacant_len_bytes: usize, base_text_len: usize) -> (Range<usize>,Self);
+    fn attempt_backspace(&self, backspace_bytes: usize, base_text_len: usize) -> (Range<usize>,Self);
 }
 
 pub enum TxtCurSelBytePos {

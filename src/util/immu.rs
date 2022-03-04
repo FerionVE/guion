@@ -49,8 +49,6 @@ impl<E,A,Z> TextStorMut<E> for Immutable<E,A,Z> where A: TextStor<E> {
     #[inline]
     fn push_chars(&mut self, off: usize, chars: &str) {}
     #[inline]
-    fn remove_chars_old(&mut self, off: usize, n: usize) {}
-    #[inline]
     fn replace(&mut self, s: &str) {}
 }
 impl<E,A,Z> TextStorMut<E> for &Immutable<E,A,Z> where A: TextStor<E>, E: Env {
@@ -58,8 +56,6 @@ impl<E,A,Z> TextStorMut<E> for &Immutable<E,A,Z> where A: TextStor<E>, E: Env {
     fn remove_chars(&mut self, range: Range<usize>) {}
     #[inline]
     fn push_chars(&mut self, off: usize, chars: &str) {}
-    #[inline]
-    fn remove_chars_old(&mut self, off: usize, n: usize) {}
     #[inline]
     fn replace(&mut self, s: &str) {}
 }

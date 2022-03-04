@@ -1,9 +1,12 @@
 //! Aliases for deep/nested types inside Env
 #![allow(type_alias_bounds)]
+use crate::text::layout::TxtLayout;
+
 use super::*;
 
 pub type ERenderer<'a,E: Env> = <E::Backend as Backend<E>>::Renderer<'a>;
 pub type ETextLayout<E: Env> = <E::Backend as Backend<E>>::TextLayout;
+pub type ETCurSel<E: Env> = <ETextLayout<E> as TxtLayout<E>>::CurSel;
 pub type EEvent<E: Env> = <E::Backend as Backend<E>>::Event;
 pub type EEDest<E: Env> = <EEvent<E> as Event<E>>::Dest;
 pub type EEKey<E: Env> = <EEvent<E> as Event<E>>::Key;

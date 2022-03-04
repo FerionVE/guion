@@ -33,7 +33,7 @@ pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for
     fn move_cursor_display(&self, old: Self::CurSel, disp_pos: Offset, extend_selection: bool) -> Self::CurSel; //TODO re-implement cursor_stick
 
     /// How many bytes are n chars to the left from off?
-    //fn char_len_l(&self, off: usize, chars: usize) -> usize;
+    fn char_len_l(&self, off: usize, chars: usize) -> usize;
 
     fn fix_boundary(&self, off: usize) -> usize;
     fn fix_cursor_boundaries(&self, s: &mut Self::CurSel);

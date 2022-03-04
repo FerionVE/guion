@@ -39,32 +39,19 @@ pub trait TextStorMut<E>: TextStor<E> {
     fn apply(&mut self, op: TextUpdate<'_>) {
         match op {
             TextUpdate::RemoveChars(range) => self.remove_chars(range),
-            TextUpdate::RemoveCharsOld { off, n } => self.remove_chars_old(off, n),
             TextUpdate::PushChars(off, chars) => self.push_chars(off, chars.as_ref()),
-            TextUpdate::Replace(chars) => self.replace(chars.as_ref()),
+            TextUpdate::Replace(range,chars) => self.replace(range,chars.as_ref()),
         }
     }
 
     fn remove_chars(&mut self, range: Range<usize>);
 
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        let len = TextStor::<E>::chars(self);
-        let popable = n.min(off).min(len);
-        let pop_start = off - popable;
-        let pop_end = off;
-
-        assert!(pop_end >= pop_start);
-
-
-
-        self.remove_chars(pop_start..pop_end)
-    }
     /// off in char units
     fn push_chars(&mut self, off: usize, chars: &str);
 
-    fn replace(&mut self, s: &str) {
-        self.remove_chars(0..self.len());
-        self.push_chars(0,s);
+    fn replace(&mut self, range: Range<usize>, s: &str) {
+        self.remove_chars(range);
+        self.push_chars(range.start,s);
     }
 
     #[inline]
@@ -132,12 +119,8 @@ impl<E,A> TextStorMut<E> for &mut A where A: TextStorMut<E> + ?Sized {
         (**self).push_chars(off,chars)
     }
 
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        (**self).remove_chars_old(off,n)
-    }
-
-    fn replace(&mut self, s: &str) {
-        (**self).replace(s)
+    fn replace(&mut self, range: Range<usize>, s: &str) {
+        (**self).replace(range,s)
     }
 }
 
@@ -173,12 +156,8 @@ impl<E,T> TextStorMut<E> for Validated<E,T> where T: TextStorMut<E> {
         (**self).push_chars(off,chars)
     }
 
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        (**self).remove_chars_old(off,n)
-    }
-
-    fn replace(&mut self, s: &str) {
-        (**self).replace(s)
+    fn replace(&mut self, range: Range<usize>, s: &str) {
+        (**self).replace(range,s)
     }
 }
 pub struct OnModification<E,S: ?Sized,F>(F,PhantomData<E>,S) where F: FnMut(&mut S);
@@ -246,14 +225,8 @@ impl<E,S,F> TextStorMut<E> for OnModification<E,S,F> where S: TextStorMut<E>, F:
     }
 
     #[inline]
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        (**self).remove_chars_old(off,n);
-        (self.0)(&mut self.2);
-    }
-
-    #[inline]
-    fn replace(&mut self, s: &str) {
-        (**self).replace(s);
+    fn replace(&mut self, range: Range<usize>, s: &str) {
+        (**self).replace(range,s);
         (self.0)(&mut self.2);
     }
 }
