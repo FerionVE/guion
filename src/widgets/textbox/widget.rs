@@ -1,4 +1,6 @@
 use crate::style::standard::cursor::StdCursor;
+use crate::text::cursel::Direction;
+use crate::text::cursel::TxtCurSel;
 use crate::text::layout::TxtLayout;
 use crate::text::layout::TxtLayoutFromStor;
 use crate::text::stor::*;
@@ -21,7 +23,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
     TBUpd: TBMut<E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
+    fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
         vec![]
     }
     fn id(&self) -> E::WidgetID {
@@ -74,8 +76,10 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
 
         //e.0._debug_type_name();
         let g = self.glyphs(l.reference());
+
         let mut cursor = self.cursor.get(l.ctx);
-        cursor.fix_boundaries(&*g);
+        g.fix_cursor_boundaries(&mut cursor);
+
         let border = e.style.border(&StdSelectag::BorderVisual.into_selector(),l.ctx)*2;
         let b = e.bounds.inside_border(&border);
 
@@ -84,11 +88,10 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
         if let Some(ee) = e.event.is_text_input() {
             if !l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 let s = ee.text;
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
-                    w.insert_text(&s,ctx);
-                    w.scroll_to_cursor(ctx,&b);
-                }));
+                
+                self.insert_text(l.reference(),&s);
+                self.scroll_to_cursor(l.reference(),&b);
+
                 passed = true;
             }
         } else if let Some(ee) = e.event.is_kbd_press() {
@@ -98,22 +101,21 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
             {
                 let ctrl = l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some();
 
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
-                    if ee.key == MatchKeyCode::KbdBackspace {
-                        w.remove_selection_or_n(1,ctx);
-                    }
-                    if ee.key == MatchKeyCode::KbdReturn {
-                        w.insert_text("\n",ctx);
-                    }
-                    if ee.key == MatchKeyCode::KbdLeft {
-                        w.move_cursor_x(Direction::Left,ctrl,ctx);
-                    }
-                    if ee.key == MatchKeyCode::KbdRight {
-                        w.move_cursor_x(Direction::Right,ctrl,ctx);
-                    }
-                    w.scroll_to_cursor(ctx,&b);
-                }));
+                
+                if ee.key == MatchKeyCode::KbdBackspace {
+                    self.remove_selection_or_n(l.reference(),1);
+                }
+                if ee.key == MatchKeyCode::KbdReturn {
+                    self.insert_text(l.reference(),"\n");
+                }
+                if ee.key == MatchKeyCode::KbdLeft {
+                    self.move_cursor_x(l.reference(),Direction::Left,ctrl);
+                }
+                if ee.key == MatchKeyCode::KbdRight {
+                    self.move_cursor_x(l.reference(),Direction::Right,ctrl);
+                }
+                self.scroll_to_cursor(l.reference(),&b);
+
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdA && l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 l.mutate_closure(Box::new(move |mut w,ctx,_| {
@@ -126,26 +128,20 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdV && l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 if let Some(text) = l.clipboard_get_text() {
-                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                        let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
-                        w.insert_text(&text,ctx);
-                        w.scroll_to_cursor(ctx,&b);
-                    }));
+                    self.insert_text(l.reference(),&text);
+                    self.scroll_to_cursor(l.reference(),&b);
                 }
+
                 passed = true;
             }else if (ee.key == MatchKeyCode::KbdC || ee.key == MatchKeyCode::KbdX) && l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
-                if cursor.is_selection() {
-                    let range = cursor.range_usize();
+                if let TxtCurSelBytePos::Selection(range) = cursor.typ() {
                     let text = self.text.caption();
                     let text = &text.as_ref()[range];
                     l.clipboard_set_text(text);
 
                     if ee.key == MatchKeyCode::KbdX {
-                        l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                            let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
-                            w.remove_selection(ctx);
-                            w.scroll_to_cursor(ctx,&b);
-                        }));
+                        self.remove_selection(l.reference());
+                        self.scroll_to_cursor(l.reference(),&b);
                     }
                 }
                 passed = true;
@@ -153,17 +149,15 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
                 let ctrl = l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some();
 
                 let b = b.clone();
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
+                
+                if ee.key == MatchKeyCode::KbdUp {
+                    self.move_cursor_y(l.reference(),Direction::Up,ctrl,&b);
+                }
+                if ee.key == MatchKeyCode::KbdDown {
+                    self.move_cursor_y(l.reference(),Direction::Down,ctrl,&b);
+                }
+                self.scroll_to_cursor(l.reference(),&b);
 
-                    if ee.key == MatchKeyCode::KbdUp {
-                        w.move_cursor_y(Direction::Up,ctrl,ctx,&b);
-                    }
-                    if ee.key == MatchKeyCode::KbdDown {
-                        w.move_cursor_y(Direction::Down,ctrl,ctx,&b);
-                    }
-                    w.scroll_to_cursor(ctx,&b);
-                }));
                 passed = true;
             }
         } else if let Some(ee) = e.event.is_mouse_scroll() {
@@ -193,13 +187,11 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
                 let mouse_pressed = l.is_hovered() && l.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone()).is_some();
                 let b = b.clone();
 
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let w = w.traitcast_mut::<dyn ITextBoxMut<E>>().unwrap();
-                    w._m(mouse_down,mouse_pressed,mouse,b,ctx);
-                    if mouse_pressed {
-                        w.scroll_to_cursor(ctx,&b);
-                    }
-                }));
+                self._m(l.reference(),mouse_down,mouse_pressed,mouse,b);
+                if mouse_pressed {
+                    self.scroll_to_cursor(l.reference(),&b);
+                }
+
                 passed |= mouse_pressed;
             }
         }
@@ -212,10 +204,10 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
+    fn childs_ref<'s>(&'s self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
         vec![]
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
+    fn into_childs<'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
         vec![]
     }
     
@@ -225,20 +217,49 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
     fn focusable(&self) -> bool {
         true
     }
-    fn child(&self, _: usize) -> Result<Resolvable<E>,()> {
+    fn child<'s>(&'s self, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
         Err(())
     }
-    fn into_child<'a>(self: Box<Self>, _: usize) -> Result<Resolvable<'a,E>,()> where Self: 'a {
+    fn into_child<'s>(self: Box<Self>, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
         Err(())
     }
 
-    impl_traitcast!(
+    impl_traitcast!( dyn Widget<E>:
         dyn TextStor<E> => |s| &s.text;
         dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
-        dyn AtomState<E,Cursor> => |s| &s.cursor;
-        dyn AtomState<E,Option<u32>> => |s| &s.cursor_stick_x;
+        dyn AtomState<E,ETCurSel<E>> => |s| &s.cursor;
         dyn ITextBox<E> => |s| s;
         dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
         dyn Validation<E> => |s| &s.text;
     );
+}
+
+impl<'l,E,Text,Scroll,Curs,TBUpd,GlyphCache> AsWidget<E> for TextBox<'l,E,Text,Scroll,Curs,TBUpd,GlyphCache> where Self: Widget<E>, E: Env {
+    type Widget = Self;
+    type WidgetOwned = Self;
+
+    #[inline]
+    fn as_widget<'w>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget<'w>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
+        WCow::Owned(self)
+    }
+    #[inline]
+    fn box_into_widget<'w>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
+        WCow::Owned(*self)
+    }
+    #[inline]
+    fn as_widget_dyn<'w,'s>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Borrowed(self)
+    }
+    #[inline]
+    fn into_widget_dyn<'w,'s>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
+        WCow::Owned(Box::new(self))
+    }
+    #[inline]
+    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
+        WCow::Owned(self)
+    }
 }

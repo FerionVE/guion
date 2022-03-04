@@ -8,7 +8,7 @@ use super::stor::{TextStor, ToTextLayout};
 use super::update::TextUpdate;
 
 pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for<'a> TxtLayoutFromStor<&'a str,E> /*+Send+Sync*/ where E: Env {
-    type CurSel: TxtCurSel<E>;
+    type CurSel: TxtCurSel<E> +Send+Sync;
     // fns from https://docs.rs/piet/0.3.0/piet/trait.TextLayout.html
 
     fn display_size(&self) -> Dims;

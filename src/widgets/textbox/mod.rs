@@ -1,7 +1,9 @@
 use crate::text::update::TextUpdate;
 
 use super::*;
+use std::borrow::Cow;
 use std::marker::PhantomData;
+use std::ops::Range;
 use util::{LocalGlyphCache, remote_state::RemoteState};
 
 pub mod widget;
@@ -109,19 +111,19 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,TBUpd
 
 /// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
 pub trait TBMut<E> where E: Env {
-    fn boxed(&self, tu: Option<TextUpdate<'static>>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>>;
+    fn boxed(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>>;
 }
 
 impl<E> TBMut<E> for () where E: Env {
     #[inline]
-    fn boxed(&self, tu: Option<TextUpdate<'static>>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>> {
+    fn boxed(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>> {
         None
     }
 }
 
-impl<T,E> TBMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,Option<TextUpdate<'static>>,Option<ETCurSel<E>>) + Clone + Send + Sync + 'static, E: Env {
+impl<T,E> TBMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>) + Clone + Send + Sync + 'static, E: Env {
     #[inline]
-    fn boxed(&self, tu: Option<TextUpdate<'static>>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>> {
+    fn boxed(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>> {
         let s = self.clone();
         Some(Box::new(move |r,x,c| s(r,x,c,tu,nc) ))
     }

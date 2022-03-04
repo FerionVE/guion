@@ -9,6 +9,8 @@ pub trait TxtCurSel<E>: Clone + Default /*+Send+Sync*/ {
     fn is_cursor(&self) -> bool;
     fn is_selection(&self) -> bool;
 
+    fn caret(&self) -> usize;
+
     fn unselect(&mut self);
 
     /// Apply identical change applied to TextStor.
