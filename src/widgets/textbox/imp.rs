@@ -11,13 +11,8 @@ pub trait ITextBox<E> where E: Env {
 
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
     E: Env,
-    Text: 'w,
-    Scroll: 'w,
-    Curs: 'w,
-    CursorStickX: 'w,
-    GlyphCache: 'w,
 {
 
 }
@@ -32,7 +27,7 @@ pub trait ITextBoxMut<E>: ITextBox<E> where E: Env {
     fn scroll_to_cursor(&mut self, ctx: &mut E::Context<'_>, b: &Bounds);
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -41,7 +36,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
-    CursorStickX: AtomStateMut<E,Option<u32>>,
+    TBUpd: TBMut<E>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn insert_text(&mut self, s: &str, ctx: &mut E::Context<'_>) {
@@ -173,7 +168,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
 
 traitcast_for!(ITextBox<E>;ITextBoxMut<E>);
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -182,7 +177,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
-    CursorStickX: AtomState<E,Option<u32>>,
+    TBUpd: TBMut<E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<ETextLayout<E>> { //TODO FIX style mutation invalidating glyphs
@@ -208,7 +203,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -217,7 +212,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Cur
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
-    CursorStickX: AtomStateMut<E,Option<u32>>,
+    TBUpd: TBMut<E>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context<'_>) -> Arc<ETextLayout<E>> {

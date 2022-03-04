@@ -4,7 +4,7 @@ use super::update::TextUpdate;
 
 
 // TODO impl holds bytepos and cursor_stick_y
-pub trait TxtCurSel<E>: Clone + Default {
+pub trait TxtCurSel<E>: Clone + Default /*+Send+Sync*/ {
     fn typ(&self) -> TxtCurSelBytePos;
     fn is_cursor(&self) -> bool;
     fn is_selection(&self) -> bool;

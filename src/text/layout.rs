@@ -7,7 +7,7 @@ use super::cursel::{TxtCurSel, Direction};
 use super::stor::{TextStor, ToTextLayout};
 use super::update::TextUpdate;
 
-pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for<'a> TxtLayoutFromStor<&'a str,E> where E: Env {
+pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for<'a> TxtLayoutFromStor<&'a str,E> /*+Send+Sync*/ where E: Env {
     type CurSel: TxtCurSel<E>;
     // fns from https://docs.rs/piet/0.3.0/piet/trait.TextLayout.html
 
@@ -28,19 +28,19 @@ pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for
     fn len_bytes(&self) -> usize;
 
     // move cursor into direction. this resets selection (unselect)
-    fn move_cursor_direction(&self, old: Self::CurSel, dir: Direction) -> Self::CurSel; //TODO re-implement cursor_stick
+    fn move_cursor_direction(&self, old: Self::CurSel, dir: Direction, extend_selection: bool) -> Self::CurSel; //TODO re-implement cursor_stick
     // move cursor to display pos. this resets selection (unselect)
-    fn move_cursor_display(&self, old: Self::CurSel, disp_pos: (u32,u32)) -> Self::CurSel; //TODO re-implement cursor_stick
-
-    // extend selection into direction.
-    fn extend_selection_direction(&self, old: Self::CurSel, dir: Direction) -> Self::CurSel; //TODO re-implement cursor_stick
-    // extend selection to display pos.
-    fn extend_selection_display(&self, old: Self::CurSel, disp_pos: (u32,u32)) -> Self::CurSel; //TODO re-implement cursor_stick
+    fn move_cursor_display(&self, old: Self::CurSel, disp_pos: Offset, extend_selection: bool) -> Self::CurSel; //TODO re-implement cursor_stick
 
     /// How many bytes are n chars to the left from off?
     //fn char_len_l(&self, off: usize, chars: usize) -> usize;
 
     fn fix_boundary(&self, off: usize) -> usize;
+    fn fix_cursor_boundaries(&self, s: &mut Self::CurSel);
+    fn fixed_cursor_boundaries(&self, mut s: Self::CurSel) -> Self::CurSel {
+        self.fix_cursor_boundaries(&mut s);
+        s
+    }
 
     /// Apply identical change applied to TextStor.
     /// 

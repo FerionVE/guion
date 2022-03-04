@@ -10,7 +10,7 @@ use state::{Cursor};
 use super::imp::*;
 use validation::*;
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -19,7 +19,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,Cursor>,
-    CursorStickX: AtomState<E,Option<u32>>,
+    TBUpd: TBMut<E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath) -> Vec<E::WidgetPath> {
@@ -42,16 +42,16 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
         let g = self.glyphs(l.reference());
         //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
         let mut cursor = self.cursor.get(l.ctx);
-        cursor.fix_boundaries(&*g);
+        //cursor.fix_boundaries(&*g);
         let off: Offset = self.scroll.get(l.ctx).into();
 
-        for b in g.selection_bounds(cursor.range_usize()) {
+        for b in g.selection_bounds(cursor) {
             let b = b - off;
             r.slice(&b)
                 .with(StdSelectag::ObjForeground)
                 .fill_rect(l.ctx);
         }
-        let mut b = g.display_of_char(cursor.caret as usize); //TODO fix as it should work if cursor is at end
+        let mut b = g.cursor_bounds(cursor); //TODO fix as it should work if cursor is at end
         b.size.w = 2;
         //let b = Bounds::from_xywh(c.0 as i32, c.1 as i32 - s.glyphs.line_ascent() as i32, 2, s.glyphs.line_height());
         let b = b - off;
@@ -244,7 +244,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> Widget<E> for TextBox<'w,E,T
     );
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> WidgetMut<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -253,7 +253,7 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> WidgetMut<E> for TextBox<'w,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomStateMut<E,(u32,u32)>,
     Curs: AtomStateMut<E,Cursor>,
-    CursorStickX: AtomStateMut<E,Option<u32>>,
+    TBUpd: TBMut<E>,
     GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
 {
     fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
