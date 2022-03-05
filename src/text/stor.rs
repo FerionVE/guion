@@ -58,7 +58,7 @@ impl<E> TextStor<E> for String {
 impl<E> TextStorMut<E> for String {
     fn replace(&mut self, range: Range<usize>, insert: &str) {
         let range = fix_boundary(self, range.start) .. fix_boundary(self, range.end);
-        self.drain(range);
+        self.drain(range.clone());
         self.insert_str(range.start, insert);
     }
 }

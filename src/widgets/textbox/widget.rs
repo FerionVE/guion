@@ -1,6 +1,7 @@
 use crate::style::standard::cursor::StdCursor;
 use crate::text::cursel::Direction;
 use crate::text::cursel::TxtCurSel;
+use crate::text::cursel::TxtCurSelBytePos;
 use crate::text::layout::TxtLayout;
 use crate::text::layout::TxtLayoutFromStor;
 use crate::text::stor::*;
@@ -11,7 +12,7 @@ use util::{state::*, LocalGlyphCache};
 use super::imp::*;
 use validation::*;
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -21,6 +22,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
     TBUpd: TBMut<E>,
+    TBScr: TBSM<E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
@@ -46,7 +48,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
         //cursor.fix_boundaries(&*g);
         let off: Offset = self.scroll.get(l.ctx).into();
 
-        for b in g.selection_bounds(cursor) {
+        for b in g.selection_bounds(cursor.clone()) {
             let b = b - off;
             r.slice(&b)
                 .with(StdSelectag::ObjForeground)
@@ -118,13 +120,13 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
 
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdA && l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
-                l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                    let wc = w.traitcast_mut::<dyn TextStorMut<E>>().unwrap();
-                    cursor.select = 0;
-                    cursor.caret = wc.len() as u32;
-                    w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                    w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
-                }));
+                // l.mutate_closure(Box::new(move |mut w,ctx,_| { TODO
+                //     let wc = w.traitcast_mut::<dyn TextStorMut<E>>().unwrap();
+                //     cursor.select = 0;
+                //     cursor.caret = wc.len() as u32;
+                //     w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
+                //     w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
+                // }));
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdV && l.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 if let Some(text) = l.clipboard_get_text() {
@@ -175,10 +177,9 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
                 off.1.max(0).min(max_off.y) as u32,
             );
 
-            l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                let w = w.traitcast_mut::<dyn AtomStateMut<E,(u32,u32)>>().unwrap();
-                w.set(off,ctx);
-            }));
+            if let Some(t) = self.scroll_update.boxed(off) {
+                l.mutate_closure(t);
+            }
             passed = true;
         } else {
             if let Some(mouse) = l.state().cursor_pos() { //TODO strange event handling
@@ -234,7 +235,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> Widget<E> for TextBox<'w,E,Text,Scr
     );
 }
 
-impl<'l,E,Text,Scroll,Curs,TBUpd,GlyphCache> AsWidget<E> for TextBox<'l,E,Text,Scroll,Curs,TBUpd,GlyphCache> where Self: Widget<E>, E: Env {
+impl<'l,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> AsWidget<E> for TextBox<'l,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where Self: Widget<E>, E: Env {
     type Widget = Self;
     type WidgetOwned = Self;
 

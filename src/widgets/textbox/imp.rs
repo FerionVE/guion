@@ -20,7 +20,7 @@ pub trait ITextBox<E> where E: Env {
     fn update(&self, l: &mut Link<E>, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>);
 }
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -30,10 +30,11 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,S
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
     TBUpd: TBMut<E>,
+    TBScr: TBSM<E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    fn insert_text(&self, l: Link<E>, s: &str) {
-        let g = self.glyphs(l);
+    fn insert_text(&self, mut l: Link<E>, s: &str) {
+        let g = self.glyphs(l.reference());
         let mut cursor = self.cursor.get(l.ctx);
         g.fix_cursor_boundaries(&mut cursor);
         if cursor.is_selection() {
@@ -46,10 +47,10 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,S
             self.update(&mut l,Some((ins_off..ins_off,Cow::Owned(s.to_owned()))),Some(new_cursor));
         }
     }
-    fn remove_selection_or_n(&self, l: Link<E>, n: u32) {
-        if self.remove_selection(l) {return;}
+    fn remove_selection_or_n(&self, mut l: Link<E>, n: u32) {
+        if self.remove_selection(l.reference()) {return;}
 
-        let g = self.glyphs(l);
+        let g = self.glyphs(l.reference());
         let mut cursor = self.cursor.get(l.ctx);
         g.fix_cursor_boundaries(&mut cursor);
 
@@ -59,8 +60,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,S
             cursor.attempt_backspace(to_remove, self.text.len());
         self.update(&mut l,Some((del_range,Default::default())),Some(new_cursor));
     }
-    fn remove_selection(&self, l: Link<E>) -> bool {
-        let g = self.glyphs(l);
+    fn remove_selection(&self, mut l: Link<E>) -> bool {
+        let g = self.glyphs(l.reference());
         let mut cursor = self.cursor.get(l.ctx);
         g.fix_cursor_boundaries(&mut cursor);
 
@@ -73,24 +74,24 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,S
             false
         }
     }
-    fn move_cursor_x(&self, l: Link<E>, o: Direction, skip_unselect: bool) {
-        let g = self.glyphs(l);
+    fn move_cursor_x(&self, mut l: Link<E>, o: Direction, skip_unselect: bool) {
+        let g = self.glyphs(l.reference());
         let mut cursor = self.cursor.get(l.ctx);
 
         let new_cursor = g.move_cursor_direction(cursor,o,skip_unselect);
 
         self.update(&mut l,None,Some(new_cursor))
     }
-    fn move_cursor_y(&self, l: Link<E>, o: Direction, skip_unselect: bool, b: &Bounds) {
-        let g = self.glyphs(l);
+    fn move_cursor_y(&self, mut l: Link<E>, o: Direction, skip_unselect: bool, b: &Bounds) {
+        let g = self.glyphs(l.reference());
         let mut cursor = self.cursor.get(l.ctx);
 
         let new_cursor = g.move_cursor_direction(cursor,o,skip_unselect);
 
         self.update(&mut l,None,Some(new_cursor))
     }
-    fn _m(&self, l: Link<E>, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds) {
-        let g = self.glyphs(l);
+    fn _m(&self, mut l: Link<E>, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds) {
+        let g = self.glyphs(l.reference());
         let mut cursor = self.cursor.get(l.ctx);
         g.fix_cursor_boundaries(&mut cursor);
 
@@ -109,8 +110,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,S
             self.update(&mut l,None,Some(new_cursor))
         }
     }
-    fn scroll_to_cursor(&self, l: Link<E>, b: &Bounds) {
-        let g = self.glyphs(l);
+    fn scroll_to_cursor(&self, mut l: Link<E>, b: &Bounds) {
+        let g = self.glyphs(l.reference());
         let mut cursor = self.cursor.get(l.ctx);
         g.fix_cursor_boundaries(&mut cursor);
 
@@ -126,7 +127,10 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,S
         vb.shift_to_fit(&cb);
 
         let off = (vb.off.x as u32, vb.off.y as u32);
-        self.scroll.set(off,l.ctx);
+        
+        if let Some(t) = self.scroll_update.boxed(off) {
+            l.mutate_closure(t);
+        }
     }
 
     fn update(&self, l: &mut Link<E>, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>) {
@@ -140,7 +144,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,S
 
 traitcast_for_from_widget!(ITextBox<E>);
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,TBUpd,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,

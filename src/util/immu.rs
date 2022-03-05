@@ -45,11 +45,11 @@ impl<E,A,Z> TextStor<E> for Immutable<E,A,Z> where A: TextStor<E> {
 }
 impl<E,A,Z> TextStorMut<E> for Immutable<E,A,Z> where A: TextStor<E> {
     #[inline]
-    fn replace(&mut self, s: &str) {}
+    fn replace(&mut self, _: Range<usize>, _: &str) {}
 }
 impl<E,A,Z> TextStorMut<E> for &Immutable<E,A,Z> where A: TextStor<E>, E: Env {
     #[inline]
-    fn replace(&mut self, s: &str) {}
+    fn replace(&mut self, _: Range<usize>, _: &str) {}
 }
 
 impl<E,A,Z> Validation<E> for Immutable<E,A,Z> where A: Validation<E> {
