@@ -1,10 +1,10 @@
 use crate::text::cursel::{Direction, TxtCurSel};
 use crate::text::layout::TxtLayoutFromStor;
-use crate::text::stor::{TextStor, TextStorMut};
+use crate::text::stor::TextStor;
 use crate::text::layout::TxtLayout;
 
 use super::*;
-use util::{state::{AtomState, AtomStateMut}, LocalGlyphCache};
+use util::{state::AtomState, LocalGlyphCache};
 use std::borrow::Cow;
 use std::sync::Arc;
 use validation::*;
@@ -76,7 +76,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> ITextBox<E> for TextBox<'w,E,
     }
     fn move_cursor_x(&self, mut l: Link<E>, o: Direction, skip_unselect: bool) {
         let g = self.glyphs(l.reference());
-        let mut cursor = self.cursor.get(l.ctx);
+        let cursor = self.cursor.get(l.ctx);
 
         let new_cursor = g.move_cursor_direction(cursor,o,skip_unselect);
 
@@ -84,7 +84,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> ITextBox<E> for TextBox<'w,E,
     }
     fn move_cursor_y(&self, mut l: Link<E>, o: Direction, skip_unselect: bool, b: &Bounds) {
         let g = self.glyphs(l.reference());
-        let mut cursor = self.cursor.get(l.ctx);
+        let cursor = self.cursor.get(l.ctx);
 
         let new_cursor = g.move_cursor_direction(cursor,o,skip_unselect);
 
@@ -97,7 +97,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> ITextBox<E> for TextBox<'w,E,
 
         let off = self.scroll.get(l.ctx);
 
-        let mut tpos = mouse - b.off + Offset::from(off);
+        let tpos = mouse - b.off + Offset::from(off);
         //tpos.y += g.line_ascent() as i32; //TODO FIX boundary precision all over the place
                     
         if let Some(ee) = mouse_down {

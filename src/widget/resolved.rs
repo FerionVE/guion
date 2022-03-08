@@ -1,6 +1,6 @@
 //! [`Widget`] reference including it's [path](Env::WidgetPath) and a reference to the [root](Env::Storage)
 use super::*;
-use std::ops::{DerefMut, Deref};
+use std::ops::Deref;
 
 /// A reference to a resolved [`Widget`]
 pub struct Resolved<'a,E> where E: Env {

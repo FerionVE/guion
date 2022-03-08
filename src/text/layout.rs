@@ -5,7 +5,6 @@ use crate::util::bounds::*;
 
 use super::cursel::{TxtCurSel, Direction};
 use super::stor::{TextStor, ToTextLayout};
-use super::update::TextUpdate;
 
 pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for<'a> TxtLayoutFromStor<&'a str,E> /*+Send+Sync*/ where E: Env {
     type CurSel: TxtCurSel<E> +Send+Sync;

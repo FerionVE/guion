@@ -1,6 +1,5 @@
 use crate::*;
 use crate::root::RootRef;
-use widget::Widget;
 
 #[deprecated]
 #[allow(deprecated)]

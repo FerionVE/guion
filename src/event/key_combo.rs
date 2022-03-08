@@ -1,5 +1,3 @@
-use std::hash::Hash;
-use std::marker::PhantomData;
 use std::ops::BitAnd;
 use std::ops::BitOr;
 use std::ops::BitXor;

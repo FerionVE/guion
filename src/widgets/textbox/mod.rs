@@ -1,5 +1,3 @@
-use crate::text::update::TextUpdate;
-
 use super::*;
 use std::borrow::Cow;
 use std::marker::PhantomData;
@@ -143,7 +141,7 @@ pub trait TBMut<E> where E: Env {
 
 impl<E> TBMut<E> for () where E: Env {
     #[inline]
-    fn boxed(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>> {
+    fn boxed(&self, _: Option<(Range<usize>,Cow<'static,str>)>, _: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>> {
         None
     }
 }

@@ -7,7 +7,6 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use crate::env::Env;
-use crate::traitcast_for;
 use crate::traitcast_for_from_widget;
 use crate::util::translate::immu::Immutable;
 use crate::validation::Validation;
@@ -15,7 +14,6 @@ use crate::validation::ValidationMut;
 use crate::validation::validated::Validated;
 
 use super::layout::TxtLayout;
-use super::update::TextUpdate;
 
 pub trait TextStor<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str>;
@@ -97,14 +95,6 @@ impl<E,A> TextStorMut<E> for &mut A where A: TextStorMut<E> + ?Sized {
 }
 
 traitcast_for_from_widget!(TextStor<E>); //TODO mutable Traitcast
-
-fn char_off(s: impl AsRef<str>, o: usize) -> usize {
-    let s = s.as_ref();
-    match s.char_indices().skip(o).next() {
-        Some((i,_)) => i,
-        None => s.len(),
-    }
-}
 
 impl<E,T> TextStor<E> for Validated<E,T> where T: TextStor<E> {
     fn caption<'s>(&'s self) -> Cow<'s,str> {

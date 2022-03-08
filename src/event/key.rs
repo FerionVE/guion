@@ -1,5 +1,5 @@
 use super::*;
-use std::{fmt::Debug, ops::BitAnd};
+use std::fmt::Debug;
 
 pub trait PressedKey<E> where E: Env {
     fn key(&self) -> EEKey<E>;

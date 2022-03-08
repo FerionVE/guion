@@ -1,10 +1,9 @@
 use crate::text::layout::*;
-use crate::text::stor::TextStorMut;
 
 use super::*;
 use std::sync::Arc;
-use util::state::{AtomStateMut, AtomState};
-use validation::{ValidationMut, Validation};
+use util::state::AtomState;
+use validation::Validation;
 
 impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     E: Env,
@@ -46,7 +45,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
         vec![]
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {

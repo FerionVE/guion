@@ -1,6 +1,4 @@
 //! The [`Context`] trait housing handlers, queue and other side stuff
-use std::ops::DerefMut;
-
 use super::*;
 
 pub mod queue;
