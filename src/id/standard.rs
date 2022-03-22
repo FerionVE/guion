@@ -78,13 +78,13 @@ impl<E> SubPath<E> for StdID where E: Env, E::WidgetID: Into<Self> + From<Self> 
     }
 
     fn is<T: Any>(&self) -> bool { //TODO default underlying-trait impl hack
-        Any::is::<T>(self)
+        <dyn Any>::is::<T>(self)
     }
     fn downcast_ref<T: Any>(&self) -> Option<&T> {
-        Any::downcast_ref::<T>(self)
+        <dyn Any>::downcast_ref::<T>(self)
     }
     fn downcast_mut<T: Any>(&mut self) -> Option<&mut T> {
-        Any::downcast_mut::<T>(self)
+        <dyn Any>::downcast_mut::<T>(self)
     }
     fn downcast_into<T: Any>(self) -> Result<T,Self> where Self: Sized + 'static {
         todo!()

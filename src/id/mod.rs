@@ -11,7 +11,7 @@ pub mod standard;
 pub trait WidgetID: AsRefMut<Self> + Clone + PartialEq + Sized + Debug + 'static { //should also implement Eq + Hash + Send
     #[inline]
     fn id_eq<I: WidgetID + 'static>(&self, o: &I) -> bool where Self: 'static {
-        Any::downcast_ref::<Self>(o)
+        <dyn Any>::downcast_ref::<Self>(o)
             .map_or(false, #[inline] |r| self.eq(r) )
     }
 

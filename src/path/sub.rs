@@ -18,7 +18,7 @@ where E: Env {
     fn downcast_into<T: Any>(self) -> Result<T,Self> where Self: Sized + 'static;
     #[inline]
     fn eq<I: SubPath<F> + 'static, F: Env>(&self, o: &I) -> bool where Self: 'static {
-        Any::downcast_ref::<Self>(o)
+        <dyn Any>::downcast_ref::<Self>(o)
             .map_or(false, #[inline] |r| self == r )
     }
 }
