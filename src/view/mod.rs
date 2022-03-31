@@ -13,41 +13,44 @@ pub trait View<E,MutFn> where MutFn: Clone + Send + Sync + 'static, E: Env {
 #[macro_export]
 macro_rules! impl_view {
     (
-        $( < $($generics:path),* $(,)* > )?
+        $e:tt;
+        ($($generics:tt)*)
         for $ontype:ty :
         <$life:lifetime> $mutfnroot:ty => $mutfndest:ty
-        $(where $($bounds:tt)+)?
+        $(where ($($bounds:tt)+))?
         {
-            $($impl:tt)*
+            $($impl:item)*
         }
 
     ) => {
-        impl < E,MutFn, $( $($generics),* )? > $crate::view::View<E,MutFn>
+        impl < $($generics)*, MutFn > $crate::view::View<$e,MutFn>
         for $ontype where
-            MutFn: for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut E::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + Clone + Send + Sync + 'static,
-            E: $crate::env::Env,
+            MutFn: for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut <$e as $crate::env::Env>::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + Clone + Send + Sync + 'static,
+            $e: $crate::env::Env,
             $($($bounds)*)?
 
         {
-            type Viewed = impl $crate::widget::Widget<E>;
+            type Viewed = impl $crate::widget::Widget<$e>;
 
             $($impl)*
         }
     };
     (
-        $( < $($generics:path),* $(,)* > )?
+        $e:tt;
+        ($($generics:tt)*)
         for $ontype:ty :
         <$life:lifetime> $mutfndest:ty
-        $(where $($bounds:tt)+)?
+        $(where ($($bounds:tt)+))?
         {
-            $($impl:tt)*
+            $($impl:item)*
         }
 
     ) => {
         $crate::impl_view!(
-            $( < $($generics),* $(,)* > )?
+            $e;
+            ($($generics)*)
                 for $ontype :
-            <$life> <E as $crate::env::Env>::RootMut<$life> => $mutfndest
+            <$life> <$e as $crate::env::Env>::RootMut<$life> => $mutfndest
             $(where $($bounds)+)?
             {
                 $($impl)*
