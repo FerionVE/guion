@@ -2,8 +2,14 @@
 use super::*;
 use std::borrow::Cow;
 use std::cell::Cell;
+use std::cell::Ref;
 use std::cell::RefCell;
+use std::cell::RefMut;
 use std::marker::PhantomData;
+use std::mem::ManuallyDrop;
+use std::sync::MutexGuard;
+use std::sync::RwLockReadGuard;
+use std::sync::RwLockWriteGuard;
 
 /// Simple atomic type state
 pub trait AtomState<E,T> where E: Env {
@@ -45,6 +51,7 @@ impl<E,T> AtomState<E,T> for &mut T where T: Clone, E: Env {
         Ok((**self).clone())
     }
 }
+
 impl<E,T> AtomStateMut<E,T> for &mut T where T: Clone, E: Env {
     #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
@@ -67,6 +74,26 @@ impl<E,T> AtomState<E,T> for Cow<'_,T> where T: Clone, E: Env {
     }
 }
 impl<E,T> AtomStateMut<E,T> for Cow<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        *self.to_mut() = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &Cow<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((*self.as_ref()).clone())
+    }
+}
+impl<E,T> AtomState<E,T> for &mut Cow<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((*self.as_ref()).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &mut Cow<'_,T> where T: Clone, E: Env {
     #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         *self.to_mut() = v;
@@ -98,6 +125,20 @@ impl<E,T> AtomStateMut<E,T> for &RefCell<T> where T: Clone, E: Env {
     #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         *self.borrow_mut() = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &mut RefCell<T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok(self.borrow().clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &mut RefCell<T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        *self.get_mut() = v;
         Ok(())
     }
 }
@@ -154,6 +195,168 @@ impl<E,T> AtomStateMut<E,T> for &Cell<T> where T: Copy, E: Env {
     #[inline]
     fn set_direct(&mut self, v: T) -> Result<(),()> {
         Cell::set(self,v);
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for MutexGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((**self).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for MutexGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        **self = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &MutexGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+impl<E,T> AtomState<E,T> for &mut MutexGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &mut MutexGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        ***self = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for RwLockReadGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((**self).clone())
+    }
+}
+impl<E,T> AtomState<E,T> for &RwLockReadGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+
+impl<E,T> AtomState<E,T> for RwLockWriteGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((**self).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for RwLockWriteGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        **self = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &RwLockWriteGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+impl<E,T> AtomState<E,T> for &mut RwLockWriteGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &mut RwLockWriteGuard<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        ***self = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for Ref<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((**self).clone())
+    }
+}
+impl<E,T> AtomState<E,T> for &Ref<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+
+impl<E,T> AtomState<E,T> for RefMut<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((**self).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for RefMut<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        **self = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &RefMut<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+impl<E,T> AtomState<E,T> for &mut RefMut<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &mut RefMut<'_,T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        ***self = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for ManuallyDrop<T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((**self).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for ManuallyDrop<T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        **self = v;
+        Ok(())
+    }
+}
+
+impl<E,T> AtomState<E,T> for &ManuallyDrop<T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+impl<E,T> AtomState<E,T> for &mut ManuallyDrop<T> where T: Clone, E: Env {
+    #[inline]
+    fn get_direct(&self) -> Result<T,()> {
+        Ok((***self).clone())
+    }
+}
+impl<E,T> AtomStateMut<E,T> for &mut ManuallyDrop<T> where T: Clone, E: Env {
+    #[inline]
+    fn set_direct(&mut self, v: T) -> Result<(),()> {
+        ***self = v;
         Ok(())
     }
 }
