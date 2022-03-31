@@ -23,7 +23,7 @@ impl StdID {
 /// Syntax: `const_std_id!([visibilty] ident [[visibility] ident]...);`
 ///
 /// Example:
-/// ```rust
+/// ```rust ignore
 ///const_std_id!(LabelX);
 ///
 ///fn foo() -> StdID {

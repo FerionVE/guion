@@ -25,7 +25,6 @@ pub trait EnvFlexCtxHandler: Env {
     type CtxHandler: Handler<Self>;
 }
 
-
 pub trait ValidState {
     fn valid() -> Self;
     fn rerender(&self) -> bool;
@@ -69,7 +68,7 @@ macro_rules! impl_env_stds {
 #[macro_export]
 macro_rules! impl_as_widget_for_path {
     (
-        $e:ty; 
+        $e:ty;
         $typ:ident
         $( < $($args:ident),* $(,)* > )?
         $(where $($preds:tt)+)?

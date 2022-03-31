@@ -13,7 +13,7 @@ pub trait View<E,MutFn> where MutFn: Clone + Send + Sync + 'static, E: Env {
 #[macro_export]
 macro_rules! impl_view {
     (
-        $e:tt;
+        $e:ty;
         ($($generics:tt)*)
         for $ontype:ty :
         <$life:lifetime> $mutfnroot:ty => $mutfndest:ty
@@ -36,7 +36,7 @@ macro_rules! impl_view {
         }
     };
     (
-        $e:tt;
+        $e:ty;
         ($($generics:tt)*)
         for $ontype:ty :
         <$life:lifetime> $mutfndest:ty

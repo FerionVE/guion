@@ -29,6 +29,8 @@ pub mod traitcast;
 pub mod view;
 pub mod error;
 
+pub mod compat;
+
 pub(crate) use aliases::*;
 pub(crate) use backend::*;
 pub(crate) use ctx::queue::*;
