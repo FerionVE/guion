@@ -86,34 +86,34 @@ impl StdGonstraintAxis {
 /// `5-8`: Preferred 5, can be bigger, but not bigger than 8  
 #[macro_export]
 macro_rules! constraint {
-    (# $min:literal ~ $pref:literal - $max:tt @ $p:literal | $($m:tt)*) => {
+    (# $min:tt ~ $pref:tt - $max:tt @ $p:tt | $($m:tt)*) => {
         $crate::layout::size::StdGonstraints{
             x: $crate::constraint!(#$min ~ $pref - $max @ $p),
             y: $crate::constraint!($($m)*),
         }
     };
-    (# $min:literal ~ $pref:literal - None @ $p:literal) => {
+    (# $min:tt ~ $pref:tt - None @ $p:tt) => {
         $crate::layout::size::StdGonstraintAxis{min:$min,preferred:$pref,max:None,pressure:$p}
     };
-    (# $min:literal ~ $pref:literal - $max:literal @ $p:literal) => {
+    (# $min:tt ~ $pref:tt - $max:tt @ $p:tt) => {
         $crate::layout::size::StdGonstraintAxis{min:$min,preferred:$pref,max:Some($max),pressure:$p}
     };
-    (# $min:literal ~ $pref:literal - $max:tt $($m:tt)*) => {
+    (# $min:tt ~ $pref:tt - $max:tt $($m:tt)*) => {
         $crate::constraint!(#$min ~ $pref - $max @ 1.0 $($m)*)
     };
-    ($min:literal ~ $pref:literal - $max:literal $($m:tt)*) => {
+    ($min:tt ~ $pref:tt - $max:tt $($m:tt)*) => {
         $crate::constraint!(#$min ~ $pref - $max $($m)*)
     };
-    ($min:literal ~ $pref:literal - $($m:tt)*) => {
+    ($min:tt ~ $pref:tt - $($m:tt)*) => {
         $crate::constraint!(#$min ~ $pref - None $($m)*)
     };
-    ($min:literal ~ $pref:literal $($m:tt)*) => {
+    ($min:tt ~ $pref:tt $($m:tt)*) => {
         $crate::constraint!(#$min ~ $pref - $pref $($m)*)
     };
-    (~ $pref:literal $($m:tt)*) => {
+    (~ $pref:tt $($m:tt)*) => {
         $crate::constraint!(0 ~ $pref $($m)*)
     };
-    ($pref:literal $($m:tt)*) => {
+    ($pref:tt $($m:tt)*) => {
         $crate::constraint!($pref ~ $pref $($m)*)
     };
 }
