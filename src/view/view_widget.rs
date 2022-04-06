@@ -6,7 +6,7 @@ use crate::widget::as_widget::{AsWidget, WCow};
 
 use super::View;
 
-pub struct ViewWidget<Wid,WFn,MFn,E>(WFn,MFn,PhantomData<(Wid,E)>) where
+pub struct ViewWidget<Wid,WFn,MFn,E>(WFn,MFn,PhantomData<(fn()->Wid,E)>) where
     Wid: View<E,MFn>,
     WFn: Fn()->Wid, MFn: Clone + Send + Sync + 'static,
     E: Env;

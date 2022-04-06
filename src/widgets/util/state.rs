@@ -361,7 +361,7 @@ impl<E,T> AtomStateMut<E,T> for &mut ManuallyDrop<T> where T: Clone, E: Env {
     }
 }
 
-pub struct AtomStateOnSet<E,A: ?Sized,F,T>(F,PhantomData<(T,E)>,A) where E: Env, A: AtomState<E,T>, F: FnMut(T);
+pub struct AtomStateOnSet<E,A: ?Sized,F,T>(F,PhantomData<(fn()->T,E)>,A) where E: Env, A: AtomState<E,T>, F: FnMut(T);
 
 impl<E,A,F,T> AtomState<E,T> for AtomStateOnSet<E,A,F,T> where E: Env, A: AtomState<E,T>, F: FnMut(T) {
     #[inline]

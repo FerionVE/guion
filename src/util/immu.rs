@@ -10,7 +10,7 @@ use crate::widgets::util::state::AtomStateMut;
 
 /// Implements TextStorMut/ValidationMut for immutable and discards mutation
 #[repr(transparent)]
-pub struct Immutable<E,T: ?Sized,Z: ?Sized>(pub PhantomData<(E,Z)>,pub T);
+pub struct Immutable<E,T: ?Sized,Z: ?Sized>(pub PhantomData<(E,fn()->Z)>,pub T);
 
 impl<E,T,Z> Deref for Immutable<E,T,Z> {
     type Target = T;
