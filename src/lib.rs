@@ -31,6 +31,8 @@ pub mod error;
 
 pub mod compat;
 
+pub mod cachialize;
+
 pub(crate) use aliases::*;
 pub(crate) use backend::*;
 pub(crate) use ctx::queue::*;
