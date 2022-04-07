@@ -1,4 +1,4 @@
-use crate::util::translate::immu::Immutable;
+use crate::util::immu::Immutable;
 
 use super::*;
 use std::marker::PhantomData;

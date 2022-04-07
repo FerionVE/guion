@@ -14,7 +14,7 @@ use std::sync::RwLockWriteGuard;
 
 use crate::env::Env;
 use crate::traitcast_for_from_widget;
-use crate::util::translate::immu::Immutable;
+use crate::util::immu::Immutable;
 use crate::validation::Validation;
 use crate::validation::ValidationMut;
 use crate::validation::validated::Validated;
