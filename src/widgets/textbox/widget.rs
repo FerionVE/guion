@@ -225,7 +225,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
         Err(())
     }
 
-    impl_traitcast!( dyn Widget<E>:
+    impl_traitcast!( dyn WidgetDyn<E>:
         dyn TextStor<E> => |s| &s.text;
         dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
         dyn AtomState<E,ETCurSel<E>> => |s| &s.cursor;

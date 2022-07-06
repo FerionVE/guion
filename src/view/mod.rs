@@ -5,6 +5,7 @@ use crate::dispatchor::{ViewDispatch, ViewClosure};
 use crate::env::Env;
 use crate::error::ResolveResult;
 use crate::widget::Widget;
+use crate::widget::dyn_tunnel::WidgetDyn;
 
 pub mod view_widget;
 pub mod apply;
@@ -50,7 +51,7 @@ impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z
 pub trait ViewDyn<E> where E: Env {
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn Widget<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
         remut: Rc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
@@ -64,7 +65,7 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
     #[inline]
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn Widget<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
         remut: Rc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
@@ -94,7 +95,7 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
 }
 
 impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
-    type Viewed<'v,MutorFn> = dyn Widget<E>+'v where MutorFn: 'static, 'z: 'v;
+    type Viewed<'v,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v;
     type Mutable<'k> = Timmy;
 
     #[inline]
@@ -137,7 +138,7 @@ impl Timmy {
 pub trait ViewDyn2<E,M> where M: MuGator<E>, E: Env {
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn Widget<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
         remut: Rc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
@@ -155,7 +156,7 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
     #[inline]
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn Widget<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
         remut: Rc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
@@ -178,7 +179,7 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
 }
 
 impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
-    type Viewed<'v,MutFn> = dyn Widget<E>+'v where MutFn: 'static, 'z: 'v;
+    type Viewed<'v,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, 'z: 'v;
     type Mutable<'k> = M::Mutable<'k>;
 
     #[inline]

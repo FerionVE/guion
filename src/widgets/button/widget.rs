@@ -105,7 +105,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         Ok(self.text.into_widget_dyn(root,ctx))
     }
 
-    impl_traitcast!( dyn Widget<E>:
+    impl_traitcast!( dyn WidgetDyn<E>:
         dyn IButton<E> => |s| s;
         dyn Trigger<E> => |s| &s.trigger;
     );

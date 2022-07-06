@@ -117,7 +117,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
         Ok(self.text.into_widget_dyn(root,ctx))
     }
 
-    impl_traitcast!( dyn Widget<E>:
+    impl_traitcast!( dyn WidgetDyn<E>:
         dyn ICheckBox<E> => |s| s;
         dyn AtomState<E,bool> => |s| &s.state;
     );

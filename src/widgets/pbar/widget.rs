@@ -48,7 +48,7 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
         Err(())
     }
 
-    impl_traitcast!( dyn Widget<E>:
+    impl_traitcast!( dyn WidgetDyn<E>:
         dyn AtomState<E,f32> => |s| &s.value;
     );
 }

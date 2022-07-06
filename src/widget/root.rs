@@ -25,7 +25,7 @@ pub trait Widgets<E>: Sized where E: Env {
 }
 //#[doc(hidden)]
 // Used by [`Widgets::widget`] implementations
-// pub fn resolve_in_root<'l,'s,E>(root: &'s dyn Widget<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage<'_>) -> Result<Resolved<'s,E>,E::Error> where E: Env, 'l: 's {
+// pub fn resolve_in_root<'l,'s,E>(root: &'s dyn WidgetDyn<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage<'_>) -> Result<Resolved<'s,E>,E::Error> where E: Env, 'l: 's {
 //     let r = root.resolve(sub.refc())?;
     
 //     match r {

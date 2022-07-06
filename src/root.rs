@@ -1,6 +1,6 @@
 use crate::aliases::EStyle;
 use crate::env::Env;
-use crate::widget::resolved::Resolved;
+//use crate::widget::resolved::Resolved;
 use crate::util::bounds::Bounds;
 
 pub trait RootRef<E> where E: Env {

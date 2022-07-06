@@ -4,11 +4,16 @@
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
 
+use crate::queron::Queron;
 use crate::root::RootRef;
+
+use self::dyn_tunnel::WidgetDyn;
 
 use super::*;
 use std::any::{TypeId, type_name};
 use traitcast::TraitObject;
+
+pub mod dyn_tunnel;
 
 //pub mod link;
 pub mod as_widget;
@@ -31,19 +36,19 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::render`]
-    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>);
+    fn _render<P>(&self, stack: &P, r: &mut ERenderer<'_,E>) where P: Queron<E> + ?Sized;
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::event`](Link::send_event)
-    fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp;
+    fn _event_direct<P>(&self, stack: &P, e: &EventCompound<E>) -> EventResp where P: Queron<E> + ?Sized;
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::size`]
-    fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E>;
+    fn _size<P>(&self, stack: &P, e: &EStyle<E>) -> ESize<E> where P: Queron<E> + ?Sized;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn childs(&self) -> usize;
@@ -52,7 +57,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn with_child<'s>(
         &'s self,
         i: usize,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn Widget<E>+'ww),&'c mut E::Context<'cc>),
+        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>),
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> Result<(),()>;
@@ -61,7 +66,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     #[deprecated]
     fn childs_ref<'s>(
         &'s self,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(usize,&'w (dyn Widget<E>+'ww),&'c mut E::Context<'cc>),
+        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(usize,&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>),
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) {
@@ -93,7 +98,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn with_resolve<'s>(
         &'s self,
         i: E::WidgetPath,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn Widget<E>+'ww),&'c mut E::Context<'cc>),
+        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>),
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> Result<(),E::Error> {
@@ -121,7 +126,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     #[inline]
-    fn trace_bounds(&self, l: Link<E>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
+    fn trace_bounds<P>(&self, stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> where P: Queron<E> + ?Sized {
         if i.is_empty() {
             return Ok(*b)
         }
@@ -131,7 +136,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         Ok(bounds[child])
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()>;
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized;
     
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Attach widget's id to the given parent path
@@ -165,7 +170,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
 
     /// Determines the next child in this widget in the tabulation step
-    fn _tabulate_next_child(&self, _l: Link<E>, origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse {
+    fn _tabulate_next_child<P>(&self, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse where P: Queron<E> + ?Sized {
         match origin {
             TabulateNextChildOrigin::Enter => match dir {
                 TabulateDirection::Forward if self.focusable() => TabulateNextChildResponse::This,
@@ -187,12 +192,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         }
     }
 
-    fn _tabulate(&self, mut l: Link<E>, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,E::Error> {
+    fn _tabulate<P>(&self, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,E::Error> where P: Queron<E> + ?Sized {
         // fn to tabulate to the next child away from the previous child (child_id None = self)
-        let enter_child_sub = |l: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
+        let enter_child_sub = |stack: &P, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
             l.for_child(child_id).unwrap()._tabulate(to,dir)
         };
-        let next_child = |l: &mut Link<E>, mut child_id: Option<usize>| -> Result<TabulateResponse<E>,E::Error> {
+        let next_child = |stack: &P, mut child_id: Option<usize>| -> Result<TabulateResponse<E>,E::Error> {
             loop {
                 // determine the targeted next child
                 let targeted_child = self._tabulate_next_child(
@@ -225,7 +230,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             Ok(TabulateResponse::Leave)
         };
         // tabulate into specific child, either in resolve phase or enter
-        let enter_child = |l: &mut Link<E>, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
+        let enter_child = |stack: &P, child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
             match enter_child_sub(l,child_id,to)? {
                 TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
                 TabulateResponse::Leave => return next_child(l,Some(child_id)),
@@ -263,11 +268,11 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
     
     #[inline]
-    fn inner<'s>(&self) -> Option<&(dyn Widget<E>+'s)> where Self: 's {
+    fn inner<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's {
         None
     }
     #[inline]
-    fn innest(&self) -> Option<&dyn Widget<E>> { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn Widget<E>+'w)> where Self: 'w
+    fn innest(&self) -> Option<&dyn WidgetDyn<E>> { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn WidgetDyn<E>+'w)> where Self: 'w
         let mut i = self.erase();
         loop {
             let v = i.inner();
@@ -305,26 +310,26 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
     /// Use this to turn to dyn Widget
     #[inline]
-    fn erase<'s>(&self) -> &(dyn Widget<E>+'s) where Self: 's {
+    fn erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {
         WBase::_erase(self)
     }
 
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// Box reference of this widget immutable. Use [`WidgetMut::box_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
-    fn box_ref<'s>(&'s self) -> Box<dyn Widget<E>+'s> where Self: 's {
+    fn box_ref<'s>(&'s self) -> Box<dyn WidgetDyn<E>+'s> where Self: 's {
         WBase::_box_ref(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// Move widget into box immutable. Use [`WidgetMut::box_box_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
-    fn box_box<'w>(self: Box<Self>) -> Box<dyn Widget<E>+'w> where Self: 'w {
+    fn box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w {
         WBase::_box_box(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// Move widget into box immutable. Use [`WidgetMut::boxed_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
-    fn boxed<'w>(self) -> Box<dyn Widget<E>+'w> where Self: Sized + 'w {
+    fn boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
         WBase::_boxed(self)
     }
 
@@ -366,13 +371,13 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 #[doc(hidden)]
 pub trait WBase<E> where E: Env {
     fn type_name(&self) -> &'static str;
-    fn _erase<'s>(&self) -> &(dyn Widget<E>+'s) where Self: 's;
+    fn _erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's;
     // fn _as_wcow<'s>(&'s self) -> WidgetRef<'s,E>;
     // fn _box_into_wcow<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
     // fn _into_wcow<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
-    fn _box_ref<'s>(&'s self) -> Box<dyn Widget<E>+'s> where Self: 's;
-    fn _box_box<'w>(self: Box<Self>) -> Box<dyn Widget<E>+'w> where Self: 'w;
-    fn _boxed<'w>(self) -> Box<dyn Widget<E>+'w> where Self: Sized + 'w;
+    fn _box_ref<'s>(&'s self) -> Box<dyn WidgetDyn<E>+'s> where Self: 's;
+    fn _box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w;
+    fn _boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w;
     fn as_any(&self) -> &dyn std::any::Any where Self: 'static;
 }
 impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
@@ -381,7 +386,7 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
         type_name::<Self>()
     }
     #[inline]
-    fn _erase<'s>(&self) -> &(dyn Widget<E>+'s) where Self: 's {
+    fn _erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {
         self
     }
     // #[inline]
@@ -397,16 +402,17 @@ impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     //     let b = Box::new(self);
     //     WCow::Owned(b)
     // }
-    // #[inline]
-    // fn _box_ref<'s>(&'s self) -> Box<dyn Widget<E>+'s> where Self: 's {
-    //     Box::new(self)
-    // }
     #[inline]
-    fn _box_box<'w>(self: Box<Self>) -> Box<dyn Widget<E>+'w> where Self: 'w {
+    fn _box_ref<'s>(&'s self) -> Box<dyn WidgetDyn<E>+'s> where Self: 's {
+        //Box::new(self)
+        todo!()
+    }
+    #[inline]
+    fn _box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w {
         self
     }
     #[inline]
-    fn _boxed<'w>(self) -> Box<dyn Widget<E>+'w> where Self: Sized + 'w {
+    fn _boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
         Box::new(self)
     }
     #[inline]

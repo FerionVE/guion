@@ -29,8 +29,8 @@ pub type CtxRefR<'a, 'rr, 'cc: 'a, E: Env> = (E::RootRef<'rr>, &'a E::Context<'c
 pub type CtxRefM<'a, 'rr, 'cc: 'a, E: Env> = (E::RootMut<'rr>, &'a mut E::Context<'cc>);
 
 // Reference to a [`Widget`](Widget) or [immediate widget](AsWidget)
-//pub type WidgetRef<'a, E: Env> = WCow<'a, dyn Widget<E> + 'a, Box<(dyn Widget<E> + 'a)>>;
+//pub type WidgetRef<'a, E: Env> = WCow<'a, dyn WidgetDyn<E> + 'a, Box<(dyn WidgetDyn<E> + 'a)>>;
 
 // TODO this is HORRIBLE temp hack
 // pub type RefDynAsWidget<'a, E: Env> =
-//     &'a dyn AsWidget<E, Widget = dyn Widget<E> + 'a, WidgetOwned = Box<(dyn Widget<E> + 'a)>>;
+//     &'a dyn AsWidget<E, Widget = dyn WidgetDyn<E> + 'a, WidgetOwned = Box<(dyn WidgetDyn<E> + 'a)>>;

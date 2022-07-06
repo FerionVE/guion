@@ -17,11 +17,11 @@ pub trait Context<'cc,E>: Sized + 'cc where E: Env {
 
     fn build_handler(&mut self) -> <Self::Handler as HandlerBuilder<E>>::Built where Self: Sized;
 
-    #[inline]
-    fn link<'o,'s:'o,'t:'o>(&'s mut self, w: Resolved<'t,E>) -> Link<'o,'cc,E> where 'cc: 'o, Self: 'cc {
-        Link{
-            ctx: self.lt_mut(),
-            widget: w.lt(),
-        }
-    }
+    // #[inline]
+    // fn link<'o,'s:'o,'t:'o>(&'s mut self, w: Resolved<'t,E>) -> Link<'o,'cc,E> where 'cc: 'o, Self: 'cc {
+    //     Link{
+    //         ctx: self.lt_mut(),
+    //         widget: w.lt(),
+    //     }
+    // }
 }

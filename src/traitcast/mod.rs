@@ -51,7 +51,7 @@ pub trait TraitcastImplBase<'a> {
 }
 
 /// Trait to secure Traitcasting, generally implemented by [macro](traitcast_for)  
-/// - Always implemented on `dyn Widget<E>` or `dyn Handler<E>`
+/// - Always implemented on `dyn WidgetDyn<E>` or `dyn Handler<E>`
 /// - `T` is the destination `dyn Trait` to which should be traitcasted
 /// - `DestTypeID` must be the same type as `T`, but with 'static lifetimes. Used to retrieve TypeID
 #[doc(hidden)]

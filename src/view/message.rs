@@ -2,12 +2,12 @@ use crate::env::Env;
 
 /// Implement on [`View::Mutable`]
 pub trait Messagable<E> where E: Env {
-    fn message(&mut self, m: &dyn std::any::Any, ctx: &mut E::Ctx<'_>);
+    fn message(&mut self, m: &dyn std::any::Any, ctx: &mut E::Context<'_>);
 }
 
 impl<E,T> Messagable<E> for &mut T where T: Messagable<E> + ?Sized, E: Env {
     #[inline]
-    fn message(&mut self, m: &dyn std::any::Any, ctx: &mut E::Ctx<'_>) {
+    fn message(&mut self, m: &dyn std::any::Any, ctx: &mut E::Context<'_>) {
         (**self).message(m, ctx)
     }
 }

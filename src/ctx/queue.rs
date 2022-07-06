@@ -1,4 +1,6 @@
 //! [`Queue`] trait and util fns for implementors
+use crate::widget::dyn_tunnel::WidgetDyn;
+
 use super::*;
 
 /// The Queue, accessible from [`E::Context`](Context), used to enqueue [events](Event) or actions from any thread
@@ -27,8 +29,8 @@ pub enum StdEnqueueable<E> where E: Env {
 
 pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
 pub type PtrMutEvent<E> = for<'r> fn(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>);
-pub type BoxAccessWidget<E> = Box<dyn for<'r> FnOnce(WidgetRef<E>,<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
-pub type PtrAccessWidget<E> = for<'r> fn(WidgetRef<E>,<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>);
+pub type BoxAccessWidget<E> = Box<dyn for<'w,'ww,'r> FnOnce(&'w (dyn WidgetDyn<E>+'ww),<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
+pub type PtrAccessWidget<E> = for<'w,'ww,'r> fn(&'w (dyn WidgetDyn<E>+'ww),<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>);
 pub type BoxAccessRoot<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
 pub type PtrAccessRoot<E> = for<'r> fn(<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>);
 

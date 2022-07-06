@@ -145,7 +145,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         self.childs.into_child(i,root,ctx)
     }
 
-    impl_traitcast!( dyn Widget<E>:
+    impl_traitcast!( dyn WidgetDyn<E>:
         dyn AtomState<E,f32> => |s| &s.state;
     );
 }

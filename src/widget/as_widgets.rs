@@ -4,7 +4,7 @@ use crate::dispatchor::{AsWidgetsDispatch, AsWidgetsIndexedDispatch, AsWidgetsIn
 use crate::env::Env;
 use crate::root::RootRef;
 
-use super::Widget;
+use super::*;
 use super::as_widget::AsWidget;
 
 pub trait ChildIDSerialize<E> {

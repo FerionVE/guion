@@ -2,12 +2,13 @@ use std::any::TypeId;
 
 use crate::env::Env;
 use crate::widget::Widget;
+use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::{TraitcastImpl, TraitcastImplBase, TraitObject};
 
 pub trait TraitcastWidget<E>: Widget<E> where E: Env {
     #[inline]
-    fn try_traitcast_ref<'a,'b,T>(&'a self) -> Result<&'a T,()> where T: ?Sized + 'b, dyn Widget<E>+'b: TraitcastImpl<'b,T> + 'b, Self: 'b, 'b: 'a {
+    fn try_traitcast_ref<'a,'b,T>(&'a self) -> Result<&'a T,()> where T: ?Sized + 'b, dyn WidgetDyn<E>+'b: TraitcastImpl<'b,T> + 'b, Self: 'b, 'b: 'a {
         if let Ok(e) = _try_traitcast_ref(self.erase()) {
             Ok(e)
         } else {
@@ -19,7 +20,7 @@ pub trait TraitcastWidget<E>: Widget<E> where E: Env {
         }
     }
     #[inline]
-    fn try_traitcast_ref_nonrecursive<'a,'b,T>(&'a self) -> Result<&'a T,()> where T: ?Sized + 'b, dyn Widget<E>+'b: TraitcastImpl<'b,T> + 'b, Self: 'b, 'b: 'a {
+    fn try_traitcast_ref_nonrecursive<'a,'b,T>(&'a self) -> Result<&'a T,()> where T: ?Sized + 'b, dyn WidgetDyn<E>+'b: TraitcastImpl<'b,T> + 'b, Self: 'b, 'b: 'a {
         _try_traitcast_ref(self.erase())
     }
 }
@@ -29,11 +30,11 @@ impl<T,E> TraitcastWidget<E> for T where T: Widget<E> + ?Sized, E: Env {
 }
 
 #[inline]
-fn _try_traitcast_ref<'a,'b,T,E>(s: &'a (dyn Widget<E>+'b)) -> Result<&'a T,()> where T: ?Sized + 'b, dyn Widget<E>+'b: TraitcastImpl<'b,T> + 'b, 'b: 'a, E: Env {
-    unsafe{<dyn Widget<E>+'b as TraitcastImpl<'b,T>>::_try_traitcast_ref(s)}
+fn _try_traitcast_ref<'a,'b,T,E>(s: &'a (dyn WidgetDyn<E>+'b)) -> Result<&'a T,()> where T: ?Sized + 'b, dyn WidgetDyn<E>+'b: TraitcastImpl<'b,T> + 'b, 'b: 'a, E: Env {
+    unsafe{<dyn WidgetDyn<E>+'b as TraitcastImpl<'b,T>>::_try_traitcast_ref(s)}
 }
 
-impl<'a,E> TraitcastImplBase<'a> for dyn Widget<E>+'a where E: Env {
+impl<'a,E> TraitcastImplBase<'a> for dyn WidgetDyn<E>+'a where E: Env {
     #[inline]
     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
         Widget::_as_trait_ref(self, t)

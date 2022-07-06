@@ -130,7 +130,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         Ok(self.inner.into_widget_dyn(root,ctx))
     }
 
-    impl_traitcast!( dyn Widget<E>:
+    impl_traitcast!( dyn WidgetDyn<E>:
         dyn AtomState<E,ScrollOff> => |s| &s.scroll;
     );
 }

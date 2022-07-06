@@ -58,7 +58,7 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
         Err(())
     }
 
-    impl_traitcast!( dyn Widget<E>:
+    impl_traitcast!( dyn WidgetDyn<E>:
         dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
         dyn Validation<E> => |s| &s.text;
         dyn TextStor<E> => |s| &s.text;

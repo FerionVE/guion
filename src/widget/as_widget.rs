@@ -1,8 +1,10 @@
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 use std::ops::Deref;
+use super::*;
+use super::dyn_tunnel::WidgetDyn;
 
-use crate::dispatchor::{CallbackClosure, AsWidgetDispatch};
+use crate::dispatchor::{AsWidgetDispatch, AsWidgetClosure};
 use crate::env::Env;
 
 pub trait AsWidget<'z,E> where E: Env, Self: 'z {
@@ -13,8 +15,8 @@ pub trait AsWidget<'z,E> where E: Env, Self: 'z {
         F: AsWidgetDispatch<'z,Self,E>;
 }
 
-impl<'a,E> AsWidget<'a,E> for dyn Widget<E> + 'a where E: Env {
-    type Widget<'v> = dyn Widget<E>+'v where 'a: 'v;
+impl<'a,E> AsWidget<'a,E> for dyn WidgetDyn<E> + 'a where E: Env {
+    type Widget<'v> = dyn WidgetDyn<E>+'v where 'a: 'v;
 
     #[inline]
     fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
@@ -33,7 +35,7 @@ impl<'z,T,E> AsWidget<'z,E> for &'z T where T: AsWidget<'z,E> + ?Sized, E: Env {
     where
         F: AsWidgetDispatch<'z,Self,E>
     {
-        let dis = CallbackClosure::for_as_widget(#[inline] move |widget,root,ctx| {
+        let dis = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
             f.call(&widget, root, ctx)
         });
         (**self).with_widget(dis,root,ctx)
@@ -47,7 +49,7 @@ impl<'z,T,E> AsWidget<'z,E> for &'z mut T where T: AsWidget<'z,E> + ?Sized, E: E
     where
         F: AsWidgetDispatch<'z,Self,E>
     {
-        let dis = CallbackClosure::for_as_widget(#[inline] move |widget,root,ctx| {
+        let dis = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
             f.call(&widget, root, ctx)
         });
         (**self).with_widget(dis,root,ctx)
@@ -61,7 +63,7 @@ impl<'z,T,E> AsWidget<'z,E> for Box<T> where T: AsWidget<'z,E> + ?Sized, E: Env 
     where
         F: AsWidgetDispatch<'z,Self,E>
     {
-        let dis = CallbackClosure::for_as_widget(#[inline] |widget,root,ctx| {
+        let dis = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             f.call(widget, root, ctx)
         });
         (**self).with_widget(dis,root,ctx)
@@ -75,7 +77,7 @@ impl<'z,T,E> AsWidget<'z,E> for std::rc::Rc<T> where T: AsWidget<'z,E> + ?Sized,
     where
         F: AsWidgetDispatch<'z,Self,E>
     {
-        let dis = CallbackClosure::for_as_widget(#[inline] |widget,root,ctx| {
+        let dis = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             f.call(widget, root, ctx)
         });
         (**self).with_widget(dis,root,ctx)
@@ -89,7 +91,7 @@ impl<'z,T,E> AsWidget<'z,E> for std::sync::Arc<T> where T: AsWidget<'z,E> + ?Siz
     where
         F: AsWidgetDispatch<'z,Self,E>
     {
-        let dis = CallbackClosure::for_as_widget(#[inline] |widget,root,ctx| {
+        let dis = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             f.call(widget, root, ctx)
         });
         (**self).with_widget(dis,root,ctx)
@@ -130,7 +132,7 @@ macro_rules! impl_as_widget_self {
             type Widget<'__impl_as_widget_self_v> = Self where $lt: '__impl_as_widget_self_v;
 
             #[inline]
-            fn with_widget<'__impl_as_widget_self_w,F>(&'__impl_as_widget_self_w self, dispatch: F, root: <E as $crate::env::Env>::RootRef<'_>, ctx: &mut <E as $crate::env::Env>::Context<'_>)
+            fn with_widget<'__impl_as_widget_self_w,F>(&'__impl_as_widget_self_w self, dispatch: F, root: <E as $crate::env::Env>::RootRef<'_>, ctx: &mut <E as $crate::env::Env>::Ctx<'_>)
             where
                 F: AsWidgetDispatch<$lt,Self,E>
             {
@@ -141,5 +143,3 @@ macro_rules! impl_as_widget_self {
 }
 
 pub(crate) use impl_as_widget_self;
-
-use super::Widget;
