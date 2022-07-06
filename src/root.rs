@@ -2,16 +2,22 @@ use crate::aliases::EStyle;
 use crate::env::Env;
 //use crate::widget::resolved::Resolved;
 use crate::util::bounds::Bounds;
+use crate::widget::dyn_tunnel::WidgetDyn;
 
 pub trait RootRef<E> where E: Env {
     fn fork<'s,'w:'s>(&'s self) -> E::RootRef<'w> where Self: 'w;
 
     //TODO fix old resolve stack
-    fn widget<'s,'w:'s>(&'s self, i: E::WidgetPath, ctx: &mut E::Context<'_>) -> Result<Resolved<'w,E>,E::Error> where Self: 'w;
+    fn with_widget<'s,'l:'s>(
+        &'s self,
+        i: E::WidgetPath,
+        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>),
+        ctx: &mut E::Context<'_>,
+    ) -> Result<(),E::Error> where Self: 'l;
 
     #[inline]
     fn has_widget(&self, i: E::WidgetPath, ctx: &mut E::Context<'_>) -> bool {
-        self.widget(i,ctx).is_ok()
+        self.with_widget(i,&mut |_,_|{},ctx).is_ok()
     }
 
     #[deprecated] 

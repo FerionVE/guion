@@ -57,7 +57,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn with_child<'s>(
         &'s self,
         i: usize,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>),
+        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>),
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> Result<(),()>;
@@ -70,21 +70,32 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) {
-        (0..self.childs())
-            .map(#[inline] |i| {
-                let root: &E::RootRef<'s> = &root;
-                let root: E::RootRef<'s> = root.fork();
-                self.child(i,root,ctx).unwrap()
-            } )
-            .collect::<Vec<_>>()
+        for i in 0..self.childs() {
+            self.with_child(
+                i,
+                &mut |wg,ctx| (callback)(i,wg.unwrap(),ctx), 
+                root, ctx,
+            );
+        }
     }
     
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
     fn child_paths(&self, own_path: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
-        (0..self.childs())
-            .map(#[inline] |i| self.child(i,root.fork(),ctx).unwrap().in_parent_path(own_path.refc()) )
-            .collect::<Vec<_>>()
+        let mut dest = Vec::with_capacity(self.childs());
+
+        for i in 0..self.childs() {
+            self.with_child(
+                i,
+                &mut |wg,ctx| {
+                    let w = wg.unwrap();
+                    dest.push(w.in_parent_path(own_path.refc()));
+                }, 
+                root, ctx,
+            );
+        }
+
+        dest
     }
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
@@ -98,16 +109,30 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn with_resolve<'s>(
         &'s self,
         i: E::WidgetPath,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>),
+        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>),
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> Result<(),E::Error> {
         if i.is_empty() {
-            return Ok(self.as_wcow())
+            (callback)(Ok(self.erase()),ctx);
+            return Ok(());
         }
         //TODO resolve_child could also return it's ref resolve
-        let (c,sub) = self.resolve_child(&i,root.fork(),ctx)?;
-        self.child(c,root.fork(),ctx).unwrap().into_resolve(sub,root,ctx)
+        match self.resolve_child(&i,root.fork(),ctx) {
+            Ok((c,sub)) => {
+                //TODO assert that with_child always calls the callback
+                self.with_child(
+                    c,
+                    &mut |w,cb| (callback)(Ok(w.unwrap()),ctx),
+                    root, ctx,
+                );
+                Ok(())
+            },
+            Err(e) => {
+                (callback)(Err(e),ctx);
+                Err(e)
+            },
+        }
     }
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// To (or through) which child path would the given sub_path resolve?
@@ -118,6 +143,11 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     #[inline]
     fn resolve_child(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
+            let mut path_result = None;
+            self.child(
+                c,
+                |root|
+            )
             if let Some(r) = self.child(c,root.fork(),ctx).unwrap().resolved_by_path(sub_path) {
                 return Ok((c,r.sub_path));
             }

@@ -18,5 +18,6 @@ pub trait Queron<E> {
 
     fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>) where Self: 'a;
 
+    //TODO move to QBase
     fn erase<'s,'ss>(&'s self) -> &'s (dyn QueronDyn<E>+'ss) where 'ss: 's, Self: 'ss;
 }
