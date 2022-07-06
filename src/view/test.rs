@@ -28,66 +28,138 @@ pub struct C {
 pub struct ViewC<'a>(&'a C);
 pub struct ViewCMut<'a>(&'a mut C);
 
-impl<E,MutFn> View<E,MutFn> for &TestRoot where
-    MutFn: for<'a> Fn(E::RootMut<'a>,&'a (),&mut E::Context<'_>)->ResolveResult<&'a mut TestRoot> + Clone + 'static,
+impl<'z,E> View<'z,E> for TestRoot where
     E: Env,
 {
-    type Viewed = impl Widget<E>;
+    type Viewed<'v,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, 'z: 'v;
+    type Mutable<'k> = &'k mut TestRoot;
 
-    fn view(self, remut: MutFn, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Self::Viewed {
-        DummyWidget(view_widget!(
+    fn view<'d,MutFn,DispatchFn>(&'d self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Ctx<'_>)
+    where
+        MutFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Ctx<'cc>) -> ResolveResult<Self::Mutable<'s>> + Clone + 'static,
+        DispatchFn: ViewDispatch<'z,Self,MutFn,E>,
+    {
+        let w = DummyWidget(view_widget!(
             || &self.a,
             remut => |root,todo_omittable_field| &mut root.a
-        ))
+        ));
+
+        dispatch.call(&w,root,ctx)
     }
+    
+    // fn view(self, remut: MutFn, _: E::RootRef<'_>, _: &mut E::Ctx<'_>) -> Self::Viewed {
+    //     DummyWidget(view_widget!(
+    //         || &self.a,
+    //         remut => |root,todo_omittable_field| &mut root.a
+    //     ))
+    // }
+
+    
 }
 
-/*impl<E,MutFn> View<E,MutFn> for &A where MutFn: for<'a> Fn(&'a mut Root,&mut E::Context<'_>)->ResolveResult<&'a mut A> + Clone + 'static, Ctx: Queue<Root> {
-    type Viewed = impl Widget<E>;
+// impl_view!(
+//     for &A : <'a> &'a mut A {
+//         fn view(self, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Ctx<'_>) -> Self::Viewed {
+//             // self.b.view(
+//             //     mutor!(remut => |root,todo_omittable_field| &mut root.b),
+//             //     ctx
+//             // ) // direct nested view
+//             DummyWidget(view_widget!(
+//                 || &self.b,
+//                 remut => |root,todo_omittable_field| &mut root.b
+//             )) // lazy nested view
+//         }
+//     }
+// );
 
-    fn view(self, remut: MutFn, ctx: &mut E::Context<'_>) -> Self::Viewed {
-        view_widget(
+impl<'z,E> View<'z,E> for A where
+    E: Env,
+{
+    type Viewed<'v,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, 'z: 'v;
+    type Mutable<'k> = &'k mut A;
+
+    fn view<'d,MutFn,DispatchFn>(&'d self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Ctx<'_>)
+    where
+        MutFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Ctx<'cc>) -> ResolveResult<Self::Mutable<'s>> + Clone + 'static,
+        DispatchFn: ViewDispatch<'z,Self,MutFn,E>,
+    {
+        let w = DummyWidget(view_widget!(
             || &self.b,
-            move |E| &mut remut(E).b,
-        )
-    }
-}*/
-impl_view!(
-    for &A : <'a> &'a mut A {
-        fn view(self, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Viewed {
-            // self.b.view(
-            //     mutor!(remut => |root,todo_omittable_field| &mut root.b),
-            //     ctx
-            // ) // direct nested view
-            DummyWidget(view_widget!(
-                || &self.b,
-                remut => |root,todo_omittable_field| &mut root.b
-            )) // lazy nested view
-        }
-    }
-);
+            remut => |root,todo_omittable_field| &mut root.b
+        ));
 
-impl<E,MutFn> View<E,MutFn> for &B where
-    MutFn: for<'a> Fn(E::RootMut<'a>,&'a (),&mut E::Context<'_>)->ResolveResult<&'a mut B> + Clone + 'static,
-    E: Env,
-{
-    type Viewed = impl Widget<E>;
+        let m = messaged!(E;remut |root,ctx|a:()| 25i32);
 
-    fn view(self, remut: MutFn, root: E::RootRef<'_>, _: &mut E::Context<'_>) -> Self::Viewed {
-        DummyWidget(view_widget!(
-            || ViewC(&self.c),
-            remut => |root,todo_omittable_field| ViewCMut(&mut root.c)
-        ))
+        dispatch.call(&w,root,ctx)
     }
 }
 
-impl<E,MutFn> View<E,MutFn> for ViewC<'_> where
-    MutFn: for<'a> Fn(E::RootMut<'a>,&'a (),&mut E::Context<'_>)->ResolveResult<ViewCMut<'a>> + Clone + 'static,
+impl<'z,E> Messagable<E> for &'z mut A where E: Env {
+    fn message(&mut self, m: &dyn std::any::Any, ctx: &mut <E as Env>::Ctx<'_>) {
+        todo!()
+    }
+}
+
+// impl<E,MutFn> View<E,MutFn> for &B where
+//     MutFn: for<'a> Fn(E::RootMut<'a>,&'a (),&mut E::Ctx<'_>)->ResolveResult<&'a mut B> + Clone + 'static,
+//     E: Env,
+// {
+//     type Viewed = impl Widget<E>;
+
+//     fn view(self, remut: MutFn, root: E::RootRef<'_>, _: &mut E::Ctx<'_>) -> Self::Viewed {
+//         DummyWidget(view_widget!(
+//             || ViewC(&self.c),
+//             remut => |root,todo_omittable_field| ViewCMut(&mut root.c)
+//         ))
+//     }
+// }
+
+impl<'z,E> View<'z,E> for B where
     E: Env,
 {
-    type Viewed = impl Widget<E>;
+    type Viewed<'v,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, 'z: 'v;
+    type Mutable<'k> = &'k mut B;
 
-    fn view(self, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Viewed {
+    fn view<'d,MutFn,DispatchFn>(&'d self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Ctx<'_>)
+    where
+        MutFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Ctx<'cc>) -> ResolveResult<Self::Mutable<'s>> + Clone + 'static,
+        DispatchFn: ViewDispatch<'z,Self,MutFn,E>,
+        Self: 'z,
+    {
+        let c = ViewC(&self.c);
+        let w = DummyWidget(view_widget!(
+            || &c,
+            remut => |root,todo_omittable_field| ViewCMut(&mut root.c)
+        ));
+
+        dispatch.call(&w,root,ctx)
+    }
+}
+
+// impl<E,MutFn> View<E,MutFn> for ViewC<'_> where
+//     MutFn: for<'a> Fn(E::RootMut<'a>,&'a (),&mut E::Ctx<'_>)->ResolveResult<ViewCMut<'a>> + Clone + 'static,
+//     E: Env,
+// {
+//     type Viewed = impl Widget<E>;
+
+//     fn view(self, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Ctx<'_>) -> Self::Viewed {
+//         ctx.enqueue(
+//             mutor!(remut =>| |root,todo_omittable_field| root.0.d = 42 )
+//         )
+//     }
+// }
+
+impl<'z,E> View<'z,E> for ViewC<'z> where
+    E: Env,
+{
+    type Viewed<'v,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, Self: 'v;
+    type Mutable<'k> = ViewCMut<'k>;
+
+    fn view<'d,MutFn,DispatchFn>(&'d self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Ctx<'_>)
+    where
+        MutFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Ctx<'cc>) -> ResolveResult<Self::Mutable<'s>> + Clone + 'static,
+        DispatchFn: ViewDispatch<'z,Self,MutFn,E>,
+    {
         ctx.enqueue(
             mutor!(remut =>| |root,todo_omittable_field| root.0.d = 42 )
         );

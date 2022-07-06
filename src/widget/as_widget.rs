@@ -1,194 +1,145 @@
 use std::borrow::Borrow;
+use std::marker::PhantomData;
 use std::ops::Deref;
 
-use crate::aliases::WidgetRef;
+use crate::dispatchor::{CallbackClosure, AsWidgetDispatch};
 use crate::env::Env;
 
-use super::Widget;
+pub trait AsWidget<'z,E> where E: Env, Self: 'z {
+    type Widget<'v>: Widget<E> + ?Sized + 'v where 'z: 'v;
 
-pub trait AsWidget<E> where E: Env {
-    type Widget: Widget<E> + ?Sized;
-    type WidgetOwned: Borrow<Self::Widget> + Sized;
+    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        F: AsWidgetDispatch<'z,Self,E>;
+}
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w;
-    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w;
+impl<'a,E> AsWidget<'a,E> for dyn Widget<E> + 'a where E: Env {
+    type Widget<'v> = dyn Widget<E>+'v where 'a: 'v;
+
     #[inline]
-    fn box_into_widget<'w>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        self.into_widget(root, ctx)
-    }
-
-    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w;
-    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w;
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w;
-}
-
-impl<'a,E> AsWidget<E> for dyn Widget<E> + 'a where E: Env {
-    type Widget = dyn Widget<E>+'a;
-    type WidgetOwned = Box<dyn Widget<E>+'a>;
-
-    fn as_widget<'w>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        WCow::Owned(Box::new(self))
-    }
-    fn box_into_widget<'w>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Owned(self)
-    }
-
-    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        WCow::Owned(Box::new(self))
-    }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Owned(self)
+    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        F: AsWidgetDispatch<'a,Self,E>
+    {
+        f.call(&*self, root, ctx)
     }
 }
 
-impl<T,E> AsWidget<E> for &T where T: AsWidget<E> + ?Sized, E: Env {
-    type Widget = T::Widget;
-    type WidgetOwned = T::WidgetOwned;
+impl<'z,T,E> AsWidget<'z,E> for &'z T where T: AsWidget<'z,E> + ?Sized, E: Env {
+    type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        (**self).as_widget(root,ctx)
-    }
-    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        (*self).as_widget(root,ctx)
-    }
-
-    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        (**self).as_widget_dyn(root,ctx)
-    }
-    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        (*self).as_widget_dyn(root,ctx)
-    }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        self.into_widget_dyn(root,ctx)
+    #[inline]
+    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        F: AsWidgetDispatch<'z,Self,E>
+    {
+        let dis = CallbackClosure::for_as_widget(#[inline] move |widget,root,ctx| {
+            f.call(&widget, root, ctx)
+        });
+        (**self).with_widget(dis,root,ctx)
     }
 }
-impl<T,E> AsWidget<E> for &mut T where T: AsWidget<E> + ?Sized, E: Env {
-    type Widget = T::Widget;
-    type WidgetOwned = T::WidgetOwned;
+impl<'z,T,E> AsWidget<'z,E> for &'z mut T where T: AsWidget<'z,E> + ?Sized, E: Env {
+    type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        (**self).as_widget(root,ctx)
-    }
-    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        (*self).as_widget(root,ctx)
-    }
-
-    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        (**self).as_widget_dyn(root,ctx)
-    }
-    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        (*self).as_widget_dyn(root,ctx)
-    }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        self.into_widget_dyn(root,ctx)
+    #[inline]
+    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        F: AsWidgetDispatch<'z,Self,E>
+    {
+        let dis = CallbackClosure::for_as_widget(#[inline] move |widget,root,ctx| {
+            f.call(&widget, root, ctx)
+        });
+        (**self).with_widget(dis,root,ctx)
     }
 }
-impl<T,E> AsWidget<E> for Box<T> where T: AsWidget<E> + ?Sized, E: Env {
-    type Widget = T::Widget;
-    type WidgetOwned = T::WidgetOwned;
+impl<'z,T,E> AsWidget<'z,E> for Box<T> where T: AsWidget<'z,E> + ?Sized, E: Env {
+    type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        (**self).as_widget(root,ctx)
-    }
-    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        <T as AsWidget<E>>::box_into_widget(self, root, ctx)
-    }
-
-    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        (**self).as_widget_dyn(root,ctx)
-    }
-    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        <T as AsWidget<E>>::box_into_widget_dyn(self, root, ctx)
-    }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        self.into_widget_dyn(root,ctx)
+    #[inline]
+    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        F: AsWidgetDispatch<'z,Self,E>
+    {
+        let dis = CallbackClosure::for_as_widget(#[inline] |widget,root,ctx| {
+            f.call(widget, root, ctx)
+        });
+        (**self).with_widget(dis,root,ctx)
     }
 }
-/*impl<T,E> AsWidget<E> for std::rc::Rc<T> where T: AsWidget<E> + ?Sized, E: Env {
-    type Widget = T::Widget;
-    type WidgetOwned = T::WidgetOwned;
+impl<'z,T,E> AsWidget<'z,E> for std::rc::Rc<T> where T: AsWidget<'z,E> + ?Sized, E: Env {
+    type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> {
-        (**self).as_widget(root,ctx)
-    }
-    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        (*self).as_widget(root,ctx)
+    #[inline]
+    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        F: AsWidgetDispatch<'z,Self,E>
+    {
+        let dis = CallbackClosure::for_as_widget(#[inline] |widget,root,ctx| {
+            f.call(widget, root, ctx)
+        });
+        (**self).with_widget(dis,root,ctx)
     }
 }
-impl<T,E> AsWidget<E> for std::sync::Arc<T> where T: AsWidget<E> + ?Sized, E: Env {
-    type Widget = T::Widget;
-    type WidgetOwned = T::WidgetOwned;
+impl<'z,T,E> AsWidget<'z,E> for std::sync::Arc<T> where T: AsWidget<'z,E> + ?Sized, E: Env {
+    type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> {
-        (**self).as_widget(root,ctx)
+    #[inline]
+    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        F: AsWidgetDispatch<'z,Self,E>
+    {
+        let dis = CallbackClosure::for_as_widget(#[inline] |widget,root,ctx| {
+            f.call(widget, root, ctx)
+        });
+        (**self).with_widget(dis,root,ctx)
     }
-    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        (*self).as_widget(root,ctx)
-    }
-}*/
-
-pub trait AsWidgetImplemented<E> {}
-
-impl<T,E> AsWidgetImplemented<E> for T where T: AsWidget<E> + ?Sized, E: Env {}
-
-pub type DynWCow<'w,E> = WCow<'w,dyn Widget<E>+'w,Box<dyn Widget<E>+'w>>; 
-
-#[doc(hidden)]
-pub enum WCow<'a,T,U> where T: ?Sized + 'a, U: Borrow<T> + Sized + 'a {
-    Borrowed(&'a T),
-    Owned(U),
 }
 
-impl<'a,T,U> WCow<'a,T,U> where T: ?Sized + 'a, U: Borrow<T> + Sized + 'a {
-    pub fn reference<'s>(&'s self) -> WCow<'s,T,U> where Self: 's {
-        match self {
-            WCow::Borrowed(t) => WCow::Borrowed(*t),
-            WCow::Owned(t) => WCow::Borrowed(t.borrow()),
+// pub trait AsWidgetDyn<E> where E: Env {
+//     fn with_widget_dyn<'w>(&'w self, f: Box<dyn for<'r,'s> FnOnce(&'r (dyn WidgetDyn<E>+'s))>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+// }
+
+// impl<T,E> AsWidgetDyn<E> for T where T: AsWidget<E>, E: Env {
+//     fn with_widget_dyn<'w>(&'w self, f: Box<dyn for<'r,'s> FnOnce(&'r (dyn WidgetDyn<E>+'s))>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+//         self.with_widget(f, root, ctx)
+//     }
+// }
+
+// impl<'l,E> AsWidget<E> for dyn AsWidgetDyn<E> + 'l where E: Env {
+//     type Widget<'k> = dyn WidgetDyn<E>+'k;
+
+//     fn with_widget<'w>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+//     where
+//         F: for<'r,'s> FnOnce(&'r Self::Widget<'s>)
+//     {
+//         self.with_widget_dyn(f, root, ctx)
+//     }
+// }
+
+/// Implement AsWidget for a Widget
+#[macro_export]
+macro_rules! impl_as_widget_self {
+    (
+        $e:ident;
+        ($($args:tt)*)
+        $lt:lifetime $typ:ty
+        $(where $($preds:tt)+)?
+    ) => {
+        impl<$($args)*> $crate::widget::as_widget::AsWidget<$lt,$e> for $typ where $e: $crate::env::Env, Self: $lt $(, $($preds)*)? {
+            type Widget<'__impl_as_widget_self_v> = Self where $lt: '__impl_as_widget_self_v;
+
+            #[inline]
+            fn with_widget<'__impl_as_widget_self_w,F>(&'__impl_as_widget_self_w self, dispatch: F, root: <E as $crate::env::Env>::RootRef<'_>, ctx: &mut <E as $crate::env::Env>::Context<'_>)
+            where
+                F: AsWidgetDispatch<$lt,Self,E>
+            {
+                dispatch.call(self, root, ctx)
+            }
         }
-    }
+    };
 }
 
-//TODO also for generic WCow<'_,T,U>
-impl<'a,E> WidgetRef<'a,E> where E: Env {
-    pub fn into_resolve<'s>(self, i: E::WidgetPath, root: E::RootRef<'s>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,E::Error> where Self: 's {
-        match self {
-            WCow::Borrowed(t) => t.resolve(i,root,ctx),
-            WCow::Owned(t) => t.into_resolve(i,root,ctx),
-        }
-    }
-}
+pub(crate) use impl_as_widget_self;
 
-impl<'a,T,U> Deref for WCow<'a,T,U> where T: ?Sized + 'a, U: Borrow<T> + Sized + 'a {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        match self {
-            WCow::Borrowed(t) => *t,
-            WCow::Owned(t) => t.borrow(),
-        }
-    }
-}
-
-impl<'a,T,U> Borrow<T> for WCow<'a,T,U> where T: ?Sized + 'a, U: Borrow<T> + Sized + 'a{
-    fn borrow(&self) -> &T {
-        match self {
-            WCow::Borrowed(t) => *t,
-            WCow::Owned(t) => t.borrow(),
-        }
-    }
-}
-
-impl<'a,T,U> AsRef<T> for WCow<'a,T,U> where T: ?Sized + 'a, U: Borrow<T> + Sized + 'a {
-    fn as_ref(&self) -> &T {
-        match self {
-            WCow::Borrowed(t) => *t,
-            WCow::Owned(t) => t.borrow(),
-        }
-    }
-}
+use super::Widget;

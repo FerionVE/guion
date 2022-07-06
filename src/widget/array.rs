@@ -9,7 +9,7 @@ pub trait WidgetArray<E>: Sized where E: Env {
     fn into_childs<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'w,E>> where Self: 'w;
 }
 
-impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
+impl<'z,T,E> WidgetArray<E> for Vec<T> where T: AsWidget<'z,E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         self.len()
@@ -42,7 +42,7 @@ impl<T,E> WidgetArray<E> for Vec<T> where T: AsWidget<E>, E: Env {
     }
 }
 
-impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
+impl<'z,T,E> WidgetArray<E> for &[T] where T: AsWidget<'z,E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -73,7 +73,7 @@ impl<T,E> WidgetArray<E> for &[T] where T: AsWidget<E>, E: Env {
     }
 }
 
-impl<T,E> WidgetArray<E> for &mut [T] where T: AsWidget<E>, E: Env {
+impl<'z,T,E> WidgetArray<E> for &mut [T] where T: AsWidget<'z,E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -116,10 +116,10 @@ macro_rules! impl_wpps_tuple {
     } => {
         impl_wpps_tuple!(($n-1);$senf;$($tt)+;$($ll)+;$($mm => $xx),+);
 
-        impl<E,$t,$($tt),+> WidgetArray<E> for ($t,$($tt),+) where
+        impl<'z,E,$t,$($tt),+> WidgetArray<E> for ($t,$($tt),+) where
             E: Env,
-            $t: AsWidget<E>,
-            $($tt: AsWidget<E>),+ 
+            $t: AsWidget<'z,E>,
+            $($tt: AsWidget<'z,E>),+ 
         {
             #[inline]
             fn len(&self) -> usize {
@@ -155,10 +155,10 @@ macro_rules! impl_wpps_tuple {
             }
         }
 
-        impl<E,$t,$($tt),+> WidgetArray<E> for &($t,$($tt),+) where
+        impl<'z,E,$t,$($tt),+> WidgetArray<E> for &($t,$($tt),+) where
             E: Env,
-            $t: AsWidget<E>,
-            $($tt: AsWidget<E>),+ 
+            $t: AsWidget<'z,E>,
+            $($tt: AsWidget<'z,E>),+ 
         {
             #[inline]
             fn len(&self) -> usize {
@@ -194,10 +194,10 @@ macro_rules! impl_wpps_tuple {
             }
         }
 
-        impl<E,$t,$($tt),+> WidgetArray<E> for &mut ($t,$($tt),+) where
+        impl<'z,E,$t,$($tt),+> WidgetArray<E> for &mut ($t,$($tt),+) where
             E: Env,
-            $t: AsWidget<E>,
-            $($tt: AsWidget<E>),+ 
+            $t: AsWidget<'z,E>,
+            $($tt: AsWidget<'z,E>),+ 
         {
             #[inline]
             fn len(&self) -> usize {
@@ -257,7 +257,7 @@ impl_wpps_tuple!(
 );
 
 
-impl<T,E,const N: usize> WidgetArray<E> for [T;N] where T: AsWidget<E>, E: Env {
+impl<'z,T,E,const N: usize> WidgetArray<E> for [T;N] where T: AsWidget<'z,E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         N
@@ -289,7 +289,7 @@ impl<T,E,const N: usize> WidgetArray<E> for [T;N] where T: AsWidget<E>, E: Env {
     }
 }
 
-impl<T,E,const N: usize> WidgetArray<E> for &[T;N] where T: AsWidget<E>, E: Env {
+impl<'z,T,E,const N: usize> WidgetArray<E> for &[T;N] where T: AsWidget<'z,E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()
@@ -319,7 +319,7 @@ impl<T,E,const N: usize> WidgetArray<E> for &[T;N] where T: AsWidget<E>, E: Env 
             .collect::<Vec<_>>()
     }
 }
-impl<T,E,const N: usize> WidgetArray<E> for &mut [T;N] where T: AsWidget<E>, E: Env {
+impl<'z,T,E,const N: usize> WidgetArray<E> for &mut [T;N] where T: AsWidget<'z,E>, E: Env {
     #[inline]
     fn len(&self) -> usize {
         (**self).len()

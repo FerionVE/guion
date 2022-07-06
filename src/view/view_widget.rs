@@ -1,49 +1,76 @@
 use std::marker::PhantomData;
 
+use crate::dispatchor::{CallbackClosure, AsWidgetDispatch};
 use crate::env::Env;
-use crate::widget::Widget;
-use crate::widget::as_widget::{AsWidget, WCow};
+use crate::error::ResolveResult;
+use crate::root::RootRef;
+use crate::widget::as_widget::AsWidget;
 
 use super::View;
 
-pub struct ViewWidget<Wid,WFn,MFn,E>(WFn,MFn,PhantomData<(fn()->Wid,E)>) where
-    Wid: View<E,MFn>,
-    WFn: Fn()->Wid, MFn: Clone + Send + Sync + 'static,
+pub struct ViewWidget<'z,Wid,WFn,MFn,E>(WFn,MFn,PhantomData<(&'z Wid,E)>) where
+    WFn: Fn()->Wid + 'z,
+    Wid: View<'z,E>,
+    MFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Context<'cc>) -> ResolveResult<Wid::Mutable<'s>> + Clone + 'static,
     E: Env;
 
-pub fn view_widget_adv<Wid,WFn,MFn,E>(w: WFn, f: MFn) -> ViewWidget<Wid,WFn,MFn,E> where
-    Wid: View<E,MFn>,
-    WFn: Fn()->Wid, MFn: Clone + Send + Sync + 'static,
+pub fn view_widget_adv<'z,Wid,WFn,MFn,E>(w: WFn, f: MFn) -> ViewWidget<'z,Wid,WFn,MFn,E> where
+    WFn: Fn()->Wid + 'z,
+    Wid: View<'z,E>,
+    MFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Context<'cc>) -> ResolveResult<Wid::Mutable<'s>> + Clone + 'static,
     E: Env,
 {
     ViewWidget(w,f,PhantomData)
 }
+// pub fn view_widget_dummy_adv<'z,Wid,WFn,MFn,E>(w: WFn, f: MFn) -> DummyWidget<ViewWidget<'z,Wid,WFn,MFn,E>> where
+//     WFn: Fn()->Wid + 'z,
+//     Wid: View<'z,E>,
+//     MFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Context<'cc>) -> ResolveResult<Wid::Mutable<'s>> + Clone + 'static,
+//     E: Env,
+// {
+//     DummyWidget(ViewWidget(w,f,PhantomData))
+// }
 
-impl<Wid,WFn,MFn,E> AsWidget<E> for ViewWidget<Wid,WFn,MFn,E> where
-    Wid: View<E,MFn>,
-    WFn: Fn()->Wid, MFn: Clone + Send + Sync + 'static,
+impl<'z,Wid,WFn,MFn,E> AsWidget<'z,E> for ViewWidget<'z,Wid,WFn,MFn,E> where
+    WFn: Fn()->Wid + 'z,
+    Wid: View<'z,E>,
+    MFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Context<'cc>) -> ResolveResult<Wid::Mutable<'s>> + Clone + 'static,
     E: Env,
 {
-    type Widget = Wid::Viewed;
-    type WidgetOwned = Wid::Viewed;
+    type Widget<'v> = Wid::Viewed<'v,MFn> where 'z: 'v;
 
-    fn as_widget<'w>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Owned( (self.0)().view(self.1.clone(), root,ctx) )
-    }
-    fn into_widget<'w>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        WCow::Owned( (self.0)().view(self.1.clone(), root,ctx) )
-    }
-
-    fn as_widget_dyn<'w,'s>(&'w self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
-        WCow::Owned( (self.0)().view(self.1.clone(), root,ctx).boxed() )
-    }
-    fn into_widget_dyn<'w,'s>(self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: Sized + 'w {
-        WCow::Owned( (self.0)().view(self.1.clone(), root,ctx).boxed() )
-    }
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> crate::widget::as_widget::DynWCow<'w,E> where Self: 'w {
-        self.into_widget_dyn(root,ctx)
+    #[inline]
+    fn with_widget<'w,F>(&'w self, dispatch: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        F: AsWidgetDispatch<'z,Self,E>
+    {
+        let s = (self.0)();
+        let dis = CallbackClosure::for_view(move |widget,root,ctx| {
+            dispatch.call(widget, root, ctx)
+        });
+        s.view(dis,self.1.clone(),root,ctx)
     }
 }
+
+// pub struct DummyWidget<T>(pub T);
+
+// impl<'z,T,E> Widget<E> for DummyWidget<T> where T: AsWidget<'z,E>, E: Env {
+//     type Inner = ();
+
+//     #[inline]
+//     fn inner<'s>(&'s self) -> Option<&'s Self::Inner> where Self: 's {
+//         None
+//     }
+//     #[inline]
+//     fn run<S>(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+//         let dis = CallbackClosure::for_as_widget(|widget: &T::Widget<'_>,root,ctx| {
+//             widget.run::<()>(root,ctx)
+//         });
+//         self.0.with_widget(dis, root, ctx)
+//     }
+// }
+
+// impl_as_widget_self!(E;('z,T,E) 'z DummyWidget<T> where T: AsWidget<'z,E>);
 
 //TODO impl AsWidget
 
@@ -99,7 +126,7 @@ macro_rules! view_widget {
             $(let $mutor = $mutor.clone();)?
             $crate::view::view_widget::view_widget_adv(
                 $viewgen,
-                move |$root,_,$ctx $(,$($extra_in),*)?| {$mutexpr},
+                #[inline] move |$root,_,$ctx $(,$($extra_in),*)?| {$mutexpr},
             )
         }
     };
@@ -152,7 +179,7 @@ macro_rules! mutor {
     ) => {
         {
             $(let $mutor = $mutor.clone();)?
-            move |$root,_,$ctx $(,$($extra_in),*)?| {$mutexpr}
+            #[inline] move |$root,_,$ctx $(,$($extra_in),*)?| {$mutexpr}
         }
     };
 
@@ -189,7 +216,7 @@ macro_rules! mutor {
     ) => {
         {
             $(let $mutor = $mutor.clone();)?
-            move |$root,_,$ctx $(,$($extra_in),*)?| {$mutexpr;}
+            #[inline] move |$root,_,$ctx $(,$($extra_in),*)?| {$mutexpr;}
         }
     };
 }

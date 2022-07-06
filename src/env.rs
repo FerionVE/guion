@@ -1,17 +1,17 @@
 //! The Env type defines a compound over any generic types
-use crate::root::{RootRef, RootMut};
+use crate::root::{RootMut, RootRef};
 
 use super::*;
 use std::fmt::Debug;
 
 /// Type compound
-/// 
+///
 /// Note the Trait bounds Clone, Default, PartialEq are not used and just for simplifying derives
 pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'static {
     type Backend: Backend<Self>;
-    type Context<'a>: Context<'a,Self>+'a;
-    type RootRef<'a>: RootRef<Self>+'a;
-    type RootMut<'a>: RootMut<Self>+'a;
+    type Context<'a>: Context<'a, Self> + 'a;
+    type RootRef<'a>: RootRef<Self> + 'a;
+    type RootMut<'a>: RootMut<Self> + 'a;
     type WidgetID: WidgetID;
     /// Implementation of path to resolve [`Widget`]
     type WidgetPath: WidgetPath<Self>;
@@ -41,7 +41,10 @@ macro_rules! impl_env_stds {
                 $crate::widget::resolvable::Resolvable::Path(self.clone().into())
             }
             #[inline]
-            fn into_ref<'w>(self) -> $crate::widget::resolvable::Resolvable<'w,$e> where Self: 'w {
+            fn into_ref<'w>(self) -> $crate::widget::resolvable::Resolvable<'w, $e>
+            where
+                Self: 'w,
+            {
                 $crate::widget::resolvable::Resolvable::Path(self.clone().into())
             }
         }
@@ -51,7 +54,10 @@ macro_rules! impl_env_stds {
                 $crate::widget::resolvable::ResolvableMut::Path(self.clone().into())
             }
             #[inline]
-            fn into_mut<'w>(self) -> $crate::widget::resolvable::ResolvableMut<'w,$e> where Self: 'w {
+            fn into_mut<'w>(self) -> $crate::widget::resolvable::ResolvableMut<'w, $e>
+            where
+                Self: 'w,
+            {
                 $crate::widget::resolvable::ResolvableMut::Path(self.clone().into())
             }
         }
