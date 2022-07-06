@@ -36,7 +36,7 @@ pub trait RootMut<E> where E: Env {
 //         todo!()
 //     }
 //     #[inline]
-//     fn trace_bounds(&self, ctx: &mut <E as Env>::Context<'_>, i: <E as Env>::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,<E as Env>::Error> {
+//     fn trace_bounds(&self, ctx: &mut E::Context<'_>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
 //         todo!()
 //     }
 // }
@@ -61,7 +61,7 @@ pub trait RootMut<E> where E: Env {
 //         todo!()
 //     }
 
-//     fn trace_bounds(&self, ctx: &mut <E as Env>::Context<'_>, i: <E as Env>::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,<E as Env>::Error> {
+//     fn trace_bounds(&self, ctx: &mut E::Context<'_>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> {
 //         todo!()
 //     }
 // }

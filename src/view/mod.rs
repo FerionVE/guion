@@ -1,62 +1,256 @@
-use crate::dispatchor::ViewDispatch;
+use std::marker::PhantomData;
+use std::rc::Rc;
+
+use crate::dispatchor::{ViewDispatch, ViewClosure};
 use crate::env::Env;
 use crate::error::ResolveResult;
 use crate::widget::Widget;
 
 pub mod view_widget;
+pub mod apply;
+pub mod message;
 //pub mod test;
 
 pub trait View<'z,E> where E: Env, Self: 'z {
-    type Viewed<'v,MutFn>: Widget<E> + ?Sized + 'v where MutFn: 'static, 'z: 'v;
-    type Mutable<'k>: 'k;
+    type Viewed<'v,MutorFn>: Widget<E> + ?Sized + 'v where MutorFn: 'static, 'z: 'v;
+    type Mutable<'k>: ?Sized + 'k;
 
     fn view<'d,MutorFn,DispatchFn>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
-        MutorFn: for<'s,'c,'cc> Fn(E::RootMut<'s>,&'s (),&'c mut E::Context<'cc>) -> ResolveResult<Self::Mutable<'s>> + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>;
+        MutorFn: for<'s,'c,'cc> Fn(
+            E::RootMut<'s>,&'s (),
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            &'c mut E::Context<'cc>
+        ) + Clone + 'static,
+        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>,
+   ;
 }
+
+impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z {
+    type Viewed<'v,MutorFn> = T::Viewed<'v,MutorFn> where MutorFn: 'static, 'z: 'v;
+    type Mutable<'k> = T::Mutable<'k>;
+
+    #[inline]
+    fn view<'d,MutorFn,DispatchFn>(&'d self, dispatch: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        MutorFn: for<'s,'c,'cc> Fn(
+            E::RootMut<'s>,&'s (),
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            &'c mut E::Context<'cc>
+        ) + Clone + 'static,
+        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>,
+    {
+        let g = ViewClosure::new(#[inline] move |widget,root,ctx|
+            dispatch.call(widget, root, ctx)
+        );
+        (**self).view(g,remut,root,ctx)
+    }
+}
+
+pub trait ViewDyn<E> where E: Env {
+    fn view_dyn(
+        &self,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn Widget<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        remut: Rc<dyn for<'s,'c,'cc> Fn(
+            E::RootMut<'s>,&'s (),
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
+            &'c mut E::Context<'cc>
+        ) + 'static>,
+        root: E::RootRef<'_>, ctx: &mut E::Context<'_>
+    );
+}
+
+impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
+    #[inline]
+    fn view_dyn(
+        &self,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn Widget<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        remut: Rc<dyn for<'s,'c,'cc> Fn(
+            E::RootMut<'s>,&'s (),
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
+            &'c mut E::Context<'cc>
+        ) + 'static>,
+        root: E::RootRef<'_>, ctx: &mut E::Context<'_>
+    ) {
+        let g = ViewClosure::new(#[inline] move |widget,root,ctx|
+            (dispatch)(&widget, root, ctx)
+        );
+        View::view(
+            self,
+            g,
+            move |root,_,callback,ctx| {
+                (remut)(root,&(),&mut move |resolved,&(),ctx| {
+                    let resolved = resolved.expect("TODO");
+                    (callback)(
+                        Ok(resolved.into_everything::<'z,'_,'_,Self,E>()),
+                        &(),ctx
+                    )
+                },ctx)
+            },
+            root,
+            ctx
+        )
+    }
+}
+
+impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
+    type Viewed<'v,MutorFn> = dyn Widget<E>+'v where MutorFn: 'static, 'z: 'v;
+    type Mutable<'k> = Timmy;
+
+    #[inline]
+    fn view<'d,MutorFn,DispatchFn>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        MutorFn: for<'s,'c,'cc> Fn(
+            E::RootMut<'s>,&'s (),
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            &'c mut E::Context<'cc>
+        ) + Clone + 'static,
+        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>
+    {
+        self.view_dyn(
+            Box::new(move |widget,root,ctx| {
+                dispatch.call(widget,root,ctx)
+            }),
+            Rc::new(move |root,_,cb,ctx| {
+                (mutor)(
+                    root,&(),
+                    &mut move |resolved: ResolveResult<&mut Timmy>,&(),ctx| {
+                        (cb)(resolved,&(),ctx);
+                    },
+                    ctx
+                )
+            }),
+            root,
+            ctx
+        )
+    }
+}
+
+pub struct Timmy;
+
+impl Timmy {
+    fn into_everything<'z,'v,'vv,V,E>(&mut self) -> &'v mut <V as View<'z,E>>::Mutable<'vv> where V: View<'z,E>, E: Env {
+        todo!()
+    }
+}
+
+pub trait ViewDyn2<E,M> where M: MuGator<E>, E: Env {
+    fn view_dyn(
+        &self,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn Widget<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        remut: Rc<dyn for<'s,'c,'cc> Fn(
+            E::RootMut<'s>,&'s (),
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            &'c mut E::Context<'cc>
+        ) + 'static>,
+        root: E::RootRef<'_>, ctx: &mut E::Context<'_>
+    );
+}
+
+pub trait MuGator<E>: 'static where E: Env {
+    type Mutable<'k>: 'k;
+}
+
+impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mutable<'k>>, M: MuGator<E>, E: Env {
+    #[inline]
+    fn view_dyn(
+        &self,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn Widget<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        remut: Rc<dyn for<'s,'c,'cc> Fn(
+            E::RootMut<'s>,&'s (),
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            &'c mut E::Context<'cc>
+        ) + 'static>,
+        root: E::RootRef<'_>, ctx: &mut E::Context<'_>
+    ) {
+        let g = ViewClosure::new(#[inline] move |widget,root,ctx|
+            (dispatch)(&widget, root, ctx)
+        );
+        View::view(
+            self,
+            g,
+            #[inline] move |root,_,cb,ctx| 
+                (remut)(root,&(),cb,ctx),
+            root,
+            ctx
+        )
+    }
+}
+
+impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
+    type Viewed<'v,MutFn> = dyn Widget<E>+'v where MutFn: 'static, 'z: 'v;
+    type Mutable<'k> = M::Mutable<'k>;
+
+    #[inline]
+    fn view<'d,MutorFn,DispatchFn>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    where
+        MutorFn: for<'s,'c,'cc> Fn(
+            E::RootMut<'s>,&'s (),
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            &'c mut E::Context<'cc>
+        ) + Clone + 'static,
+        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>
+    {
+        self.view_dyn(
+            Box::new(#[inline] move |widget,root,ctx|
+                dispatch.call(widget,root,ctx)
+            ),
+            Rc::new(#[inline] move |root,_,cb,ctx|
+                (mutor)(root,&(),cb,ctx)
+            ),
+            root,
+            ctx
+        )
+    }
+}
+
+// pub trait Timmy {
+//     fn into_everything<'z,'v,V,E>(self) -> <V as View<'z,E>>::Mutable<'v> where V: View<'z,E>, E: Env;
+// }
+// impl<T> Timmy for T where T: ?Sized {
+//     fn into_everything<'z,'v,V,E>(self) -> <V as View<'z,E>>::Mutable<'v> where V: View<'z,E>, E: Env {
+//         todo!()
+//     }
+// }
 
 // #[macro_export]
 // macro_rules! impl_view {
 //     (
-//         $e:ty;
-//         ($($generics:tt)*)
+//         $( < $($generics:path),* $(,)* > )?
 //         for $ontype:ty :
 //         <$life:lifetime> $mutfnroot:ty => $mutfndest:ty
-//         $(where ($($bounds:tt)+))?
+//         $(where $($bounds:tt)+)?
 //         {
-//             $($impl:item)*
+//             $($impl:tt)*
 //         }
 
 //     ) => {
-//         impl < $($generics)*, MutFn > $crate::view::View<$e,MutFn>
+//         impl < E,MutFn, $( $($generics),* )? > $crate::view::View<E,MutFn>
 //         for $ontype where
-//             MutFn: for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut <$e as $crate::env::Env>::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + Clone + Send + Sync + 'static,
-//             $e: $crate::env::Env,
+//             MutFn: for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut E::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + Clone + 'static,
+//             E: $crate::env::Env,
 //             $($($bounds)*)?
 
 //         {
-//             type Viewed = impl $crate::widget::Widget<$e>;
+//             type Viewed = impl $crate::widget::Widget<E>;
 
 //             $($impl)*
 //         }
 //     };
 //     (
-//         $e:ty;
-//         ($($generics:tt)*)
+//         $( < $($generics:path),* $(,)* > )?
 //         for $ontype:ty :
 //         <$life:lifetime> $mutfndest:ty
-//         $(where ($($bounds:tt)+))?
+//         $(where $($bounds:tt)+)?
 //         {
-//             $($impl:item)*
+//             $($impl:tt)*
 //         }
 
 //     ) => {
 //         $crate::impl_view!(
-//             $e;
-//             ($($generics)*)
+//             $( < $($generics),* $(,)* > )?
 //                 for $ontype :
-//             <$life> <$e as $crate::env::Env>::RootMut<$life> => $mutfndest
+//             <$life> <E as $crate::env::Env>::RootMut<$life> => $mutfndest
 //             $(where $($bounds)+)?
 //             {
 //                 $($impl)*
@@ -74,7 +268,7 @@ pub trait View<'z,E> where E: Env, Self: 'z {
 //         $dv type $dest<'view,E> = dyn $crate::view::View<
 //             E,
 //             std::sync::Arc<
-//                 dyn for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut <E as $crate::env::Env>::Context<'_>) -> $crate::error::ResolveResult<$mutfndest> + Send + Sync + 'static
+//                 dyn for<$life,'ctx> Fn($mutfnroot,&$life (),&'ctx mut <E as $crate::env::Env>::Ctx<'_>) -> $crate::error::ResolveResult<$mutfndest> + 'static
 //             >,
 //             Viewed=Box<dyn $crate::widget::Widget<E>+'view>
 //         >+'view;
@@ -94,5 +288,5 @@ pub trait View<'z,E> where E: Env, Self: 'z {
 //     pub type ADyn = <'a> &'a mut test::A
 // );
 // decl_dyn_view_type!(
-//     pub type BDyn = <'a> <E as Env>::RootMut<'a> => &'a mut test::B
+//     pub type BDyn = <'a> E::RootMut<'a> => &'a mut test::B
 // );

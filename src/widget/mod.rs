@@ -10,7 +10,7 @@ use super::*;
 use std::any::{TypeId, type_name};
 use traitcast::TraitObject;
 
-pub mod link;
+//pub mod link;
 pub mod as_widget;
 pub mod ext;
 #[doc(hidden)]
