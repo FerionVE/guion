@@ -32,6 +32,7 @@ pub mod error;
 pub mod compat;
 
 pub mod dispatchor;
+pub mod cachialize;
 
 pub(crate) use aliases::*;
 pub(crate) use backend::*;
