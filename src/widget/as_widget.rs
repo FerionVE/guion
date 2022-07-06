@@ -10,18 +10,18 @@ use crate::env::Env;
 pub trait AsWidget<'z,E> where E: Env, Self: 'z {
     type Widget<'v>: Widget<E> + ?Sized + 'v where 'z: 'v;
 
-    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,E>;
+        F: AsWidgetDispatch<'z,Self,R,E>;
 }
 
 impl<'a,E> AsWidget<'a,E> for dyn WidgetDyn<E> + 'a where E: Env {
     type Widget<'v> = dyn WidgetDyn<E>+'v where 'a: 'v;
 
     #[inline]
-    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'a,Self,E>
+        F: AsWidgetDispatch<'a,Self,R,E>
     {
         f.call(&*self, root, ctx)
     }
@@ -31,9 +31,9 @@ impl<'z,T,E> AsWidget<'z,E> for &'z T where T: AsWidget<'z,E> + ?Sized, E: Env {
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,E>
+        F: AsWidgetDispatch<'z,Self,R,E>
     {
         let dis = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
             f.call(&widget, root, ctx)
@@ -45,9 +45,9 @@ impl<'z,T,E> AsWidget<'z,E> for &'z mut T where T: AsWidget<'z,E> + ?Sized, E: E
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,E>
+        F: AsWidgetDispatch<'z,Self,R,E>
     {
         let dis = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
             f.call(&widget, root, ctx)
@@ -59,9 +59,9 @@ impl<'z,T,E> AsWidget<'z,E> for Box<T> where T: AsWidget<'z,E> + ?Sized, E: Env 
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,E>
+        F: AsWidgetDispatch<'z,Self,R,E>
     {
         let dis = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             f.call(widget, root, ctx)
@@ -73,9 +73,9 @@ impl<'z,T,E> AsWidget<'z,E> for std::rc::Rc<T> where T: AsWidget<'z,E> + ?Sized,
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,E>
+        F: AsWidgetDispatch<'z,Self,R,E>
     {
         let dis = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             f.call(widget, root, ctx)
@@ -87,9 +87,9 @@ impl<'z,T,E> AsWidget<'z,E> for std::sync::Arc<T> where T: AsWidget<'z,E> + ?Siz
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,E>
+        F: AsWidgetDispatch<'z,Self,R,E>
     {
         let dis = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             f.call(widget, root, ctx)
@@ -132,9 +132,9 @@ macro_rules! impl_as_widget_self {
             type Widget<'__impl_as_widget_self_v> = Self where $lt: '__impl_as_widget_self_v;
 
             #[inline]
-            fn with_widget<'__impl_as_widget_self_w,F>(&'__impl_as_widget_self_w self, dispatch: F, root: <E as $crate::env::Env>::RootRef<'_>, ctx: &mut <E as $crate::env::Env>::Ctx<'_>)
+            fn with_widget<'__impl_as_widget_self_w,F,R>(&'__impl_as_widget_self_w self, dispatch: F, root: <E as $crate::env::Env>::RootRef<'_>, ctx: &mut <E as $crate::env::Env>::Ctx<'_>) -> R
             where
-                F: AsWidgetDispatch<$lt,Self,E>
+                F: AsWidgetDispatch<$lt,Self,R,E>
             {
                 dispatch.call(self, root, ctx)
             }

@@ -80,3 +80,6 @@ pub(crate) use widget::ident::*;
 pub(crate) use widget::*;
 
 pub type EventResp = bool;
+
+#[doc(hidden)]
+pub struct ProtectedReturn(std::marker::PhantomData<()>);

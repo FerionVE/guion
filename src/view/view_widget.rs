@@ -57,9 +57,9 @@ impl<'z,Wid,WFn,MFn,E> AsWidget<'z,E> for ViewWidget<'z,Wid,WFn,MFn,E> where
     type Widget<'v> = Wid::Viewed<'v,MFn> where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F>(&'w self, dispatch: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn with_widget<'w,F,R>(&'w self, dispatch: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,E>
+        F: AsWidgetDispatch<'z,Self,R,E>
     {
         let s = (self.0)();
         let dis = ViewClosure::new(move |widget,root,ctx| {

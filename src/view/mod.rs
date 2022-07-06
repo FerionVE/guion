@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use std::rc::Rc;
 
+use crate::ProtectedReturn;
 use crate::dispatchor::{ViewDispatch, ViewClosure};
 use crate::env::Env;
 use crate::error::ResolveResult;
@@ -16,14 +17,14 @@ pub trait View<'z,E> where E: Env, Self: 'z {
     type Viewed<'v,MutorFn>: Widget<E> + ?Sized + 'v where MutorFn: 'static, 'z: 'v;
     type Mutable<'k>: ?Sized + 'k;
 
-    fn view<'d,MutorFn,DispatchFn>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>,
+        DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>,
    ;
 }
 
@@ -32,14 +33,14 @@ impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z
     type Mutable<'k> = T::Mutable<'k>;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn>(&'d self, dispatch: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>,
+        DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>,
     {
         let g = ViewClosure::new(#[inline] move |widget,root,ctx|
             dispatch.call(widget, root, ctx)
@@ -51,28 +52,28 @@ impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z
 pub trait ViewDyn<E> where E: Env {
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
         remut: Rc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
-    );
+    ) -> ProtectedReturn;
 }
 
 impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
     #[inline]
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
         remut: Rc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
-    ) {
+    ) -> ProtectedReturn {
         let g = ViewClosure::new(#[inline] move |widget,root,ctx|
             (dispatch)(&widget, root, ctx)
         );
@@ -99,18 +100,21 @@ impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
     type Mutable<'k> = Timmy;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>
+        DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>
     {
+        let mut dispatch_return: Option<R> = None;
         self.view_dyn(
-            Box::new(move |widget,root,ctx| {
-                dispatch.call(widget,root,ctx)
+            Box::new(|widget,root,ctx| {
+                let r = dispatch.call(widget,root,ctx);
+                dispatch_return = Some(r);
+                ProtectedReturn(PhantomData)
             }),
             Rc::new(move |root,_,cb,ctx| {
                 (mutor)(
@@ -123,7 +127,8 @@ impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
             }),
             root,
             ctx
-        )
+        );
+        dispatch_return.unwrap()
     }
 }
 
@@ -138,14 +143,14 @@ impl Timmy {
 pub trait ViewDyn2<E,M> where M: MuGator<E>, E: Env {
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
         remut: Rc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
-    );
+    ) -> ProtectedReturn;
 }
 
 pub trait MuGator<E>: 'static where E: Env {
@@ -156,14 +161,14 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
     #[inline]
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) + '_>,
+        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
         remut: Rc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
-    ) {
+    ) -> ProtectedReturn {
         let g = ViewClosure::new(#[inline] move |widget,root,ctx|
             (dispatch)(&widget, root, ctx)
         );
@@ -183,25 +188,29 @@ impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
     type Mutable<'k> = M::Mutable<'k>;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,E>
+        DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>
     {
+        let mut dispatch_return: Option<R> = None;
         self.view_dyn(
-            Box::new(#[inline] move |widget,root,ctx|
-                dispatch.call(widget,root,ctx)
-            ),
+            Box::new(#[inline] |widget,root,ctx| {
+                let r = dispatch.call(widget,root,ctx);
+                dispatch_return = Some(r);
+                ProtectedReturn(PhantomData)
+            }),
             Rc::new(#[inline] move |root,_,cb,ctx|
                 (mutor)(root,&(),cb,ctx)
             ),
             root,
             ctx
-        )
+        );
+        dispatch_return.unwrap()
     }
 }
 
