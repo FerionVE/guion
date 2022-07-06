@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::aliases::{EStyle, ERenderer};
 use crate::env::Env;
 use crate::event::compound::EventCompound;
@@ -20,10 +22,10 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn with_child_dyn<'s>(
         &'s self,
         i: usize,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>),
-        root: E::RootRef<'s>,
-        ctx: &mut E::Context<'_>
-    ) -> Result<(),()>;
+        callback: Box<dyn for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut <E as Env>::Context<'cc>) -> ProtectedReturn>,
+        root: <E as Env>::RootRef<'s>,
+        ctx: &mut <E as Env>::Context<'_>
+    ) -> ProtectedReturn;
 
     #[deprecated]
     fn childs_ref_dyn<'s>(
@@ -40,10 +42,10 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn with_resolve_dyn<'s>(
         &'s self,
         i: E::WidgetPath,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>),
+        callback: Box<dyn for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut <E as Env>::Context<'cc>) -> ProtectedReturn>,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
-    ) -> Result<(),E::Error>;
+    ) -> ProtectedReturn;
 
     fn resolve_child_dyn(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error>;
 
@@ -116,10 +118,10 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     fn with_child_dyn<'s>(
         &'s self,
         i: usize,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut <E as Env>::Context<'cc>),
+        callback: Box<dyn for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut <E as Env>::Context<'cc>) -> ProtectedReturn>,
         root: <E as Env>::RootRef<'s>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> Result<(),()> {
+    ) -> ProtectedReturn {
         self.with_child(i, callback, root, ctx)
     }
     #[allow(deprecated)]
@@ -142,10 +144,10 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     fn with_resolve_dyn<'s>(
         &'s self,
         i: <E as Env>::WidgetPath,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut <E as Env>::Context<'cc>),
+        callback: Box<dyn for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut <E as Env>::Context<'cc>) -> ProtectedReturn>,
         root: <E as Env>::RootRef<'s>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> Result<(),<E as Env>::Error> {
+    ) -> ProtectedReturn {
         self.with_resolve(i, callback, root, ctx)
     }
     #[inline]
@@ -259,24 +261,40 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[allow(deprecated)]
     #[inline]
-    fn with_child<'s>(
+    fn with_child<'s,F,R>(
         &'s self,
         i: usize,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut <E as Env>::Context<'cc>),
-        root: <E as Env>::RootRef<'s>,
-        ctx: &mut <E as Env>::Context<'_>
-    ) -> Result<(),()> {
-        self.with_child_dyn(i, callback, root, ctx)
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+    {
+        let mut callback_return: Option<R> = None;
+        self.with_child_dyn(
+            i,
+            Box::new(#[inline] |w,ctx| {
+                let r = (callback)(w,ctx);
+                callback_return = Some(r);
+                ProtectedReturn(PhantomData)
+            }),
+            root, ctx,
+        );
+        callback_return.unwrap()
     }
     #[allow(deprecated)]
     #[inline]
-    fn childs_ref<'s>(
+    fn childs_ref<'s,F>(
         &'s self,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(usize,&'w (dyn WidgetDyn<E>+'ww),&'c mut <E as Env>::Context<'cc>),
-        root: <E as Env>::RootRef<'s>,
-        ctx: &mut <E as Env>::Context<'_>
-    ) {
-        self.childs_ref_dyn(callback, root, ctx)
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    )
+    where
+        F: for<'w,'ww,'c,'cc> FnMut(usize,&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>)
+    {
+        self.childs_ref_dyn(&mut callback, root, ctx)
     }
     #[allow(deprecated)]
     #[inline]
@@ -285,14 +303,27 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[allow(deprecated)]
     #[inline]
-    fn with_resolve<'s>(
+    fn with_resolve<'s,F,R>(
         &'s self,
-        i: <E as Env>::WidgetPath,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),&'c mut <E as Env>::Context<'cc>),
-        root: <E as Env>::RootRef<'s>,
-        ctx: &mut <E as Env>::Context<'_>
-    ) -> Result<(),<E as Env>::Error> {
-        self.with_resolve_dyn(i, callback, root, ctx)
+        i: E::WidgetPath,
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
+    {
+        let mut callback_return: Option<R> = None;
+        self.with_resolve(
+            i,
+            Box::new(#[inline] |w,ctx| {
+                let r = (callback)(w,ctx);
+                callback_return = Some(r);
+                ProtectedReturn(PhantomData)
+            }),
+            root, ctx,
+        );
+        callback_return.unwrap()
     }
     #[inline]
     fn resolve_child(&self, sub_path: &<E as Env>::WidgetPath, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Result<(usize,<E as Env>::WidgetPath),<E as Env>::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
@@ -395,22 +426,22 @@ impl<E> WBase<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
 
     fn _erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {
-        todo!()
+        self
     }
 
     fn _box_ref<'s>(&'s self) -> Box<dyn WidgetDyn<E>+'s> where Self: 's {
-        todo!()
+        self.box_ref_dyn()
     }
 
     fn _box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w {
-        todo!()
+        self.box_box_dyn()
     }
 
     fn _boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
-        todo!()
+        Box::new(self)
     }
 
     fn as_any(&self) -> &dyn std::any::Any where Self: 'static {
-        todo!()
+        self.as_any_dyn()
     }
 }

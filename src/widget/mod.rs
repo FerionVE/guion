@@ -54,26 +54,31 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn childs(&self) -> usize;
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
-    fn with_child<'s>(
+    fn with_child<'s,F,R>(
         &'s self,
         i: usize,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>),
+        callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
-    ) -> Result<(),()>;
+    ) -> R
+    where
+        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]
-    fn childs_ref<'s>(
+    fn childs_ref<'s,F>(
         &'s self,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(usize,&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>),
+        callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
-    ) {
+    )
+    where
+        F: for<'w,'ww,'c,'cc> FnMut(usize,&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>)
+    {
         for i in 0..self.childs() {
             self.with_child(
                 i,
-                &mut |wg,ctx| (callback)(i,wg.unwrap(),ctx), 
+                #[inline] |wg,ctx| (callback)(i,wg.unwrap(),ctx), 
                 root, ctx,
             );
         }
@@ -87,7 +92,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         for i in 0..self.childs() {
             self.with_child(
                 i,
-                &mut |wg,ctx| {
+                #[inline] |wg,ctx| {
                     let w = wg.unwrap();
                     dest.push(w.in_parent_path(own_path.refc()));
                 }, 
@@ -106,16 +111,18 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     #[inline]
     #[deprecated]
-    fn with_resolve<'s>(
+    fn with_resolve<'s,F,R>(
         &'s self,
         i: E::WidgetPath,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>),
+        callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
-    ) -> Result<(),E::Error> {
+    ) -> R
+    where
+        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
+    {
         if i.is_empty() {
-            (callback)(Ok(self.erase()),ctx);
-            return Ok(());
+            return (callback)(Ok(self.erase()),ctx);
         }
         //TODO resolve_child could also return it's ref resolve
         match self.resolve_child(&i,root.fork(),ctx) {
@@ -123,14 +130,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                 //TODO assert that with_child always calls the callback
                 self.with_child(
                     c,
-                    &mut |w,cb| (callback)(Ok(w.unwrap()),ctx),
+                    #[inline] |w,cb| (callback)(Ok(w.unwrap()),ctx),
                     root, ctx,
-                );
-                Ok(())
+                )
             },
             Err(e) => {
-                (callback)(Err(e),ctx);
-                Err(e)
+                (callback)(Err(e),ctx)
             },
         }
     }
@@ -143,12 +148,11 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     #[inline]
     fn resolve_child(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
         for c in 0..self.childs() {
-            let mut path_result = None;
-            self.child(
-                c,
-                |root|
-            )
-            if let Some(r) = self.child(c,root.fork(),ctx).unwrap().resolved_by_path(sub_path) {
+            if let Some(r) = self.with_child(
+                c, 
+                #[inline] |w,_| w.unwrap().resolved_by_path(sub_path),
+                root.fork(), ctx,
+            ) {
                 return Ok((c,r.sub_path));
             }
         }

@@ -74,8 +74,8 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
         ) + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        let g = ViewClosure::new(#[inline] move |widget,root,ctx|
-            (dispatch)(&widget, root, ctx)
+        let g = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
+            (dispatch)(widget.erase(), root, ctx)
         );
         View::view(
             self,
@@ -109,11 +109,11 @@ impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
         ) + Clone + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>
     {
-        let mut dispatch_return: Option<R> = None;
+        let mut callback_return: Option<R> = None;
         self.view_dyn(
             Box::new(|widget,root,ctx| {
                 let r = dispatch.call(widget,root,ctx);
-                dispatch_return = Some(r);
+                callback_return = Some(r);
                 ProtectedReturn(PhantomData)
             }),
             Rc::new(move |root,_,cb,ctx| {
@@ -128,7 +128,7 @@ impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
             root,
             ctx
         );
-        dispatch_return.unwrap()
+        callback_return.unwrap()
     }
 }
 
@@ -169,8 +169,8 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
         ) + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        let g = ViewClosure::new(#[inline] move |widget,root,ctx|
-            (dispatch)(&widget, root, ctx)
+        let g = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
+            (dispatch)(widget.erase(), root, ctx)
         );
         View::view(
             self,
@@ -197,11 +197,11 @@ impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
         ) + Clone + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>
     {
-        let mut dispatch_return: Option<R> = None;
+        let mut callback_return: Option<R> = None;
         self.view_dyn(
             Box::new(#[inline] |widget,root,ctx| {
                 let r = dispatch.call(widget,root,ctx);
-                dispatch_return = Some(r);
+                callback_return = Some(r);
                 ProtectedReturn(PhantomData)
             }),
             Rc::new(#[inline] move |root,_,cb,ctx|
@@ -210,7 +210,7 @@ impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
             root,
             ctx
         );
-        dispatch_return.unwrap()
+        callback_return.unwrap()
     }
 }
 
