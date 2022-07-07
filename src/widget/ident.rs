@@ -24,7 +24,7 @@ impl<E> WidgetIdent<E> where E: Env {
             stor.with_widget(
                 path,
                 #[inline] |w,_|
-                    w.map(#[inline] |r| r.ident() ),
+                    w.map(#[inline] |r| Self{id: r.id(), path} ), //TODO with_widget resolve should also yield new path
                 ctx,
             )
         }
