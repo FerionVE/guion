@@ -2,10 +2,10 @@ use super::*;
 
 /// This trait is only for bridging thru trait objects
 pub trait QueronDyn<E> {
-    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery>);
+    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>);
 }
 impl<T,E> QueronDyn<E> for T where T: Queron<E> + ?Sized {
-    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery>) {
+    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>) {
         self._query(builder)
     }
 }
@@ -13,7 +13,7 @@ impl<T,E> QueronDyn<E> for T where T: Queron<E> + ?Sized {
 /// The call into dyn querylon stack, the last static propagation
 impl<E> Queron<E> for dyn QueronDyn<E> + '_ {
     #[inline]
-    fn _query<'a,Q>(&'a self, mut builder: QueryStack<'_,'a,Q>) where Self: 'a {
+    fn _query<'a,Q>(&'a self, mut builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
         // Using a hidden optimizable cache right here.
         // The compiler must be able to completely optimize away cache accesses and state (doesn't work with maps or vecs, may work with fixed arrays)
         // At best it's also conditionally compiled on used optimizations (whether it would actually optimize away)

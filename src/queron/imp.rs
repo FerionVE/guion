@@ -6,11 +6,11 @@ use super::*;
 
 impl<E> Queron<E> for () {
     #[inline]
-    fn query<'a,Q>(&'a self, _: &Q) -> Option<Q::Out<'a>> where Q: Query + ?Sized, Self: 'a {
+    fn query<'a,Q>(&'a self, _: &Q) -> Option<Q::Out<'a>> where Q: Query<E> + ?Sized, Self: 'a {
         None
     }
     #[inline]
-    fn _query<'a,Q>(&'a self, _: QueryStack<'_,'a,Q>) where Self: 'a {}
+    fn _query<'a,Q>(&'a self, _: QueryStack<'_,'a,Q,E>) where Self: 'a {}
     #[inline]
     fn erase<'s,'ss>(&'s self) -> &'s (dyn QueronDyn<E>+'ss) where 'ss: 's, Self: 'ss {
         self
@@ -27,7 +27,7 @@ macro_rules! impl_queron_transparent { // next-gen matching
     ) => {
         impl<$($args)*> Queron<E> for $typ $(where $($preds)*)? {
             #[inline]
-            fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>) where Self: 'a {
+            fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
                 let $senf = self;
                 <$subtyp as Queron<E>>::_query($senf,builder)
             }
@@ -49,7 +49,7 @@ macro_rules! impl_queronseq_transparent { // next-gen matching
     ) => {
         impl<$($args)*> QueronSequential<E> for $typ $(where $($preds)*)? {
             #[inline]
-            fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>, rev: bool, bounce: bool) where Self: 'a {
+            fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>, rev: bool, bounce: bool) where Self: 'a {
                 let $senf = self;
                 <$subtyp as QueronSequential<E>>::_query($senf,builder,rev,bounce)
             }
@@ -71,7 +71,7 @@ impl_queron_transparent!((T,E) RwLockWriteGuard<'_,T> => T where (T: Queron<E> +
 
 impl<T,E> Queron<E> for Option<T> where T: Queron<E> {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>) where Self: 'a {
+    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
         if let Some(v) = self {
             v._query(builder)
         }
@@ -89,7 +89,7 @@ pub struct QuerySequentialRPrio<T>(pub T) where T: ?Sized;
 
 impl<T,E> Queron<E> for QuerySequentialRPrio<T> where T: QueronSequential<E> {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>) where Self: 'a {
+    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
         self.0._query(builder,false,false)
     }
     #[inline]
@@ -105,7 +105,7 @@ pub struct QuerySequentialLPrio<T>(pub T) where T: ?Sized;
 
 impl<T,E> Queron<E> for QuerySequentialLPrio<T> where T: QueronSequential<E> {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>) where Self: 'a {
+    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
         self.0._query(builder,true,false)
     }
     #[inline]
@@ -121,7 +121,7 @@ pub struct QuerySequentialLPrioBounce<T>(pub T) where T: ?Sized;
 #[allow(deprecated)]
 impl<T,E> Queron<E> for QuerySequentialLPrioBounce<T> where T: QueronSequential<E> {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>) where Self: 'a {
+    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
         self.0._query(builder,false,true)
     }
     #[inline]
@@ -137,7 +137,7 @@ pub struct QuerySequentialRPrioBounce<T>(pub T) where T: ?Sized;
 #[allow(deprecated)]
 impl<T,E> Queron<E> for QuerySequentialRPrioBounce<T> where T: QueronSequential<E> {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>) where Self: 'a {
+    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
         self.0._query(builder,true,true)
     }
     #[inline]
@@ -147,7 +147,7 @@ impl<T,E> Queron<E> for QuerySequentialRPrioBounce<T> where T: QueronSequential<
 }
 
 pub trait QueronSequential<E> {
-    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>, rev: bool, bounce: bool) where Self: 'a;
+    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>, rev: bool, bounce: bool) where Self: 'a;
 }
 
 impl_queronseq_transparent!((T,E) &T => T where (T: QueronSequential<E> + ?Sized) |s| &**s);
@@ -164,7 +164,7 @@ impl_queronseq_transparent!((T,E) RwLockWriteGuard<'_,T> => T where (T: QueronSe
 
 impl<T,E> QueronSequential<E> for [T] where T: Queron<E> {
     #[inline]
-    fn _query<'a,Q>(&'a self, mut builder: QueryStack<'_,'a,Q>, rev: bool, bounce: bool) where Self: 'a {
+    fn _query<'a,Q>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, rev: bool, bounce: bool) where Self: 'a {
         if rev {
             for v in self.iter().rev() {
                 v._query(builder.fork())
@@ -189,14 +189,14 @@ impl<T,E> QueronSequential<E> for [T] where T: Queron<E> {
 
 impl<T,E> QueronSequential<E> for Vec<T> where T: Queron<E> {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>, rev: bool, bounce: bool) where Self: 'a {
+    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>, rev: bool, bounce: bool) where Self: 'a {
         <[T] as QueronSequential<E>>::_query(self, builder, rev, bounce)
     }
 }
 
 impl<T,E,const N: usize> QueronSequential<E> for [T;N] where T: Queron<E> {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q>, rev: bool, bounce: bool) where Self: 'a {
+    fn _query<'a,Q>(&'a self, builder: QueryStack<'_,'a,Q,E>, rev: bool, bounce: bool) where Self: 'a {
         <[T] as QueronSequential<E>>::_query(self, builder, rev, bounce)
     }
 }
@@ -222,7 +222,7 @@ macro_rules! impl_tuple {
             $($tt: Queron<E>),+ 
         {
             #[inline]
-            fn _query<'a,Q>(&'a self, mut builder: QueryStack<'_,'a,Q>, rev: bool, bounce: bool) where Self: 'a {
+            fn _query<'a,Q>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, rev: bool, bounce: bool) where Self: 'a {
                 let ($l,$($ll),+) = self;
                 if rev {
                     let ($l,$($ll),+) = reverse_idents!([$l $($ll)+]);
