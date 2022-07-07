@@ -210,21 +210,35 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// Determines the next child in this widget in the tabulation step
     fn _tabulate_next_child<P>(&self, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse where P: Queron<E> + ?Sized {
         match origin {
+            // This widget is entered
             TabulateNextChildOrigin::Enter => match dir {
+                // This widget is entered forwards, if focusable tabulate into this
                 TabulateDirection::Forward if self.focusable() => TabulateNextChildResponse::This,
+                // Entered forwards, not focusable but has childs, try tabulate into first child
                 TabulateDirection::Forward if self.childs() != 0 => TabulateNextChildResponse::Child(0),
+                // Entered backwards and has childs, try tabulate into last child
                 TabulateDirection::Backward if self.childs() != 0 => TabulateNextChildResponse::Child(self.childs()-1),
+                // Entered backwards, doesn't have childs but is focusable, try tabulate into this
                 TabulateDirection::Backward if self.focusable() => TabulateNextChildResponse::This,
+                // No childs and not focusable, leave this widget (resumes traverse in parent widget)
                 _ => TabulateNextChildResponse::Leave,
             }
+            // This widget was focused, tabulate away from this widget
             TabulateNextChildOrigin::This => match dir {
+                // If forward and has childs, tabulate into first child
                 TabulateDirection::Forward if self.childs() != 0 => TabulateNextChildResponse::Child(0),
+                // Else, leave this widget (resumes traverse in parent widget)
                 _ => TabulateNextChildResponse::Leave,
             }
+            // Tabulate from previous child of this widget
             TabulateNextChildOrigin::Child(child_id) => match dir { //assert!(child_id < self.childs());
-                TabulateDirection::Forward if child_id < self.childs()-1 => TabulateNextChildResponse::Child(child_id+1),
-                TabulateDirection::Backward if child_id != 0 => TabulateNextChildResponse::Child(child_id-1),
+                // If forward and child after origin child, tabulate into next child
+                TabulateDirection::Forward if child_id < self.childs().saturating_sub(1) => TabulateNextChildResponse::Child(child_id+1),
+                // If backwards, and child before origin child, tabulate into previous child
+                TabulateDirection::Backward if self.childs() != 0 && child_id != 0 => TabulateNextChildResponse::Child(child_id-1),
+                // If backwards, and no childs before origin child, but this widget is focusable, tabulate into this widget
                 TabulateDirection::Backward if self.focusable() => TabulateNextChildResponse::This,
+                // Else, leave this widget (resumes traverse in parent widget)
                 _ => TabulateNextChildResponse::Leave,
             }
         }
