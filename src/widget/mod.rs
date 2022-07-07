@@ -27,6 +27,8 @@ pub mod as_widgets;
 // pub mod array;
 pub mod ident;
 
+pub mod stack;
+
 /// Core Trait of guion ™️
 pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E: Env + 'static {
     fn id(&self) -> E::WidgetID;
@@ -160,12 +162,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     #[inline]
-    fn trace_bounds<P>(&self, stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error> where P: Queron<E> + ?Sized {
+    fn trace_bounds<P>(&self, stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error> where P: Queron<E> + ?Sized {
         if i.is_empty() {
             return Ok(*b)
         }
-        let (child,_) = self.resolve_child(&i,l.widget.root.fork(),l.ctx)?;
-        let bounds = self.child_bounds(l,b,e,force)?;
+        let (child,_) = self.resolve_child(&i,root.fork(),ctx)?;
+        let bounds = self.child_bounds(todo!() as &(),b,e,force)?;
         
         Ok(bounds[child])
     }
