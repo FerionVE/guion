@@ -66,9 +66,9 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn _tabulate_by_tab_dyn(&self) -> bool;
 
     #[deprecated="Not supposted to be exposed"]
-    fn _tabulate_next_child_dyn(&self, stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse;
+    fn _tabulate_next_child_dyn(&self, stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse;
 
-    fn _tabulate_dyn(&self, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,E::Error>;
+    fn _tabulate_dyn(&self, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error>;
     
     fn inner_dyn<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's;
 
@@ -185,12 +185,12 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         self._tabulate_by_tab()
     }
     #[inline]
-    fn _tabulate_next_child_dyn(&self, stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse {
-        self._tabulate_next_child(stack, origin, dir)
+    fn _tabulate_next_child_dyn(&self, stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse {
+        self._tabulate_next_child(stack, origin, dir, root, ctx)
     }
     #[inline]
-    fn _tabulate_dyn(&self, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,E::Error> {
-        self._tabulate_dyn(stack, op, dir)
+    fn _tabulate_dyn(&self, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> {
+        self._tabulate_dyn(stack, op, dir, root, ctx)
     }
     #[inline]
     fn inner_dyn<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's {
@@ -361,12 +361,12 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[allow(deprecated)]
     #[inline]
-    fn _tabulate_next_child<P>(&self, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection) -> TabulateNextChildResponse where P: Queron<E> + ?Sized {
-        self._tabulate_next_child_dyn(stack.erase(), origin, dir)
+    fn _tabulate_next_child<P>(&self, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse where P: Queron<E> + ?Sized {
+        self._tabulate_next_child_dyn(stack.erase(), origin, dir, root, ctx)
     }
     #[inline]
-    fn _tabulate<P>(&self, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection) -> Result<TabulateResponse<E>,E::Error> where P: Queron<E> + ?Sized {
-        self._tabulate_dyn(stack.erase(), op, dir)
+    fn _tabulate<P>(&self, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where P: Queron<E> + ?Sized {
+        self._tabulate_dyn(stack.erase(), op, dir, root, ctx)
     }
     #[inline]
     fn inner<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's {

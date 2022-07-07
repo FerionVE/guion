@@ -52,7 +52,7 @@ impl<E> Query<E> for QueryCurrentWidget where E: Env {
 }
 
 #[inline]
-pub fn for_child_widget<Q,W,E>(query: Q, child_widget: &W) -> WithCurrentWidget<Q,E> where Q: Queron<E>, W: Widget<E>, E: Env {
+pub fn for_child_widget<Q,W,E>(query: Q, child_widget: &W) -> WithCurrentWidget<Q,E> where Q: Queron<E>, W: Widget<E> + ?Sized, E: Env {
     let parent = QueryCurrentWidget.query_in(&query).unwrap();
 
     let new_path = child_widget.in_parent_path(parent.path.clone());

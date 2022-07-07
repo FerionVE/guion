@@ -1,3 +1,6 @@
+use crate::queron::Queron;
+use crate::widget::stack::WithCurrentWidget;
+
 use super::*;
 
 #[derive(Clone,Copy)]
@@ -16,13 +19,19 @@ pub enum TabulateResponse<E> where E: Env {
     Leave,
 }
 
-pub fn tabi<E>(root: &impl Widget<E>, path: E::WidgetPath, dir: TabulateDirection) -> Result<E::WidgetPath,E::Error> where E: Env { //TODO rename to tabulate_root
-    let mut current = path.clone();
-    let result = root._tabulate(todo!(),TabulateOrigin::Resolve( path.strip_prefix(&root.path()).unwrap() ),dir)?;
+pub fn tabi<E>(root_widget: &impl Widget<E>, root_path: E::WidgetPath, old_path: E::WidgetPath, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<E::WidgetPath,E::Error> where E: Env { //TODO rename to tabulate_root
+    let root_stack = WithCurrentWidget{
+        inner: (),
+        id: root_widget.id(),
+        path: root_path,
+    };
+
+    let mut current = old_path.clone();
+    let result = root_widget._tabulate(&root_stack, TabulateOrigin::Resolve( old_path.strip_prefix(&root_stack.path).unwrap() ), dir, root, ctx)?;
     match result {
         TabulateResponse::Done(p) => current = p,
         TabulateResponse::Leave => {
-            let result = root._tabulate(todo!(),TabulateOrigin::Enter,dir)?;
+            let result = root_widget._tabulate(&root_stack, TabulateOrigin::Enter, dir, root, ctx)?;
             match result {
                 TabulateResponse::Done(p) => current = p,
                 TabulateResponse::Leave => {},
