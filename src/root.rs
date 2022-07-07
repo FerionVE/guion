@@ -8,16 +8,19 @@ pub trait RootRef<E> where E: Env {
     fn fork<'s,'w:'s>(&'s self) -> E::RootRef<'w> where Self: 'w;
 
     //TODO fix old resolve stack
-    fn with_widget<'s,'l:'s>(
+    fn with_widget<'s,'l:'s,F,R>(
         &'s self,
         i: E::WidgetPath,
-        callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>),
+        callback: F,
         ctx: &mut E::Context<'_>,
-    ) -> Result<(),E::Error> where Self: 'l;
+    ) -> R
+    where 
+        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R,
+        Self: 'l;
 
     #[inline]
     fn has_widget(&self, i: E::WidgetPath, ctx: &mut E::Context<'_>) -> bool {
-        self.with_widget(i,&mut |_,_|{},ctx).is_ok()
+        self.with_widget(i, #[inline] |w,_| w.is_ok(), ctx)
     }
 
     #[deprecated] 

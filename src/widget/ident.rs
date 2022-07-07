@@ -21,7 +21,12 @@ impl<E> WidgetIdent<E> where E: Env {
         if let Some(id) = path._dest_widget() {
             Ok(Self{id,path})
         }else{
-            stor.widget(path,ctx).map(#[inline] |r| r.ident() )
+            stor.with_widget(
+                path,
+                #[inline] |w,_|
+                    w.map(#[inline] |r| r.ident() ),
+                ctx,
+            )
         }
     }
 }
