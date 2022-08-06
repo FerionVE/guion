@@ -189,7 +189,7 @@ impl Bounds {
     #[inline]
     pub fn shift_to_fit(&mut self, inner_abs: &Bounds) {
         #[inline]
-    fn shift_to_fit_axis(axis: &mut (i32,i32), inner_abs: (i32,i32)) {
+        fn shift_to_fit_axis(axis: &mut (i32,i32), inner_abs: (i32,i32)) {
             if axis.1 < inner_abs.1 {
                 axis.0 += inner_abs.1 - axis.1;
                 axis.1 += inner_abs.1 - axis.1;
@@ -205,6 +205,13 @@ impl Bounds {
         shift_to_fit_axis(&mut yy, (inner_abs.off.y,inner_abs.y1()) );
         self.off.x = xx.0; self.size.w = (xx.1-xx.0) as u32;
         self.off.y = yy.0; self.size.h = (yy.1-yy.0) as u32;
+    }
+
+    pub fn overlap(&self, o: &Bounds) -> bool {
+        (o.x() < self.x1() || o.x() == self.x()) &&
+        (o.x1() > self.x() || o.x1() == self.x1()) &&
+        (o.y() < self.y1() || o.y() == self.y()) &&
+        (o.y1() > self.y() || o.y1() == self.y1())
     }
 }
 

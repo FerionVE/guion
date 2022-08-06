@@ -13,6 +13,7 @@ pub mod id;
 pub mod path;
 pub mod render;
 pub mod event;
+pub mod event_new;
 pub mod style;
 pub mod layout;
 pub mod ctx;

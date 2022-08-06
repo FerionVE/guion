@@ -208,6 +208,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
 
     /// Determines the next child in this widget in the tabulation step
+    #[inline]
     fn _tabulate_next_child<P>(&self, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse where P: Queron<E> + ?Sized {
         match origin {
             // This widget is entered
@@ -250,7 +251,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         let enter_child_sub = |child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
             self.with_child(
                 child_id,
-                |child_widget, ctx| {
+                #[inline] |child_widget, ctx| {
                     let child_widget = child_widget.unwrap();
                     let stack = stack::for_child_widget(stack, child_widget);
                     child_widget._tabulate(&stack, to, dir, root, ctx)

@@ -69,8 +69,8 @@ pub trait Render<E>: Sized where E: Env, /*for<'r> ERenderer<'r,E>: AsRefMut<Sel
     fn style(&self) -> &EStyle<E>;
     fn selector(&self) -> &ESSelector<E>;
 
-    #[deprecated]
-    fn render_widget(&mut self, w: Link<E>);
+    // #[deprecated]
+    // fn render_widget(&mut self, w: Link<E>);
 
     #[deprecated]
     fn fork_with<'r>(&'r mut self, bounds: Option<Bounds>, viewport: Option<Bounds>, style: Option<EStyle<E>>, selector: Option<ESSelector<E>>) -> ERenderer<'r,E>;
