@@ -18,7 +18,7 @@ pub trait Event<E> where E: Env {
     fn query<'a,Q,S>(&'a self, query: &Q, stack: &S) -> Option<Q::Out<'a>> where Q: Query<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
         let mut builder = query.new_builder();
         let qstack = QueryStack::new(query, &mut builder);
-        stack._query(qstack);
+        self._query(qstack,stack);
         query.end_builder(builder)
     }
 
@@ -35,7 +35,7 @@ pub trait Event<E> where E: Env {
 
     #[deprecated]
     #[inline]
-    fn query_variant<'a,V,S>(&'a self, stack: &S) -> Option<&'a V> where S: Queron<E> + ?Sized, V: Clone, Self: 'a {
+    fn query_variant<'a,V,S>(&'a self, stack: &S) -> Option<&'a V> where S: Queron<E> + ?Sized, V: Clone + 'static, Self: 'a {
         self.query(&QueryVariant(PhantomData), stack)
     }
 

@@ -403,11 +403,12 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     where
         F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
+        let mut callback = Some(callback);
         let mut callback_return: Option<R> = None;
         unsafe{self.with_child_dyn(
             i,
             &mut |w,ctx| {
-                let r = (callback)(w,ctx);
+                let r = (callback.take().unwrap_unchecked())(w,ctx);
                 callback_return = Some(r);
                 ProtectedReturn(PhantomData)
             },
@@ -419,7 +420,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     #[inline]
     fn childs_ref<'s,F>(
         &'s self,
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     )
@@ -445,11 +446,12 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     where
         F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
     {
+        let mut callback = Some(callback);
         let mut callback_return: Option<R> = None;
         unsafe{self.with_resolve_dyn(
             i,
             &mut |w,ctx| {
-                let r = (callback)(w,ctx);
+                let r = (callback.take().unwrap_unchecked())(w,ctx);
                 callback_return = Some(r);
                 ProtectedReturn(PhantomData)
             },

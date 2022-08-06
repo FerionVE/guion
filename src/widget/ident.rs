@@ -22,7 +22,7 @@ impl<E> WidgetIdent<E> where E: Env {
             Ok(Self{id,path})
         }else{
             stor.with_widget(
-                path,
+                path.clone(),
                 #[inline] |w,_|
                     w.map(#[inline] |r| Self{id: r.id(), path} ), //TODO with_widget resolve should also yield new path
                 ctx,

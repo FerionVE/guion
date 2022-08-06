@@ -1,5 +1,6 @@
 use crate::queron::Queron;
 use crate::queron::query::Query;
+use crate::root::RootRef;
 use crate::widget::stack::{WithCurrentWidget, QueryCurrentWidget};
 
 use super::*;
@@ -24,7 +25,7 @@ pub fn tabi<E>(root_widget: &impl Widget<E>, root_stack: &impl Queron<E>, old_pa
     let widget_data = QueryCurrentWidget.query_in(root_stack).unwrap();
 
     let mut current = old_path.clone();
-    let result = root_widget._tabulate(&root_stack, TabulateOrigin::Resolve( old_path.strip_prefix(&widget_data.path).unwrap() ), dir, root, ctx)?;
+    let result = root_widget._tabulate(&root_stack, TabulateOrigin::Resolve( old_path.strip_prefix(&widget_data.path).unwrap() ), dir, root.fork(), ctx)?;
     match result {
         TabulateResponse::Done(p) => current = p,
         TabulateResponse::Leave => {

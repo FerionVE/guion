@@ -14,7 +14,7 @@ pub struct WithCurrentWidget<S,E> where E: Env {
 
 impl<S,E> Queron<E> for WithCurrentWidget<S,E> where S: Queron<E>, E: Env {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: crate::queron::query::QueryStack<'_,'a,Q,E>) where Self: 'a {
+    fn _query<'a,Q>(&'a self, mut builder: crate::queron::query::QueryStack<'_,'a,Q,E>) where Self: 'a {
         if let Some((_,builder)) = builder.downcast::<'_,QueryCurrentWidget>() {
             *builder = Some(QueriedCurrentWidget{
                 path: &self.path,
@@ -85,7 +85,7 @@ pub struct WithCurrentBounds<S> {
 
 impl<S,E> Queron<E> for WithCurrentBounds<S> where S: Queron<E>, E: Env {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: crate::queron::query::QueryStack<'_,'a,Q,E>) where Self: 'a {
+    fn _query<'a,Q>(&'a self, mut builder: crate::queron::query::QueryStack<'_,'a,Q,E>) where Self: 'a {
         if let Some((_,builder)) = builder.downcast::<'_,QueryCurrentBounds>() {
             *builder = Some(QueriedCurrentBounds{
                 bounds: &self.bounds,

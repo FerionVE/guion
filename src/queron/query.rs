@@ -3,7 +3,7 @@ use std::ptr::NonNull;
 use super::*;
 
 //TODO Builder with lifetime
-pub trait Query<E>: Clone + 'static {
+pub trait Query<E>: Clone + 'static where E: 'static {
     type Out<'b>: 'b;
     type Builder<'b>: Clone + 'b;
 

@@ -119,7 +119,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     #[deprecated]
     fn childs_ref<'s,F>(
         &'s self,
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     )
@@ -130,7 +130,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             self.with_child(
                 i,
                 #[inline] |wg,ctx| (callback)(i,wg.unwrap(),ctx), 
-                root, ctx,
+                root.fork(), ctx,
             );
         }
     }
@@ -147,7 +147,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                     let w = wg.unwrap();
                     dest.push(w.in_parent_path(own_path.refc()));
                 }, 
-                root, ctx,
+                root.fork(), ctx,
             );
         }
 
@@ -181,7 +181,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                 //TODO assert that with_child always calls the callback
                 self.with_child(
                     c,
-                    #[inline] |w,cb| (callback)(Ok(w.unwrap()),ctx),
+                    #[inline] |w,ctx| (callback)(Ok(w.unwrap()),ctx),
                     root, ctx,
                 )
             },
@@ -207,7 +207,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                 return Ok((c,r.sub_path));
             }
         }
-        Err(self.gen_diag_error_resolve_fail(sub_path, "resolve",root,ctx))
+        Err(self.gen_diag_error_resolve_fail(sub_path, "resolve",root.fork(),ctx))
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     #[inline]
@@ -295,30 +295,30 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn _tabulate<P>(&self, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where P: Queron<E> + ?Sized {
         let current_path = QueryCurrentWidget.query_in(stack).unwrap().path;
         // fn to tabulate to the next child away from the previous child (child_id None = self)
-        let enter_child_sub = |child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
+        let enter_child_sub = |child_id: usize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
             self.with_child(
                 child_id,
                 #[inline] |child_widget, ctx| {
                     let child_widget = child_widget.unwrap();
                     let stack = stack::for_child_widget(stack, child_widget);
-                    child_widget._tabulate(&stack, to, dir, root, ctx)
+                    child_widget._tabulate(&stack, to, dir, root.fork(), ctx)
                 }, 
-                root, ctx
+                root.fork(), ctx
             )
         };
-        let next_child = |mut child_id: Option<usize>| -> Result<TabulateResponse<E>,E::Error> {
+        let next_child = |mut child_id: Option<usize>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
             loop {
                 // determine the targeted next child
                 let targeted_child = self._tabulate_next_child(
                     stack,
                     TabulateNextChildOrigin::child_or_this(child_id),
                     dir,
-                    root, ctx,
+                    root.fork(), ctx,
                 );
 
                 match targeted_child {
                     // enter child or repeat
-                    TabulateNextChildResponse::Child(t) => match enter_child_sub(t,TabulateOrigin::Enter)? {
+                    TabulateNextChildResponse::Child(t) => match enter_child_sub(t,TabulateOrigin::Enter,ctx)? {
                         TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
                         TabulateResponse::Leave => {
                             // couldn't enter next child, repeat
@@ -340,10 +340,10 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             Ok(TabulateResponse::Leave)
         };
         // tabulate into specific child, either in resolve phase or enter
-        let enter_child = |child_id: usize, to: TabulateOrigin<E>| -> Result<TabulateResponse<E>,E::Error> {
-            match enter_child_sub(child_id,to)? {
+        let enter_child = |child_id: usize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
+            match enter_child_sub(child_id,to,ctx)? {
                 TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
-                TabulateResponse::Leave => return next_child(Some(child_id)),
+                TabulateResponse::Leave => return next_child(Some(child_id),ctx),
             }
         };
         match op {
@@ -351,10 +351,10 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                 if !p.is_empty() {
                     // pass 1: resolve to previous focused widget
                     let (child_id,sub_path) = self.resolve_child(&p,root.fork(),ctx)?;
-                    return enter_child(child_id, TabulateOrigin::Resolve(sub_path));
+                    return enter_child(child_id, TabulateOrigin::Resolve(sub_path),ctx);
                 }else{
                     // pass 2: we are the previous focused widget and should tabulate away
-                    return next_child( None);
+                    return next_child(None,ctx);
                 }
             },
             TabulateOrigin::Enter => {
@@ -364,12 +364,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                     stack,
                     TabulateNextChildOrigin::Enter,
                     dir,
-                    root, ctx,
+                    root.fork(), ctx,
                 );
 
                 match enter_dir {
                     // tabulate into enter the targeted child
-                    TabulateNextChildResponse::Child(t) => return enter_child(t, TabulateOrigin::Enter),
+                    TabulateNextChildResponse::Child(t) => return enter_child(t, TabulateOrigin::Enter,ctx),
                     // tabulate to self
                     TabulateNextChildResponse::This => return Ok(TabulateResponse::Done(current_path.clone())),
                     TabulateNextChildResponse::Leave => return Ok(TabulateResponse::Leave),
@@ -457,7 +457,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         */
         let widget_type = self.debugged_type_name();
         let child_info = (0..self.childs())
-            .map(#[inline] |i| self.with_child(i,|w,_| w.unwrap().guion_resolve_error_child_info(i) ,root,ctx)  )
+            .map(#[inline] |i| self.with_child(
+                i,
+                |w,ctx| w.unwrap().guion_resolve_error_child_info(i) ,
+                root.fork(),
+                ctx,
+            )  )
             .collect::<Vec<_>>();
         GuionError::ResolveError(Box::new(ResolveError{
             op,

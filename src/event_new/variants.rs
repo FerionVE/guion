@@ -16,7 +16,7 @@ pub struct StdVariant<V,E> where V: Variant<E> + Clone, E: Env {
 impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone, E: Env {
     type WithPrefetch<R> = R where R: Queron<E>;
 
-    fn _query<'a,Q,S>(&'a self, builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a {
+    fn _query<'a,Q,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a {
         if let Some((_,builder)) = builder.downcast::<'_,QueryVariant<V>>() {
             *builder = Some(&self.variant);
         } else if let Some((_,builder)) = builder.downcast::<'_,QueryStdEventMode>() {
