@@ -4,11 +4,13 @@ use super::*;
 #[derive(Clone,Debug)]
 pub struct KbdDown<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
     pub key: EEKey<E>,
 }
 #[derive(Clone,Debug)]
 pub struct KbdUp<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
     pub key: EEKey<E>,
     pub down_widget: WidgetIdent<E>,
     pub down_ts: u64,
@@ -16,53 +18,70 @@ pub struct KbdUp<E> where E: Env {
 #[derive(Clone,Debug)]
 pub struct KbdPress<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
     pub key: EEKey<E>,
     pub down_widget: WidgetIdent<E>,
     pub down_ts: u64,
 }
 #[derive(Clone,Debug)]
-pub struct TextInput {
+pub struct TextInput<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
     pub text: String, //TODO Arc<str> for less clonery
 }
 
 #[derive(Clone,Debug)]
 pub struct MouseDown<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
     pub key: EEKey<E>,
     pub pos: Offset,
+    pub filter_pos: bool,
 }
 #[derive(Clone,Debug)]
 pub struct MouseUp<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
     pub key: EEKey<E>,
     pub pos: Offset,
+    pub filter_pos: bool,
     pub down_pos: Offset,
     pub down_widget: WidgetIdent<E>,
     pub down_ts: u64,
 }
 
 #[derive(Clone,Debug)]
-pub struct MouseScroll {
+pub struct MouseScroll<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
+    pub pos: Offset,
+    pub filter_pos: bool,
     pub x: i32,
     pub y: i32,
 }
 
 #[derive(Clone,Debug)]
-pub struct MouseMove {
+pub struct MouseMove<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
     pub pos: Offset,
+    pub filter_pos: bool,
 }
 
 #[derive(Clone,Debug)]
-pub struct MouseEnter {
+pub struct MouseEnter<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
+    pub pos: Offset,
+    pub filter_pos: bool,
 }
 
 #[derive(Clone,Debug)]
-pub struct MouseLeave {
+pub struct MouseLeave<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
+    pub pos: Offset,
+    pub filter_pos: bool,
 }
 
 #[derive(Clone,Debug)]
@@ -79,13 +98,15 @@ pub struct WindowResize {
 }
 
 #[derive(Clone,Debug)]
-pub struct Focus {
+pub struct Focus<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
 }
 
 #[derive(Clone,Debug)]
-pub struct Unfocus {
+pub struct Unfocus<E> where E: Env {
     pub ts: u64,
+    pub receiver: Option<E::WidgetPath>,
 }
 
 macro_rules! pos {
@@ -145,20 +166,20 @@ macro_rules! invalid {
 impl<E> Variant<E> for KbdDown<E> where E: Env {focused!();}
 impl<E> Variant<E> for KbdPress<E> where E: Env {focused!();}
 impl<E> Variant<E> for KbdUp<E> where E: Env {focused!();}
-impl<E> Variant<E> for TextInput where E: Env {focused!();}
+impl<E> Variant<E> for TextInput<E> where E: Env {focused!();}
 
 impl<E> Variant<E> for MouseDown<E> where E: Env {consuming!();hovered!();pos!(pos);}
 impl<E> Variant<E> for MouseUp<E> where E: Env {consuming!();hovered!();pos!(pos);}
-impl<E> Variant<E> for MouseScroll where E: Env {consuming!();hovered!();}
-impl<E> Variant<E> for MouseMove where E: Env {consuming!();root!();pos!(pos);}
-impl<E> Variant<E> for MouseEnter where E: Env {consuming!();invalid!();}
-impl<E> Variant<E> for MouseLeave where E: Env {consuming!();invalid!();}
+impl<E> Variant<E> for MouseScroll<E> where E: Env {consuming!();hovered!();}
+impl<E> Variant<E> for MouseMove<E> where E: Env {consuming!();root!();pos!(pos);}
+impl<E> Variant<E> for MouseEnter<E> where E: Env {consuming!();invalid!();}
+impl<E> Variant<E> for MouseLeave<E> where E: Env {consuming!();invalid!();}
 
 impl<E> Variant<E> for WindowMove where E: Env {consuming!();invalid!();}
 impl<E> Variant<E> for WindowResize where E: Env {consuming!();invalid!();}
 
-impl<E> Variant<E> for Focus where E: Env {consuming!();invalid!();}
-impl<E> Variant<E> for Unfocus where E: Env {consuming!();invalid!();}
+impl<E> Variant<E> for Focus<E> where E: Env {consuming!();invalid!();}
+impl<E> Variant<E> for Unfocus<E> where E: Env {consuming!();invalid!();}
 #[non_exhaustive]
 #[derive(Clone,Debug)]
 pub enum RootEvent<E> where E: Env {

@@ -10,6 +10,29 @@ use super::*;
 pub trait WidgetDyn<E> where E: Env + 'static {
     fn id_dyn(&self) -> E::WidgetID;
 
+    fn render_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        r: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    );
+
+    fn event_direct_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        e: &(dyn EventDyn<E>+'_),
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> EventResp;
+
+    fn size_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> ESize<E>;
+
     fn _render_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
@@ -113,6 +136,35 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn id_dyn(&self) -> E::WidgetID {
         self.id()
+    }
+    #[inline]
+    fn render_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        r: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) {
+        self.render(stack, r, root, ctx)
+    }
+    #[inline]
+    fn event_direct_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        e: &(dyn EventDyn<E>+'_),
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> EventResp {
+        self.event_direct(stack, e, root, ctx)
+    }
+    #[inline]
+    fn size_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> ESize<E> {
+        self.size(stack, root, ctx)
     }
     #[inline]
     fn _render_dyn(
@@ -276,6 +328,35 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     #[inline]
     fn id(&self) -> E::WidgetID {
         self.id_dyn()
+    }
+    #[inline]
+    fn render<P>(
+        &self,
+        stack: &P,
+        r: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where P: Queron<E> + ?Sized {
+        self.render_dyn(stack.erase(), r, root, ctx)
+    }
+    #[inline]
+    fn event_direct<P,Evt>(
+        &self,
+        stack: &P,
+        e: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        self.event_direct_dyn(stack.erase(), e.erase(), root, ctx)
+    }
+    #[inline]
+    fn size<P>(
+        &self,
+        stack: &P,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where P: Queron<E> + ?Sized {
+        self.size_dyn(stack.erase(), root, ctx)
     }
     #[inline]
     fn _render<P>(

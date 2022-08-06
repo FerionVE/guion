@@ -8,6 +8,7 @@ use crate::queron::query::{Query, QueryStack, DynQuery};
 use self::filter::{StdEventMode, QueryStdEventMode, QueryVariant};
 
 pub mod filter;
+pub mod variants;
 
 pub trait Event<E> where E: Env {
     /// Prefetch appended to stack
