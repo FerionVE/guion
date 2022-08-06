@@ -1,84 +1,71 @@
 use std::marker::PhantomData;
 
 use crate::env::Env;
-use crate::path::WidgetPath;
 use crate::queron::Queron;
-use crate::queron::query::Query;
-use crate::widget::stack::{QueryCurrentWidget, QueryCurrentBounds};
+use crate::queron::dyn_tunnel::QueronDyn;
+use crate::queron::query::{Query, QueryStack, DynQuery};
 
-use self::filter::{QueryEventFilterPath, QueryEventFilterPos};
+use self::filter::{StdEventMode, QueryStdEventMode, QueryVariant};
 
 pub mod filter;
 
-#[derive(Clone)]
-pub struct QueryEvent<V>(pub PhantomData<V>) where V: Clone + 'static;
-
-pub struct WithEvent<S,V> where V: Clone + 'static {
-    pub inner: S,
-    pub event: V,
-    pub ts: u64,
-}
-
-#[derive(Clone)]
-pub struct QueriedEvent<'a,V> where V: Clone + 'static {
-    pub event: &'a V,
-    pub ts: u64,
-}
-
-impl<S,V,E> Queron<E> for WithEvent<S,V> where S: Queron<E>, E: Env, V: Clone + 'static {
+pub trait Event<E> where E: Env {
     #[inline]
-    fn _query<'a,Q>(&'a self, builder: crate::queron::query::QueryStack<'_,'a,Q,E>) where Self: 'a {
-        if let Some((_,builder)) = builder.downcast::<'_,QueryEvent<V>>() {
-            *builder = Some(QueriedEvent{
-                event: &self.event,
-                ts: self.ts,
-            })
-        } else {
-            self.inner._query(builder)
-        }
+    fn query<'a,Q,S>(&'a self, query: &Q, stack: &S) -> Option<Q::Out<'a>> where Q: Query<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
+        let mut builder = query.new_builder();
+        let qstack = QueryStack::new(query, &mut builder);
+        stack._query(qstack);
+        query.end_builder(builder)
+    }
+
+    fn _query<'a,Q,S>(&'a self, builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a;
+
+    //TODO move to QBase
+    fn erase<'s,'ss>(&'s self) -> &'s (dyn EventDyn<E>+'ss) where 'ss: 's, Self: 'ss;
+
+    #[deprecated]
+    #[inline]
+    fn query_std_event_mode<'a,S>(&'a self, stack: &S) -> Option<&'a StdEventMode<E>> where S: Queron<E> + ?Sized, Self: 'a {
+        self.query(&QueryStdEventMode, stack)
+    }
+
+    #[deprecated]
+    #[inline]
+    fn query_variant<'a,V,S>(&'a self, stack: &S) -> Option<&'a StdEventMode<E>> where S: Queron<E> + ?Sized, Self: 'a {
+        self.query(&QueryVariant(PhantomData), stack)
+    }
+
+    #[deprecated]
+    /// Timestamp
+    fn ts(&self) -> u64;
+}
+
+/// This trait is only for bridging thru trait objects
+pub trait EventDyn<E> {
+    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, stack: &dyn QueronDyn<E>);
+    fn ts_dyn(&self) -> u64;
+}
+impl<T,E> EventDyn<E> for T where T: Event<E> + ?Sized, E: Env {
+    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, stack: &dyn QueronDyn<E>) {
+        self._query(builder,stack)
+    }
+    fn ts_dyn(&self) -> u64 {
+        self.ts()
+    }
+}
+
+/// The call into dyn querylon stack, the last static propagation
+impl<E> Event<E> for dyn EventDyn<E> + '_ where E: Env {
+    #[inline]
+    fn _query<'a,Q,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a {
+        self._query_dyn(builder.fork_dyn(),stack.erase())
     }
     #[inline]
-    fn erase<'s,'ss>(&'s self) -> &'s (dyn crate::queron::dyn_tunnel::QueronDyn<E>+'ss) where 'ss: 's, Self: 'ss {
+    fn erase<'s,'ss>(&'s self) -> &'s (dyn EventDyn<E>+'ss) where 'ss: 's, Self: 'ss {
         self
     }
-}
 
-impl<E,V> Query<E> for QueryEvent<V> where E: Env, V: Clone + 'static {
-    type Out<'b> = QueriedEvent<'b,V>;
-    type Builder<'b> = Option<QueriedEvent<'b,V>>;
-
-    
-
-    #[inline]
-    fn new_builder<'b>(&self) -> Self::Builder<'b> {
-        None
-    }
-    #[inline]
-    fn end_builder<'b>(&self, b: Self::Builder<'b>) -> Option<Self::Out<'b>> {
-        b
-    }
-
-    fn query_in<'b,S>(&self, stack: &'b S) -> Option<Self::Out<'b>> where S: Queron<E> + ?Sized + 'b {
-        if let Some(filter) = QueryEventFilterPath.query_in(stack) {
-            if let Some(current_widget) = QueryCurrentWidget.query_in(stack) {
-                if !filter.dest_eq(&current_widget.path) { //TODO: incorrect path compare, new path system
-                    return None;
-                }
-            } else {
-                return None;
-            }
-        }
-
-        if let Some(filter_pos) = QueryEventFilterPos.query_in(stack) {
-            if let Some(current_pos) = QueryCurrentBounds.query_in(stack) {
-                if filter_pos.is_inside(current_pos.bounds) {
-                    return None;
-                }
-            } else {
-                return None;
-            }
-        }
-
-        self._query_direct(stack)
+    fn ts(&self) -> u64 {
+        self.ts_dyn()
     }
 }
