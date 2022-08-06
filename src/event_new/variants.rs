@@ -13,6 +13,24 @@ pub struct StdVariant<V,E> where V: Variant<E> + Clone, E: Env {
     pub filter_point: Option<Offset>,
 }
 
+impl<V,E> StdVariant<V,E> where V: Variant<E> + Clone, E: Env { 
+    /// nofilter
+    #[inline]
+    pub fn new(variant: V, ts: u64) -> Self {
+        Self { variant, ts, filter_path: None, filter_point: None }
+    }
+    #[inline]
+    pub fn with_filter_path(mut self, filter_path: E::WidgetPath) -> Self {
+        self.filter_path = Some(filter_path);
+        self
+    }
+    #[inline]
+    pub fn with_filter_point(mut self, filter_point: Offset) -> Self {
+        self.filter_point = Some(filter_point);
+        self
+    }
+}
+
 impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone, E: Env {
     type WithPrefetch<R> = R where R: Queron<E>;
 

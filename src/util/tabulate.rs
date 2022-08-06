@@ -21,7 +21,7 @@ pub enum TabulateResponse<E> where E: Env {
     Leave,
 }
 
-pub fn tabi<E>(root_widget: &impl Widget<E>, root_stack: &impl Queron<E>, old_path: E::WidgetPath, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<E::WidgetPath,E::Error> where E: Env { //TODO rename to tabulate_root
+pub fn tabi<E>(root_widget: &(impl Widget<E> + ?Sized), root_stack: &(impl Queron<E> + ?Sized), old_path: E::WidgetPath, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<E::WidgetPath,E::Error> where E: Env { //TODO rename to tabulate_root
     let widget_data = QueryCurrentWidget.query_in(root_stack).unwrap();
 
     let mut current = old_path.clone();

@@ -19,6 +19,7 @@ pub type ESFont<E: Env> = <EStyle<E> as Style<E>>::Font;
 pub type ESColor<E: Env> = <EStyle<E> as Style<E>>::Color;
 pub type ESCursor<E: Env> = <EStyle<E> as Style<E>>::Cursor;
 pub type ECHandler<'cc, E: Env> = <E::Context<'cc> as Context<'cc, E>>::Handler;
+pub type ECHandlerBuilt<'cc, E: Env> = <ECHandler<'cc,E> as HandlerBuilder<E>>::Built;
 pub type ECQueue<'cc, E: Env> = <E::Context<'cc> as Context<'cc, E>>::Queue;
 
 pub type ECStdState<'cc, E: Env> = <E::Context<'cc> as CtxStdState<'cc, E>>::T;

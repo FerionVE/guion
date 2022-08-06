@@ -24,9 +24,11 @@ pub trait Handler<E>: 'static where E: Env {
         w: &W,
         stack: &S,
         r: &mut ERenderer<'_,E>,
+        //handler_root: &ECHandlerBuilt<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized;
+
     fn _event_direct<W,S,Evt>(
         &self,
         w: &W,
@@ -35,6 +37,7 @@ pub trait Handler<E>: 'static where E: Env {
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+
     fn _event_root<W,S,Evt>(
         &self,
         w: &W,
@@ -43,6 +46,7 @@ pub trait Handler<E>: 'static where E: Env {
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+
     fn _size<W,S>(
         &self,
         w: &W,

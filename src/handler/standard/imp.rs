@@ -52,7 +52,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
     //#[inline] 
     fn _event_root<W,S,Evt>(
         &self,
-        w: &W,
+        root_widget: &W,
         stack: &S,
         e: &Evt,
         root: E::RootRef<'_>,
@@ -66,36 +66,44 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         assert!(widget_data.path.is_empty());
 
         if let Some(ee) = e.query_variant::<RootEvent<E>,_>(stack) {
+            let ee = ee.clone();
+            let ts = e.ts();
             let mut passed = false;
             match ee {
                 RootEvent::KbdDown{key} => {
                     //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = (self.access)(ctx).s.kbd.focused.clone() {
-                        if !l.widget.root.has_widget(id.refc().path,ctx) {
+                        if !root.has_widget(id.refc().path,ctx) {
                             //drop event if widget is gone
                             return false;
                         }
                         (self.access)(ctx).s.key.down(
                             key.clone(),
                             id.clone(),
-                            e.ts(),
+                            ts,
                             None,
                         );
                         //emit KbdDown event
                         let event = KbdDown{
                             key: key.clone(),
                         };
-                        passed |= l.send_event(
-                            &e.default_filter().with_event(Event::from(event)),
-                            id.refc().path
-                        ).unwrap();
+                        passed |= root_widget.event_direct(
+                            stack,
+                            &StdVariant::new(event,ts).with_filter_path(id.path),
+                            root.fork(), ctx,
+                        );
                         /*let event = KbdPress{
                             key: key.clone(),
                             down_widget: id.refc(),
                             down_ts: e.2,
                         };
                         l._event_root((Event::from(event),&wbounds,e.2));*/
-                        passed |= l._event_root(&e.with_event(Event::from(RootEvent::KbdPress{key})));
+                        passed |= self._event_root(
+                            root_widget,
+                            stack,
+                            &StdVariant::new(RootEvent::KbdPress{key},ts),
+                            root, ctx,
+                        ); // TODO discards filters from current RootEvent
                     }
                     //l._event_root((Event::from(RootEvent::KbdPress{key}),e.1,e.2));
                 },
@@ -108,16 +116,18 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             down_ts: p.ts,
                         };
                         if let Some(id) = (self.access)(ctx).s.kbd.focused.clone() {
-                            passed |= l.send_event(
-                                &e.default_filter().with_event(Event::from(event.clone())),
-                                id.path,
-                            ).unwrap_or(false);
+                            passed |= root_widget.event_direct(
+                                stack,
+                                &StdVariant::new(event.clone(),ts).with_filter_path(id.path),
+                                root.fork(), ctx,
+                            );
                         }
                         //drop up if widget is gone TODO check if this is correct
-                        passed |=  l.send_event(
-                            &e.default_filter().with_event(Event::from(event.clone())),
-                            p.down.refc().path,
-                        ).unwrap_or(false);
+                        passed |= root_widget.event_direct(
+                            stack,
+                            &StdVariant::new(event,ts).with_filter_path(p.down.path),
+                            root, ctx,
+                        );
                     }
                 },
                 RootEvent::KbdPress{key} => {
@@ -130,52 +140,60 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             down_ts: p.ts,
                         };
                         if let Some(id) = (self.access)(ctx).s.kbd.focused.clone() {
-                            passed |= l.send_event(
-                                &e.default_filter().with_event(Event::from(event.clone())),
-                                id.path.refc(),
-                            ).unwrap_or(false);
+                            passed |= root_widget.event_direct(
+                                stack,
+                                &StdVariant::new(event,ts).with_filter_path(id.path.clone()),
+                                root.fork(), ctx,
+                            );
                             let mut do_tab = false;
-                            if let Ok(l) = l.with_widget(id.path.refc()) {
-                                if key == MatchKeyCode::KbdTab && l.widget._tabulate_by_tab() {
-                                    do_tab = true;
-                                }
+                            if
+                                key == MatchKeyCode::KbdTab &&
+                                root.with_widget(id.path.clone(),|w,_| w.map_or(false,|w| w._tabulate_by_tab() ), ctx)
+                            {
+                                do_tab = true;
                             }
                             if do_tab {
-                                let reverse = l.state().is_pressed(MatchKeyCode::KbdShift).is_some();
+                                let reverse = ctx.state().is_pressed(MatchKeyCode::KbdShift).is_some();
                                 let dir = if reverse {TabulateDirection::Backward} else {TabulateDirection::Forward};
-                                let path = tabi(l.reference(),id.path,dir).expect("TODO");
+                                let path = tabi(root_widget,stack,id.path,dir,root.fork(),ctx).expect("TODO");
                                 //better way than this hack to get the ident
-                                (self.access)(l.ctx).s.kbd.focused = Some(WidgetIdent::from_path(path,&l.widget.root,l.ctx).expect("TODO"));
+                                (self.access)(ctx).s.kbd.focused = Some(WidgetIdent::from_path(path,&root,ctx).expect("TODO"));
                             }
                         }
                     }
                 }
                 RootEvent::MouseDown{key} => {
-                    passed |= self._event_root(l.reference(),&e.with_event(Event::from(RootEvent::MouseUp{key: key.clone()})),&mut |_,_|todo!());
+                    passed |= self._event_root(
+                        root_widget,
+                        stack,
+                        &StdVariant::new(RootEvent::MouseUp{key: key.clone()},ts),
+                        root.fork(), ctx,
+                    ); // TODO discards filters from current RootEvent
                     //unfocus previously focused widget
-                    passed |= self.unfocus(l.reference(),e.bounds,e.ts());
+                    passed |= self.unfocus(root_widget, stack, ts, root.fork(), ctx);
 
                     //the currently hovered widget
-                    if let Some(pos) = (self.access)(l.ctx).s.mouse.pos {
+                    if let Some(pos) = (self.access)(ctx).s.mouse.pos {
                         if let Some(hovered) = (self.access)(ctx).s.mouse.hovered.clone() {
-                            (self.access)(ctx).s.key.down(key.clone(),hovered.clone(),e.ts,Some(pos));
+                            (self.access)(ctx).s.key.down(key.clone(),hovered.clone(),ts,Some(pos));
 
-                            passed |= l.send_event(
-                                &e.default_filter().with_event(Event::from(MouseDown{key,pos})),
-                                hovered.path.refc(),
-                            ).unwrap_or(false);
+                            passed |= root_widget.event_direct(
+                                stack,
+                                &StdVariant::new(MouseDown{key,pos},ts).with_filter_path(hovered.path.clone()),
+                                root.fork(), ctx,
+                            );
 
 
                             //passed |= Self::focus(l,hovered.path.refc(),e.1,e.2).unwrap_or(false);
 
-                            let focus = if let Ok(w) = l.with_widget(hovered.path.refc()) {
-                                w.widget._focus_on_mouse_down()
-                            }else{
-                                false
-                            };
+                            let focus = root.with_widget(
+                                hovered.path.refc(),
+                                |w,_| w.map_or(false,|w| w._focus_on_mouse_down() ),
+                                ctx
+                            );
 
                             if focus {
-                                passed |= self.focus(l,hovered.path,e.bounds,e.ts()).unwrap();
+                                passed |= self.focus(root_widget, hovered.path, stack, ts, root, ctx).unwrap();
                             }
                         }
                     }
@@ -194,17 +212,19 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             };
                             if let Some(hovered) = (self.access)(ctx).s.mouse.hovered.clone() {
                                 if hovered != p.down {
-                                    passed |= l.send_event(
-                                        &e.default_filter().with_event(Event::from(event.clone())),
-                                        hovered.path,
-                                    ).unwrap_or(false);
+                                    passed |= root_widget.event_direct(
+                                        stack,
+                                        &StdVariant::new(event.clone(),ts).with_filter_path(hovered.path),
+                                        root.fork(), ctx,
+                                    );
                                 }
                             }
                             //event dropped if widget gone
-                            passed |= l.send_event(
-                                &e.default_filter().with_event(Event::from(event)),
-                                p.down.refc().path,
-                            ).unwrap_or(false);
+                            passed |= root_widget.event_direct(
+                                stack,
+                                &StdVariant::new(event.clone(),ts).with_filter_path(p.down.path),
+                                root, ctx,
+                            );
                         }
                     }
                 }
@@ -213,58 +233,80 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                     (self.access)(ctx).s.mouse.pos = Some(pos);
                     //previous hovered widget
                     if let Some(p) = (self.access)(ctx).s.mouse.hovered.take() {
-                        passed |= l.send_event(
-                            &e.default_filter().with_event(Event::from(MouseLeave{})),
-                            p.path,
-                        ).unwrap_or(false);
+                        //TODO only send MouseLeave and MouseEnter if hovered widget actually changes
+                        passed |= root_widget.event_direct(
+                            stack,
+                            &StdVariant::new(MouseLeave{},ts).with_filter_path(p.path),
+                            root.fork(), ctx,
+                        );
                     }
                     //hover state will be updated as the event passes through the widget tree
-                    passed |= l._event_root(&e.with_event(Event::from(MouseMove{pos})));
+                    passed |= self._event_root(
+                        root_widget,
+                        stack,
+                        &StdVariant::new(MouseMove{pos},ts).with_filter_point(pos),
+                        root.fork(), ctx,
+                    ); // TODO discards filters from current RootEvent
+
                     if let Some(p) = (self.access)(ctx).s.mouse.hovered.clone() {//TODO optimize clone
-                        passed |= l.send_event(
-                            &e.default_filter().with_event(Event::from(MouseEnter{})),
-                            p.path,
-                        ).unwrap_or(false);
+                        passed |= root_widget.event_direct(
+                            stack,
+                            &StdVariant::new(MouseEnter{},ts).with_filter_path(p.path),
+                            root, ctx,
+                        );
                     }
                     
                 }
                 RootEvent::MouseLeaveWindow{} => {
                     if let Some(p) = (self.access)(ctx).s.mouse.hovered.clone() {//TODO optimize clone
-                        passed |= l.send_event(
-                            &e.default_filter().with_event(Event::from(MouseLeave{})),
-                            p.path,
-                        ).unwrap_or(false);
+                        passed |= root_widget.event_direct(
+                            stack,
+                            &StdVariant::new(MouseLeave{},ts).with_filter_path(p.path),
+                            root, ctx,
+                        );
                     }
                     let mouse = &mut (self.access)(ctx).s.mouse;
                     mouse.pos = None;
                     mouse.hovered = None;
                 }
                 RootEvent::WindowMove{pos,size} => {
-                    passed |= l._event_root(&e.with_event(Event::from(WindowMove{pos,size})))
+                    passed |= self._event_root(
+                        root_widget,
+                        stack,
+                        &StdVariant::new(WindowMove{pos,size},ts),
+                        root, ctx,
+                    ); // TODO discards filters from current RootEvent
                 }
                 RootEvent::WindowResize{size} => {
-                    passed |= l._event_root(&e.with_event(Event::from(WindowResize{size})))
+                    passed |= self._event_root(
+                        root_widget,
+                        stack,
+                        &StdVariant::new(WindowResize{size},ts),
+                        root, ctx,
+                    ); // TODO discards filters from current RootEvent
                 }
                 RootEvent::TextInput{text} => {
                     if let Some(id) = (self.access)(ctx).s.kbd.focused.clone() {
-                        passed |= l.send_event(
-                            &e.default_filter().with_event(Event::from(TextInput{text})),
-                            id.path,
-                        ).unwrap_or(false);
+                        passed |= root_widget.event_direct(
+                            stack,
+                            &StdVariant::new(TextInput{text},ts).with_filter_path(id.path),
+                            root, ctx,
+                        );
                     }
                 }
                 RootEvent::MouseScroll{x,y} => {
                     if let Some(hovered) = (self.access)(ctx).s.mouse.hovered.clone() {
-                        passed |= l.send_event(
-                            &e.default_filter().with_event(Event::from(MouseScroll{x,y})),
-                            hovered.path,
-                        ).unwrap_or(false);
+                        passed |= root_widget.event_direct(
+                            stack,
+                            &StdVariant::new(MouseScroll{x,y},ts).with_filter_path(hovered.path),
+                            root, ctx,
+                        );
                     }
                 }
             }
             passed
         }else{
-            self.sup._event_root(w, stack, e, root, ctx)
+            self.sup._event_root(root_widget, stack, e, root, ctx)
         }
     }
     #[inline] 
