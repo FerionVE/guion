@@ -6,7 +6,7 @@ use crate::util::bounds::Offset;
 
 /// Widget event handler do need to query receive_self before querying event types, or they may get events not supposed to get
 #[derive(Clone)]
-pub struct StdEventMode<E> where E: Env {
+pub struct StdEventMode<'a,E> where E: Env {
     /// Whether the current widget receives the event
     /// 
     /// The event may still be routed to childs if [`route_to_childs`] is set
@@ -35,15 +35,15 @@ pub struct StdEventMode<E> where E: Env {
     /// Only relevent if route_to_childs is enabled
     /// 
     /// If no child_filters are set, the event will be routed to all childs
-    pub child_filter_path: Option<E::WidgetPath>,
+    pub child_filter_path: Option<&'a E::WidgetPath>,
 }
 
 #[derive(Clone)]
 pub struct QueryStdEventMode;
 
 impl<E> Query<E> for QueryStdEventMode where E: Env {
-    type Out<'b> = &'b StdEventMode<E>;
-    type Builder<'b> = Option<&'b StdEventMode<E>>;
+    type Out<'b> = StdEventMode<'b,E>;
+    type Builder<'b> = Option<StdEventMode<'b,E>>;
 
     #[inline]
     fn new_builder<'b>(&self) -> Self::Builder<'b> {

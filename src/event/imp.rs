@@ -37,17 +37,17 @@ pub trait StdVarSup<E>:
     VariantSupport<KbdDown<E>,E> +
     VariantSupport<KbdUp<E>,E> +
     VariantSupport<KbdPress<E>,E> +
-    VariantSupport<TextInput<E>,E> +
+    VariantSupport<TextInput,E> +
     VariantSupport<MouseDown<E>,E> +
     VariantSupport<MouseUp<E>,E> +
-    VariantSupport<MouseScroll<E>,E> +
-    VariantSupport<MouseMove<E>,E> +
-    VariantSupport<MouseEnter<E>,E> +
-    VariantSupport<MouseLeave<E>,E> +
+    VariantSupport<MouseScroll,E> +
+    VariantSupport<MouseMove,E> +
+    VariantSupport<MouseEnter,E> +
+    VariantSupport<MouseLeave,E> +
     VariantSupport<WindowMove,E> +
     VariantSupport<WindowResize,E> +
-    VariantSupport<Focus<E>,E> +
-    VariantSupport<Unfocus<E>,E> +
+    VariantSupport<Focus,E> +
+    VariantSupport<Unfocus,E> +
     VariantSupport<RootEvent<E>,E>
 where E: Env {
     #[inline]
@@ -73,7 +73,7 @@ where E: Env {
         }
     }
     #[inline]
-    fn is_text_input(&self) -> Option<TextInput<E>> {
+    fn is_text_input(&self) -> Option<TextInput> {
         self.is::<TextInput>()
     }
     #[inline]
@@ -85,19 +85,19 @@ where E: Env {
         self.is::<MouseUp<E>>()
     }
     #[inline]
-    fn is_mouse_scroll(&self) -> Option<MouseScroll<E>> {
+    fn is_mouse_scroll(&self) -> Option<MouseScroll> {
         self.is::<MouseScroll>()
     }
     #[inline]
-    fn is_mouse_move(&self) -> Option<MouseMove<E>> {
+    fn is_mouse_move(&self) -> Option<MouseMove> {
         self.is::<MouseMove>()
     }
     #[inline]
-    fn is_mouse_enter(&self) -> Option<MouseEnter<E>> {
+    fn is_mouse_enter(&self) -> Option<MouseEnter> {
         self.is::<MouseEnter>()
     }
     #[inline]
-    fn is_mouse_leave(&self) -> Option<MouseLeave<E>> {
+    fn is_mouse_leave(&self) -> Option<MouseLeave> {
         self.is::<MouseLeave>()
     }
     #[inline]
@@ -109,11 +109,11 @@ where E: Env {
         self.is::<WindowResize>()
     }
     #[inline]
-    fn is_focus(&self) -> Option<Focus<E>> {
+    fn is_focus(&self) -> Option<Focus> {
         self.is::<Focus>()
     }
     #[inline]
-    fn is_unfocus(&self) -> Option<Unfocus<E>> {
+    fn is_unfocus(&self) -> Option<Unfocus> {
         self.is::<Unfocus>()
     }
     /*#[inline]
@@ -130,17 +130,17 @@ impl<E,T> StdVarSup<E> for T where T:
     VariantSupport<KbdDown<E>,E> +
     VariantSupport<KbdUp<E>,E> +
     VariantSupport<KbdPress<E>,E> +
-    VariantSupport<TextInput<E>,E> +
+    VariantSupport<TextInput,E> +
     VariantSupport<MouseDown<E>,E> +
     VariantSupport<MouseUp<E>,E> +
-    VariantSupport<MouseScroll<E>,E> +
-    VariantSupport<MouseMove<E>,E> +
-    VariantSupport<MouseEnter<E>,E> +
-    VariantSupport<MouseLeave<E>,E> +
+    VariantSupport<MouseScroll,E> +
+    VariantSupport<MouseMove,E> +
+    VariantSupport<MouseEnter,E> +
+    VariantSupport<MouseLeave,E> +
     VariantSupport<WindowMove,E> +
     VariantSupport<WindowResize,E> +
-    VariantSupport<Focus<E>,E> +
-    VariantSupport<Unfocus<E>,E> +
+    VariantSupport<Focus,E> +
+    VariantSupport<Unfocus,E> +
     VariantSupport<RootEvent<E>,E>
 , E: Env, E::Backend: Backend<E,Event=T> {
 
