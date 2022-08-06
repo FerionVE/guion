@@ -1,5 +1,6 @@
 use crate::queron::Queron;
-use crate::widget::stack::WithCurrentWidget;
+use crate::queron::query::Query;
+use crate::widget::stack::{WithCurrentWidget, QueryCurrentWidget};
 
 use super::*;
 
@@ -19,15 +20,11 @@ pub enum TabulateResponse<E> where E: Env {
     Leave,
 }
 
-pub fn tabi<E>(root_widget: &impl Widget<E>, root_path: E::WidgetPath, old_path: E::WidgetPath, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<E::WidgetPath,E::Error> where E: Env { //TODO rename to tabulate_root
-    let root_stack = WithCurrentWidget{
-        inner: (),
-        id: root_widget.id(),
-        path: root_path,
-    };
+pub fn tabi<E>(root_widget: &impl Widget<E>, root_stack: &impl Queron<E>, old_path: E::WidgetPath, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<E::WidgetPath,E::Error> where E: Env { //TODO rename to tabulate_root
+    let widget_data = QueryCurrentWidget.query_in(root_stack).unwrap();
 
     let mut current = old_path.clone();
-    let result = root_widget._tabulate(&root_stack, TabulateOrigin::Resolve( old_path.strip_prefix(&root_stack.path).unwrap() ), dir, root, ctx)?;
+    let result = root_widget._tabulate(&root_stack, TabulateOrigin::Resolve( old_path.strip_prefix(&widget_data.path).unwrap() ), dir, root, ctx)?;
     match result {
         TabulateResponse::Done(p) => current = p,
         TabulateResponse::Leave => {

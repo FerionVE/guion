@@ -43,7 +43,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        E::Context::<'_>::build_handler(self.ctx)._render(self, stack, r, root, ctx)
+        ctx.build_handler()._render(self, stack, r, root, ctx)
     }
     #[inline]
     fn event_direct<P,Evt>(
@@ -53,7 +53,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        E::Context::<'_>::build_handler(self.ctx)._event_direct(self, stack, e, root, ctx)
+        ctx.build_handler()._event_direct(self, stack, e, root, ctx)
     }
     #[inline]
     fn size<P>(
@@ -62,7 +62,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
-        E::Context::<'_>::build_handler(self.ctx)._size(self, stack, root, ctx)
+        ctx.build_handler()._size(self, stack, root, ctx)
     }
 
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)

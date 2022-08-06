@@ -29,19 +29,22 @@ pub trait Event<E> where E: Env {
 
     #[deprecated]
     #[inline]
-    fn query_std_event_mode<'a,S>(&'a self, stack: &S) -> Option<&'a StdEventMode<E>> where S: Queron<E> + ?Sized, Self: 'a {
+    fn query_std_event_mode<'a,S>(&'a self, stack: &S) -> Option<StdEventMode<'a,E>> where S: Queron<E> + ?Sized, Self: 'a {
         self.query(&QueryStdEventMode, stack)
     }
 
     #[deprecated]
     #[inline]
-    fn query_variant<'a,V,S>(&'a self, stack: &S) -> Option<&'a StdEventMode<E>> where S: Queron<E> + ?Sized, Self: 'a {
+    fn query_variant<'a,V,S>(&'a self, stack: &S) -> Option<&'a V> where S: Queron<E> + ?Sized, V: Clone, Self: 'a {
         self.query(&QueryVariant(PhantomData), stack)
     }
 
     #[deprecated]
     /// Timestamp
     fn ts(&self) -> u64;
+
+    #[deprecated]
+    fn _root_only(&self) -> bool;
 
     /// Append prefetch to stack
     fn with_prefetch<R>(&self, stack: R) -> Self::WithPrefetch<R> where R: Queron<E>;
@@ -51,13 +54,20 @@ pub trait Event<E> where E: Env {
 pub trait EventDyn<E> {
     fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, stack: &dyn QueronDyn<E>);
     fn ts_dyn(&self) -> u64;
+    fn _root_only_dyn(&self) -> bool;
 }
 impl<T,E> EventDyn<E> for T where T: Event<E> + ?Sized, E: Env {
+    #[inline]
     fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, stack: &dyn QueronDyn<E>) {
         self._query(builder,stack)
     }
+    #[inline]
     fn ts_dyn(&self) -> u64 {
         self.ts()
+    }
+    #[inline]
+    fn _root_only_dyn(&self) -> bool {
+        self._root_only()
     }
 }
 
@@ -80,5 +90,9 @@ impl<E> Event<E> for dyn EventDyn<E> + '_ where E: Env {
     #[inline]
     fn with_prefetch<R>(&self, stack: R) -> Self::WithPrefetch<R> where R: Queron<E> {
         stack
+    }
+    #[inline]
+    fn _root_only(&self) -> bool {
+        self._root_only_dyn()
     }
 }

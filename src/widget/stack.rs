@@ -4,6 +4,7 @@ use crate::queron::query::Query;
 use crate::util::bounds::Bounds;
 
 use super::Widget;
+use super::ident::WidgetIdent;
 
 pub struct WithCurrentWidget<S,E> where E: Env {
     pub inner: S,
@@ -33,6 +34,16 @@ impl<S,E> Queron<E> for WithCurrentWidget<S,E> where S: Queron<E>, E: Env {
 pub struct QueriedCurrentWidget<'a,E> where E: Env {
     pub path: &'a E::WidgetPath,
     pub id: E::WidgetID,
+}
+
+impl<'a,E> QueriedCurrentWidget<'a,E> where E: Env {
+    #[deprecated]
+    pub fn ident(&self) -> WidgetIdent<E> {
+        WidgetIdent {
+            path: self.path.clone(),
+            id: self.id.clone(),
+        }
+    }
 }
 
 #[derive(Clone)]

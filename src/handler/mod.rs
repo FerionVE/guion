@@ -108,7 +108,7 @@ impl<E> Handler<E> for () where E: Env {
     where
         W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     {
-        if !e.event._root_only() {//TODO warn eprint??
+        if !e._root_only() {//TODO warn eprint??
             //TODO everything wrong here with event root propagation and tail
             w._event_direct(stack, e, root, ctx)
             //l.ctx.event_direct(l.widget,e)

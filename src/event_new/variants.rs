@@ -1,18 +1,19 @@
 use crate::env::Env;
+use crate::event::variant::Variant;
 use crate::queron::Queron;
 use crate::queron::query::QueryStack;
 use crate::util::bounds::Offset;
 
 use super::filter::{QueryVariant, StdEventMode, QueryStdEventMode};
 
-pub struct StdVariant<V,E> where E: Env {
+pub struct StdVariant<V,E> where V: Variant<E> + Clone, E: Env {
     pub variant: V,
     pub ts: u64,
     pub filter_path: Option<E::WidgetPath>,
     pub filter_point: Option<Offset>,
 }
 
-impl<V,E> super::Event<E> for StdVariant<V,E> where E: Env {
+impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone, E: Env {
     type WithPrefetch<R> = R where R: Queron<E>;
 
     fn _query<'a,Q,S>(&'a self, builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a {
@@ -26,7 +27,7 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where E: Env {
                 child_filter_path: todo!(),
             };
 
-            *builder = Some(&mode);
+            *builder = Some(mode);
         }
     }
 
@@ -40,5 +41,9 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where E: Env {
 
     fn with_prefetch<R>(&self, stack: R) -> Self::WithPrefetch<R> where R: Queron<E> {
         stack
+    }
+
+    fn _root_only(&self) -> bool {
+        self.variant._root_only()
     }
 }
