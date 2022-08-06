@@ -30,15 +30,15 @@ macro_rules! traitcast_handler {
     };
 }
 
-#[doc(hidden)]
-#[inline]
-pub fn _try_traitcast_ref<'a,'b,T,E>(s: &'a (dyn Handler<E>+'b)) -> Result<&'a T,()> where T: ?Sized + 'b, dyn Handler<E>+'b: TraitcastImpl<'b,T> + 'b, 'b: 'a, E: Env {
-    unsafe{<dyn Handler<E>+'b as TraitcastImpl<'b,T>>::_try_traitcast_ref(s)}
-}
+// #[doc(hidden)]
+// #[inline]
+// pub fn _try_traitcast_ref<'a,'b,T,E>(s: &'a (dyn Handler<E>+'b)) -> Result<&'a T,()> where T: ?Sized + 'b, dyn Handler<E>+'b: TraitcastImpl<'b,T> + 'b, 'b: 'a, E: Env {
+//     unsafe{<dyn Handler<E>+'b as TraitcastImpl<'b,T>>::_try_traitcast_ref(s)}
+// }
 
-impl<'a,E> TraitcastImplBase<'a> for dyn Handler<E>+'a where E: Env {
-    #[inline]
-    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
-        Handler::_as_trait_ref(self, t)
-    }
-}
+// impl<'a,E> TraitcastImplBase<'a> for dyn Handler<E>+'a where E: Env {
+//     #[inline]
+//     unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
+//         Handler::_as_trait_ref(self, t)
+//     }
+// }

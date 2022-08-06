@@ -46,8 +46,6 @@ pub(crate) use event::imp::*;
 pub(crate) use event::key::*;
 pub(crate) use event::variant::*;
 pub(crate) use event::standard::variants::*;
-pub(crate) use event::filter::*;
-pub(crate) use event::compound::*;
 pub(crate) use event::*;
 pub(crate) use handler::*;
 pub(crate) use id::standard::*;

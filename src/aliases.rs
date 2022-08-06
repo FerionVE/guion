@@ -10,7 +10,7 @@ pub type ETCurSel<E: Env> = <ETextLayout<E> as TxtLayout<E>>::CurSel;
 pub type EEvent<E: Env> = <E::Backend as Backend<E>>::Event;
 pub type EEDest<E: Env> = <EEvent<E> as Event<E>>::Dest;
 pub type EEKey<E: Env> = <EEvent<E> as Event<E>>::Key;
-pub type EEFilter<E: Env> = <E::Backend as Backend<E>>::EventFilter;
+//pub type EEFilter<E: Env> = <E::Backend as Backend<E>>::EventFilter;
 pub type EStyle<E: Env> = <E::Backend as Backend<E>>::Style;
 pub type ESize<E: Env> = <E::Backend as Backend<E>>::Size;
 

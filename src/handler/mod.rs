@@ -2,6 +2,8 @@
 use std::any::TypeId;
 use std::sync::Arc;
 
+use crate::queron::Queron;
+
 use super::*;
 
 pub mod standard;
@@ -17,39 +19,39 @@ pub trait HandlerBuilder<E>: 'static where E: Env {
 /// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
 pub trait Handler<E>: 'static where E: Env {
     //TODO move into feature traits
-    fn _render(
+    fn _render<W,S>(
         &self,
-        l: Link<E>,
+        w: &W,
+        stack: &S,
         r: &mut ERenderer<'_,E>,
-        tail: &mut dyn FnMut(Link<E>,&mut ERenderer<'_,E>),
-    );
-    fn _event_direct(
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized;
+    fn _event_direct<W,S,Evt>(
         &self,
-        l: Link<E>,
-        e: &EventCompound<E>,
-        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>)->EventResp,
-    ) -> EventResp;
-    fn _event_root(
+        w: &W,
+        stack: &S,
+        e: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    fn _event_root<W,S,Evt>(
         &self,
-        l: Link<E>,
-        e: &EventCompound<E>,
-        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>)->EventResp,
-    ) -> EventResp;
-    fn _size(
+        w: &W,
+        stack: &S,
+        e: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    fn _size<W,S>(
         &self,
-        l: Link<E>,
-        e: &EStyle<E>,
-        tail: &mut dyn FnMut(Link<E>,&EStyle<E>)->ESize<E>,
-    ) -> ESize<E>;
-    fn _send_event(
-        &self,
-        l: Link<E>,
-        e: &EventCompound<E>,
-        child: E::WidgetPath,
-        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>,E::WidgetPath)->Result<EventResp,E::Error>
-    ) -> Result<EventResp,E::Error>;
+        w: &W,
+        stack: &S,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> ESize<E> where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized;
 
-    fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's;
+    //fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's;
 
     #[inline]
     fn is_tail(&self) -> bool {
@@ -67,61 +69,70 @@ pub trait Handler<E>: 'static where E: Env {
 
 impl<E> Handler<E> for () where E: Env {
     #[inline] 
-    fn _render(
+    fn _render<W,S>(
         &self,
-        l: Link<E>,
+        w: &W,
+        stack: &S,
         r: &mut ERenderer<'_,E>,
-        tail: &mut dyn FnMut(Link<E>,&mut ERenderer<'_,E>),
-    ) {
-        (tail)(l,r)
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    )
+    where
+        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
+    {
+        w._render(stack, r, root, ctx)
     }
     #[inline] 
-    fn _event_direct(
+    fn _event_direct<W,S,Evt>(
         &self,
-        l: Link<E>,
-        e: &EventCompound<E>,
-        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>)->EventResp,
-    ) -> EventResp {
-        (tail)(l,e)
+        w: &W,
+        stack: &S,
+        e: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> EventResp
+    where
+        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
+    {
+        w._event_direct(stack, e, root, ctx)
     }
     #[inline] 
-    fn _event_root(
+    fn _event_root<W,S,Evt>(
         &self,
-        mut l: Link<E>,
-        e: &EventCompound<E>,
-        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>)->EventResp,
-    ) -> EventResp {
+        w: &W,
+        stack: &S,
+        e: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> EventResp
+    where
+        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
+    {
         if !e.event._root_only() {//TODO warn eprint??
             //TODO everything wrong here with event root propagation and tail
-            l.event_direct(e)
+            w._event_direct(stack, e, root, ctx)
             //l.ctx.event_direct(l.widget,e)
         }else{
             false
         }
     }
     #[inline] 
-    fn _size(
+    fn _size<W,S>(
         &self,
-        l: Link<E>,
-        e: &EStyle<E>,
-        tail: &mut dyn FnMut(Link<E>,&EStyle<E>)->ESize<E>,
-    ) -> ESize<E> {
-        (tail)(l,e)
-    }
-    #[inline]
-    fn _send_event(
-        &self,
-        l: Link<E>,
-        e: &EventCompound<E>,
-        child: E::WidgetPath,
-        tail: &mut dyn FnMut(Link<E>,&EventCompound<E>,E::WidgetPath)->Result<EventResp,E::Error>
-    ) -> Result<EventResp,E::Error> {
-        (tail)(l,e,child)
+        w: &W,
+        stack: &S,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> ESize<E>
+    where
+        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
+    {
+        w._size(stack, root, ctx)
     }
 
-    fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's {
-        todo!()
-    }
+    // fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's {
+    //     todo!()
+    // }
     #[inline]
     fn is_tail(&self) -> bool {
         true

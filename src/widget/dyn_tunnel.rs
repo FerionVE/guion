@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::aliases::{EStyle, ERenderer};
 use crate::env::Env;
-use crate::event::compound::EventCompound;
+use crate::event_new::EventDyn;
 use crate::queron::dyn_tunnel::QueronDyn;
 
 use super::*;
@@ -10,11 +10,28 @@ use super::*;
 pub trait WidgetDyn<E> where E: Env + 'static {
     fn id_dyn(&self) -> E::WidgetID;
 
-    fn _render_dyn(&self, stack: &(dyn QueronDyn<E>+'_), r: &mut ERenderer<'_,E>);
+    fn _render_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        r: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    );
 
-    fn _event_direct_dyn(&self, stack: &(dyn QueronDyn<E>+'_), e: &EventCompound<E>) -> EventResp;
+    fn _event_direct_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        e: &(dyn EventDyn<E>+'_),
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> EventResp;
 
-    fn _size_dyn(&self, stack: &(dyn QueronDyn<E>+'_), e: &EStyle<E>) -> ESize<E>;
+    fn _size_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> ESize<E>;
 
     fn childs_dyn(&self) -> usize;
 
@@ -98,16 +115,33 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         self.id()
     }
     #[inline]
-    fn _render_dyn(&self, stack: &(dyn QueronDyn<E>+'_), r: &mut ERenderer<'_,E>) {
-        self._render(stack, r)
+    fn _render_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        r: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) {
+        self._render(stack, r, root, ctx)
     }
     #[inline]
-    fn _event_direct_dyn(&self, stack: &(dyn QueronDyn<E>+'_), e: &EventCompound<E>) -> EventResp {
-        self._event_direct(stack, e)
+    fn _event_direct_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        e: &(dyn EventDyn<E>+'_),
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> EventResp {
+        self._event_direct(stack, e, root, ctx)
     }
     #[inline]
-    fn _size_dyn(&self, stack: &(dyn QueronDyn<E>+'_), e: &EStyle<E>) -> ESize<E> {
-        self._size(stack, e)
+    fn _size_dyn(
+        &self,
+        stack: &(dyn QueronDyn<E>+'_),
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> ESize<E> {
+        self._size(stack, root, ctx)
     }
     #[inline]
     fn childs_dyn(&self) -> usize {
@@ -244,16 +278,33 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         self.id_dyn()
     }
     #[inline]
-    fn _render<P>(&self, stack: &P, r: &mut ERenderer<'_,E>) where P: Queron<E> + ?Sized {
-        self._render_dyn(stack.erase(), r)
+    fn _render<P>(
+        &self,
+        stack: &P,
+        r: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where P: Queron<E> + ?Sized {
+        self._render_dyn(stack.erase(), r, root, ctx)
     }
     #[inline]
-    fn _event_direct<P>(&self, stack: &P, e: &EventCompound<E>) -> EventResp where P: Queron<E> + ?Sized {
-        self._event_direct_dyn(stack.erase(), e)
+    fn _event_direct<P,Evt>(
+        &self,
+        stack: &P,
+        e: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        self._event_direct_dyn(stack.erase(), e.erase(), root, ctx)
     }
     #[inline]
-    fn _size<P>(&self, stack: &P, e: &EStyle<E>) -> ESize<E> where P: Queron<E> + ?Sized {
-        self._size_dyn(stack.erase(), e)
+    fn _size<P>(
+        &self,
+        stack: &P,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where P: Queron<E> + ?Sized {
+        self._size_dyn(stack.erase(), root, ctx)
     }
     #[inline]
     fn childs(&self) -> usize {

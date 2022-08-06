@@ -10,6 +10,9 @@ use self::filter::{StdEventMode, QueryStdEventMode, QueryVariant};
 pub mod filter;
 
 pub trait Event<E> where E: Env {
+    /// Prefetch appended to stack
+    type WithPrefetch<R>: Queron<E> where R: Queron<E>;
+
     #[inline]
     fn query<'a,Q,S>(&'a self, query: &Q, stack: &S) -> Option<Q::Out<'a>> where Q: Query<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
         let mut builder = query.new_builder();
@@ -38,6 +41,9 @@ pub trait Event<E> where E: Env {
     #[deprecated]
     /// Timestamp
     fn ts(&self) -> u64;
+
+    /// Append prefetch to stack
+    fn with_prefetch<R>(&self, stack: R) -> Self::WithPrefetch<R> where R: Queron<E>;
 }
 
 /// This trait is only for bridging thru trait objects
@@ -56,6 +62,8 @@ impl<T,E> EventDyn<E> for T where T: Event<E> + ?Sized, E: Env {
 
 /// The call into dyn querylon stack, the last static propagation
 impl<E> Event<E> for dyn EventDyn<E> + '_ where E: Env {
+    type WithPrefetch<R> = R where R: Queron<E>;
+
     #[inline]
     fn _query<'a,Q,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a {
         self._query_dyn(builder.fork_dyn(),stack.erase())
@@ -64,8 +72,12 @@ impl<E> Event<E> for dyn EventDyn<E> + '_ where E: Env {
     fn erase<'s,'ss>(&'s self) -> &'s (dyn EventDyn<E>+'ss) where 'ss: 's, Self: 'ss {
         self
     }
-
+    #[inline]
     fn ts(&self) -> u64 {
         self.ts_dyn()
+    }
+    #[inline]
+    fn with_prefetch<R>(&self, stack: R) -> Self::WithPrefetch<R> where R: Queron<E> {
+        stack
     }
 }

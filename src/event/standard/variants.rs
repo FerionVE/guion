@@ -3,32 +3,38 @@ use super::*;
 
 #[derive(Clone,Debug)]
 pub struct KbdDown<E> where E: Env {
+    pub ts: u64,
     pub key: EEKey<E>,
 }
 #[derive(Clone,Debug)]
 pub struct KbdUp<E> where E: Env {
+    pub ts: u64,
     pub key: EEKey<E>,
     pub down_widget: WidgetIdent<E>,
     pub down_ts: u64,
 }
 #[derive(Clone,Debug)]
 pub struct KbdPress<E> where E: Env {
+    pub ts: u64,
     pub key: EEKey<E>,
     pub down_widget: WidgetIdent<E>,
     pub down_ts: u64,
 }
 #[derive(Clone,Debug)]
 pub struct TextInput {
+    pub ts: u64,
     pub text: String, //TODO Arc<str> for less clonery
 }
 
 #[derive(Clone,Debug)]
 pub struct MouseDown<E> where E: Env {
+    pub ts: u64,
     pub key: EEKey<E>,
     pub pos: Offset,
 }
 #[derive(Clone,Debug)]
 pub struct MouseUp<E> where E: Env {
+    pub ts: u64,
     pub key: EEKey<E>,
     pub pos: Offset,
     pub down_pos: Offset,
@@ -38,36 +44,49 @@ pub struct MouseUp<E> where E: Env {
 
 #[derive(Clone,Debug)]
 pub struct MouseScroll {
+    pub ts: u64,
     pub x: i32,
     pub y: i32,
 }
 
 #[derive(Clone,Debug)]
 pub struct MouseMove {
+    pub ts: u64,
     pub pos: Offset,
 }
 
 #[derive(Clone,Debug)]
-pub struct MouseEnter;
+pub struct MouseEnter {
+    pub ts: u64,
+}
+
 #[derive(Clone,Debug)]
-pub struct MouseLeave;
+pub struct MouseLeave {
+    pub ts: u64,
+}
 
 #[derive(Clone,Debug)]
 pub struct WindowMove {
+    pub ts: u64,
     pub pos: Offset,
     pub size: Dims,
 }
 
 #[derive(Clone,Debug)]
 pub struct WindowResize {
+    pub ts: u64,
     pub size: Dims,
 }
 
 #[derive(Clone,Debug)]
-pub struct Focus;
+pub struct Focus {
+    pub ts: u64,
+}
 
 #[derive(Clone,Debug)]
-pub struct Unfocus;
+pub struct Unfocus {
+    pub ts: u64,
+}
 
 macro_rules! pos {
     ($field:ident) => {

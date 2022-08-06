@@ -3,8 +3,8 @@ use crate::event::key::Key;
 use super::*;
 use std::{fmt::Debug, any::Any};
 
-pub mod compound;
-pub mod filter;
+//pub mod compound;
+//pub mod filter;
 pub mod variant;
 pub mod key;
 pub mod key_combo;
