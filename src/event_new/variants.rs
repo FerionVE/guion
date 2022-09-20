@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::env::Env;
 use crate::event::variant::Variant;
 use crate::queron::Queron;
@@ -6,6 +8,7 @@ use crate::util::bounds::Offset;
 
 use super::filter::{QueryVariant, StdEventMode, QueryStdEventMode};
 
+#[derive(Clone,Debug)]
 pub struct StdVariant<V,E> where V: Variant<E> + Clone, E: Env {
     pub variant: V,
     pub ts: u64,
