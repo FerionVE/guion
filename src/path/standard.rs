@@ -128,6 +128,23 @@ impl<E,S> WidgetPath<E> for SimplePath<E,S> where
             )
     }
 
+    fn relation_to_self(&self, b: &Self) -> RelationToSelfRelation<E> {
+        if b.v.len() > self.v.len() {
+            if b.v[..self.v.len()] == self.v[..] {
+                return RelationToSelfRelation::ChildOfSelf( b.slice(self.v.len()..).into() );
+            }
+        } else if b.v.len() == self.v.len() {
+            if b.v == self.v {
+                return RelationToSelfRelation::Identical;
+            }
+        } else if b.v.len() < self.v.len() {
+            if b.v[..] == self.v[..b.v.len()] {
+                return RelationToSelfRelation::ParentOfSelf( self.slice(b.v.len()..).into() );
+            }
+        }
+        RelationToSelfRelation::Invalid
+    }
+
     fn for_child_widget_id(&self, child_id: E::WidgetID) -> Self {
         self.clone().attached(SubPath::from_id(child_id))
     }

@@ -32,6 +32,9 @@ where E: Env {
     // Returns the subpath which when attached to the prefix yields a path with identical target widget and resolve route
     fn strip_prefix(&self, prefix: &Self) -> Result<Self,()>; //TODO GuionError
 
+    // Relation of b absolute path to self absolute path
+    fn relation_to_self(&self, b: &Self) -> RelationToSelfRelation<E>;
+
     /// Does the sub path from the parent path resolve to or through the specific child widget of the parent widget?
     // returns None only of sub_path wouldn't resolve to or through the given child widget
     /// 
@@ -73,4 +76,15 @@ where E: Env {
 pub struct ResolvesThruResult<E> where E: Env {
     /// The sub path inside the current child widget which resolves further
     pub sub_path: E::WidgetPath,
+}
+
+pub enum RelationToSelfRelation<E> where E: Env {
+    /// subpath of child relative to self
+    ChildOfSelf(E::WidgetPath),
+    /// Both paths point are identical
+    Identical,
+    /// subpath of self relative to parent
+    ParentOfSelf(E::WidgetPath),
+    /// No relation
+    Invalid,
 }

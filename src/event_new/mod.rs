@@ -29,7 +29,7 @@ pub trait Event<E> where E: Env {
 
     #[deprecated]
     #[inline]
-    fn query_std_event_mode<'a,S>(&'a self, stack: &S) -> Option<StdEventMode<'a,E>> where S: Queron<E> + ?Sized, Self: 'a {
+    fn query_std_event_mode<'a,S>(&'a self, stack: &S) -> Option<StdEventMode<E>> where S: Queron<E> + ?Sized, Self: 'a {
         self.query(&QueryStdEventMode, stack)
     }
 

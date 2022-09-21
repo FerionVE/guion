@@ -35,6 +35,8 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
                 ts,
                 filter_path: Some(p.refc().path),
                 filter_point: None,
+                direct_only: false,
+                filter_path_strict: true,
             };
             root_widget.event_direct(stack,&event,root,ctx)
         }else{
@@ -51,6 +53,8 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
             ts,
             filter_path: Some(p),
             filter_point: None,
+            direct_only: false,
+            filter_path_strict: true,
         };
         Ok(root_widget.event_direct(stack,&event,root,ctx))
     }
