@@ -33,7 +33,8 @@ pub trait Event<E> where E: Env {
         self.query(&QueryStdEventMode, stack)
     }
 
-    #[deprecated]
+    /// query legacy variant
+    #[deprecated="The old \"variants\" will be replaced"]
     #[inline]
     fn query_variant<'a,V,S>(&'a self, stack: &S) -> Option<&'a V> where S: Queron<E> + ?Sized, V: Clone + 'static, Self: 'a {
         self.query(&QueryVariant(PhantomData), stack)

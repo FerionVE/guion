@@ -39,21 +39,21 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn render<P>(
         &self,
         stack: &P,
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        ctx.build_handler()._render(self, stack, r, root, ctx)
+        ctx.build_handler()._render(self, stack, renderer, root, ctx)
     }
     #[inline]
     fn event_direct<P,Evt>(
         &self,
         stack: &P,
-        e: &Evt,
+        event: &Evt,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        ctx.build_handler()._event_direct(self, stack, e, root, ctx)
+        ctx.build_handler()._event_direct(self, stack, event, root, ctx)
     }
     #[inline]
     fn size<P>(
@@ -73,7 +73,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn _render<P>(
         &self,
         stack: &P,
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized;
@@ -85,7 +85,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn _event_direct<P,Evt>(
         &self,
         stack: &P,
-        e: &Evt,
+        event: &Evt,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
@@ -113,7 +113,8 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         ctx: &mut E::Context<'_>
     ) -> R
     where
-        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R;
+        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+   ;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     #[deprecated]

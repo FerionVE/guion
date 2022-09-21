@@ -7,7 +7,7 @@ use std::fmt::Debug;
 /// Type compound
 ///
 /// Note the Trait bounds Clone, Default, PartialEq are not used and just for simplifying derives
-pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'static {
+pub trait Env: Sized + Clone + Copy + Default + PartialEq + Debug + Send + Sync + 'static {
     type Backend: Backend<Self>;
     type Context<'a>: Context<'a, Self> + 'a;
     type RootRef<'a>: RootRef<Self> + 'a;
@@ -18,6 +18,7 @@ pub trait Env: Sized + Clone + Default + PartialEq + Debug + Send + Sync + 'stat
     type ValidState: ValidState;
     type Message;
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;
+    type Phantom: InfallibleType;
     //type Commit: Eq + Ord;
 }
 
@@ -105,3 +106,8 @@ macro_rules! impl_as_widget_for_path {
         }
     };
 }
+
+/// A type that can never the instantiatad. Implemented on [`std::convert::Infallible`]
+pub unsafe trait InfallibleType: Sized + Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Debug + Send + Sync + 'static {}
+pub enum EnvPhantom {}
+unsafe impl InfallibleType for std::convert::Infallible {}

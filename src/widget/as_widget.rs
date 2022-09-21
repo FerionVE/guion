@@ -12,7 +12,8 @@ pub trait AsWidget<'z,E> where E: Env, Self: 'z {
 
     fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,R,E>;
+        F: AsWidgetDispatch<'z,Self,R,E>
+   ;
 }
 
 impl<'a,E> AsWidget<'a,E> for dyn WidgetDyn<E> + 'a where E: Env {

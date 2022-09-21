@@ -69,6 +69,10 @@ pub struct Focus;
 #[derive(Clone,Debug)]
 pub struct Unfocus;
 
+/// If hover update, e.g. [`MouseEnter`] or [`MouseLeave`]
+#[derive(Clone,Debug)]
+pub struct HoverUpdate;
+
 macro_rules! pos {
     ($field:ident) => {
         #[inline]

@@ -24,4 +24,13 @@ pub trait Context<'cc,E>: Sized + 'cc where E: Env {
     //         widget: w.lt(),
     //     }
     // }
+
+    #[deprecated="TODO better queue shorthands"]
+    fn mutate_closure(&mut self, closure: BoxMutEvent<E>) {
+        self.queue_mut().push(
+            StdEnqueueable::MutateRootClosure { f: closure },
+            StdOrder::PostCurrent,
+            0,
+        );
+    }
 }

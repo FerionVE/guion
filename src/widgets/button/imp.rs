@@ -1,7 +1,7 @@
 use super::*;
 
 pub trait IButton<E> where E: Env {
-    fn trigger(&self, l: &mut Link<E>);
+    fn trigger(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
 }
 
 impl<'w,E,Text,Tr,TrMut> IButton<E> for Button<'w,E,Text,Tr,TrMut> where
@@ -10,10 +10,10 @@ impl<'w,E,Text,Tr,TrMut> IButton<E> for Button<'w,E,Text,Tr,TrMut> where
     TrMut: TriggerMut<E>,
 {
     #[inline]
-    fn trigger(&self, l: &mut Link<E>) {
-        self.trigger.trigger(l.reference());
+    fn trigger(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        self.trigger.trigger(root,ctx);
         if let Some(t) = self.trigger_mut.boxed() {
-            l.mutate_closure(t);
+            ctx.mutate_closure(t);
         }
     }
 }

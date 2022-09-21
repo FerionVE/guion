@@ -1,4 +1,6 @@
+use crate::queron::Queron;
 use crate::text::layout::*;
+use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::*;
 use std::sync::Arc;
@@ -19,43 +21,65 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
-        let mut r = r.with_style(&self.style);
-        r.with(&[
-            StdSelectag::ObjForeground,
-            StdSelectag::ObjText,
-        ][..])
-            .render_text(self.text.caption().as_ref(),self.align,l.ctx);
+    
+    fn _render<P>(
+        &self,
+        stack: &P,
+        r: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where P: Queron<E> + ?Sized {
+        //TODO way to inject props/style to widget
+        r.render_text(
+            self.text.caption().as_ref(),
+            self.align,
+            stack,
+            ctx,
+        )
     }
-    fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
+
+    fn _event_direct<P,Evt>(
+        &self,
+        stack: &P,
+        e: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         false
     }
-    fn _size(&self, l: Link<E>, _: &EStyle<E>) -> ESize<E> {
-        let ms = self.glyphs(l).display_size();
+
+    fn _size<P>(
+        &self,
+        stack: &P,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where P: Queron<E> + ?Sized {
+        let ms = self.glyphs(ctx).display_size();
         let ms = ESize::<E>::fixed(ms.w, ms.h);
         ms.max( &self.size )
     }
+
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref<'s>(&'s self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
-        vec![]
-    }
-    fn into_childs<'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
-        vec![]
+    fn with_child<'s,F,R>(
+        &'s self,
+        i: usize,
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+    {
+        (callback)(Err(()),ctx)
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {
         false
-    }
-    fn child<'s>(&'s self, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
-        Err(())
-    }
-    fn into_child<'s>(self: Box<Self>, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
-        Err(())
     }
 
     impl_traitcast!( dyn WidgetDyn<E>:
@@ -73,15 +97,15 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    fn glyphs(&self, mut l: Link<E>) -> Arc<ETextLayout<E>> {
-        if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
+    fn glyphs(&self, ctx: &mut E::Context<'_>) -> Arc<ETextLayout<E>> {
+        if let Some((v,c)) = self.glyph_cache.get(ctx) {
             if self.text.valid(&c) {
                 return v;
             }
         }
 
         let glyphs: Arc<ETextLayout<E>> = Arc::new(
-            TxtLayoutFromStor::<Text,E>::from(&self.text,l.ctx)
+            TxtLayoutFromStor::<Text,E>::from(&self.text,ctx)
         );
 
         let g = glyphs.refc();
@@ -97,32 +121,14 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
     }
 }
 
-impl<'l,E,Text,GlyphCache> AsWidget<E> for Label<'l,E,Text,GlyphCache> where Self: Widget<E>, E: Env {
-    type Widget = Self;
-    type WidgetOwned = Self;
+impl<'z,E,Text,GlyphCache> AsWidget<'z,E> for Label<'z,E,Text,GlyphCache> where Self: Widget<E>, E: Env {
+    type Widget<'v> = Self where 'z: 'v;
 
     #[inline]
-    fn as_widget<'w>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget<'w>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        WCow::Owned(self)
-    }
-    #[inline]
-    fn box_into_widget<'w>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Owned(*self)
-    }
-    #[inline]
-    fn as_widget_dyn<'w,'s>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget_dyn<'w,'s>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        WCow::Owned(Box::new(self))
-    }
-    #[inline]
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Owned(self)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R
+    where
+        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
+    {
+        f.call(self, root, ctx)
     }
 }

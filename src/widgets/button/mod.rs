@@ -64,7 +64,7 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     E: Env,
 {
     #[inline]
-    pub fn with_trigger<T>(self, mutor: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(Link<E>) {
+    pub fn with_trigger<T>(self, mutor: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(E::RootRef<'_>,&mut E::Context<'_>) {
         Button{
             id: self.id,
             size: self.size,
@@ -140,18 +140,18 @@ impl<'w,E,T,LC,Tr,TrMut> Button<'w,E,Label<'w,E,T,LC>,Tr,TrMut> where
 
 /// blanket-implemented on all `Fn(Link<E>)`
 pub trait Trigger<E> where E: Env {
-    fn trigger(&self, l: Link<E>);
+    fn trigger(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
 }
 
 impl<E> Trigger<E> for () where E: Env {
     #[inline]
-    fn trigger(&self, _: Link<E>) {}
+    fn trigger(&self, _: E::RootRef<'_>, _: &mut E::Context<'_>) {}
 }
 
-impl<T,E> Trigger<E> for T where T: Fn(Link<E>), E: Env {
+impl<T,E> Trigger<E> for T where T: Fn(E::RootRef<'_>,&mut E::Context<'_>), E: Env {
     #[inline]
-    fn trigger(&self, l: Link<E>) {
-        (self)(l)
+    fn trigger(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        (self)(root,ctx)
     }
 }
 
