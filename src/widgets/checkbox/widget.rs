@@ -1,4 +1,9 @@
+use crate::dispatchor::AsWidgetClosure;
+use crate::queron::Queron;
+use crate::queron::query::Query;
 use crate::style::standard::cursor::StdCursor;
+use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widget::stack::QueryCurrentBounds;
 
 use super::*;
 use imp::ICheckBox;
@@ -9,7 +14,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     State: AtomState<E,bool>,
-    Text: AsWidget<E>,
+    for<'a> Text: AsWidget<'a,E>,
     TrMut: TriggerMut<E>,
 {
     fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
@@ -18,104 +23,159 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, mut l: Link<E>, r: &mut ERenderer<'_,E>) {
-        let mut r = r.with_style(&self.style);
-        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
-        if l.state().is_hovered(&self.id) {
-            r.set_cursor_specific(&StdCursor::Hand.into(),l.ctx);
+    fn _render<P>(
+        &self,
+        stack: &P,
+        renderer: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where P: Queron<E> + ?Sized {
+        let render_props = StdRenderProps::new(stack)
+            .inside_spacing_border();
+
+        if ctx.state().is_hovered(&self.id) {
+            renderer.set_cursor_specific(&StdCursor::Hand.into(),ctx);
         }
-        let size = r.bounds().size.h;
+
+        let size = render_props.absolute_bounds.size.h;
         {
             let rect = Bounds::from_wh(size,size);
-            let mut r = r.slice(&rect);
-            r.with(&[
-                    StdSelectag::ObjForeground,
-                ][..])
-                .fill_rect(l.ctx);
-            r.inside_border_by_mul(StdSelectag::BorderVisual,3,l.ctx)
-                .with(&[
-                    StdSelectag::ObjForeground,
-                    StdSelectag::Hovered(l.is_hovered()),
-                    StdSelectag::Focused(l.is_focused()),
-                    StdSelectag::Locked(self.locked),
-                    StdSelectag::Pressed(self.state.get(l.ctx))
-                ][..])
-                .fill_rect(l.ctx);
-            r.with(&[
-                    StdSelectag::ObjBorder,
-                    StdSelectag::Hovered(l.is_hovered()),
-                    StdSelectag::Focused(l.is_focused()),
-                    StdSelectag::Locked(self.locked),
-                    StdSelectag::BorderVisual,
-                    //StdSelectag::Pressed(self.state.get())
-                ][..])
-                .fill_border_inner(l.ctx);
+            let mut render_props = render_props.slice(&rect);
+
+            renderer.fill_rect(
+                &render_props
+                .with_style_color_type(TestStyleColorType::Fg),
+                ctx
+            );
+
+            renderer.fill_rect(
+                &render_props
+                    .inside_border_of_type_mul(TestStyleBorderType::Component,3)
+                    .with_style_color_type(TestStyleColorType::Fg)
+                    .with_vartype(
+                        ctx.state().is_hovered(&self.id),
+                        ctx.state().is_focused(&self.id),
+                        self.state.get(ctx),
+                        false, //TODO
+                    ),
+                ctx
+            );
+
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_border_type(TestStyleBorderType::Component)
+                    .with_style_color_type(TestStyleColorType::Fg)
+                    .with_vartype(
+                        ctx.state().is_hovered(&self.id),
+                        ctx.state().is_focused(&self.id),
+                        false, //self.pressed(ctx).is_some(),
+                        self.locked,
+                    ),
+                ctx
+            );
         }
         {
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
-            r.inside_border_specific(&text_border)
-                .with(&[
-                    StdSelectag::ObjForeground,
-                    StdSelectag::ObjText,
-                    StdSelectag::Hovered(l.is_hovered()),
-                    StdSelectag::Focused(l.is_focused()),
-                    StdSelectag::Locked(self.locked),
-                ][..])
-                .render_widget(l.for_child(0).unwrap());
+
+            self.text.with_widget(
+                AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                    widget.render(
+                        &render_props
+                            .inside_border(text_border)
+                            .with_vartype(
+                                ctx.state().is_hovered(&self.id),
+                                ctx.state().is_focused(&self.id),
+                                false, //self.pressed(ctx).is_some(), TODO this wasn't set previously
+                                self.locked,
+                            ),
+                        renderer,
+                        root,ctx
+                    )
+                }),
+                root,ctx
+            );
         }
     }
-    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = e.with_style(&self.style);
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
-        //let mut invalid = false;
-        if e.event.is_hover_update() || e.event.is_kbd_down().is_some() || e.event.is_kbd_up().is_some() {
-            l.enqueue_invalidate()
-        }
-        if let Some(ee) = e.event.is_mouse_up() {
-            if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(self.id()) && l.is_hovered() && !self.locked {
-                let new = !self.state.get(l.ctx);
-                self.set(l,new);
+
+    fn _event_direct<P,Evt>(
+        &self,
+        stack: &P,
+        event: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        let stack = with_inside_spacing_border(stack);
+        let event_mode = event.query_std_event_mode(&stack).unwrap();
+
+        if !event_mode.receive_self {return false;}
+
+        if let Some(ee) = event.query_variant::<MouseUp<E>,_>(&stack) {
+            if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(self.id()) && ctx.state().is_hovered(&self.id) && !self.locked { //TODO down_widgets checks are redundand as event is sent?
+                let new = !self.state.get(ctx);
+                self.set(new,ctx);
                 return true;
             }
-        } else if let Some(ee) = e.event.is_kbd_press() {
+        } else if let Some(ee) = event.query_variant::<KbdPress<E>,_>(&stack) {
             if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.is(self.id()) {
-                let new = !self.state.get(l.ctx);
-                self.set(l,new);
+                let new = !self.state.get(ctx);
+                self.set(new,ctx);
                 return true;
             }
         }
-        e.event.is_mouse_down().is_some()
+        event.query_variant::<MouseDown<E>,_>(&stack).is_some() //TODO tf, also what is this EventResp? useless?
     }
-    fn _size(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> {
-        let e = e.and(&self.style);
-        let mut ms = l.for_child(0).unwrap().size(&e);
-        ms.add_x( &self.size );
-        ms
+
+    fn _size<P>(
+        &self,
+        stack: &P,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where P: Queron<E> + ?Sized {
+        let check_size = QueryCurrentBounds.query_in(stack).unwrap().bounds.size.h;
+        let text_border = Border::new(check_size+4/*TODO fix border impl*/*2,0,0,0);
+
+        let size = widget_size_inside_border_type(
+            stack, TestStyleBorderType::Spacing,
+            |stack| widget_size_inside_border(
+                stack, text_border,
+                |stack|
+                    self.text.with_widget(AsWidgetClosure::new(
+                        |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| widget.size(&stack,root,ctx)
+                    ),root,ctx)
+            )
+        );
+
+        size
     }
+
     fn childs(&self) -> usize {
         1
     }
-    fn childs_ref<'s>(&'s self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
-        vec![self.text.as_widget_dyn(root,ctx)]
-    }
-    fn into_childs<'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
-        vec![self.text.into_widget_dyn(root,ctx)]
+
+    fn with_child<'s,F,R>(
+        &'s self,
+        i: usize,
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+    {
+        self.text.with_widget(
+            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
+                (callback)(Ok(widget.erase()),ctx)
+            ),
+            root,ctx
+        )
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
         todo!();
         Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
     }
+    
     fn focusable(&self) -> bool { true }
-
-    fn child<'s>(&'s self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
-        if i != 0 {return Err(());}
-        Ok(self.text.as_widget_dyn(root,ctx))
-    }
-    fn into_child<'s>(self: Box<Self>, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
-        if i != 0 {return Err(());}
-        Ok(self.text.into_widget_dyn(root,ctx))
-    }
 
     impl_traitcast!( dyn WidgetDyn<E>:
         dyn ICheckBox<E> => |s| s;
@@ -123,32 +183,14 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     );
 }
 
-impl<'l,E,State,Text,TrMut> AsWidget<E> for CheckBox<'l,E,State,Text,TrMut> where Self: Widget<E>, E: Env {
-    type Widget = Self;
-    type WidgetOwned = Self;
+impl<'z,E,State,Text,TrMut> AsWidget<'z,E> for CheckBox<'z,E,State,Text,TrMut> where Self: Widget<E>, E: Env {
+    type Widget<'v> = Self where 'z: 'v;
 
     #[inline]
-    fn as_widget<'w>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget<'w>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        WCow::Owned(self)
-    }
-    #[inline]
-    fn box_into_widget<'w>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Owned(*self)
-    }
-    #[inline]
-    fn as_widget_dyn<'w,'s>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget_dyn<'w,'s>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        WCow::Owned(Box::new(self))
-    }
-    #[inline]
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Owned(self)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R
+    where
+        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
+    {
+        f.call(self, root, ctx)
     }
 }

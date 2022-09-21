@@ -92,9 +92,6 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
 
         if !event_mode.receive_self {return false;}
 
-        // if event.query_variant::<HoverUpdate>(&stack) || event.query_variant::<KbdPress<E>>(&stack) || event.query_variant::<KbdUp<E>>(&stack) { //TODO catch down and press
-        //     l.enqueue_invalidate()
-        // }
         if let Some(ee) = event.query_variant::<MouseUp<E>,_>(&stack) {
             if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(self.id()) && ctx.state().is_hovered(&self.id) && !self.locked {
                 self.trigger(root,ctx);
@@ -115,9 +112,9 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
-        let size = widget_size_inside_border(
+        let size = widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
-            |stack| widget_size_inside_border(
+            |stack| widget_size_inside_border_type(
                 stack, TestStyleBorderType::Component,
                 |stack|
                     self.text.with_widget(AsWidgetClosure::new(

@@ -45,6 +45,13 @@ impl<'a,S,E> StdRenderProps<'a,S,E> where E: Env, S: ?Sized {
         }
     }
 
+    pub fn inside_border_mul(&self, border: impl Borrow<Border>, multiplier: u32) -> Self {
+        Self {
+            absolute_bounds: self.absolute_bounds.inside_border(&(border.borrow() * multiplier)),
+            ..self.clone()
+        }
+    }
+
     pub fn inside_spacing_border(&self) -> Self {
         self.inside_border_of_type(TestStyleBorderType::Spacing)
     }
@@ -55,6 +62,10 @@ impl<'a,S,E> StdRenderProps<'a,S,E> where E: Env, S: ?Sized {
 
     pub fn inside_border_of_type(&self, border_type: TestStyleBorderType<E>) -> Self {
         self.inside_border(self.style.border_of_type(border_type))
+    }
+
+    pub fn inside_border_of_type_mul(&self, border_type: TestStyleBorderType<E>, multiplier: u32) -> Self {
+        self.inside_border_mul(self.style.border_of_type(border_type), multiplier)
     }
 
     pub fn slice(&self, slice_relative: impl Borrow<Bounds>) -> Self {
@@ -321,15 +332,25 @@ pub fn with_inside_border_by_type<S,E>(stack: S, border_type: TestStyleBorderTyp
 }
 
 /// For retrieving constraints inside a border. This adds the border to the bounds on the stack and to the returned constraints
-pub fn widget_size_inside_border<S,F,E>(stack: S, border_type: TestStyleBorderType<E>, func: F) -> ESize<E>
+pub fn widget_size_inside_border_type<S,F,E>(stack: S, border_type: TestStyleBorderType<E>, func: F) -> ESize<E>
+where 
+    S: Queron<E>,
+    F: FnOnce(WithCurrentBounds<S>) -> ESize<E>,
+    E: Env
+{
+    let style = QueryTestStyle.query_in(&stack).unwrap();
+    let border = style.border_of_type(border_type);
+    widget_size_inside_border(stack, border, func)
+}
+
+/// For retrieving constraints inside a border. This adds the border to the bounds on the stack and to the returned constraints
+pub fn widget_size_inside_border<S,F,E>(stack: S, border: Border, func: F) -> ESize<E>
 where 
     S: Queron<E>,
     F: FnOnce(WithCurrentBounds<S>) -> ESize<E>,
     E: Env
 {
     let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
-    let style = QueryTestStyle.query_in(&stack).unwrap();
-    let border = style.border_of_type(border_type);
 
     let stack = WithCurrentBounds {
         bounds: bounds.bounds.inside_border(&border),
@@ -342,6 +363,7 @@ where
 
     size
 }
+
 
 // impl<'a,E,S> Add<&'a S> for TestStyleColorType<E> where S: Queron<E> + 'a, E: Env {
 //     type Output = WithTestStyle<'a,&'a S,E>;

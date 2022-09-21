@@ -111,6 +111,8 @@ impl<'w,E,State,T,LC,TrMut> CheckBox<'w,E,State,Label<'w,E,T,LC>,TrMut> where
     }
 }
 
+//TODO bring the immutable trigger like in Button
+
 /// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
 pub trait TriggerMut<E> where E: Env {
     fn boxed(&self, value: bool) -> Option<BoxMutEvent<E>>;
