@@ -1,3 +1,6 @@
+use crate::queron::Queron;
+use crate::widget::dyn_tunnel::WidgetDyn;
+
 use super::*;
 use super::super::util::state::*;
 
@@ -8,44 +11,84 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
-        let mut r = r.with_style(&self.style);
-        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
-        r.with(StdSelectag::ObjBackground)
-            .fill_rect(l.ctx);
-        r.slice_abs(&crop(r.bounds(), self.value, self.orientation))
-            .with(StdSelectag::ObjActive)
-            .fill_rect(l.ctx);
-        r.with(&[StdSelectag::ObjBorder,StdSelectag::BorderVisual][..])
-            .fill_border_inner(l.ctx);
+    
+    fn _render<P>(
+        &self,
+        stack: &P,
+        renderer: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where P: Queron<E> + ?Sized {
+        let render_props = StdRenderProps::new(stack)
+            .inside_spacing_border();
+
+        renderer.fill_rect(
+            &render_props
+                .with_style_color_type(TestStyleColorType::Bg),
+            ctx
+        );
+        
+        renderer.fill_rect(
+            &render_props
+                .slice_absolute(crop(&render_props.absolute_bounds, self.value, self.orientation))
+                .with_style_color_type(TestStyleColorType::Fg) //TODO yes, stupid test style doesn't have ObjActive
+                .with_vartype(
+                    true,
+                    true,
+                    true,
+                    false,
+                ),
+            ctx
+        );
+
+        renderer.fill_border_inner(
+            &render_props
+                .with_style_border_type(TestStyleBorderType::Component)
+                .with_style_color_type(TestStyleColorType::Fg),
+            ctx
+        );
     }
-    fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
+
+    fn _event_direct<P,Evt>(
+        &self,
+        stack: &P,
+        e: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         false
     }
-    fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
-        let e = e.and(&self.style);
-        self.size.clone()
+
+    fn _size<P>(
+        &self,
+        stack: &P,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where P: Queron<E> + ?Sized {
+        self.size.clone() //TODO shouldn't the borders be added?
     }
+
     fn childs(&self) -> usize {
         0
     }
-    fn childs_ref<'s>(&'s self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
-        vec![]
+    fn with_child<'s,F,R>(
+        &'s self,
+        i: usize,
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+    {
+        (callback)(Err(()),ctx)
     }
-    fn into_childs<'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
-        vec![]
-    }
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, _: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
         Ok(vec![])
     }
     fn focusable(&self) -> bool {
         false
-    }
-    fn child<'s>(&'s self, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
-        Err(())
-    }
-    fn into_child<'s>(self: Box<Self>, _: usize, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
-        Err(())
     }
 
     impl_traitcast!( dyn WidgetDyn<E>:
@@ -62,32 +105,14 @@ pub fn crop(i: &Bounds, v: f32, o: Orientation) -> Bounds {
     Bounds::from_ori(x, y, w, h, o)
 }
 
-impl<'l,E> AsWidget<E> for ProgressBar<'l,E> where Self: Widget<E>, E: Env {
-    type Widget = Self;
-    type WidgetOwned = Self;
+impl<'z,E> AsWidget<'z,E> for ProgressBar<'z,E> where Self: Widget<E>, E: Env {
+    type Widget<'v> = Self where 'z: 'v;
 
     #[inline]
-    fn as_widget<'w>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget<'w>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        WCow::Owned(self)
-    }
-    #[inline]
-    fn box_into_widget<'w>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Owned(*self)
-    }
-    #[inline]
-    fn as_widget_dyn<'w,'s>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget_dyn<'w,'s>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        WCow::Owned(Box::new(self))
-    }
-    #[inline]
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Owned(self)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R
+    where
+        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
+    {
+        f.call(self, root, ctx)
     }
 }

@@ -91,7 +91,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn trace_bounds_dyn(&self, stack: &(dyn QueronDyn<E>+'_), i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error>;
 
-    fn child_bounds_dyn(&self, stack: &(dyn QueronDyn<E>+'_), b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()>;
+    fn child_bounds_dyn(&self, stack: &(dyn QueronDyn<E>+'_), b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()>;
     
     #[deprecated]
     fn in_parent_path_dyn(&self, parent: E::WidgetPath) -> E::WidgetPath;
@@ -245,8 +245,8 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         self.trace_bounds(stack, i, b, e, force, root, ctx)
     }
     #[inline]
-    fn child_bounds_dyn(&self, stack: &(dyn QueronDyn<E>+'_), b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
-        self.child_bounds(stack, b, e, force)
+    fn child_bounds_dyn(&self, stack: &(dyn QueronDyn<E>+'_), b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
+        self.child_bounds(stack, b, force, root, ctx)
     }
     #[allow(deprecated)]
     #[inline]
@@ -468,8 +468,8 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         self.trace_bounds_dyn(stack.erase(), i, b, e, force, root, ctx)
     }
     #[inline]
-    fn child_bounds<P>(&self, stack: &P, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
-        self.child_bounds_dyn(stack.erase(), b, e, force)
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
+        self.child_bounds_dyn(stack.erase(), b, force, root, ctx)
     }
     #[allow(deprecated)]
     #[inline]

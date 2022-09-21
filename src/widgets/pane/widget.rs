@@ -1,133 +1,159 @@
+use crate::dispatchor::{AsWidgetsClosure, AsWidgetsAllClosure};
+use crate::queron::Queron;
+use crate::queron::query::Query;
+use crate::root::RootRef;
+use crate::widget::as_widgets::AsWidgets;
+use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds};
+
 use super::*;
 
 impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     E: Env,
-    T: WidgetArray<E>,
+    for<'a> T: AsWidgets<'a,E>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, l: Link<E>, r: &mut ERenderer<'_,E>) {
-        self._render_impl(l,r)
+
+    fn _render<P>(
+        &self,
+        stack: &P,
+        renderer: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where P: Queron<E> + ?Sized {
+        let render_props = StdRenderProps::new(stack)
+            .inside_spacing_border();
+
+        let child_bounds = self.child_bounds(stack, &render_props.absolute_bounds, true, root.fork(), ctx).unwrap();
+
+        self.childs.all(
+            AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                widget.render(
+                    &render_props
+                        .slice(&child_bounds[idx]),
+                    renderer,
+                    root,ctx
+                )
+            }),
+            root,ctx
+        );
+        //TODO FIX viewport
     }
-    fn _event_direct(&self, l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        self._event_direct_impl(l,e)
+
+    fn _event_direct<P,Evt>(
+        &self,
+        stack: &P,
+        event: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        let stack = with_inside_spacing_border(stack);
+
+        let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
+        let event_mode = event.query_std_event_mode(&stack).unwrap();
+
+        if !event_mode.route_to_childs {return false;}
+
+        let child_bounds = self.child_bounds(&stack, &bounds.bounds, true, root.fork(), ctx).unwrap();
+
+        let mut passed = false;
+
+        self.childs.all(
+            AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                let stack = WithCurrentBounds {
+                    inner: &stack,
+                    bounds: bounds.bounds.slice(&child_bounds[idx]),
+                    viewport: bounds.viewport.clone(),
+                };
+    
+                passed |= widget.event_direct(&stack,event,root,ctx);
+            }),
+            root,ctx
+        );
+
+        passed
     }
-    fn _size(&self, l: Link<E>, e: &EStyle<E>) -> ESize<E> {
-        self._size_impl(l,e)
+
+    fn _size<P>(
+        &self,
+        stack: &P,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where P: Queron<E> + ?Sized {
+        let size = widget_size_inside_border_type(
+            stack, TestStyleBorderType::Spacing,
+            |stack| {
+                let mut s = ESize::<E>::empty();
+
+                self.childs.all(
+                    AsWidgetsAllClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
+                        //TODO bounds could never be used in constraints calc, else we would already need to have the child bounds calculates, which also requires the constraints
+                        s.add( &widget.size(&stack,root,ctx), self.orientation )
+                    ),
+                    root,ctx
+                );
+
+                s
+            }
+        );
+
+        size
     }
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
-        self.child_bounds_impl(l,b,e,force)
+
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
+        //TODO holy stack
+        let mut child_sizes = Vec::with_capacity(self.childs());
+
+        self.childs.all(
+            AsWidgetsAllClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
+                //TODO bounds could never be used in constraints calc, else we would already need to have the child bounds calculates, which also requires the constraints
+                child_sizes.push( widget.size(&stack,root,ctx) )
+            ),
+            root,ctx
+        );
+
+        let bounds = calc_bounds(&b.size,&child_sizes,self.orientation); 
+
+        Ok(bounds)
     }
     fn childs(&self) -> usize {
         self.childs.len()
     }
-    fn childs_ref<'s>(&'s self, r: E::RootRef<'_>, c: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
-        self.childs.childs(r,c)
-    }
-    fn into_childs<'s>(self: Box<Self>, r: E::RootRef<'_>, c: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
-        self.childs.into_childs(r,c)
+    
+    fn with_child<'s,F,R>(
+        &'s self,
+        i: usize,
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+    {
+        self.childs.by_index(
+            i,
+            AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
+                (callback)(Ok(widget.erase()),ctx)
+            ),
+            root,ctx
+        ).unwrap_or_else(|| todo!()/*(callback)(Err(()),ctx)*/ )
     }
 
     fn focusable(&self) -> bool {
         false
     }
-
-    fn child<'s>(&'s self, i: usize, r: E::RootRef<'_>, c: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
-        self.childs.child(i,r,c)
-    }
-    fn into_child<'s>(self: Box<Self>, i: usize, r: E::RootRef<'_>, c: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
-        self.childs.into_child(i,r,c)
-    }
 }
 
-impl<'w,E,T> Pane<'w,E,T> where
-    E: Env,
-    T: WidgetArray<E>,
-{
-    pub fn _render_impl(&self, mut l: Link<E>, r: &mut ERenderer<'_,E>) where
-        E: Env,
+impl<'z,E,T> AsWidget<'z,E> for Pane<'z,E,T> where Self: Widget<E>, E: Env {
+    type Widget<'v> = Self where 'z: 'v;
+
+    #[inline]
+    fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R
+    where
+        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
     {
-        let mut r = r.with_style(&self.style);
-        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
-        let sizes = l.child_sizes(r.style()).expect("Dead Path Inside Pane");
-        let bounds = calc_bounds(&r.bounds().size,&sizes,self.orientation); 
-
-        for i in 0..self.childs() {
-            let l = l.for_child(i).expect("Dead Path Inside Pane");
-            let mut r = r.slice(&bounds[i]);
-            r.render_widget(l);
-        }
-        //TODO FIX viewport
-    }
-
-    pub fn _event_direct_impl(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp where
-        E: Env,
-    {
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
-        
-        let sizes = l.child_sizes(&e.style).expect("Dead Path Inside Pane");
-        let bounds = calc_bounds(&e.bounds.size,&sizes,self.orientation);
-
-        let mut passed = false;
-
-        for i in 0..self.childs() {
-            let mut l = l.for_child(i).expect("Dead Path Inside Pane");
-            let sliced = e.slice_bounds(&bounds[i]);
-            if let Some(ee) = sliced.filter(&l) {
-                passed |= l.event_direct(&ee);
-            }
-        }
-
-        passed
-    }
-
-    pub fn _size_impl(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> where
-        E: Env,
-    {
-        let e = e.and(&self.style);
-        let mut s = ESize::<E>::empty();
-        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(&e), self.orientation) ).expect("Dead Path inside Pane");
-        s
-    }
-
-    pub fn child_bounds_impl(&self, mut l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> where
-        E: Env,
-    {
-        let e = e.and(&self.style);
-        let sizes = l.child_sizes(&e).expect("Dead Path Inside Pane");
-        let bounds = calc_bounds(&b.size,&sizes,self.orientation); 
-
-        Ok(bounds)
-    }
-}
-
-impl<'l,E,T> AsWidget<E> for Pane<'l,E,T> where Self: Widget<E>, E: Env {
-    type Widget = Self;
-    type WidgetOwned = Self;
-
-    #[inline]
-    fn as_widget<'w>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget<'w>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        WCow::Owned(self)
-    }
-    #[inline]
-    fn box_into_widget<'w>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Owned(*self)
-    }
-    #[inline]
-    fn as_widget_dyn<'w,'s>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget_dyn<'w,'s>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        WCow::Owned(Box::new(self))
-    }
-    #[inline]
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Owned(self)
+        f.call(self, root, ctx)
     }
 }

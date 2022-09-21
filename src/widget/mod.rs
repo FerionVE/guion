@@ -217,12 +217,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             return Ok(*b)
         }
         let (child,_) = self.resolve_child(&i,root.fork(),ctx)?;
-        let bounds = self.child_bounds(stack,b,e,force)?;
+        let bounds = self.child_bounds(stack,b,force,root,ctx)?;
         
         Ok(bounds[child])
     }
     /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
-    fn child_bounds<P>(&self, stack: &P, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized;
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized;
     
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Attach widget's id to the given parent path
