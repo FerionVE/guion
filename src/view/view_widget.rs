@@ -51,7 +51,7 @@ impl<'z,Wid,WFn,MFn,E> AsWidget<'z,E> for ViewWidget<'z,Wid,WFn,MFn,E> where
         E::RootMut<'s>,&'s (),
         &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Wid::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
         &'c mut E::Context<'cc>
-    ) + Clone + 'static,
+    ) + Send + Sync + Clone + 'static,
     E: Env,
 {
     type Widget<'v> = Wid::Viewed<'v,MFn> where 'z: 'v;

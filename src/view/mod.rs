@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::ProtectedReturn;
 use crate::dispatchor::{ViewDispatch, ViewClosure};
@@ -23,7 +23,7 @@ pub trait View<'z,E> where E: Env, Self: 'z {
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
-        ) + Clone + 'static,
+        ) + Clone + Send + Sync + 'static, //TODO does it also need Sync or only need to be Send?
         DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>,
    ;
 }
@@ -39,7 +39,7 @@ impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
-        ) + Clone + 'static,
+        ) + Clone + Send + Sync + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>,
     {
         let g = ViewClosure::new(#[inline] move |widget,root,ctx|
@@ -53,11 +53,11 @@ pub trait ViewDyn<E> where E: Env {
     fn view_dyn(
         &self,
         dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: Rc<dyn for<'s,'c,'cc> Fn(
+        remut: Arc<dyn for<'s,'c,'cc> Fn( //TODO Arc slow
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
-        ) + 'static>,
+        ) + Send + Sync + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn;
 }
@@ -67,11 +67,11 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
     fn view_dyn(
         &self,
         dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: Rc<dyn for<'s,'c,'cc> Fn(
+        remut: Arc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
-        ) + 'static>,
+        ) + Send + Sync + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
         let g = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
@@ -106,7 +106,7 @@ impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
-        ) + Clone + 'static,
+        ) + Clone + Send + Sync + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>
     {
         let mut callback_return: Option<R> = None;
@@ -116,7 +116,7 @@ impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
                 callback_return = Some(r);
                 ProtectedReturn(PhantomData)
             }),
-            Rc::new(move |root,_,cb,ctx| {
+            Arc::new(move |root,_,cb,ctx| {
                 (mutor)(
                     root,&(),
                     &mut move |resolved: ResolveResult<&mut Timmy>,&(),ctx| {
@@ -144,11 +144,11 @@ pub trait ViewDyn2<E,M> where M: MuGator<E>, E: Env {
     fn view_dyn(
         &self,
         dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: Rc<dyn for<'s,'c,'cc> Fn(
+        remut: Arc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
-        ) + 'static>,
+        ) + Send + Sync + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn;
 }
@@ -162,11 +162,11 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
     fn view_dyn(
         &self,
         dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: Rc<dyn for<'s,'c,'cc> Fn(
+        remut: Arc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
-        ) + 'static>,
+        ) + Send + Sync + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
         let g = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
@@ -194,7 +194,7 @@ impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
-        ) + Clone + 'static,
+        ) + Send + Sync + Clone + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>
     {
         let mut callback_return: Option<R> = None;
@@ -204,7 +204,7 @@ impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
                 callback_return = Some(r);
                 ProtectedReturn(PhantomData)
             }),
-            Rc::new(#[inline] move |root,_,cb,ctx|
+            Arc::new(#[inline] move |root,_,cb,ctx|
                 (mutor)(root,&(),cb,ctx)
             ),
             root,
