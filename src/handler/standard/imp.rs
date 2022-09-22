@@ -34,7 +34,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         &self,
         w: &W,
         stack: &S,
-        e: &Evt,
+        event: &Evt,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
@@ -43,10 +43,15 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
     {
         let widget_data = QueryCurrentWidget.query_in(stack).unwrap();
 
-        if let Some(_) = e.query_variant::<MouseMove,_>(stack) {
+        //TODO it can't be! this could never know of the spacing borders, so we can't properly trace the hover here
+
+        let event_mode = event.query_std_event_mode(&stack).unwrap();
+
+        if event_mode.receive_self && event.query_variant::<MouseMove,_>(stack).is_some() {
             (self.access)(ctx).s.mouse.hovered = Some(widget_data.ident());
         }
-        self.sup._event_direct(w, stack, e, root, ctx)
+
+        self.sup._event_direct(w, stack, event, root, ctx)
         //todo!()
     }
     //#[inline] 

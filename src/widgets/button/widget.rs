@@ -4,6 +4,7 @@ use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::style::standard::cursor::StdCursor;
 use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widget::stack::for_child_widget;
 
 use super::*;
 use super::imp::*;
@@ -63,15 +64,17 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
 
         self.text.with_widget(
             AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                let render_props = render_props
+                    .inside_border_of_type(TestStyleBorderType::Component)
+                    .with_vartype(
+                        ctx.state().is_hovered(&self.id),
+                        ctx.state().is_focused(&self.id),
+                        self.pressed(ctx).is_some(),
+                        self.locked,
+                    );
+
                 widget.render(
-                    &render_props
-                        .inside_border_of_type(TestStyleBorderType::Component)
-                        .with_vartype(
-                            ctx.state().is_hovered(&self.id),
-                            ctx.state().is_focused(&self.id),
-                            self.pressed(ctx).is_some(),
-                            self.locked,
-                        ),
+                    &for_child_widget(render_props,widget),
                     renderer,
                     root,ctx
                 )
@@ -118,7 +121,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                 stack, TestStyleBorderType::Component,
                 |stack|
                     self.text.with_widget(AsWidgetClosure::new(
-                        |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| widget.size(&stack,root,ctx)
+                        |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| widget.size(&for_child_widget(&stack,widget),root,ctx)
                     ),root,ctx)
             )
         );

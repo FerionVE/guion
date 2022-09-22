@@ -165,7 +165,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     #[deprecated]
     fn with_resolve<'s,F,R>(
         &'s self,
-        i: E::WidgetPath,
+        sub_path: E::WidgetPath,
         callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
@@ -173,17 +173,17 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     where
         F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
     {
-        if i.is_empty() {
+        if sub_path.is_empty() {
             return (callback)(Ok(self.erase()),ctx);
         }
         //TODO resolve_child could also return it's ref resolve
-        match self.resolve_child(&i,root.fork(),ctx) {
+        match self.resolve_child(&sub_path,root.fork(),ctx) {
             Ok((c,sub)) => {
                 //TODO assert that with_child always calls the callback
                 self.with_child(
                     c,
-                    #[inline] |w,ctx| (callback)(Ok(w.unwrap()),ctx),
-                    root, ctx,
+                    #[inline] |child,ctx| child.unwrap().with_resolve(sub, callback, root.fork(), ctx),
+                    root.fork(), ctx,
                 )
             },
             Err(e) => {

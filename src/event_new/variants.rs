@@ -74,12 +74,17 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone, E: En
                     RelationToSelfRelation::ParentOfSelf(self_in_parent) => {
                         // currently in parent of route-to widget
                         receive_self = false;
-                        route_to_childs = !self.filter_path_strict;
                         child_filter_sub_path = Some(self_in_parent);
                     },
-                    RelationToSelfRelation::Identical => {},
+                    RelationToSelfRelation::Identical => {
+                        if self.filter_path_strict {
+                            route_to_childs = false;
+                        }
+                    },
                     RelationToSelfRelation::ChildOfSelf(_) => {
                         if self.filter_path_strict {
+                            receive_self = false;
+                            route_to_childs = false;
                             debug_assert!(false, "Misrouted");
                         }
                     },
@@ -87,7 +92,7 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone, E: En
                         // misrouted
                         receive_self = false;
                         route_to_childs = false;
-                        debug_assert!(false, "Misrouted");
+                        //debug_assert!(false, "Misrouted");
                     },
                 }
             }

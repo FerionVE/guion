@@ -4,7 +4,7 @@ use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::widget::as_widgets::AsWidgets;
 use crate::widget::dyn_tunnel::WidgetDyn;
-use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds};
+use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds, for_child_widget};
 
 use super::*;
 
@@ -31,8 +31,11 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         self.childs.all(
             AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                 widget.render(
-                    &render_props
-                        .slice(&child_bounds[idx]),
+                    &for_child_widget(
+                        render_props
+                            .slice(&child_bounds[idx]),
+                        widget
+                    ),
                     renderer,
                     root,ctx
                 )
@@ -63,7 +66,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         self.childs.all(
             AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                 let stack = WithCurrentBounds {
-                    inner: &stack,
+                    inner: for_child_widget(&stack,widget),
                     bounds: bounds.bounds.slice(&child_bounds[idx]),
                     viewport: bounds.viewport.clone(),
                 };

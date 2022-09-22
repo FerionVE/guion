@@ -276,7 +276,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn _tabulate_dyn(&self, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> {
-        self._tabulate_dyn(stack, op, dir, root, ctx)
+        self._tabulate(stack, op, dir, root, ctx)
     }
     #[inline]
     fn inner_dyn<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's {
