@@ -51,7 +51,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         renderer.fill_border_inner(
             &render_props
                 .with_style_border_type(TestStyleBorderType::Component)
-                .with_style_color_type(TestStyleColorType::Fg)
+                .with_style_color_type(TestStyleColorType::Border)
                 .with_vartype(
                     ctx.state().is_hovered(&self.id),
                     ctx.state().is_focused(&self.id),

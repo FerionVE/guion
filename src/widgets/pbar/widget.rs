@@ -44,7 +44,7 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
         renderer.fill_border_inner(
             &render_props
                 .with_style_border_type(TestStyleBorderType::Component)
-                .with_style_color_type(TestStyleColorType::Fg),
+                .with_style_color_type(TestStyleColorType::Border),
             ctx
         );
     }

@@ -98,7 +98,9 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone, E: En
                 if filter_point.is_inside(current_bounds.bounds) { //TODO also check viewport
                     child_filter_point = Some(filter_point);
                 } else {
-                    debug_assert!(false,"Misrouted");
+                    receive_self = false;
+                    route_to_childs = false;
+                    //TODO check for misroute
                 }
             }
 
