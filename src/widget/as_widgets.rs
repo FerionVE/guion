@@ -1,6 +1,6 @@
 use std::ops::{Range, Mul, Div};
 
-use crate::dispatchor::{AsWidgetsDispatch, AsWidgetsIndexedDispatch, AsWidgetsIndexedWrap, AsWidgetClosure, AsWidgetsAllClosure, AsWidgetsClosure};
+use crate::dispatchor::{AsWidgetsDispatch, AsWidgetsIndexedDispatch, AsWidgetsIndexedWrap, AsWidgetClosure, AsWidgetsAllClosure, AsWidgetsClosure, AsWidgetClosureErased};
 use crate::env::Env;
 use crate::root::RootRef;
 
@@ -522,12 +522,18 @@ impl<'z,E,I,T> AsWidgets<'z,E> for Tupled<&'z [(I,T)]> where T: AsWidget<'z,E>, 
 
 macro_rules! impl_tuple {
     {
+        $n:expr;
+        $senf:ident;
+
         $t:ident $($tt:ident)+;
         $l:ident $($ll:ident)+;
+
+        $m:pat => $x:expr, $($mm:pat => $xx:expr),+;
+
         $enumt:ident $($enumtt:ident)+;
         $enumv:ident $($enumvv:ident)+;
     } => {
-        impl_tuple!($($tt)+;$($ll)+;$($enumtt)+;$($enumvv)+;);
+        impl_tuple!(($n-1);$senf;$($tt)+;$($ll)+;$($mm => $xx),+;$($enumtt)+;$($enumvv)+;);
 
         pub enum $enumt <$t,$($tt),+> {
             $enumv ($t),
@@ -569,15 +575,180 @@ macro_rules! impl_tuple {
         //         }
         //     }
         // }
+
+        impl<'z,E,$t,$($tt),+> AsWidgets<'z,E> for ($t,$($tt),+) where
+            $t: AsWidget<'z,E>,
+            $($tt: AsWidget<'z,E>),+ ,
+            E: Env, Self: 'z
+        {
+            type Widget<'v> = dyn WidgetDyn<E> + 'v where 'z: 'v;
+            type Bound = Range<usize>;
+            type ChildID = usize;
+            type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
+        
+            #[inline]
+            fn by_index<'w,XF,XR>(&'w self, idx: usize, fun: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
+            where
+                XF: AsWidgetsDispatch<'z,Self,XR,E>
+            {
+                let $senf = self;
+                
+                match idx {
+                    $m => 
+                        Some(AsWidget::with_widget(
+                            & $x,
+                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                fun.call(idx, idx..idx+1, idx, widget, root, ctx)
+                            }),
+                            root,ctx,
+                        ))
+                    ,
+                    $($mm => 
+                        Some(AsWidget::with_widget(
+                            & $xx,
+                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                fun.call(idx, idx..idx+1, idx, widget, root, ctx)
+                            }),
+                            root,ctx,
+                        ))
+                    ),+ ,
+                    _ => None,
+                }
+            }
+        
+            #[inline]
+            fn by_id<'w,XF,XR>(&'w self, &id: &Self::ChildID, f: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
+            where
+                XF: AsWidgetsDispatch<'z,Self,XR,E>
+            {
+                todo!()
+            }
+        
+            #[inline]
+            fn iter_ids(&self) -> Self::IdIdxIter {
+                (0..self.len()).map(#[inline] |i| (i,i..i+1,i))
+            }
+        
+            #[inline]
+            fn len(&self) -> usize {
+                $n
+            }
+        
+            #[inline]
+            fn full_bounds(&self) -> Self::Bound {
+                0..self.len()
+            }
+        
+            #[inline]
+            fn all_filtered<'w,XF>(&'w self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut fun: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            where
+                XF: AsWidgetsIndexedDispatch<'z,Self,E>
+            {
+                let ($l,$($ll),*) = self;
+
+                let mut i = 0;
+
+                {
+                    let idx = i;
+                    i += 1;
+
+                    if (filter)(idx,&(idx..idx+1),&idx) {
+                        AsWidget::with_widget(
+                            $l,
+                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                fun.call(idx, idx..idx+1, idx, widget, root, ctx)
+                            }),
+                            root.fork(),ctx,
+                        )
+                    }
+                }
+                $({
+                    let idx = i;
+                    i += 1;
+
+                    if (filter)(idx,&(idx..idx+1),&idx) {
+                        AsWidget::with_widget(
+                            $ll,
+                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                fun.call(idx, idx..idx+1, idx, widget, root, ctx)
+                            }),
+                            root.fork(),ctx,
+                        )
+                    }
+                })*
+            }
+        
+            #[inline]
+            fn all_in_bounds_filtered<'w,XF>(&'w self, bound: &Self::Bound, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut fun: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            where
+                XF: AsWidgetsIndexedDispatch<'z,Self,E>
+            {
+                let ($l,$($ll),*) = self;
+
+                let mut idx = 0;
+
+                {
+                    let current_idx = idx;
+                    idx += 1;
+
+                    if idx >= bound.start && idx < bound.end && (filter)(current_idx,&(current_idx..current_idx+1),&current_idx) {
+                        AsWidget::with_widget(
+                            $l,
+                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                fun.call(idx, idx..idx+1, idx, widget, root, ctx)
+                            }),
+                            root.fork(),ctx,
+                        )
+                    }
+                }
+                $({
+                    let current_idx = idx;
+                    idx += 1;
+
+                    if idx >= bound.start && idx < bound.end && (filter)(current_idx,&(current_idx..current_idx+1),&current_idx) {
+                        AsWidget::with_widget(
+                            $ll,
+                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                fun.call(idx, idx..idx+1, idx, widget, root, ctx)
+                            }),
+                            root.fork(),ctx,
+                        )
+                    }
+                })*
+            }
+        
+            fn resolve<'w,XF,XR>(&'w self, path: &[DynIDFragment], mut f: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
+            where
+                XF: AsWidgetsDispatch<'z,Self,XR,E>
+            {
+                todo!()
+            }
+        }
     };
     {
-        $t:ident;$l:ident;$enumt:ident;$enumv:ident;
+        $n:expr;
+        $senf:ident;
+        
+        $t:ident;$l:ident;
+        $m:pat => $x:expr;
+        
+        $enumt:ident;
+        $enumv:ident;
     } => {}
 }
 
 impl_tuple!(
+    32;senf;
     A B C D F G H I J K L M N O P R S T U V W X Y Z AA AB AC AD AE AF AG AH;
     a b c d f g h i j k l m n o p r s t u v w x y z aa ab ac ad ae af ag ah;
+    31 => senf.31,30 => senf.30,29 => senf.29,28 => senf.28,
+    27 => senf.27,26 => senf.26,25 => senf.25,24 => senf.24,
+    23 => senf.23,22 => senf.22,21 => senf.21,20 => senf.20,
+    19 => senf.19,18 => senf.18,17 => senf.17,16 => senf.16,
+    15 => senf.15,14 => senf.14,13 => senf.13,12 => senf.12,
+    11 => senf.11,10 => senf.10,09 => senf. 9,08 => senf. 8,
+    07 => senf. 7,06 => senf. 6,05 => senf. 5,04 => senf. 4,
+    03 => senf. 3,02 => senf. 2,01 => senf. 1,00 => senf. 0;
     Widgets32 Widgets31 Widgets30 
     Widgets29 Widgets28 Widgets27 Widgets26 Widgets25 Widgets24 Widgets23 Widgets22 Widgets21 Widgets20 
     Widgets19 Widgets18 Widgets17 Widgets16 Widgets15 Widgets14 Widgets13 Widgets12 Widgets11 Widgets10 

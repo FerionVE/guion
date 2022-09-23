@@ -2,8 +2,10 @@ use std::marker::PhantomData;
 
 use crate::env::Env;
 use crate::view::View;
+use crate::widget::Widget;
 use crate::widget::as_widget::AsWidget;
 use crate::widget::as_widgets::AsWidgets;
+use crate::widget::dyn_tunnel::WidgetDyn;
 
 
 pub trait AsWidgetDispatch<'z,V,R,E>
@@ -195,5 +197,59 @@ where
         'ww: 'w, 'z: 'ww
     {
         self.0.call(idx,bound,child_id,widget,root,ctx)
+    }
+}
+
+// pub struct AsWidgetToSDispatchErase<'z,C,V,W,R,E>(pub usize, pub W::Bound, pub W::ChildID, pub C, pub PhantomData<(Box<V>,Box<R>,Box<E>)>)
+// where
+//     C: AsWidgetsDispatch<'z,W,R,E>,
+//     V: AsWidget<'z,E> + ?Sized,
+//     W: ?Sized,
+//     for<'a> W: AsWidgets<'z,E,Widget<'a>=(dyn WidgetDyn<E> + 'a)> + 'z,
+//     E: Env,
+//     Self: 'z;
+
+// impl<'z,C,V,W,R,E> AsWidgetDispatch<'z,V,R,E> for AsWidgetToSDispatchErase<'z,C,V,W,R,E>
+// where
+//     C: AsWidgetsDispatch<'z,W,R,E>,
+//     V: AsWidget<'z,E> + ?Sized,
+//     W: ?Sized,
+//     for<'a> W: AsWidgets<'z,E,Widget<'a>=(dyn WidgetDyn<E> + 'a)> + 'z,
+//     E: Env,
+//     Self: 'z
+// {
+
+// }
+
+pub struct AsWidgetClosureErased<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
+where
+    V: AsWidget<'z,E> + ?Sized,
+    E: Env,
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w (dyn WidgetDyn<E> + 'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
+
+impl<'z,C,V,R,E> AsWidgetClosureErased<'z,C,V,R,E> 
+where
+    V: AsWidget<'z,E> + ?Sized,
+    E: Env,
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w (dyn WidgetDyn<E> + 'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+{
+    #[inline]
+    pub fn new(c: C) -> Self {
+        Self(c,PhantomData)
+    }
+}
+
+impl<'z,C,V,R,E> AsWidgetDispatch<'z,V,R,E> for AsWidgetClosureErased<'z,C,V,R,E>
+where
+    V: AsWidget<'z,E> + ?Sized,
+    E: Env,
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w (dyn WidgetDyn<E> + 'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+{
+    #[inline]
+    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    where
+        'ww: 'w, 'z: 'ww
+    {
+        (self.0)(widget.erase(),root,ctx)
     }
 }
