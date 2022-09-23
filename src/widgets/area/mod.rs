@@ -72,12 +72,26 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     }
 
     #[inline]
-    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> ResolveResult<&'r mut (dyn AtomStateMut<E,ScrollOff>)> + Clone + Send + Sync + 'static {
-        self.with_scroll_updater(move |r,x,c,ScrollUpdate { offset: (ax,ay) }| {
-            if let Ok(state) = mutor(r,x,c) {//TODO ResolveResult handling
-                let (ox,oy) = state.get(c);
-                state.set((ox+ax,oy+ay),c);
-            }
+    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>>
+    where
+        T: for<'r> FnOnce(
+            E::RootMut<'r>,
+            &'r (),
+            &mut (dyn FnMut(ResolveResult<&mut (dyn AtomStateMut<E,ScrollOff> + '_)>,&(),&mut E::Context<'_>)),
+            &mut E::Context<'_>,
+        ) + Clone + Send + Sync + 'static
+    {
+        self.with_scroll_updater(move |root,x,ctx,ScrollUpdate { offset: (ax,ay) }| {
+            (mutor)(
+                root,x,
+                &mut |state,_,ctx| {
+                    if let Ok(state) = state {//TODO ResolveResult handling
+                        let (ox,oy) = state.get(ctx);
+                        state.set((ox+ax,oy+ay),ctx);
+                    }
+                },
+                ctx
+            )
         })
     }
 

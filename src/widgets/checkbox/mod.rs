@@ -64,9 +64,28 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) -> ResolveResult<&'r mut (dyn AtomStateMut<E,bool>)> + Clone + Send + Sync + 'static {
-        self.with_update(move |r,x,c,v| if let Ok(s) = mutor(r,x,c) {s.set(v,c)} )
+    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>>
+    where
+        T: for<'r> FnOnce(
+            E::RootMut<'r>,
+            &'r (),
+            &mut (dyn FnMut(ResolveResult<&mut (dyn AtomStateMut<E,bool> + '_)>,&(),&mut E::Context<'_>)),
+            &mut E::Context<'_>,
+        ) + Clone + Send + Sync + 'static
+    {
+        self.with_update(move |root,x,ctx,value| {
+            (mutor)(
+                root,x,
+                &mut |state,_,ctx| {
+                    if let Ok(state) = state {
+                        state.set(value,ctx)
+                    }
+                },
+                ctx
+            )
+        })
     }
+
     #[inline]
     pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,TrMut> {
         CheckBox{

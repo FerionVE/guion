@@ -10,7 +10,7 @@ pub mod imp;
 
 pub struct TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where
     E: Env,
-    Self: 'w
+    Self: 'w,
 {
     id: E::WidgetID,
     pub size: ESize<E>,
@@ -21,7 +21,7 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where
     pub glyph_cache: GlyphCache,
     pub update: TBUpd,
     pub scroll_update: TBScr,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<&'w (Text,Scroll,Curs,TBUpd,TBScr,GlyphCache)>,
 }
 
 impl<'w,E> TextBox<'w,E,String,(u32,u32),ETCurSel<E>,(),(),LocalGlyphCache<E>> where
@@ -45,7 +45,6 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),ETCurSel<E>,(),(),LocalGlyphCache<E>> w
 }
 impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,ETCurSel<E>>,(),(),RemoteState<E,LocalGlyphCache<E>>> where
     E: Env,
-    Text: 'w,
 {
     #[inline]
     pub fn immediate(id: E::WidgetID, text: Text) -> Self {

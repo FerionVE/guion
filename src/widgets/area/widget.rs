@@ -1,3 +1,10 @@
+use crate::dispatchor::AsWidgetClosure;
+use crate::queron::Queron;
+use crate::queron::query::Query;
+use crate::root::RootRef;
+use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widget::stack::{for_child_widget, QueryCurrentBounds, WithCurrentBounds};
+
 use super::*;
 use util::{state::*};
 
@@ -6,48 +13,99 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    W: AsWidget<E>,
+    W: AsWidget<'w,E>,
     Scroll: AtomState<E,ScrollOff>,
     MutFn: TriggerMut<E>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, mut l: Link<E>, r: &mut ERenderer<'_,E>) {
-        let mut r = r.with_style(&self.style);
-        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
-        r.with(&[
-            StdSelectag::ObjBorder,
-            StdSelectag::Focused(l.is_focused()),
-            StdSelectag::BorderVisual,
-        ][..])
-            .fill_border_inner(l.ctx);
-        let mut r = r.inside_border_by(StdSelectag::BorderVisual,l.ctx);
+    
+    fn _render<P>(
+        &self,
+        stack: &P,
+        renderer: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where P: Queron<E> + ?Sized {
+        let render_props = StdRenderProps::new(stack)
+            .inside_spacing_border();
 
-        let rect = *r.bounds();
+        renderer.fill_border_inner(
+            &render_props
+                .with_style_border_type(TestStyleBorderType::Component)
+                .with_style_color_type(TestStyleColorType::Border)
+                .with_vartype(
+                    false, //ctx.state().is_hovered(&self.id),
+                    ctx.state().is_focused(&self.id),
+                    false, //self.pressed(ctx).is_some(),
+                    false, //self.locked,
+                ),
+            ctx
+        );
+        let render_props = render_props.inside_border_of_type(TestStyleBorderType::Component);
 
-        let (sx,sy) = self.scroll.get(l.ctx);
+        let rect = render_props.absolute_bounds;
 
-        let inner_size: ESize<E> = l.for_child(0).unwrap().size(r.style());
+        let (sx,sy) = self.scroll.get(ctx);
+
+        let inner_size = self.inner.with_widget(
+            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                widget.size(&for_child_widget(&render_props,widget),root,ctx)
+            }),
+            root.fork(),ctx
+        );
+
         let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
 
         let (sx,sy) = normalize_scroll_off((sx,sy), (iw,ih).into(), rect.size,true);
 
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
-        r.fork_with(Some(inner_rect), Some(rect), None, None)
-            .render_widget(l.for_child(0).unwrap());
+        self.inner.with_widget(
+            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                let render_props = render_props
+                    .fork_with(|r| {
+                        r.absolute_bounds = inner_rect;
+                        r.absolute_viewport = rect;
+                    });
+
+                widget.render(
+                    &for_child_widget(render_props,widget),
+                    renderer,
+                    root,ctx
+                )
+            }),
+            root,ctx
+        );
     }
-    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = e.with_style(&self.style);
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderVisual,l.ctx));
+
+    fn _event_direct<P,Evt>(
+        &self,
+        stack: &P,
+        event: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        let stack = with_inside_spacing_border(stack);
+        let stack = with_inside_border_by_type(stack,TestStyleBorderType::Component);
         
-        let rect = e.bounds;
+        let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
+        let event_mode = event.query_std_event_mode(&stack).unwrap();
 
-        let (osx,osy) = self.scroll.get(l.ctx);
+        if !event_mode.route_to_childs && !event_mode.receive_self {return false;}
+        
+        let rect = bounds.bounds;
 
-        let inner_size: ESize<E> = l.for_child(0).unwrap().size(&e.style);
+        let (osx,osy) = self.scroll.get(ctx);
+
+        let inner_size = self.inner.with_widget(
+            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                widget.size(&for_child_widget(&stack,widget),root,ctx)
+            }),
+            root.fork(),ctx
+        );
+
         let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
 
         let (sx,sy) = normalize_scroll_off((osx,osy), (iw,ih).into(), rect.size,true);
@@ -56,16 +114,29 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
 
         let mut passed = false;
 
-        {
-            let mut l = l.for_child(0).unwrap();
-            let e = e.with_bounds(inner_rect);
-            if let Some(ee) = e.filter(&l) { //TODO API OOF not filtering breaks for_child mechanism
-                passed |= l.event_direct(&ee);
-            }
+        if event_mode.route_to_childs {
+            // let mut l = l.for_child(0).unwrap();
+            // let e = e.with_bounds(inner_rect);
+            // if let Some(ee) = e.filter(&l) { //TODO API OOF not filtering breaks for_child mechanism
+            //     passed |= l.event_direct(&ee);
+            // }
+
+            self.inner.with_widget(
+                AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                    let stack = WithCurrentBounds {
+                        inner: for_child_widget(&stack,widget),
+                        bounds: inner_rect,
+                        viewport: *rect,
+                    };
+        
+                    passed |= widget.event_direct(&stack,event,root,ctx);
+                }),
+                root.fork(),ctx
+            )
         }
 
-        if !passed {
-            if let Some(ee) = e.event.is_kbd_press() {
+        if !passed && event_mode.receive_self { //TODO passed stack doof
+            if let Some(ee) = event.query_variant::<KbdPress<E>,_>(&stack) {
                 if
                     ee.key == MatchKeyCode::KbdUp || ee.key == MatchKeyCode::KbdDown ||
                     ee.key == MatchKeyCode::KbdLeft || ee.key == MatchKeyCode::KbdRight
@@ -91,7 +162,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
 
                     if su.offset != (0,0) {
                         if let Some(t) = self.scroll_updater.boxed(su) {
-                            l.mutate_closure(t);
+                            ctx.mutate_closure(t);
                             passed = true;
                         }
                     }
@@ -101,33 +172,44 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
 
         passed
     }
-    fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
-        let e = e.and(&self.style);
+
+    fn _size<P>(
+        &self,
+        stack: &P,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where P: Queron<E> + ?Sized {
         self.size.clone()
     }
+
     fn childs(&self) -> usize {
         1
     }
-    fn childs_ref<'s>(&'s self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
-        vec![self.inner.as_widget_dyn(root,ctx)]
-    }
-    fn into_childs<'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
-        vec![self.inner.into_widget_dyn(root,ctx)]
+
+    fn with_child<'s,F,R>(
+        &'s self,
+        i: usize,
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+    {
+        //if i != 0 {return Err(());} //TODO fix callback
+        self.inner.with_widget(
+            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
+                (callback)(Ok(widget.erase()),ctx)
+            ),
+            root,ctx
+        )
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
         todo!() // TODO complete inner bounds or just view
     }
     fn focusable(&self) -> bool {
         false //TODO
-    }
-    fn child<'s>(&'s self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
-        if i != 0 {return Err(());}
-        Ok(self.inner.as_widget_dyn(root,ctx))
-    }
-    fn into_child<'s>(self: Box<Self>, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
-        if i != 0 {return Err(());}
-        Ok(self.inner.into_widget_dyn(root,ctx))
     }
 
     impl_traitcast!( dyn WidgetDyn<E>:
@@ -135,32 +217,14 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     );
 }
 
-impl<'l,E,W,Scroll,MutFn> AsWidget<E> for Area<'l,E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
-    type Widget = Self;
-    type WidgetOwned = Self;
+impl<'z,E,W,Scroll,MutFn> AsWidget<'z,E> for Area<'z,E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
+    type Widget<'v> = Self where 'z: 'v;
 
     #[inline]
-    fn as_widget<'w>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget<'w>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        WCow::Owned(self)
-    }
-    #[inline]
-    fn box_into_widget<'w>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Owned(*self)
-    }
-    #[inline]
-    fn as_widget_dyn<'w,'s>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget_dyn<'w,'s>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        WCow::Owned(Box::new(self))
-    }
-    #[inline]
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Owned(self)
+    fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R
+    where
+        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
+    {
+        f.call(self, root, ctx)
     }
 }

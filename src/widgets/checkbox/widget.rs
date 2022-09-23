@@ -14,7 +14,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     State: AtomState<E,bool>,
-    for<'a> Text: AsWidget<'a,E>,
+    Text: AsWidget<'w,E>,
     TrMut: TriggerMut<E>,
 {
     fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
@@ -134,7 +134,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
         let check_size = QueryCurrentBounds.query_in(stack).unwrap().bounds.size.h;
         let text_border = Border::new(check_size+4/*TODO fix border impl*/*2,0,0,0);
 
-        let size = widget_size_inside_border_type(
+        let mut size = widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
             |stack| widget_size_inside_border(
                 stack, text_border,
@@ -144,6 +144,8 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
                     ),root,ctx)
             )
         );
+
+        size.add_x( &self.size );
 
         size
     }

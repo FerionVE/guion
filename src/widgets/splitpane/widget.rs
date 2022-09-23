@@ -156,7 +156,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
             }
         //}
         }
-        {
+        if event_mode.route_to_childs {
             self.childs.0.with_widget(
                 AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
@@ -168,9 +168,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                     passed |= widget.event_direct(&stack,event,root,ctx);
                 }),
                 root.fork(),ctx
-            )
-        }
-        {
+            );
             self.childs.1.with_widget(
                 AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
@@ -182,7 +180,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                     passed |= widget.event_direct(&stack,event,root,ctx);
                 }),
                 root,ctx
-            )
+            );
         }
         passed
     }

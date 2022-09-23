@@ -57,6 +57,8 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
         let event_mode = event.query_std_event_mode(&stack).unwrap();
 
+        dbg!(event._debug(),&event_mode);
+
         if !event_mode.route_to_childs {return false;}
 
         let child_bounds = self.child_bounds(&stack, &bounds.bounds, true, root.fork(), ctx).unwrap();
@@ -93,7 +95,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
                 self.childs.all(
                     AsWidgetsAllClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
                         //TODO bounds could never be used in constraints calc, else we would already need to have the child bounds calculates, which also requires the constraints
-                        s.add( &widget.size(&stack,root,ctx), self.orientation )
+                        s.add( &widget.size(&for_child_widget(&stack,widget),root,ctx), self.orientation )
                     ),
                     root,ctx
                 );
@@ -112,7 +114,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         self.childs.all(
             AsWidgetsAllClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
                 //TODO bounds could never be used in constraints calc, else we would already need to have the child bounds calculates, which also requires the constraints
-                child_sizes.push( widget.size(&stack,root,ctx) )
+                child_sizes.push( widget.size(&for_child_widget(&stack,widget),root,ctx) )
             ),
             root,ctx
         );
