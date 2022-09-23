@@ -1,80 +1,137 @@
 use super::*;
 use util::state::*;
+use crate::dispatchor::{AsWidgetClosure, AsWidgetsClosure};
 use crate::event::key::Key;
-use crate::style::standard::cursor::StdCursor; //TODO fix req of this import
+use crate::queron::Queron;
+use crate::queron::query::Query;
+use crate::root::RootRef;
+use crate::style::standard::cursor::StdCursor;
+use crate::widget::as_widgets::AsWidgets;
+use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widget::stack::{for_child_widget, QueryCurrentBounds, WithCurrentBounds}; //TODO fix req of this import
 
 impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
-    L: AsWidget<E>,
-    R: AsWidget<E>,
+    (L,R): AsWidgets<'w,E>,
+    L: AsWidget<'w,E>,
+    R: AsWidget<'w,E>,
     V: AtomState<E,f32>,
     TrMut: TriggerMut<E>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
-    fn _render(&self, mut l: Link<E>, r: &mut ERenderer<'_,E>) {
-        let mut r = r.with_style(&self.style);
-        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
-        let bounds = self.calc_bounds(r.bounds(),self.state.get(l.ctx)); 
+
+    fn _render<P>(
+        &self,
+        stack: &P,
+        renderer: &mut ERenderer<'_,E>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where P: Queron<E> + ?Sized {
+        let render_props = StdRenderProps::new(stack)
+            .inside_spacing_border();
+
+        let bounds = self.calc_bounds(&render_props.absolute_bounds,self.state.get(ctx)); 
 
         {
-            if l.state().is_hovered(&self.id) {
+            if ctx.state().is_hovered(&self.id) {
                 let cursor = match self.orientation {
                     Orientation::Horizontal => StdCursor::SizeWE,
                     Orientation::Vertical => StdCursor::SizeNS,
                 };
 
-                r.set_cursor_specific(&cursor.into(),l.ctx);
+                renderer.set_cursor_specific(&cursor.into(),ctx);
             }
 
-            r.slice_abs(&bounds[1])
-                .with(StdSelectag::ObjForeground)
-                .fill_rect(l.ctx);
+            renderer.fill_rect(
+                &render_props
+                    .slice_absolute(&bounds[1])
+                    .with_style_color_type(TestStyleColorType::Fg)
+                    .with_vartype(
+                        ctx.state().is_hovered(&self.id),
+                        ctx.state().is_focused(&self.id),
+                        false, //self.pressed(ctx).is_some(),
+                        false, //self.locked, //TODO add locked
+                    ),
+                ctx
+            );
         }
 
         {
-            let left = l.for_child(0).expect("Dead Path inside Pane");
-            let mut r = r.slice_abs(&bounds[0]);
-            r.render_widget(left);
+            self.childs.0.with_widget(
+                AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                    widget.render(
+                        &for_child_widget(render_props.slice_absolute(&bounds[0]),widget),
+                        renderer,
+                        root,ctx
+                    )
+                }),
+                root.fork(),ctx
+            );
         }
         {
-            let right = l.for_child(1).expect("Dead Path inside Pane");
-            let mut r = r.slice_abs(&bounds[2]);
-            r.render_widget(right);
+            self.childs.1.with_widget(
+                AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                    widget.render(
+                        &for_child_widget(render_props.slice_absolute(&bounds[2]),widget),
+                        renderer,
+                        root,ctx
+                    )
+                }),
+                root,ctx
+            );
         }
         {
             //TODO render center
         }
         //TODO FIX viewport
     }
-    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = e.with_style(&self.style);
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
+    
+    fn _event_direct<P,Evt>(
+        &self,
+        stack: &P,
+        event: &Evt,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        let stack = with_inside_spacing_border(stack);
+
+        let current = QueryCurrentBounds.query_in(&stack).unwrap();
+        let event_mode = event.query_std_event_mode(&stack).unwrap();
+
+        if !event_mode.route_to_childs && !event_mode.receive_self {return false;}
 
         let o = self.orientation;
-        let mut bounds = self.calc_bounds(&e.bounds,self.state.get(l.ctx)); 
+        let mut bounds = self.calc_bounds(&current.bounds,self.state.get(ctx)); 
 
         let mut passed = false;
 
+        if event_mode.receive_self {
         //if let Some(e) = e.slice_bounds(&bounds[1]).filter(&l) {
-            if let Some(mm) = e.event.is_mouse_move() {
+            if let Some(mm) = event.query_variant::<MouseMove,_>(&stack) {
                 //if mouse is down and was pressed on us
-                if let Some(_) = l.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone()) {
-                    let cursor = l.state().cursor_pos().expect("TODO");
+                if let Some(_) = ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone()) {
+                    let cursor = ctx.state().cursor_pos().expect("TODO");
                     let mut cx = cursor.par(o);
-                    let (mut wx0, ww) = e.bounds.par(o);
+                    let (mut wx0, ww) = current.bounds.par(o);
                     let mut wx1 = wx0 + ww as i32;
 
-                    let l_min = l.for_child(0)
-                        .expect("Dead Path inside Pane").size(&e.style)
-                        .par(o).min();
-                    let r_min = l.for_child(1)
-                        .expect("Dead Path inside Pane").size(&e.style)
-                        .par(o).min();
+                    let l_min = self.childs.0.with_widget(
+                        AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                            widget.size(&for_child_widget(&stack,widget),root,ctx) //TODO It can't be! We can't already have the bounds for the widget when constraining
+                        }),
+                        root.fork(),ctx
+                    ).par(o).min();
+                    let r_min = self.childs.1.with_widget(
+                        AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                            widget.size(&for_child_widget(&stack,widget),root,ctx)
+                        }),
+                        root.fork(),ctx
+                    ).par(o).min();
 
                     wx0 += (self.width/2) as i32;
                     wx1 -= (self.width/2) as i32;
@@ -90,59 +147,106 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                         let fcx = (cx as f32)/(ww as f32);
 
                         if let Some(t) = self.updater.boxed(fcx) {
-                            l.mutate_closure(t)
+                            ctx.mutate_closure(t)
                         }
 
-                        bounds = self.calc_bounds(&e.bounds,fcx);
+                        bounds = self.calc_bounds(&current.bounds,fcx);
                     }
                 }
             }
         //}
-        {
-            let mut left = l.for_child(0).expect("Dead Path inside Pane");
-            let sliced = &e & &bounds[0]; //TODO opion impl
-            if let Some(ee) = sliced.filter(&left) {
-                passed |= left.event_direct(&ee);
-            }
         }
         {
-            let mut right = l.for_child(1).expect("Dead Path inside Pane");
-            let sliced = &e & &bounds[2];
-            if let Some(ee) = sliced.filter(&right) {
-                passed |= right.event_direct(&ee);
-            }
+            self.childs.0.with_widget(
+                AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                    let stack = WithCurrentBounds {
+                        inner: for_child_widget(&stack,widget),
+                        bounds: current.bounds & &bounds[0],
+                        viewport: current.viewport.clone(),
+                    };
+        
+                    passed |= widget.event_direct(&stack,event,root,ctx);
+                }),
+                root.fork(),ctx
+            )
+        }
+        {
+            self.childs.1.with_widget(
+                AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                    let stack = WithCurrentBounds {
+                        inner: for_child_widget(&stack,widget),
+                        bounds: current.bounds & &bounds[2],
+                        viewport: current.viewport.clone(),
+                    };
+        
+                    passed |= widget.event_direct(&stack,event,root,ctx);
+                }),
+                root,ctx
+            )
         }
         passed
     }
-    fn _size(&self, mut l: Link<E>, e: &EStyle<E>) -> ESize<E> {
-        let e = e.and(&self.style);
-        let mut s = ESize::<E>::empty();
-        l.for_childs(&mut |mut l: Link<E>| s.add(&l.size(&e), self.orientation) ).expect("Dead Path inside Pane");
-        s.add_space(self.width,self.orientation);
-        s
+
+    fn _size<P>(
+        &self,
+        stack: &P,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where P: Queron<E> + ?Sized {
+        let size = widget_size_inside_border_type(
+            stack, TestStyleBorderType::Spacing,
+            |stack| {
+                let mut s = ESize::<E>::empty();
+
+                self.childs.0.with_widget(
+                    AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                        s.add( &widget.size(&for_child_widget(&stack,widget),root,ctx), self.orientation )
+                    }),
+                    root.fork(),ctx
+                );
+                s.add_space(self.width,self.orientation);
+                self.childs.1.with_widget(
+                    AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                        s.add( &widget.size(&for_child_widget(&stack,widget),root,ctx), self.orientation )
+                    }),
+                    root,ctx
+                );
+
+                s
+            }
+        );
+
+        size
     }
-    fn child_bounds(&self, l: Link<E>, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Vec<Bounds>,()> {
-        Ok(self.calc_bounds(b,self.state.get(l.ctx)))
+
+    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
+        Ok(self.calc_bounds(b,self.state.get(ctx)))
     }
     fn childs(&self) -> usize {
         self.childs.len()
     }
-    fn childs_ref<'s>(&'s self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> {
-        self.childs.childs(root,ctx)
-    }
-    fn into_childs<'s>(self: Box<Self>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<WidgetRef<'s,E>> where Self: 's {
-        self.childs.into_childs(root,ctx)
+
+    fn with_child<'s,F,Ret>(
+        &'s self,
+        i: usize,
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> Ret
+    where
+        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> Ret
+    {
+        self.childs.by_index(
+            i,
+            AsWidgetsClosure::new(|_,_,_,widget:&<(L,R) as AsWidgets<'_, E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
+                (callback)(Ok(widget.erase()),ctx)
+            ),
+            root,ctx
+        ).unwrap_or_else(|| todo!()/*(callback)(Err(()),ctx)*/ )
     }
 
     fn focusable(&self) -> bool {
         false
-    }
-
-    fn child<'s>(&'s self, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> {
-        self.childs.child(i,root,ctx)
-    }
-    fn into_child<'s>(self: Box<Self>, i: usize, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<WidgetRef<'s,E>,()> where Self: 's {
-        self.childs.into_child(i,root,ctx)
     }
 
     impl_traitcast!( dyn WidgetDyn<E>:
@@ -154,7 +258,7 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     V: AtomState<E,f32>,
 {
-    fn calc_bounds(&self, b: &Bounds, v: f32) -> Vec<Bounds> {
+    fn calc_bounds(&self, b: &Bounds, v: f32) -> Vec<Bounds> { //TODO WHY does calc_bounds in pane return relative bounds and this does absolute bounds
         let handle_width = self.width.min(b.w());
         let o = self.orientation;
         let (x,w) = b.par(o);
@@ -170,32 +274,14 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     }
 }
 
-impl<'l,E,L,R,V,TrMut> AsWidget<E> for SplitPane<'l,E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
-    type Widget = Self;
-    type WidgetOwned = Self;
+impl<'z,E,L,R,V,TrMut> AsWidget<'z,E> for SplitPane<'z,E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
+    type Widget<'v> = Self where 'z: 'v;
 
     #[inline]
-    fn as_widget<'w>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget<'w>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: Sized + 'w {
-        WCow::Owned(self)
-    }
-    #[inline]
-    fn box_into_widget<'w>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> WCow<'w,Self::Widget,Self::WidgetOwned> where Self: 'w {
-        WCow::Owned(*self)
-    }
-    #[inline]
-    fn as_widget_dyn<'w,'s>(&'w self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Borrowed(self)
-    }
-    #[inline]
-    fn into_widget_dyn<'w,'s>(self, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: Sized + 'w {
-        WCow::Owned(Box::new(self))
-    }
-    #[inline]
-    fn box_into_widget_dyn<'w,'s>(self: Box<Self>, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> DynWCow<'w,E> where Self: 'w {
-        WCow::Owned(self)
+    fn with_widget<'w,F,Ret>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Ret
+    where
+        F: dispatchor::AsWidgetDispatch<'z,Self,Ret,E>
+    {
+        f.call(self, root, ctx)
     }
 }
