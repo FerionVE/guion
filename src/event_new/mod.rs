@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use crate::env::Env;
@@ -49,6 +50,8 @@ pub trait Event<E> where E: Env {
 
     /// Append prefetch to stack
     fn with_prefetch<R>(&self, stack: R) -> Self::WithPrefetch<R> where R: Queron<E>;
+
+    fn _debug(&self) -> &dyn Debug;
 }
 
 /// This trait is only for bridging thru trait objects
@@ -56,6 +59,7 @@ pub trait EventDyn<E> {
     fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, stack: &dyn QueronDyn<E>);
     fn ts_dyn(&self) -> u64;
     fn _root_only_dyn(&self) -> bool;
+    fn _debug_dyn(&self) -> &dyn Debug;
 }
 impl<T,E> EventDyn<E> for T where T: Event<E> + ?Sized, E: Env {
     #[inline]
@@ -69,6 +73,10 @@ impl<T,E> EventDyn<E> for T where T: Event<E> + ?Sized, E: Env {
     #[inline]
     fn _root_only_dyn(&self) -> bool {
         self._root_only()
+    }
+
+    fn _debug_dyn(&self) -> &dyn Debug {
+        self._debug()
     }
 }
 
@@ -95,5 +103,9 @@ impl<E> Event<E> for dyn EventDyn<E> + '_ where E: Env {
     #[inline]
     fn _root_only(&self) -> bool {
         self._root_only_dyn()
+    }
+
+    fn _debug(&self) -> &dyn Debug {
+        self._debug_dyn()
     }
 }

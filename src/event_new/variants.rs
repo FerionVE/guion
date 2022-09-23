@@ -135,4 +135,8 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone, E: En
     fn _root_only(&self) -> bool {
         self.variant._root_only()
     }
+
+    fn _debug(&self) -> &dyn Debug {
+        self
+    }
 }

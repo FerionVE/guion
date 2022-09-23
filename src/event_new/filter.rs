@@ -5,7 +5,7 @@ use crate::queron::query::Query;
 use crate::util::bounds::Offset;
 
 /// Widget event handler do need to query receive_self before querying event types, or they may get events not supposed to get
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct StdEventMode<E> where E: Env {
     /// Whether the current widget receives the event
     /// 
