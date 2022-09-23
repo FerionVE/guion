@@ -10,7 +10,7 @@ use super::*;
 
 impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     E: Env,
-    for<'a> T: AsWidgets<'a,E>,
+    T: AsWidgets<'w,E>,
 {
     fn id(&self) -> E::WidgetID {
         self.id.clone()

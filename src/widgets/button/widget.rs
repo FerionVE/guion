@@ -14,7 +14,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
-    for<'a> Text: AsWidget<'a,E>,
+    Text: AsWidget<'w,E>,
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
 {
@@ -168,7 +168,7 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
-    for<'a> S: AsWidget<'a,E>,
+    S: AsWidget<'w,E>,
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
 {
