@@ -6,6 +6,7 @@ use crate::dispatchor::{ViewDispatch, ViewClosure};
 use crate::env::Env;
 use crate::error::ResolveResult;
 use crate::widget::Widget;
+use crate::widget::cache::{WidgetCache, WidgetCacheDyn, DynWidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 pub mod view_widget;
@@ -14,7 +15,8 @@ pub mod message;
 //pub mod test;
 
 pub trait View<'z,E> where E: Env, Self: 'z {
-    type Viewed<'v,MutorFn>: Widget<E> + ?Sized + 'v where MutorFn: 'static, 'z: 'v;
+    type Viewed<'v,MutorFn>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where MutorFn: 'static, 'z: 'v;
+    type WidgetCache: WidgetCache<E>;
     type Mutable<'k>: ?Sized + 'k;
 
     fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
@@ -30,6 +32,7 @@ pub trait View<'z,E> where E: Env, Self: 'z {
 
 impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z {
     type Viewed<'v,MutorFn> = T::Viewed<'v,MutorFn> where MutorFn: 'static, 'z: 'v;
+    type WidgetCache = T::WidgetCache;
     type Mutable<'k> = T::Mutable<'k>;
 
     #[inline]
@@ -97,6 +100,7 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
 
 impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
     type Viewed<'v,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v;
+    type WidgetCache = DynWidgetCache<E>;
     type Mutable<'k> = Timmy;
 
     #[inline]
@@ -184,6 +188,7 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
 
 impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
     type Viewed<'v,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, 'z: 'v;
+    type WidgetCache = DynWidgetCache<E>;
     type Mutable<'k> = M::Mutable<'k>;
 
     #[inline]

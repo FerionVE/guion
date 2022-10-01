@@ -55,6 +55,7 @@ impl<'z,Wid,WFn,MFn,E> AsWidget<'z,E> for ViewWidget<'z,Wid,WFn,MFn,E> where
     E: Env,
 {
     type Widget<'v> = Wid::Viewed<'v,MFn> where 'z: 'v;
+    type WidgetCache = Wid::WidgetCache;
 
     #[inline]
     fn with_widget<'w,F,R>(&'w self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R

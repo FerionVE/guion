@@ -95,7 +95,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn _event_direct<P,Evt>(
         &self,
         stack: &P,
-        event: &Evt,
+        event: &Evt, // what if e.g. bounds change, if it's validated by parents then it's not signaled here
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>

@@ -143,6 +143,7 @@ impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
 
 impl<'z,E,Text,GlyphCache> AsWidget<'z,E> for Label<'z,E,Text,GlyphCache> where Self: Widget<E>, E: Env {
     type Widget<'v> = Self where 'z: 'v;
+    type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
     fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R

@@ -19,7 +19,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
 {
-    type Cache = ButtonCache<<Text::Widget<'w> as Widget<E>>::Cache,E>;
+    type Cache = ButtonCache<Text::WidgetCache,E>;
 
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -209,6 +209,7 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
 
 impl<'z,E,Text,Tr,TrMut> AsWidget<'z,E> for Button<'z,E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v> = Self where 'z: 'v;
+    type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
     fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R

@@ -3,6 +3,7 @@ use std::ops::{Range, Mul, Div};
 use crate::dispatchor::{AsWidgetsDispatch, AsWidgetsIndexedDispatch, AsWidgetsIndexedWrap, AsWidgetClosure, AsWidgetsAllClosure, AsWidgetsClosure, AsWidgetClosureErased};
 use crate::env::Env;
 use crate::root::RootRef;
+use crate::widget::cache::DynWidgetCache;
 
 use super::*;
 use super::as_widget::AsWidget;
@@ -20,7 +21,8 @@ impl<E,T> ChildIDSerialize<E> for T where T: Clone + Sized + 'static {
 }
 
 pub trait AsWidgets<'z,E> where E: Env, Self: 'z {
-    type Widget<'v>: Widget<E> + ?Sized + 'v where 'z: 'v;
+    type Widget<'v>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v;
+    type WidgetCache: WidgetCache<E>;
     type Bound: Rangor<E> + Clone + 'static; //must be range
     type ChildID: ChildIDSerialize<E> + Clone + 'static; // + AppendToPathResolvor
     type IdIdxIter: Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
@@ -70,6 +72,7 @@ pub trait AsWidgets<'z,E> where E: Env, Self: 'z {
 
 impl<'z,E,T> AsWidgets<'z,E> for &T where T: AsWidgets<'z,E> + ?Sized, E: Env, Self: 'z {
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
+    type WidgetCache = T::WidgetCache;
     type Bound = T::Bound;
     type ChildID = T::ChildID;
     type IdIdxIter = T::IdIdxIter;
@@ -169,6 +172,7 @@ impl<'z,E,T> AsWidgets<'z,E> for &T where T: AsWidgets<'z,E> + ?Sized, E: Env, S
 
 impl<'z,E,T> AsWidgets<'z,E> for [T] where T: AsWidget<'z,E>, E: Env, Self: 'z {
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
+    type WidgetCache = T::WidgetCache;
     type Bound = Range<usize>;
     type ChildID = usize;
     type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
@@ -262,6 +266,7 @@ where
     Self: 'z,
 {
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
+    type WidgetCache = T::WidgetCache;
     type Bound = T::Bound;
     type ChildID = T::ChildID;
     type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
@@ -417,6 +422,7 @@ pub struct Tupled<T>(pub T) where T: ?Sized;
 
 impl<'z,E,I,T> AsWidgets<'z,E> for Tupled<&'z [(I,T)]> where T: AsWidget<'z,E>, E: Env, I: Clone + PartialEq + 'static, Self: 'z {
     type Widget<'v> = T::Widget<'v> where 'z: 'v;
+    type WidgetCache = T::WidgetCache;
     type Bound = Range<usize>;
     type ChildID = I;
     type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
@@ -582,6 +588,7 @@ macro_rules! impl_tuple {
             E: Env, Self: 'z
         {
             type Widget<'v> = dyn WidgetDyn<E> + 'v where 'z: 'v;
+            type WidgetCache = DynWidgetCache<E>;
             type Bound = Range<usize>;
             type ChildID = usize;
             type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
