@@ -17,9 +17,6 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     Text: AsWidget<'w,E>,
     TrMut: TriggerMut<E>,
 {
-    fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
-        vec![]
-    }
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
