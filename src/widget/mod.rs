@@ -18,12 +18,10 @@ use traitcast::TraitObject;
 
 pub mod dyn_tunnel;
 
-//pub mod link;
 pub mod as_widget;
 pub mod ext;
 #[doc(hidden)]
 pub mod imp;
-// pub mod resolved;
 //pub mod root;
 pub mod as_widgets;
 // #[deprecated="Replaced by AsWidgets"]

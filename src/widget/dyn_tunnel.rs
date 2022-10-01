@@ -14,7 +14,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn render_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -23,7 +23,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn event_direct_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
-        e: &(dyn EventDyn<E>+'_),
+        event: &(dyn EventDyn<E>+'_),
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -40,7 +40,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn _render_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -49,7 +49,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn _event_direct_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
-        e: &(dyn EventDyn<E>+'_),
+        event: &(dyn EventDyn<E>+'_),
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -88,7 +88,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     #[deprecated]
     unsafe fn with_resolve_dyn<'s>(
         &'s self,
-        i: E::WidgetPath,
+        sub_path: E::WidgetPath,
         callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> ProtectedReturn,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
@@ -148,23 +148,23 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     fn render_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) {
-        self.render(stack, r, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
+        self.render(stack, renderer, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn event_direct_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
-        e: &(dyn EventDyn<E>+'_),
+        event: &(dyn EventDyn<E>+'_),
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp {
-        self.event_direct(stack, e, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
+        self.event_direct(stack, event, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn size_dyn(
@@ -180,23 +180,23 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     fn _render_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) {
-        self._render(stack, r, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
+        self._render(stack, renderer, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn _event_direct_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
-        e: &(dyn EventDyn<E>+'_),
+        event: &(dyn EventDyn<E>+'_),
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp {
-        self._event_direct(stack, e, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
+        self._event_direct(stack, event, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn _size_dyn(
@@ -242,12 +242,12 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     unsafe fn with_resolve_dyn<'s>(
         &'s self,
-        i: E::WidgetPath,
+        sub_path: E::WidgetPath,
         callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> ProtectedReturn,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        self.with_resolve(i, callback, root, ctx)
+        self.with_resolve(sub_path, callback, root, ctx)
     }
     #[inline]
     fn resolve_child_dyn(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error> {
@@ -346,23 +346,23 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn render<P>(
         &self,
         stack: &P,
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        self.render_dyn(stack.erase(), r, cache, root, ctx)
+        self.render_dyn(stack.erase(), renderer, cache, root, ctx)
     }
     #[inline]
     fn event_direct<P,Evt>(
         &self,
         stack: &P,
-        e: &Evt,
+        event: &Evt,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        self.event_direct_dyn(stack.erase(), e.erase(), cache, root, ctx)
+        self.event_direct_dyn(stack.erase(), event.erase(), cache, root, ctx)
     }
     #[inline]
     fn size<P>(
@@ -378,23 +378,23 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn _render<P>(
         &self,
         stack: &P,
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        self._render_dyn(stack.erase(), r, cache, root, ctx)
+        self._render_dyn(stack.erase(), renderer, cache, root, ctx)
     }
     #[inline]
     fn _event_direct<P,Evt>(
         &self,
         stack: &P,
-        e: &Evt,
+        event: &Evt,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        self._event_direct_dyn(stack.erase(), e.erase(), cache, root, ctx)
+        self._event_direct_dyn(stack.erase(), event.erase(), cache, root, ctx)
     }
     #[inline]
     fn _size<P>(
@@ -457,7 +457,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     #[inline]
     fn with_resolve<'s,F,R>(
         &'s self,
-        i: E::WidgetPath,
+        sub_path: E::WidgetPath,
         callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
@@ -468,7 +468,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         let mut callback = Some(callback);
         let mut callback_return: Option<R> = None;
         unsafe{self.with_resolve_dyn(
-            i,
+            sub_path,
             &mut |w,ctx| {
                 let r = (callback.take().unwrap_unchecked())(w,ctx);
                 callback_return = Some(r);

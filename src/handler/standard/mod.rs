@@ -13,7 +13,7 @@ pub mod imps;
 
 pub struct StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
     pub sup: S,
-    pub s: StdStdState<E>,
+    pub state: StdStdState<E>,
     _c: PhantomData<E>,
 }
 
@@ -21,7 +21,7 @@ impl<S,E> StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarS
     pub fn new(sup: S) -> Self {
         Self{
             sup,
-            s: StdStdState::new(),
+            state: StdStdState::new(),
             _c: PhantomData,
         }
     }
@@ -29,11 +29,11 @@ impl<S,E> StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarS
 
 impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
     pub fn unfocus<W,S>(&self, root_widget: &W, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
-        if let Some(p) = (self.access)(ctx).s.kbd.focused.take() {
+        if let Some(widget) = (self.access)(ctx).state.kbd.focused.take() {
             let event = StdVariant {
                 variant: Unfocus{},
                 ts,
-                filter_path: Some(p.refc().path),
+                filter_path: Some(widget.refc().path),
                 filter_point: None,
                 direct_only: false,
                 filter_path_strict: true,
@@ -46,7 +46,7 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
 
     pub fn focus<W,S>(&self, root_widget: &W, p: E::WidgetPath, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<EventResp,E::Error> where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
         self.unfocus(root_widget,stack,ts,cache,root.fork(),ctx);
-        (self.access)(ctx).s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root,ctx)?);
+        (self.access)(ctx).state.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root,ctx)?);
         
         let event = StdVariant {
             variant: Focus{},
