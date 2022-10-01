@@ -31,4 +31,8 @@ pub trait RenderStdWidgets<E>: Render<E> where E: Env {
     //fn draw_text_button(&mut self, c: &mut E::Context<'_>, pressed: bool, caption: &str);
 
     //fn draw_selected(&mut self, c: &mut E::Context<'_>);
+
+    type RenderPreprocessedTextStyleCachors: PartialEq + 'static;
+    
+    fn render_preprocessed_text_cachors<Q>(&self, props: &Q) where Q: Queron<E> + ?Sized;
 }

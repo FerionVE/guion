@@ -34,7 +34,7 @@ pub mod cache;
 
 /// Core Trait of guion ™️
 pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E: Env + 'static {
-    type Cache: WidgetCache<E>;
+    type Cache: WidgetCache<E> + 'static;
 
     fn id(&self) -> E::WidgetID;
 
@@ -43,11 +43,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        ctx.build_handler()._render(self, stack, renderer, cache, root, ctx)
+        ctx.build_handler()._render(self, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
     fn event_direct<P,Evt>(
@@ -64,11 +65,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn size<P>(
         &self,
         stack: &P,
+        force_relayout: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
-        ctx.build_handler()._size(self, stack, cache, root, ctx)
+        ctx.build_handler()._size(self, stack, force_relayout, cache, root, ctx)
     }
 
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
@@ -80,6 +82,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -105,6 +108,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn _size<P>(
         &self,
         stack: &P,
+        force_relayout: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>

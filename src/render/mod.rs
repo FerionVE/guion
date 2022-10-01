@@ -15,15 +15,16 @@ pub trait Render<E>: Sized where E: Env {
     //TODO brand new force and caching
 }
 
-pub struct StdRenderProps<'a,S,E> where S: ?Sized, E: Env {
+pub struct StdRenderProps<'a,S,E,C> where S: ?Sized, E: Env, C: PartialEq + Clone + 'static {
     pub inner: &'a S,
     pub absolute_bounds: Bounds,
     pub absolute_viewport: Bounds,
     pub style: TestStyle<'a,E>,
+    just_cachors: C,
     _p: PhantomData<E>,
 }
 
-impl<'a,S,E> StdRenderProps<'a,S,E> where E: Env, S: ?Sized {
+impl<'a,S,E> StdRenderProps<'a,S,E,()> where E: Env, S: ?Sized {
     pub fn new(inner: &'a S) -> Self where S: Queron<E> {
         let current_bounds = QueryCurrentBounds.query_in(&*inner).unwrap();
         let style = QueryTestStyle.query_in(&*inner).unwrap();
@@ -32,11 +33,29 @@ impl<'a,S,E> StdRenderProps<'a,S,E> where E: Env, S: ?Sized {
             absolute_bounds: current_bounds.bounds.clone(),
             absolute_viewport: current_bounds.viewport.clone(),
             style: style.clone(),
+            just_cachors: (),
             _p: PhantomData,
         }
     }
+}
+
+impl<'a,S,E,C> StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + Clone + 'static {
+    pub fn just_cachors(&self) -> (Bounds,C) {
+        (self.absolute_bounds,self.just_cachors.clone()) // viewport isn't in child cachors
+    }
 
     //pub fn with_props<'b,SS>(f: impl FnOnce(&'a S) -> SS) -> StdRenderProps<'b,SS,E> where SS: Queron<E> + ?Sized
+
+    fn _and_cachor<CC>(self, c: CC) -> StdRenderProps<'a,S,E,(C,CC)> where CC: PartialEq + Clone + 'static {
+        StdRenderProps {
+            inner: self.inner,
+            absolute_bounds: self.absolute_bounds,
+            absolute_viewport: self.absolute_viewport,
+            style: self.style,
+            just_cachors: (self.just_cachors,c),
+            _p: PhantomData,
+        }
+    }
 
     pub fn inside_border(&self, border: impl Borrow<Border>) -> Self {
         Self {
@@ -132,20 +151,20 @@ impl<'a,S,E> StdRenderProps<'a,S,E> where E: Env, S: ?Sized {
     }
 }
 
-impl<'a,S,E> Deref for StdRenderProps<'a,S,E> where E: Env, S: ?Sized {
+impl<'a,S,E,C> Deref for StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + Clone + 'static {
     type Target = TestStyle<'a,E>;
 
     fn deref(&self) -> &Self::Target {
         &self.style
     }
 }
-impl<'a,S,E> DerefMut for StdRenderProps<'a,S,E> where E: Env, S: ?Sized {
+impl<'a,S,E,C> DerefMut for StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + Clone + 'static {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.style
     }
 }
 
-impl<'x,S,E> Queron<E> for StdRenderProps<'x,S,E> where S: Queron<E> + ?Sized, E: Env {
+impl<'x,S,E,C> Queron<E> for StdRenderProps<'x,S,E,C> where S: Queron<E> + ?Sized, E: Env, C: PartialEq + Clone + 'static {
     #[inline]
     fn _query<'a,Q>(&'a self, mut builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
         if let Some((_,builder)) = builder.downcast::<'_,QueryCurrentBounds>() {
@@ -165,7 +184,7 @@ impl<'x,S,E> Queron<E> for StdRenderProps<'x,S,E> where S: Queron<E> + ?Sized, E
     }
 }
 
-impl<'a,S,E> Clone for StdRenderProps<'a,S,E> where S: ?Sized, E: Env {
+impl<'a,S,E,C> Clone for StdRenderProps<'a,S,E,C> where S: ?Sized, E: Env, C: PartialEq + Clone + 'static {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner,
@@ -173,6 +192,7 @@ impl<'a,S,E> Clone for StdRenderProps<'a,S,E> where S: ?Sized, E: Env {
             absolute_viewport: self.absolute_viewport.clone(),
             _p: PhantomData,
             style: self.style.clone(),
+            just_cachors: self.just_cachors.clone()
         }
     }
 }

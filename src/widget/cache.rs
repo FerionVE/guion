@@ -2,14 +2,34 @@ use crate::cachialize::cache::Cache;
 
 use super::*;
 
-pub trait WidgetCache<E>: Default + Clone + Sized + 'static {
+pub trait WidgetCache<E>: Default + Sized + 'static {
     /// Reset current of current and child caches
     fn reset_current(&mut self);
+
+    // #[inline]
+    // fn full_reset(&mut self) {
+    //     *self = Default::default();
+    // }
+    // #[inline]
+    // fn with_resetted(&mut self) -> &mut Self {
+    //     self.full_reset();
+    //     self
+    // }
+    // #[inline]
+    // fn with_force(&mut self, force: bool) -> &mut Self {
+    //     if force {
+    //         self.full_reset();
+    //     }
+    //     self
+    // }
 }
 
 pub trait WidgetCacheDyn<E>: 'static {
     fn reset_current(&mut self);
-    fn _clone_to_box(&self) -> Box<dyn WidgetCacheDyn<E>>;
+
+    // fn full_reset(&mut self);
+
+    // fn _clone_to_box(&self) -> Box<dyn WidgetCacheDyn<E>>;
 }
 
 impl<T,E> WidgetCacheDyn<E> for T where T: WidgetCache<E> {
@@ -17,10 +37,14 @@ impl<T,E> WidgetCacheDyn<E> for T where T: WidgetCache<E> {
     fn reset_current(&mut self) {
         WidgetCache::reset_current(self)
     }
-    #[inline]
-    fn _clone_to_box(&self) -> Box<dyn WidgetCacheDyn<E>> {
-        Box::new(self.clone())
-    }
+    // #[inline]
+    // fn full_reset(&mut self) {
+    //     WidgetCache::full_reset(self)
+    // }
+    // #[inline]
+    // fn _clone_to_box(&self) -> Box<dyn WidgetCacheDyn<E>> {
+    //     Box::new(self.clone())
+    // }
 }
 
 pub struct DynWidgetCache<E> {
@@ -65,21 +89,25 @@ impl<E> Default for DynWidgetCache<E> where E: 'static {
     }
 }
 
-impl<E> Clone for DynWidgetCache<E> where E: 'static {
-    #[inline]
-    fn clone(&self) -> Self {
-        Self {
-            inner_type_id: self.inner_type_id,
-            inner: self.inner._clone_to_box(),
-        }
-    }
-}
+// impl<E> Clone for DynWidgetCache<E> where E: 'static {
+//     #[inline]
+//     fn clone(&self) -> Self {
+//         Self {
+//             inner_type_id: self.inner_type_id,
+//             inner: self.inner._clone_to_box(),
+//         }
+//     }
+// }
 
 impl<E> WidgetCache<E> for DynWidgetCache<E> where E: 'static {
     #[inline]
     fn reset_current(&mut self) {
         self.inner.reset_current()
     }
+    // #[inline]
+    // fn full_reset(&mut self) {
+    //     self.inner.full_reset(); // reset the boxed type to avoid reallocation (unless the to-downcast type changes)
+    // }
 }
 
 #[derive(Clone,Default)]

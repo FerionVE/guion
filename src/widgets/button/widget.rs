@@ -3,6 +3,7 @@ use crate::event_new::filter::QueryStdEventMode;
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::style::standard::cursor::StdCursor;
+use crate::widget::cache::WidgetCache;
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::for_child_widget;
 
@@ -18,6 +19,8 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
 {
+    type Cache = ButtonCache<<Text::Widget<'w> as Widget<E>>::Cache,E>;
+
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -25,54 +28,73 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
+        let mut need_render = !force_render;
+        
         let render_props = StdRenderProps::new(stack)
             .inside_spacing_border();
 
-        if ctx.state().is_hovered(&self.id) {
+        let vartypes = (
+            ctx.state().is_hovered(&self.id),
+            ctx.state().is_focused(&self.id),
+            self.pressed(ctx).is_some(),
+            self.locked,
+        );
+
+        let (hovered,selected,activated,disabled) = vartypes;
+
+        if cache.vartype_cachors != Some(vartypes) {
+            need_render = true;
+            cache.vartype_cachors = Some(vartypes);
+        }
+
+        if hovered {
             renderer.set_cursor_specific(&StdCursor::Hand.into(),ctx);
         }
 
-        renderer.fill_rect(
-            &render_props
-                .with_style_color_type(TestStyleColorType::Fg)
-                .with_vartype(
-                    ctx.state().is_hovered(&self.id),
-                    ctx.state().is_focused(&self.id),
-                    self.pressed(ctx).is_some(),
-                    self.locked,
-                ),
-            ctx
-        );
-        renderer.fill_border_inner(
-            &render_props
-                .with_style_border_type(TestStyleBorderType::Component)
-                .with_style_color_type(TestStyleColorType::Border)
-                .with_vartype(
-                    ctx.state().is_hovered(&self.id),
-                    ctx.state().is_focused(&self.id),
-                    self.pressed(ctx).is_some(),
-                    self.locked,
-                ),
-            ctx
-        );
+        if need_render {
+            renderer.fill_rect(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Fg)
+                    .with_vartype(
+                        ctx.state().is_hovered(&self.id),
+                        ctx.state().is_focused(&self.id),
+                        self.pressed(ctx).is_some(),
+                        self.locked,
+                    ),
+                ctx
+            );
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_border_type(TestStyleBorderType::Component)
+                    .with_style_color_type(TestStyleColorType::Border)
+                    .with_vartype(
+                        ctx.state().is_hovered(&self.id),
+                        ctx.state().is_focused(&self.id),
+                        self.pressed(ctx).is_some(),
+                        self.locked,
+                    ),
+                ctx
+            );
+        }
 
         self.text.with_widget(
             AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                 let render_props = render_props
                     .inside_border_of_type(TestStyleBorderType::Component)
                     .with_vartype(
-                        ctx.state().is_hovered(&self.id),
-                        ctx.state().is_focused(&self.id),
-                        self.pressed(ctx).is_some(),
-                        self.locked,
+                        hovered, selected, activated, disabled
                     );
 
                 widget.render(
                     &for_child_widget(render_props,widget),
                     renderer,
+                    need_render,
+                    &mut cache.label_cache,
                     root,ctx
                 )
             }),
@@ -84,6 +106,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         &self,
         stack: &P,
         event: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
@@ -109,6 +132,8 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     fn _size<P>(
         &self,
         stack: &P,
+        force_relayout: bool,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
@@ -118,7 +143,8 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                 stack, TestStyleBorderType::Component,
                 |stack|
                     self.text.with_widget(AsWidgetClosure::new(
-                        |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| widget.size(&for_child_widget(&stack,widget),root,ctx)
+                        |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
+                            widget.size(&for_child_widget(&stack,widget), force_relayout, &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
         );
@@ -191,4 +217,16 @@ impl<'z,E,Text,Tr,TrMut> AsWidget<'z,E> for Button<'z,E,Text,Tr,TrMut> where Sel
     {
         f.call(self, root, ctx)
     }
+}
+
+#[derive(Default)]
+pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
+    label_cache: LabelCache,
+    vartype_cachors: Option<(bool,bool,bool,bool)>,
+    _p: PhantomData<E>,
+    //TODO cachor borders and colors
+}
+
+impl<LabelCache,E> WidgetCache<E> for ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
+    fn reset_current(&mut self) {}
 }

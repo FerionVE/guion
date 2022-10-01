@@ -20,6 +20,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         widget: &W,
         stack: &S,
         renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -27,7 +28,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
     where
         W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
     {
-        self.sup._render(widget, stack, renderer, cache, root, ctx)
+        self.sup._render(widget, stack, renderer, force_render, cache, root, ctx)
         //todo!()
     }
     #[inline] 
@@ -322,7 +323,8 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         &self,
         w: &W,
         stack: &S,
-        cache: &mut W::Cache, 
+        force_relayout: bool,
+        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E>
@@ -330,7 +332,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
     {
         //todo!();
-        self.sup._size(w, stack, cache, root, ctx)
+        self.sup._size(w, stack, force_relayout, cache, root, ctx)
     }
 }
 

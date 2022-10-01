@@ -99,6 +99,21 @@ impl<'z,T,E> AsWidget<'z,E> for std::sync::Arc<T> where T: AsWidget<'z,E> + ?Siz
     }
 }
 
+#[inline] //TODO maybe Ext frontend trait workz?!
+pub fn with_as_widget<'z,W,C,R,E>(
+    w: &W, c: C, root: E::RootRef<'_>, ctx: &mut E::Context<'_>
+) -> R
+where
+    W: AsWidget<'z,E> + ?Sized,
+    E: Env,
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w W::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R,
+{
+    w.with_widget(
+        AsWidgetClosure::new(c),
+        root, ctx,
+    )
+}
+
 // pub trait AsWidgetDyn<E> where E: Env {
 //     fn with_widget_dyn<'w>(&'w self, f: Box<dyn for<'r,'s> FnOnce(&'r (dyn WidgetDyn<E>+'s))>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
 // }

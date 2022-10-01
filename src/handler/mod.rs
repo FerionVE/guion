@@ -24,6 +24,7 @@ pub trait Handler<E>: 'static where E: Env {
         widget: &W,
         stack: &S,
         renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
         cache: &mut W::Cache,
         //handler_root: &ECHandlerBuilt<'_,E>,
         root: E::RootRef<'_>,
@@ -54,6 +55,7 @@ pub trait Handler<E>: 'static where E: Env {
         &self,
         widget: &W,
         stack: &S,
+        force_relayout: bool,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -82,6 +84,7 @@ impl<E> Handler<E> for () where E: Env {
         widget: &W,
         stack: &S,
         renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -89,7 +92,7 @@ impl<E> Handler<E> for () where E: Env {
     where
         W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
     {
-        widget._render(stack, renderer, cache, root, ctx)
+        widget._render(stack, renderer, force_render, cache, root, ctx)
     }
     #[inline] 
     fn _event_direct<W,S,Evt>(
@@ -132,6 +135,7 @@ impl<E> Handler<E> for () where E: Env {
         &self,
         widget: &W,
         stack: &S,
+        force_relayout: bool,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -139,7 +143,7 @@ impl<E> Handler<E> for () where E: Env {
     where
         W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
     {
-        widget._size(stack, cache, root, ctx)
+        widget._size(stack, force_relayout, cache, root, ctx)
     }
 
     // fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's {

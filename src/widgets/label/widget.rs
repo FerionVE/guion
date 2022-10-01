@@ -1,5 +1,6 @@
 use crate::queron::Queron;
 use crate::text::layout::*;
+use crate::widget::cache::WidgetCache;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::*;
@@ -15,6 +16,8 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
+    type Cache = LabelCache<E>;
+
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -22,23 +25,41 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     fn _render<P>(
         &self,
         stack: &P,
-        r: &mut ERenderer<'_,E>,
+        renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
+        let mut need_render = !force_render;
+
+        //TODO cachor align and style stuff e.g. bg color
+        //TODO text layout cachors
+        if cache.text_cachor.is_none() || cache.text_cache.is_none() || self.text.valid(cache.text_cachor.as_ref().unwrap()) {
+            need_render = true;
+            cache.text_cachor = Some(self.text.validation());
+            cache.text_cache = Some(TxtLayoutFromStor::from(&self.text,ctx));
+        }
+
+        if !need_render {return;}
+
+        let text_layout = cache.text_cache.as_ref().unwrap();
+
         //TODO way to inject props/style to widget
-        r.render_text(
-            self.text.caption().as_ref(),
-            self.align,
-            stack,
-            ctx,
+        renderer.render_preprocessed_text(
+            text_layout,
+            Default::default(),
+            &StdRenderProps::new(&stack)
+                .inner_aligned(text_layout.display_size(),self.align),
+            ctx
         )
     }
 
     fn _event_direct<P,Evt>(
         &self,
         stack: &P,
-        e: &Evt,
+        event: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
@@ -48,6 +69,8 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     fn _size<P>(
         &self,
         stack: &P,
+        force_relayout: bool,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
@@ -128,4 +151,16 @@ impl<'z,E,Text,GlyphCache> AsWidget<'z,E> for Label<'z,E,Text,GlyphCache> where 
     {
         f.call(self, root, ctx)
     }
+}
+
+#[derive(Default)]
+pub struct LabelCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, {
+    text_cache: Option<ETextLayout<E>>,
+    text_cachor: Option<Arc<dyn Any>>,
+    //align_cachor: Option<(f32,f32)>,
+    //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
+}
+
+impl<E> WidgetCache<E> for LabelCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
+    fn reset_current(&mut self) {}
 }
