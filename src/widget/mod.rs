@@ -8,6 +8,7 @@ use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
 
+use self::cache::WidgetCache;
 use self::dyn_tunnel::WidgetDyn;
 use self::stack::QueryCurrentWidget;
 
@@ -31,8 +32,12 @@ pub mod ident;
 
 pub mod stack;
 
+pub mod cache;
+
 /// Core Trait of guion ™️
 pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E: Env + 'static {
+    type Cache: WidgetCache<E>;
+
     fn id(&self) -> E::WidgetID;
 
     #[inline]
@@ -40,29 +45,32 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        ctx.build_handler()._render(self, stack, renderer, root, ctx)
+        ctx.build_handler()._render(self, stack, renderer, cache, root, ctx)
     }
     #[inline]
     fn event_direct<P,Evt>(
         &self,
         stack: &P,
         event: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        ctx.build_handler()._event_direct(self, stack, event, root, ctx)
+        ctx.build_handler()._event_direct(self, stack, event, cache, root, ctx)
     }
     #[inline]
     fn size<P>(
         &self,
         stack: &P,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
-        ctx.build_handler()._size(self, stack, root, ctx)
+        ctx.build_handler()._size(self, stack, cache, root, ctx)
     }
 
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
@@ -74,6 +82,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized;
@@ -86,6 +95,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         &self,
         stack: &P,
         event: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
@@ -97,6 +107,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn _size<P>(
         &self,
         stack: &P,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized;

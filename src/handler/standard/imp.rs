@@ -20,13 +20,14 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         w: &W,
         stack: &S,
         r: &mut ERenderer<'_,E>,
+        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     )
     where
         W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
     {
-        self.sup._render(w, stack, r, root, ctx)
+        self.sup._render(w, stack, r, cache, root, ctx)
         //todo!()
     }
     #[inline] 
@@ -35,6 +36,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         w: &W,
         stack: &S,
         event: &Evt,
+        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
@@ -51,7 +53,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
             (self.access)(ctx).s.mouse.hovered = Some(widget_data.ident());
         }
 
-        self.sup._event_direct(w, stack, event, root, ctx)
+        self.sup._event_direct(w, stack, event, cache, root, ctx)
         //todo!()
     }
     //#[inline] 
@@ -60,6 +62,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         root_widget: &W,
         stack: &S,
         e: &Evt,
+        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
@@ -95,7 +98,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         passed |= root_widget.event_direct(
                             stack,
                             &StdVariant::new(event,ts).with_filter_path_strict(id.path),
-                            root.fork(), ctx,
+                            cache, root.fork(), ctx,
                         );
                         /*let event = KbdPress{
                             key: key.clone(),
@@ -107,7 +110,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             root_widget,
                             stack,
                             &StdVariant::new(RootEvent::KbdPress{key},ts),
-                            root, ctx,
+                            cache, root, ctx,
                         ); // TODO discards filters from current RootEvent
                     }
                     //l._event_root((Event::from(RootEvent::KbdPress{key}),e.1,e.2));
@@ -124,14 +127,14 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             passed |= root_widget.event_direct(
                                 stack,
                                 &StdVariant::new(event.clone(),ts).with_filter_path_strict(id.path),
-                                root.fork(), ctx,
+                                cache, root.fork(), ctx,
                             );
                         }
                         //drop up if widget is gone TODO check if this is correct
                         passed |= root_widget.event_direct(
                             stack,
                             &StdVariant::new(event,ts).with_filter_path_strict(p.down.path),
-                            root, ctx,
+                            cache, root, ctx,
                         );
                     }
                 },
@@ -148,7 +151,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             passed |= root_widget.event_direct(
                                 stack,
                                 &StdVariant::new(event,ts).with_filter_path_strict(id.path.clone()),
-                                root.fork(), ctx,
+                                cache, root.fork(), ctx,
                             );
                             let mut do_tab = false;
                             if
@@ -172,10 +175,10 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         root_widget,
                         stack,
                         &StdVariant::new(RootEvent::MouseUp{key: key.clone()},ts),
-                        root.fork(), ctx,
+                        cache, root.fork(), ctx,
                     ); // TODO discards filters from current RootEvent
                     //unfocus previously focused widget
-                    passed |= self.unfocus(root_widget, stack, ts, root.fork(), ctx);
+                    passed |= self.unfocus(root_widget, stack, ts, cache, root.fork(), ctx);
 
                     //the currently hovered widget
                     if let Some(pos) = (self.access)(ctx).s.mouse.pos {
@@ -185,7 +188,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             passed |= root_widget.event_direct(
                                 stack,
                                 &StdVariant::new(MouseDown{key,pos},ts).with_filter_path_strict(hovered.path.clone()),
-                                root.fork(), ctx,
+                                cache, root.fork(), ctx,
                             );
 
 
@@ -198,7 +201,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             );
 
                             if focus {
-                                passed |= self.focus(root_widget, hovered.path, stack, ts, root, ctx).unwrap();
+                                passed |= self.focus(root_widget, hovered.path, stack, ts, cache, root, ctx).unwrap();
                             }
                         }
                     }
@@ -220,7 +223,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                                     passed |= root_widget.event_direct(
                                         stack,
                                         &StdVariant::new(event.clone(),ts).with_filter_path_strict(hovered.path),
-                                        root.fork(), ctx,
+                                        cache, root.fork(), ctx,
                                     );
                                 }
                             }
@@ -228,7 +231,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             passed |= root_widget.event_direct(
                                 stack,
                                 &StdVariant::new(event.clone(),ts).with_filter_path_strict(p.down.path),
-                                root, ctx,
+                                cache, root, ctx,
                             );
                         }
                     }
@@ -242,7 +245,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         passed |= root_widget.event_direct(
                             stack,
                             &StdVariant::new(MouseLeave{},ts).with_filter_path_strict(p.path),
-                            root.fork(), ctx,
+                            cache, root.fork(), ctx,
                         );
                     }
                     //hover state will be updated as the event passes through the widget tree
@@ -250,14 +253,14 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         root_widget,
                         stack,
                         &StdVariant::new(MouseMove{pos},ts).with_filter_point(pos), //TODO infer path filter from RootEvent //TODO keep the path filter or allow at non-root widget, to allow e.g. multi-window
-                        root.fork(), ctx,
+                        cache, root.fork(), ctx,
                     ); // TODO discards filters from current RootEvent
 
                     if let Some(p) = (self.access)(ctx).s.mouse.hovered.clone() {//TODO optimize clone
                         passed |= root_widget.event_direct(
                             stack,
                             &StdVariant::new(MouseEnter{},ts).with_filter_path_strict(p.path),
-                            root, ctx,
+                            cache, root, ctx,
                         );
                     }
                     
@@ -267,7 +270,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         passed |= root_widget.event_direct(
                             stack,
                             &StdVariant::new(MouseLeave{},ts).with_filter_path_strict(p.path),
-                            root, ctx,
+                            cache, root, ctx,
                         );
                     }
                     let mouse = &mut (self.access)(ctx).s.mouse;
@@ -279,7 +282,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         root_widget,
                         stack,
                         &StdVariant::new(WindowMove{pos,size},ts),
-                        root, ctx,
+                        cache, root, ctx,
                     ); // TODO discards filters from current RootEvent
                 }
                 RootEvent::WindowResize{size} => {
@@ -287,7 +290,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         root_widget,
                         stack,
                         &StdVariant::new(WindowResize{size},ts),
-                        root, ctx,
+                        cache, root, ctx,
                     ); // TODO discards filters from current RootEvent
                 }
                 RootEvent::TextInput{text} => {
@@ -295,7 +298,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         passed |= root_widget.event_direct(
                             stack,
                             &StdVariant::new(TextInput{text},ts).with_filter_path_strict(id.path),
-                            root, ctx,
+                            cache, root, ctx,
                         );
                     }
                 }
@@ -304,14 +307,14 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         passed |= root_widget.event_direct(
                             stack,
                             &StdVariant::new(MouseScroll{x,y},ts).with_filter_path_strict(hovered.path),
-                            root, ctx,
+                            cache, root, ctx,
                         );
                     }
                 }
             }
             passed
         }else{
-            self.sup._event_root(root_widget, stack, e, root, ctx)
+            self.sup._event_root(root_widget, stack, e, cache, root, ctx)
         }
     }
     #[inline] 
@@ -319,6 +322,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         &self,
         w: &W,
         stack: &S,
+        cache: &mut W::Cache, 
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E>
@@ -326,7 +330,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
     {
         //todo!();
-        self.sup._size(w, stack, root, ctx)
+        self.sup._size(w, stack, cache, root, ctx)
     }
 }
 

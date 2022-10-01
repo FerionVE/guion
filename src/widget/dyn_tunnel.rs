@@ -6,6 +6,7 @@ use crate::event_new::EventDyn;
 use crate::queron::dyn_tunnel::QueronDyn;
 
 use super::*;
+use super::cache::DynWidgetCache;
 
 pub trait WidgetDyn<E> where E: Env + 'static {
     fn id_dyn(&self) -> E::WidgetID;
@@ -14,6 +15,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         &self,
         stack: &(dyn QueronDyn<E>+'_),
         r: &mut ERenderer<'_,E>,
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     );
@@ -22,6 +24,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         &self,
         stack: &(dyn QueronDyn<E>+'_),
         e: &(dyn EventDyn<E>+'_),
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp;
@@ -29,6 +32,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn size_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E>;
@@ -37,6 +41,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         &self,
         stack: &(dyn QueronDyn<E>+'_),
         r: &mut ERenderer<'_,E>,
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     );
@@ -45,6 +50,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         &self,
         stack: &(dyn QueronDyn<E>+'_),
         e: &(dyn EventDyn<E>+'_),
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp;
@@ -52,6 +58,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn _size_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E>;
@@ -142,58 +149,64 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         &self,
         stack: &(dyn QueronDyn<E>+'_),
         r: &mut ERenderer<'_,E>,
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) {
-        self.render(stack, r, root, ctx)
+        self.render(stack, r, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn event_direct_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
         e: &(dyn EventDyn<E>+'_),
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp {
-        self.event_direct(stack, e, root, ctx)
+        self.event_direct(stack, e, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn size_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E> {
-        self.size(stack, root, ctx)
+        self.size(stack, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn _render_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
         r: &mut ERenderer<'_,E>,
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) {
-        self._render(stack, r, root, ctx)
+        self._render(stack, r, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn _event_direct_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
         e: &(dyn EventDyn<E>+'_),
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp {
-        self._event_direct(stack, e, root, ctx)
+        self._event_direct(stack, e, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn _size_dyn(
         &self,
         stack: &(dyn QueronDyn<E>+'_),
+        cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E> {
-        self._size(stack, root, ctx)
+        self._size(stack, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn childs_dyn(&self) -> usize {
@@ -334,58 +347,64 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         &self,
         stack: &P,
         r: &mut ERenderer<'_,E>,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        self.render_dyn(stack.erase(), r, root, ctx)
+        self.render_dyn(stack.erase(), r, cache, root, ctx)
     }
     #[inline]
     fn event_direct<P,Evt>(
         &self,
         stack: &P,
         e: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        self.event_direct_dyn(stack.erase(), e.erase(), root, ctx)
+        self.event_direct_dyn(stack.erase(), e.erase(), cache, root, ctx)
     }
     #[inline]
     fn size<P>(
         &self,
         stack: &P,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
-        self.size_dyn(stack.erase(), root, ctx)
+        self.size_dyn(stack.erase(), cache, root, ctx)
     }
     #[inline]
     fn _render<P>(
         &self,
         stack: &P,
         r: &mut ERenderer<'_,E>,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        self._render_dyn(stack.erase(), r, root, ctx)
+        self._render_dyn(stack.erase(), r, cache, root, ctx)
     }
     #[inline]
     fn _event_direct<P,Evt>(
         &self,
         stack: &P,
         e: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        self._event_direct_dyn(stack.erase(), e.erase(), root, ctx)
+        self._event_direct_dyn(stack.erase(), e.erase(), cache, root, ctx)
     }
     #[inline]
     fn _size<P>(
         &self,
         stack: &P,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
-        self._size_dyn(stack.erase(), root, ctx)
+        self._size_dyn(stack.erase(), cache, root, ctx)
     }
     #[inline]
     fn childs(&self) -> usize {
@@ -540,7 +559,8 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
-        Box::new(self).box_box_dyn() //TODO remove all the boxed bs
+        //Box::new(self).box_box_dyn() //TODO remove all the boxed bs
+        todo!("ICE🥶🥶")
     }
 
     //TODO cold
@@ -552,6 +572,8 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
         self.guion_resolve_error_child_info_dyn(child_idx)
     }
+
+    type Cache = DynWidgetCache<E>;
 }
 
 impl<E> WBase<E> for dyn WidgetDyn<E> + '_ where E: Env {
@@ -572,7 +594,8 @@ impl<E> WBase<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
 
     fn _boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
-        Box::new(self)
+        //Box::new(self)
+        todo!("ICE🥶🥶")
     }
 
     fn as_any(&self) -> &dyn std::any::Any where Self: 'static {

@@ -28,7 +28,7 @@ impl<S,E> StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarS
 }
 
 impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
-    pub fn unfocus<W,S>(&self, root_widget: &W, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
+    pub fn unfocus<W,S>(&self, root_widget: &W, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
         if let Some(p) = (self.access)(ctx).s.kbd.focused.take() {
             let event = StdVariant {
                 variant: Unfocus{},
@@ -38,14 +38,14 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
                 direct_only: false,
                 filter_path_strict: true,
             };
-            root_widget.event_direct(stack,&event,root,ctx)
+            root_widget.event_direct(stack,&event,cache,root,ctx)
         }else{
             false
         }
     }
 
-    pub fn focus<W,S>(&self, root_widget: &W, p: E::WidgetPath, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<EventResp,E::Error> where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
-        self.unfocus(root_widget,stack,ts,root.fork(),ctx);
+    pub fn focus<W,S>(&self, root_widget: &W, p: E::WidgetPath, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<EventResp,E::Error> where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
+        self.unfocus(root_widget,stack,ts,cache,root.fork(),ctx);
         (self.access)(ctx).s.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root,ctx)?);
         
         let event = StdVariant {
@@ -56,7 +56,7 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
             direct_only: false,
             filter_path_strict: true,
         };
-        Ok(root_widget.event_direct(stack,&event,root,ctx))
+        Ok(root_widget.event_direct(stack,&event,cache,root,ctx))
     }
 }
 
