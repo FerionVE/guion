@@ -36,6 +36,8 @@ pub mod dispatchor;
 pub mod cachialize;
 pub mod queron;
 
+pub mod style_new;
+
 pub(crate) use aliases::*;
 pub(crate) use backend::*;
 pub(crate) use ctx::queue::*;

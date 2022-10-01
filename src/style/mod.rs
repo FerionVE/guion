@@ -19,7 +19,7 @@ pub trait Style<E>: Clone + Default where E: Env {
         for<'a> StyleSelectorAppend<&'a StdSelectag<E>,E> +
         for<'a> StyleSelectorAppend<&'a [StdSelectag<E>],E> +
         for<'a,'b> StyleSelectorAppend<&'a [&'b StdSelectag<E>],E>;
-    type Font;
+    type Font: Clone; //TODO FontID
     type Cursor: From<StdCursor>+Clone+Default;
     type Color: Color+Clone;
     
@@ -29,4 +29,6 @@ pub trait Style<E>: Clone + Default where E: Env {
     fn color(&self, selector: &Self::Selector, c: &mut E::Context<'_>) -> Self::Color;
     fn border(&self, selector: &Self::Selector, c: &mut E::Context<'_>) -> Border;
     fn cursor(&self, selector: &Self::Selector, c: &mut E::Context<'_>) -> Self::Cursor; //TODO std specific trait
+
+    fn choose_font(css_font_desc: &str) -> Self;
 }
