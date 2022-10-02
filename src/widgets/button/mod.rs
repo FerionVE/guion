@@ -23,7 +23,7 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
     p: PhantomData<&'w (Text,Tr,TrMut)>,
 }
 
-impl<'w,E> Button<'w,E,Label<'w,E,&'static str,LocalGlyphCache<E>>,(),()> where
+impl<'w,E> Button<'w,E,Label<'w,E,&'static str>,(),()> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {
@@ -120,11 +120,11 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     }
 }
 
-impl<'w,E,T,LC,Tr,TrMut> Button<'w,E,Label<'w,E,T,LC>,Tr,TrMut> where
+impl<'w,E,T,Tr,TrMut> Button<'w,E,Label<'w,E,T>,Tr,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT,LC>,Tr,TrMut> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT>,Tr,TrMut> where TT: TextStor<E>+Validation<E>+'w {
         Button{
             id: self.id,
             size: self.size,

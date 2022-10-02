@@ -1,6 +1,6 @@
 use crate::queron::Queron;
 use crate::text::layout::*;
-use crate::widget::cache::{WidgetCache, StdRenderCachors};
+use crate::widget::cache::{WidgetCache, StdRenderCachors, ValidationStat};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::*;
@@ -8,13 +8,12 @@ use std::sync::Arc;
 use util::state::AtomState;
 use validation::Validation;
 
-impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
+impl<'w,E,Text> Widget<E> for Label<'w,E,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     Text: TextStor<E>+Validation<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     type Cache = LabelCache<E>;
 
@@ -37,15 +36,24 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
 
         //TODO cachor align and style stuff e.g. bg color
         //TODO text layout cachors
-        if cache.text_cachor.is_none() || cache.text_cache.is_none() || self.text.valid(cache.text_cachor.as_ref().unwrap()) {
+        need_render |= self.glyphs(stack, cache, ctx);
+
+        if cache.align_cachor != Some(self.align) {
             need_render = true;
-            cache.text_cachor = Some(self.text.validation());
-            cache.text_cache = Some(TxtLayoutFromStor::from(&self.text,ctx));
+            cache.align_cachor = Some(self.align);
         }
 
         if !need_render {return;}
 
+        let render_props = StdRenderProps::new(&stack);
+
         let text_layout = cache.text_cache.as_ref().unwrap();
+
+        renderer.fill_rect(
+            &render_props
+                .with_style_color_type(TestStyleColorType::Bg),
+            ctx
+        );
 
         //TODO way to inject props/style to widget
         renderer.render_preprocessed_text(
@@ -75,7 +83,9 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
-        let ms = self.glyphs(ctx).display_size();
+        self.glyphs(stack, cache, ctx);
+
+        let ms = cache.text_cache.as_ref().unwrap().display_size();
         let ms = ESize::<E>::fixed(ms.w, ms.h);
         ms.max( &self.size )
     }
@@ -104,45 +114,31 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     }
 
     impl_traitcast!( dyn WidgetDyn<E>:
-        dyn AtomState<E,LocalGlyphCache<E>> => |s| &s.glyph_cache;
         dyn Validation<E> => |s| &s.text;
         dyn TextStor<E> => |s| &s.text;
     );
 }
 
-impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
+impl<'w,E,Text> Label<'w,E,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     Text: TextStor<E>+Validation<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    fn glyphs(&self, ctx: &mut E::Context<'_>) -> Arc<ETextLayout<E>> {
-        if let Some((v,c)) = self.glyph_cache.get(ctx) {
-            if self.text.valid(&c) {
-                return v;
-            }
+    fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut LabelCache<E>, ctx: &mut E::Context<'_>) -> ValidationStat {
+        //TODO also cachor e.g. style that affects text
+        if cache.text_cachor.is_none() || cache.text_cache.is_none() || self.text.valid(cache.text_cachor.as_ref().unwrap()) {
+            cache.text_cachor = Some(self.text.validation());
+            cache.text_cache = Some(TxtLayoutFromStor::from(&self.text,ctx));
+            ValidationStat::Invalid
+        } else {
+            ValidationStat::Valid
         }
-
-        let glyphs: Arc<ETextLayout<E>> = Arc::new(
-            TxtLayoutFromStor::<Text,E>::from(&self.text,ctx)
-        );
-
-        let g = glyphs.refc();
-        //TODO fix glyph caching as WidgetMut is GONE, label would require a mutor closure from the view using it
-        // l.mutate_closure(Box::new(move |mut w,ctx,_| {
-        //     let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
-        //     let key = vali.validate();
-        //     let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();
-        //     cache.set( Some((g,key)) ,ctx);
-        // }));
-
-        glyphs
     }
 }
 
-impl<'z,E,Text,GlyphCache> AsWidget<'z,E> for Label<'z,E,Text,GlyphCache> where Self: Widget<E>, E: Env {
+impl<'z,E,Text> AsWidget<'z,E> for Label<'z,E,Text> where Self: Widget<E>, E: Env {
     type Widget<'v> = Self where 'z: 'v;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
@@ -160,7 +156,7 @@ pub struct LabelCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets
     text_cache: Option<ETextLayout<E>>,
     text_cachor: Option<Arc<dyn Any>>,
     std_render_cachors: Option<StdRenderCachors<E>>,
-    //align_cachor: Option<(f32,f32)>,
+    align_cachor: Option<(f32,f32)>,
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }
 

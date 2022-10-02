@@ -35,10 +35,20 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     ) where P: Queron<E> + ?Sized {
         let mut need_render = force_render;
 
-        need_render |= StdRenderCachors::current(stack).validate(&mut cache.std_render_cachors);
-        
-        let render_props = StdRenderProps::new(stack)
-            .inside_spacing_border();
+        let render_props = StdRenderProps::new(stack);
+
+        need_render |= render_props.current_std_render_cachors().validate(&mut cache.std_render_cachors);
+
+        if need_render {
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg)
+                    .with_style_border_type(TestStyleBorderType::Spacing),
+                ctx
+            );
+        }
+
+        let render_props = render_props.inside_spacing_border();
 
         let vartypes = (
             ctx.state().is_hovered(&self.id),
@@ -58,18 +68,20 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
             renderer.set_cursor_specific(&StdCursor::Hand.into(),ctx);
         }
 
-        if need_render {
-            renderer.fill_rect(
-                &render_props
-                    .with_style_color_type(TestStyleColorType::Fg)
-                    .with_vartype(
-                        ctx.state().is_hovered(&self.id),
-                        ctx.state().is_focused(&self.id),
-                        self.pressed(ctx).is_some(),
-                        self.locked,
-                    ),
-                ctx
+        let fill_inner_color = &render_props
+            .with_style_color_type(TestStyleColorType::Fg)
+            .with_vartype(
+                ctx.state().is_hovered(&self.id),
+                ctx.state().is_focused(&self.id),
+                self.pressed(ctx).is_some(),
+                self.locked,
             );
+
+        if need_render {
+            // renderer.fill_rect(
+            //     &fill_inner_color,
+            //     ctx
+            // );
             renderer.fill_border_inner(
                 &render_props
                     .with_style_border_type(TestStyleBorderType::Component)
@@ -88,6 +100,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
             AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                 let render_props = render_props
                     .inside_border_of_type(TestStyleBorderType::Component)
+                    .fork_with(|p| p.style.bg_color = fill_inner_color.style.current_color() )
                     .with_vartype(
                         hovered, selected, activated, disabled
                     );
@@ -95,7 +108,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                 widget.render(
                     &for_child_widget(render_props,widget),
                     renderer,
-                    need_render,
+                    force_render,
                     &mut cache.label_cache,
                     root,ctx
                 )

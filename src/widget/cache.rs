@@ -150,19 +150,7 @@ pub struct StdLayoutCachors<E> where E: Env {
 
 impl<E> StdRenderCachors<E> where E: Env {
     pub fn current(stack: &(impl Queron<E> + ?Sized)) -> Self {
-        let render_props = StdRenderProps::new(stack);
-        let current_style = render_props.style.current();
-        Self {
-            dims: render_props.absolute_bounds.size,
-            fg_color: current_style.fg_color,
-            border_color: current_style.border_color,
-            bg_color: current_style.bg_color,
-            text_color: current_style.text_color,
-            component_border: current_style.component_border,
-            spacing: current_style.spacing,
-            current_color: current_style.current_color,
-            current_border: current_style.current_border,
-        }
+        StdRenderProps::new(stack).current_std_render_cachors()
     }
 
     pub fn validate(&self, cached: &mut Option<Self>) -> ValidationStat {

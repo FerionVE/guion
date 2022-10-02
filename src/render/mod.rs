@@ -5,6 +5,7 @@ use std::ops::{Deref, Add, DerefMut};
 use crate::queron::Queron;
 use crate::queron::dyn_tunnel::QueronDyn;
 use crate::queron::query::{Query, QueryStack};
+use crate::widget::cache::StdRenderCachors;
 use crate::widget::stack::{QueryCurrentBounds, QueriedCurrentBounds, WithCurrentBounds};
 
 use super::*;
@@ -40,7 +41,22 @@ impl<'a,S,E> StdRenderProps<'a,S,E,()> where E: Env, S: ?Sized {
 }
 
 impl<'a,S,E,C> StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + Clone + 'static {
-    pub fn just_cachors(&self) -> (Bounds,C) {
+    pub fn current_std_render_cachors(&self) -> StdRenderCachors<E> {
+        let current_style = self.style.current();
+        StdRenderCachors {
+            dims: self.absolute_bounds.size,
+            fg_color: current_style.fg_color,
+            border_color: current_style.border_color,
+            bg_color: current_style.bg_color,
+            text_color: current_style.text_color,
+            component_border: current_style.component_border,
+            spacing: current_style.spacing,
+            current_color: current_style.current_color,
+            current_border: current_style.current_border,
+        }
+    }
+
+    fn just_cachors(&self) -> (Bounds,C) {
         (self.absolute_bounds,self.just_cachors.clone()) // viewport isn't in child cachors
     }
 

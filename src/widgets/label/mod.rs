@@ -7,7 +7,7 @@ use util::{LocalGlyphCache, remote_state::RemoteState};
 
 pub mod widget;
 
-pub struct Label<'w,E,Text,GlyphCache> where
+pub struct Label<'w,E,Text> where
     E: Env,
     Self: 'w,
 {
@@ -16,11 +16,10 @@ pub struct Label<'w,E,Text,GlyphCache> where
     pub style: EStyle<E>,
     pub text: Text,
     pub align: (f32,f32),
-    pub glyph_cache: GlyphCache,
-    p: PhantomData<&'w (Text,GlyphCache)>,
+    p: PhantomData<&'w Text>,
 }
 
-impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
+impl<'w,E> Label<'w,E,&'static str> where
     E: Env,
 {
     #[inline]
@@ -31,13 +30,12 @@ impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
             style: Default::default(),
             text: "",
             align: (0.5,0.5),
-            glyph_cache: None,
             p: PhantomData,
         }
     }
 }
 
-impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
+impl<'w,E,Text> Label<'w,E,Text> where
     E: Env,
     Text: TextStor<E>+Validation<E>,
 {
@@ -49,24 +47,22 @@ impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
             style: Default::default(),
             text,
             align: (0.5,0.5),
-            glyph_cache: RemoteState::for_widget(id),
             p: PhantomData,
         }
     }
 }
 
-impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
+impl<'w,E,Text> Label<'w,E,Text> where
     E: Env,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,GlyphCache> where T: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<T>(self, text: T) -> Label<'w,E,T> where T: TextStor<E>+Validation<E>+'w {
         Label{
             id: self.id,
             size: self.size,
             style: self.style,
             text,
             align: self.align,
-            glyph_cache: self.glyph_cache,
             p: PhantomData,
         }
     }
