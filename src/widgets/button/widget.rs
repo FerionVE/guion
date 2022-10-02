@@ -37,7 +37,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
 
         let render_props = StdRenderProps::new(stack);
 
-        need_render |= render_props.current_std_render_cachors().validate(&mut cache.std_render_cachors);
+        need_render |= render_props.current_std_render_cachors().validate(&mut cache.std_render_cachors); //TODO also enable force_render if layout changes
 
         if need_render {
             renderer.fill_border_inner(

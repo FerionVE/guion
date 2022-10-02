@@ -194,11 +194,23 @@ pub enum ValidationStat {
 
 impl ValidationStat {
     #[inline]
-    fn valid(&self) -> bool {
+    pub fn from_valid(valid: bool) -> Self {
+        match valid {
+            true => Self::Valid,
+            false => Self::Invalid,
+        }
+    }
+    #[inline]
+    pub fn from_invalid(invalid: bool) -> Self {
+        Self::from_valid(!invalid)
+    }
+
+    #[inline]
+    pub fn valid(&self) -> bool {
         *self == ValidationStat::Valid
     }
     #[inline]
-    fn invalid(&self) -> bool {
+    pub fn invalid(&self) -> bool {
         *self == ValidationStat::Invalid
     }
 }

@@ -6,7 +6,7 @@ mod imp;
 
 pub use size::*;
 
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,PartialEq)]
 pub enum Orientation {
     Horizontal,
     Vertical,
@@ -23,7 +23,7 @@ impl Orientation {
 }
 
 //TODO move to trait submodule
-pub trait Gonstraints: From<StdGonstraints> + Into<StdGonstraints> + Clone {
+pub trait Gonstraints: From<StdGonstraints> + Into<StdGonstraints> + Clone + PartialEq {
     type Axis: GonstraintAxis;
 
     fn x(&self) -> Self::Axis;

@@ -13,7 +13,7 @@ macro_rules! try_or_false {
 
 pub mod util;
 
-// pub mod pane;
+pub mod pane;
 pub mod button;
 // //#[allow(unused)]
 // //pub mod null;

@@ -62,7 +62,9 @@ impl<'w,E,Text> Widget<E> for Label<'w,E,Text> where
             &StdRenderProps::new(&stack)
                 .inner_aligned(text_layout.display_size(),self.align),
             ctx
-        )
+        );
+
+        cache.text_rendered = true;
     }
 
     fn _event_direct<P,Evt>(
@@ -128,13 +130,12 @@ impl<'w,E,Text> Label<'w,E,Text> where
 {
     fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut LabelCache<E>, ctx: &mut E::Context<'_>) -> ValidationStat {
         //TODO also cachor e.g. style that affects text
-        if cache.text_cachor.is_none() || cache.text_cache.is_none() || self.text.valid(cache.text_cachor.as_ref().unwrap()) {
+        if cache.text_cachor.is_none() || cache.text_cache.is_none() || !self.text.valid(&**cache.text_cachor.as_ref().unwrap()) { //TODO old Validation trait bad coercion
             cache.text_cachor = Some(self.text.validation());
             cache.text_cache = Some(TxtLayoutFromStor::from(&self.text,ctx));
-            ValidationStat::Invalid
-        } else {
-            ValidationStat::Valid
+            cache.text_rendered = false;
         }
+        ValidationStat::from_valid(cache.text_rendered)
     }
 }
 
@@ -155,6 +156,7 @@ impl<'z,E,Text> AsWidget<'z,E> for Label<'z,E,Text> where Self: Widget<E>, E: En
 pub struct LabelCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, {
     text_cache: Option<ETextLayout<E>>,
     text_cachor: Option<Arc<dyn Any>>,
+    text_rendered: bool,
     std_render_cachors: Option<StdRenderCachors<E>>,
     align_cachor: Option<(f32,f32)>,
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,

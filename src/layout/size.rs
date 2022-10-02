@@ -1,7 +1,7 @@
 use super::*;
 
 /// Size +/+= Border
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,PartialEq)]
 pub struct StdGonstraints {
     pub x: StdGonstraintAxis,
     pub y: StdGonstraintAxis,
@@ -9,7 +9,7 @@ pub struct StdGonstraints {
 
 /// The SizeAxis holds layouting constraints for one axis
 /// Supported Operators: Add, BitAnd
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,PartialEq)]
 pub struct StdGonstraintAxis {
     pub min: u32,
     pub preferred: u32,
