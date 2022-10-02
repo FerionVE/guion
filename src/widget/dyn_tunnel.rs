@@ -567,8 +567,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
-        //Box::new(self).box_box_dyn() //TODO remove all the boxed bs
-        todo!("ICE🥶🥶")
+        unreachable!()
     }
 
     //TODO cold
@@ -602,8 +601,7 @@ impl<E> WBase<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
 
     fn _boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
-        //Box::new(self)
-        todo!("ICE🥶🥶")
+        unreachable!()
     }
 
     fn as_any(&self) -> &dyn std::any::Any where Self: 'static {
