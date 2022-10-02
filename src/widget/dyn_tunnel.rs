@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use crate::aliases::{EStyle, ERenderer};
 use crate::env::Env;
 use crate::event_new::EventDyn;
+use crate::event_new::downcast_map::EventDowncastMap;
 use crate::queron::dyn_tunnel::QueronDyn;
 
 use super::*;
@@ -167,7 +168,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp {
-        self.event_direct(stack, event, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
+        E::EventDowncastMap::event_downcast_map(self,stack, event, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn size_dyn(
@@ -200,7 +201,8 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp {
-        self._event_direct(stack, event, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
+        todo!()
+        //self._event_direct(stack, event, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
     #[inline]
     fn _size_dyn(

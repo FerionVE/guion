@@ -1,4 +1,5 @@
 //! The Env type defines a compound over any generic types
+use crate::event_new::downcast_map::EventDowncastMap;
 use crate::root::{RootMut, RootRef};
 
 use super::*;
@@ -19,6 +20,7 @@ pub trait Env: Sized + Clone + Copy + Default + PartialEq + Debug + Send + Sync 
     type Message;
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;
     type Phantom: InfallibleType;
+    type EventDowncastMap: EventDowncastMap<Self>;
     //type Commit: Eq + Ord;
 }
 

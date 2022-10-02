@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
@@ -10,6 +11,7 @@ use self::filter::{StdEventMode, QueryStdEventMode, QueryVariant};
 
 pub mod filter;
 pub mod variants;
+pub mod downcast_map;
 
 pub trait Event<E> where E: Env {
     /// Prefetch appended to stack
@@ -52,6 +54,8 @@ pub trait Event<E> where E: Env {
     fn with_prefetch<R>(&self, stack: R) -> Self::WithPrefetch<R> where R: Queron<E>;
 
     fn _debug(&self) -> &dyn Debug;
+
+    fn _as_any(&self) -> &dyn Any; //TODO proper non-'static downcast
 }
 
 /// This trait is only for bridging thru trait objects
@@ -60,6 +64,7 @@ pub trait EventDyn<E> {
     fn ts_dyn(&self) -> u64;
     fn _root_only_dyn(&self) -> bool;
     fn _debug_dyn(&self) -> &dyn Debug;
+    fn _as_any_dyn(&self) -> &dyn Any;
 }
 impl<T,E> EventDyn<E> for T where T: Event<E> + ?Sized, E: Env {
     #[inline]
@@ -77,6 +82,10 @@ impl<T,E> EventDyn<E> for T where T: Event<E> + ?Sized, E: Env {
 
     fn _debug_dyn(&self) -> &dyn Debug {
         self._debug()
+    }
+
+    fn _as_any_dyn(&self) -> &dyn Any {
+        self._as_any()
     }
 }
 
@@ -107,5 +116,9 @@ impl<E> Event<E> for dyn EventDyn<E> + '_ where E: Env {
 
     fn _debug(&self) -> &dyn Debug {
         self._debug_dyn()
+    }
+
+    fn _as_any(&self) -> &dyn Any {
+        self._as_any_dyn()
     }
 }
