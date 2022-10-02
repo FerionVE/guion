@@ -7,6 +7,7 @@ use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::style::standard::cursor::StdCursor;
 use crate::widget::as_widgets::AsWidgets;
+use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::{for_child_widget, QueryCurrentBounds, WithCurrentBounds}; //TODO fix req of this import
 
@@ -21,6 +22,8 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     V: AtomState<E,f32>,
     TrMut: TriggerMut<E>,
 {
+    type Cache = SplitPaneCache<(L::WidgetCache,R::WidgetCache),E>;
+
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -29,15 +32,38 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        mut force_render: bool,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        let render_props = StdRenderProps::new(stack)
-            .inside_spacing_border();
+        let mut need_render = force_render;
 
-        let bounds = self.calc_bounds(&render_props.absolute_bounds,self.state.get(ctx)); 
+        let render_props = StdRenderProps::new(stack);
 
-        {
+        render_props.current_std_render_cachors()
+            .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
+
+        if need_render {
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg)
+                    .with_style_border_type(TestStyleBorderType::Spacing),
+                ctx
+            );
+        }
+
+        let render_props = render_props.inside_spacing_border();
+
+        let bounds = self.calc_bounds(&render_props.absolute_bounds,self.state.get(ctx));
+
+        if cache.center_start_cachor != Some(bounds[1] - render_props.absolute_bounds.off) {
+            need_render = true;
+            force_render = true;
+            cache.center_start_cachor = Some(bounds[1] - render_props.absolute_bounds.off);
+        }
+
+        if need_render {
             if ctx.state().is_hovered(&self.id) {
                 let cursor = match self.orientation {
                     Orientation::Horizontal => StdCursor::SizeWE,
@@ -67,6 +93,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                     widget.render(
                         &for_child_widget(render_props.slice_absolute(&bounds[0]),widget),
                         renderer,
+                        force_render, &mut cache.child_caches.0,
                         root,ctx
                     )
                 }),
@@ -79,6 +106,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                     widget.render(
                         &for_child_widget(render_props.slice_absolute(&bounds[2]),widget),
                         renderer,
+                        force_render, &mut cache.child_caches.1,
                         root,ctx
                     )
                 }),
@@ -95,6 +123,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         &self,
         stack: &P,
         event: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
@@ -122,13 +151,13 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 
                     let l_min = self.childs.0.with_widget(
                         AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
-                            widget.size(&for_child_widget(&stack,widget),root,ctx) //TODO It can't be! We can't already have the bounds for the widget when constraining
+                            widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.0, root,ctx) //TODO It can't be! We can't already have the bounds for the widget when constraining
                         }),
                         root.fork(),ctx
                     ).par(o).min();
                     let r_min = self.childs.1.with_widget(
                         AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
-                            widget.size(&for_child_widget(&stack,widget),root,ctx)
+                            widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.1, root,ctx)
                         }),
                         root.fork(),ctx
                     ).par(o).min();
@@ -165,7 +194,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                         viewport: current.viewport.clone(),
                     };
         
-                    passed |= widget.event_direct(&stack,event,root,ctx);
+                    passed |= widget.event_direct(&stack,event, &mut cache.child_caches.0, root,ctx);
                 }),
                 root.fork(),ctx
             );
@@ -177,7 +206,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                         viewport: current.viewport.clone(),
                     };
         
-                    passed |= widget.event_direct(&stack,event,root,ctx);
+                    passed |= widget.event_direct(&stack,event, &mut cache.child_caches.1, root,ctx);
                 }),
                 root,ctx
             );
@@ -188,6 +217,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     fn _size<P>(
         &self,
         stack: &P,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
@@ -198,14 +228,14 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 
                 self.childs.0.with_widget(
                     AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
-                        s.add( &widget.size(&for_child_widget(&stack,widget),root,ctx), self.orientation )
+                        s.add( &widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.0, root,ctx), self.orientation )
                     }),
                     root.fork(),ctx
                 );
                 s.add_space(self.width,self.orientation);
                 self.childs.1.with_widget(
                     AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
-                        s.add( &widget.size(&for_child_widget(&stack,widget),root,ctx), self.orientation )
+                        s.add( &widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.1, root,ctx), self.orientation )
                     }),
                     root,ctx
                 );
@@ -218,7 +248,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     }
 
     fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
-        Ok(self.calc_bounds(b,self.state.get(ctx)))
+        Ok(self.calc_bounds(b,self.state.get(ctx)).into())
     }
     fn childs(&self) -> usize {
         self.childs.len()
@@ -256,7 +286,7 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     V: AtomState<E,f32>,
 {
-    fn calc_bounds(&self, b: &Bounds, v: f32) -> Vec<Bounds> { //TODO WHY does calc_bounds in pane return relative bounds and this does absolute bounds
+    fn calc_bounds(&self, b: &Bounds, v: f32) -> [Bounds;3] { //TODO WHY does calc_bounds in pane return relative bounds and this does absolute bounds
         let handle_width = self.width.min(b.w());
         let o = self.orientation;
         let (x,w) = b.par(o);
@@ -268,12 +298,13 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
         let left = Bounds::from_ori(x, y, w0, h, o);
         let center = Bounds::from_ori(x1, y, handle_width, h, o);
         let right = Bounds::from_ori(x2, y, w2, h, o);
-        vec![left,center,right]
+        [left,center,right]
     }
 }
 
 impl<'z,E,L,R,V,TrMut> AsWidget<'z,E> for SplitPane<'z,E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v> = Self where 'z: 'v;
+    type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
     fn with_widget<'w,F,Ret>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
@@ -282,4 +313,17 @@ impl<'z,E,L,R,V,TrMut> AsWidget<'z,E> for SplitPane<'z,E,L,R,V,TrMut> where Self
     {
         f.call(self, root, ctx)
     }
+}
+
+#[derive(Default)]
+pub struct SplitPaneCache<ChildCaches,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, ChildCaches: Default + 'static {
+    child_caches: ChildCaches,
+    std_render_cachors: Option<StdRenderCachors<E>>,
+    center_start_cachor: Option<Bounds>,
+    _p: PhantomData<E>,
+    //TODO cachor borders and colors
+}
+
+impl<ChildCaches,E> WidgetCache<E> for SplitPaneCache<ChildCaches,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, ChildCaches: Default + 'static {
+    fn reset_current(&mut self) {}
 }
