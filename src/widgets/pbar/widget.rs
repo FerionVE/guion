@@ -109,7 +109,7 @@ impl<'z,E> AsWidget<'z,E> for ProgressBar<'z,E> where Self: Widget<E>, E: Env {
     type Widget<'v> = Self where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
     {

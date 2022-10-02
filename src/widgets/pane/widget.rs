@@ -307,7 +307,7 @@ impl<'z,E,T> AsWidget<'z,E> for Pane<'z,E,T> where Self: Widget<E>, E: Env {
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
     {
