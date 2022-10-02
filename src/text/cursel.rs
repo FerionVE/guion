@@ -2,6 +2,10 @@ use std::ops::Range;
 
 // TODO impl holds bytepos and cursor_stick_y
 pub trait TxtCurSel<E>: Clone + Default /*+Send+Sync*/ {
+    type Cachor: Clone + PartialEq + 'static;
+
+    fn cachor(&self) -> Self::Cachor;
+    
     fn typ(&self) -> TxtCurSelBytePos;
     fn is_cursor(&self) -> bool;
     fn is_selection(&self) -> bool;

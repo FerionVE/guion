@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
@@ -8,6 +10,8 @@ use crate::text::cursel::TxtCurSelBytePos;
 use crate::text::layout::TxtLayout;
 use crate::text::layout::TxtLayoutFromStor;
 use crate::text::stor::*;
+use crate::widget::cache::StdRenderCachors;
+use crate::widget::cache::WidgetCache;
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::QueryCurrentBounds;
 
@@ -30,6 +34,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
     TBScr: TBSM<E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
+    type Cache = TextBoxCache<E>;
+
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -38,11 +44,50 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        mut force_render: bool,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        let render_props = StdRenderProps::new(stack)
-            .inside_spacing_border();
+        let mut need_render = force_render;
+
+        let render_props = StdRenderProps::new(stack);
+
+        render_props.current_std_render_cachors()
+            .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
+
+        let render_props = render_props.inside_spacing_border();
+
+        //TODO cachor align and style stuff e.g. bg color
+        //TODO text layout cachors
+        need_render |= self.glyphs(stack, cache, ctx);
+
+        let g = cache.text_cache.as_ref().unwrap();
+        //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
+        let mut cursor = self.cursor.get(ctx);
+        //cursor.fix_boundaries(&*g);
+        let off: Offset = self.scroll.get(ctx).into();
+
+        let selected = ctx.state().is_focused(&self.id);
+
+        if cache.scroll_curs_cachor != Some((cursor.cachor(),off,selected)) {
+            need_render = true;
+            cache.scroll_curs_cachor = Some((cursor.cachor(),off,selected));
+        }
+
+        if ctx.state().is_hovered(&self.id) {
+            renderer.set_cursor_specific(&StdCursor::IBeam.into(),ctx);
+        }
+
+        if !need_render {return;}
+
+        renderer.fill_rect(
+            &render_props
+                .with_style_color_type(TestStyleColorType::Bg),
+            ctx
+        );
+
+        let render_props = render_props.inside_spacing_border();
 
         renderer.fill_border_inner(
             &render_props
@@ -50,19 +95,13 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
                 .with_style_color_type(TestStyleColorType::Border)
                 .with_vartype(
                     false, //ctx.state().is_hovered(&self.id),
-                    ctx.state().is_focused(&self.id),
+                    selected,
                     false, //self.pressed(ctx).is_some(),
                     false, //self.locked,
                 ),
             ctx
         );
         let render_props = render_props.inside_border_of_type_mul(TestStyleBorderType::Component,2);
-
-        let g = self.glyphs(root,ctx);
-        //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
-        let mut cursor = self.cursor.get(ctx);
-        //cursor.fix_boundaries(&*g);
-        let off: Offset = self.scroll.get(ctx).into();
 
         for b in g.selection_bounds(cursor.clone()) {
             let b = b - off;
@@ -85,23 +124,22 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
             ctx
         );
 
-        if ctx.state().is_hovered(&self.id) {
-            renderer.set_cursor_specific(&StdCursor::IBeam.into(),ctx);
-        }
-
         renderer.render_preprocessed_text(
             &g,
             off,
             &render_props
                 .with_style_color_type(TestStyleColorType::Fg),
             ctx
-        )
+        );
+
+        cache.text_rendered = true;
     }
     
     fn _event_direct<P,Evt>(
         &self,
         stack: &P,
         event: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
@@ -113,8 +151,10 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
 
         if !event_mode.receive_self {return false;}
 
+        self.glyphs(&stack, cache, ctx);
+
         //e.0._debug_type_name();
-        let g = self.glyphs(root.fork(),ctx);
+        let g = cache.text_cache.as_ref().unwrap();
 
         let mut cursor = self.cursor.get(ctx);
         g.fix_cursor_boundaries(&mut cursor);
@@ -128,8 +168,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
             if !ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 let s = ee.text.clone();
                 
-                self.insert_text(&s,root.fork(),ctx);
-                self.scroll_to_cursor(&b,root,ctx);
+                self.insert_text(&s,g,root.fork(),ctx);
+                self.scroll_to_cursor(&b,g,root,ctx);
 
                 passed = true;
             }
@@ -142,18 +182,18 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
 
                 
                 if ee.key == MatchKeyCode::KbdBackspace {
-                    self.remove_selection_or_n(1,root.fork(),ctx);
+                    self.remove_selection_or_n(1,g,root.fork(),ctx);
                 }
                 if ee.key == MatchKeyCode::KbdReturn {
-                    self.insert_text("\n",root.fork(),ctx);
+                    self.insert_text("\n",g,root.fork(),ctx);
                 }
                 if ee.key == MatchKeyCode::KbdLeft {
-                    self.move_cursor_x(Direction::Left,ctrl,root.fork(),ctx);
+                    self.move_cursor_x(Direction::Left,ctrl,g,root.fork(),ctx);
                 }
                 if ee.key == MatchKeyCode::KbdRight {
-                    self.move_cursor_x(Direction::Right,ctrl,root.fork(),ctx);
+                    self.move_cursor_x(Direction::Right,ctrl,g,root.fork(),ctx);
                 }
-                self.scroll_to_cursor(&b,root,ctx);
+                self.scroll_to_cursor(&b,g,root,ctx);
 
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdA && ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
@@ -167,8 +207,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdV && ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 if let Some(text) = ctx.clipboard_get_text() {
-                    self.insert_text(&text,root.fork(),ctx);
-                    self.scroll_to_cursor(&b,root,ctx);
+                    self.insert_text(&text,g,root.fork(),ctx);
+                    self.scroll_to_cursor(&b,g,root,ctx);
                 }
 
                 passed = true;
@@ -179,8 +219,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
                     ctx.clipboard_set_text(text);
 
                     if ee.key == MatchKeyCode::KbdX {
-                        self.remove_selection(root.fork(),ctx);
-                        self.scroll_to_cursor(&b,root,ctx);
+                        self.remove_selection(g,root.fork(),ctx);
+                        self.scroll_to_cursor(&b,g,root,ctx);
                     }
                 }
                 passed = true;
@@ -190,12 +230,12 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
                 let b = b.clone();
                 
                 if ee.key == MatchKeyCode::KbdUp {
-                    self.move_cursor_y(Direction::Up,ctrl,&b,root.fork(),ctx);
+                    self.move_cursor_y(Direction::Up,ctrl,&b,g,root.fork(),ctx);
                 }
                 if ee.key == MatchKeyCode::KbdDown {
-                    self.move_cursor_y(Direction::Down,ctrl,&b,root.fork(),ctx);
+                    self.move_cursor_y(Direction::Down,ctrl,&b,g,root.fork(),ctx);
                 }
-                self.scroll_to_cursor(&b,root,ctx);
+                self.scroll_to_cursor(&b,g,root,ctx);
 
                 passed = true;
             }
@@ -225,9 +265,9 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
                 let mouse_pressed = ctx.state().is_hovered(&self.id()) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone()).is_some();
                 let b = b.clone();
 
-                self._m(mouse_down,mouse_pressed,mouse,b,root.fork(),ctx);
+                self._m(mouse_down,mouse_pressed,mouse,b,g,root.fork(),ctx);
                 if mouse_pressed {
-                    self.scroll_to_cursor(&b,root,ctx);
+                    self.scroll_to_cursor(&b,g,root,ctx);
                 }
 
                 passed |= mouse_pressed;
@@ -239,6 +279,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
     fn _size<P>(
         &self,
         stack: &P,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
@@ -280,6 +321,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
 
 impl<'z,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> AsWidget<'z,E> for TextBox<'z,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where Self: Widget<E>, E: Env {
     type Widget<'v> = Self where 'z: 'v;
+    type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
     fn with_widget<'w,F,Ret>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
@@ -288,4 +330,18 @@ impl<'z,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> AsWidget<'z,E> for TextBox<'z
     {
         f.call(self, root, ctx)
     }
+}
+
+#[derive(Default)]
+pub struct TextBoxCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
+    pub(super) text_cache: Option<ETextLayout<E>>,
+    pub(super) text_cachor: Option<Arc<dyn Any>>,
+    pub(super) scroll_curs_cachor: Option<(ETCurSelCachor<E>,Offset,bool)>,
+    pub(super) text_rendered: bool,
+    pub(super) std_render_cachors: Option<StdRenderCachors<E>>,
+    //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
+}
+
+impl<E> WidgetCache<E> for TextBoxCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
+    fn reset_current(&mut self) {}
 }
