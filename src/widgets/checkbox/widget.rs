@@ -2,6 +2,7 @@ use crate::dispatchor::AsWidgetClosure;
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::style::standard::cursor::StdCursor;
+use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::QueryCurrentBounds;
 
@@ -17,6 +18,8 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     Text: AsWidget<'w,E>,
     TrMut: TriggerMut<E>,
 {
+    type Cache = CheckBoxCache<Text::WidgetCache,E>;
+
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -24,18 +27,57 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        mut force_render: bool,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        let render_props = StdRenderProps::new(stack)
-            .inside_spacing_border();
+        let mut need_render = force_render;
+
+        let render_props = StdRenderProps::new(stack);
+
+        render_props.current_std_render_cachors()
+            .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
+
+        if need_render {
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg)
+                    .with_style_border_type(TestStyleBorderType::Spacing),
+                ctx
+            );
+        }
+
+        let render_props = render_props.inside_spacing_border();
+
+        let vartypes = (
+            ctx.state().is_hovered(&self.id),
+            ctx.state().is_focused(&self.id),
+            self.state.get(ctx),
+            false, //TODO
+        );
+
+        let (hovered,selected,activated,disabled) = vartypes;
+
+        if cache.vartype_cachors != Some(vartypes) {
+            need_render = true;
+            cache.vartype_cachors = Some(vartypes);
+        }
 
         if ctx.state().is_hovered(&self.id) {
             renderer.set_cursor_specific(&StdCursor::Hand.into(),ctx);
         }
 
         let size = render_props.absolute_bounds.size.h;
-        {
+
+        if need_render {
+            renderer.fill_rect(
+                &render_props
+                .slice(Bounds::from_wh(size+4/*TODO fix border impl*/*2,size))
+                .with_style_color_type(TestStyleColorType::Bg),
+                ctx
+            );
+
             let rect = Bounds::from_wh(size,size);
             let mut render_props = render_props.slice(&rect);
 
@@ -50,10 +92,10 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
                     .inside_border_of_type_mul(TestStyleBorderType::Component,3)
                     .with_style_color_type(TestStyleColorType::Fg)
                     .with_vartype(
-                        ctx.state().is_hovered(&self.id),
-                        ctx.state().is_focused(&self.id),
-                        self.state.get(ctx),
-                        false, //TODO
+                        hovered,
+                        selected,
+                        activated,
+                        disabled,
                     ),
                 ctx
             );
@@ -63,10 +105,10 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
                     .with_style_border_type(TestStyleBorderType::Component)
                     .with_style_color_type(TestStyleColorType::Border)
                     .with_vartype(
-                        ctx.state().is_hovered(&self.id),
-                        ctx.state().is_focused(&self.id),
-                        false, //self.pressed(ctx).is_some(),
-                        self.locked,
+                        hovered,
+                        selected,
+                        activated,
+                        disabled,
                     ),
                 ctx
             );
@@ -80,12 +122,14 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
                         &render_props
                             .inside_border(text_border)
                             .with_vartype(
-                                ctx.state().is_hovered(&self.id),
-                                ctx.state().is_focused(&self.id),
+                                hovered,
+                                selected,
                                 false, //self.pressed(ctx).is_some(), TODO this wasn't set previously
-                                self.locked,
+                                disabled,
                             ),
                         renderer,
+                        force_render,
+                        &mut cache.label_cache,
                         root,ctx
                     )
                 }),
@@ -98,6 +142,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
         &self,
         stack: &P,
         event: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
@@ -125,6 +170,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     fn _size<P>(
         &self,
         stack: &P,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
@@ -136,8 +182,8 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
             |stack| widget_size_inside_border(
                 stack, text_border,
                 |stack|
-                    self.text.with_widget(AsWidgetClosure::new(
-                        |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| widget.size(&stack,root,ctx)
+                    self.text.with_widget(AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
+                        widget.size(&stack, &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
         );
@@ -184,6 +230,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
 
 impl<'z,E,State,Text,TrMut> AsWidget<'z,E> for CheckBox<'z,E,State,Text,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v> = Self where 'z: 'v;
+    type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
     fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
@@ -192,4 +239,17 @@ impl<'z,E,State,Text,TrMut> AsWidget<'z,E> for CheckBox<'z,E,State,Text,TrMut> w
     {
         f.call(self, root, ctx)
     }
+}
+
+#[derive(Default)]
+pub struct CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
+    label_cache: LabelCache,
+    std_render_cachors: Option<StdRenderCachors<E>>,
+    vartype_cachors: Option<(bool,bool,bool,bool)>,
+    _p: PhantomData<E>,
+    //TODO cachor borders and colors
+}
+
+impl<LabelCache,E> WidgetCache<E> for CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
+    fn reset_current(&mut self) {}
 }
