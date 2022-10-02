@@ -25,14 +25,15 @@ impl<'w,E,Text> Widget<E> for Label<'w,E,Text> where
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
-        force_render: bool,
+        mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
         let mut need_render = force_render;
 
-        need_render |= StdRenderCachors::current(stack).validate(&mut cache.std_render_cachors);
+        StdRenderCachors::current(stack)
+            .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
 
         //TODO cachor align and style stuff e.g. bg color
         //TODO text layout cachors

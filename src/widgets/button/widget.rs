@@ -24,11 +24,12 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
+    
     fn _render<P>(
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
-        force_render: bool,
+        mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -37,7 +38,8 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
 
         let render_props = StdRenderProps::new(stack);
 
-        need_render |= render_props.current_std_render_cachors().validate(&mut cache.std_render_cachors); //TODO also enable force_render if layout changes
+        render_props.current_std_render_cachors()
+            .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
 
         if need_render {
             renderer.fill_border_inner(
@@ -71,10 +73,10 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         let fill_inner_color = &render_props
             .with_style_color_type(TestStyleColorType::Fg)
             .with_vartype(
-                ctx.state().is_hovered(&self.id),
-                ctx.state().is_focused(&self.id),
-                self.pressed(ctx).is_some(),
-                self.locked,
+                hovered,
+                selected,
+                activated,
+                disabled,
             );
 
         if need_render {
@@ -87,10 +89,10 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                     .with_style_border_type(TestStyleBorderType::Component)
                     .with_style_color_type(TestStyleColorType::Border)
                     .with_vartype(
-                        ctx.state().is_hovered(&self.id),
-                        ctx.state().is_focused(&self.id),
-                        self.pressed(ctx).is_some(),
-                        self.locked,
+                        hovered,
+                        selected,
+                        activated,
+                        disabled,
                     ),
                 ctx
             );

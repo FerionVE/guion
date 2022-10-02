@@ -24,7 +24,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
-        force_render: bool,
+        mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -33,8 +33,8 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
 
         let render_props = StdRenderProps::new(stack);
 
-        //TODO also enable force_render if layout changes
-        need_render |= render_props.current_std_render_cachors().validate(&mut cache.std_render_cachors);
+        render_props.current_std_render_cachors()
+            .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
 
         need_render |= !cache.layout_rendered;
 

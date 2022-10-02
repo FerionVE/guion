@@ -153,12 +153,32 @@ impl<E> StdRenderCachors<E> where E: Env {
         StdRenderProps::new(stack).current_std_render_cachors()
     }
 
-    pub fn validate(&self, cached: &mut Option<Self>) -> ValidationStat {
+    // pub fn validate(&self, cached: &mut Option<Self>) -> ValidationStat {
+    //     if cached.as_ref() != Some(self) {
+    //         *cached = Some(self.clone());
+    //         ValidationStat::Invalid
+    //     } else {
+    //         ValidationStat::Valid
+    //     }
+    // }
+
+    pub fn layout_part(&self) -> StdLayoutCachors<E> {
+        StdLayoutCachors {
+            dims: self.dims,
+            component_border: self.component_border,
+            spacing: self.spacing,
+            current_border: self.current_border,
+            _p: PhantomData,
+        }
+    }
+
+    pub fn validate(&self, cached: &mut Option<Self>, invalidate_color: &mut bool, invalidate_layout: &mut bool) {
         if cached.as_ref() != Some(self) {
+            if cached.as_ref().map(Self::layout_part) != Some(self.layout_part()) {
+                *invalidate_layout = true;
+            }
+            *invalidate_color = true;
             *cached = Some(self.clone());
-            ValidationStat::Invalid
-        } else {
-            ValidationStat::Valid
         }
     }
 }
