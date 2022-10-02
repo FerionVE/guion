@@ -11,8 +11,8 @@ pub struct WidgetIdent<E> where E: Env {
 
 impl<E> WidgetIdent<E> where E: Env {
     #[inline]
-    pub fn is(&self, w: E::WidgetID) -> bool {
-        self.id == w //TODO AsID trait
+    pub fn is(&self, other_widget: E::WidgetID) -> bool {
+        self.id == other_widget //TODO AsID trait
     }
     #[deprecated="this resolves the widget"]
     /// Resolves the Widget
@@ -23,8 +23,8 @@ impl<E> WidgetIdent<E> where E: Env {
         }else{
             stor.with_widget(
                 path.clone(),
-                #[inline] |w,_|
-                    w.map(#[inline] |r| Self{id: r.id(), path} ), //TODO with_widget resolve should also yield new path
+                #[inline] |widget,_|
+                    widget.map(#[inline] |widget| Self{id: widget.id(), path} ), //TODO with_widget resolve should also yield new path
                 ctx,
             )
         }

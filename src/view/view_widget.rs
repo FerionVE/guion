@@ -19,7 +19,7 @@ pub struct ViewWidget<'z,Wid,WFn,MFn,E>(WFn,MFn,PhantomData<(&'z Wid,E)>) where
     ) + Clone + 'static,
     E: Env;
 
-pub fn view_widget_adv<'z,Wid,WFn,MFn,E>(w: WFn, f: MFn) -> ViewWidget<'z,Wid,WFn,MFn,E> where
+pub fn view_widget_adv<'z,Wid,WFn,MFn,E>(view_fn: WFn, mutor_fn: MFn) -> ViewWidget<'z,Wid,WFn,MFn,E> where
     WFn: Fn()->Wid + 'z,
     Wid: View<'z,E>,
     MFn: for<'s,'c,'cc> Fn(
@@ -29,7 +29,7 @@ pub fn view_widget_adv<'z,Wid,WFn,MFn,E>(w: WFn, f: MFn) -> ViewWidget<'z,Wid,WF
     ) + Clone + 'static,
     E: Env,
 {
-    ViewWidget(w,f,PhantomData)
+    ViewWidget(view_fn,mutor_fn,PhantomData)
 }
 // pub fn view_widget_dummy_adv<'z,Wid,WFn,MFn,E>(w: WFn, f: MFn) -> DummyWidget<ViewWidget<'z,Wid,WFn,MFn,E>> where
 //     WFn: Fn()->Wid + 'z,
@@ -57,15 +57,15 @@ impl<'z,Wid,WFn,MFn,E> AsWidget<'z,E> for ViewWidget<'z,Wid,WFn,MFn,E> where
     type Widget<'v> = Wid::Viewed<'v,MFn> where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, dispatch: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&'w self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         F: AsWidgetDispatch<'z,Self,R,E>
     {
-        let s = (self.0)();
-        let dis = ViewClosure::new(move |widget,root,ctx| {
-            dispatch.call(widget, root, ctx)
+        let view = (self.0)();
+        let callback = ViewClosure::new(move |widget,root,ctx| {
+            callback.call(widget, root, ctx)
         });
-        s.view(dis,self.1.clone(),root,ctx)
+        view.view(callback,self.1.clone(),root,ctx)
     }
 }
 

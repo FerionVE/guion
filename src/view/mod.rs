@@ -33,7 +33,7 @@ impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z
     type Mutable<'k> = T::Mutable<'k>;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutorFn,DispatchFn,R>(&'d self, callback: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
@@ -42,10 +42,10 @@ impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z
         ) + Clone + Send + Sync + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>,
     {
-        let g = ViewClosure::new(#[inline] move |widget,root,ctx|
-            dispatch.call(widget, root, ctx)
+        let callback = ViewClosure::new(#[inline] move |widget,root,ctx|
+            callback.call(widget, root, ctx)
         );
-        (**self).view(g,remut,root,ctx)
+        (**self).view(callback,remut,root,ctx)
     }
 }
 
@@ -66,7 +66,7 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
     #[inline]
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
+        callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
         remut: Arc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
@@ -74,12 +74,12 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
         ) + Send + Sync + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        let g = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
-            (dispatch)(widget.erase(), root, ctx)
+        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
+            (callback)(widget.erase(), root, ctx)
         );
         View::view(
             self,
-            g,
+            callback,
             move |root,_,callback,ctx| {
                 (remut)(root,&(),&mut move |resolved,&(),ctx| {
                     let resolved = resolved.expect("TODO");
@@ -112,8 +112,7 @@ impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
         let mut callback_return: Option<R> = None;
         self.view_dyn(
             Box::new(|widget,root,ctx| {
-                let r = dispatch.call(widget,root,ctx);
-                callback_return = Some(r);
+                callback_return = Some(dispatch.call(widget,root,ctx));
                 ProtectedReturn(PhantomData)
             }),
             Arc::new(move |root,_,cb,ctx| {
@@ -161,7 +160,7 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
     #[inline]
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
+        callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
         remut: Arc<dyn for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut M::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
@@ -169,12 +168,12 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
         ) + Send + Sync + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        let g = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
-            (dispatch)(widget.erase(), root, ctx)
+        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
+            (callback)(widget.erase(), root, ctx)
         );
         View::view(
             self,
-            g,
+            callback,
             #[inline] move |root,_,cb,ctx| 
                 (remut)(root,&(),cb,ctx),
             root,
@@ -200,8 +199,7 @@ impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
         let mut callback_return: Option<R> = None;
         self.view_dyn(
             Box::new(#[inline] |widget,root,ctx| {
-                let r = dispatch.call(widget,root,ctx);
-                callback_return = Some(r);
+                callback_return = Some(dispatch.call(widget,root,ctx));
                 ProtectedReturn(PhantomData)
             }),
             Arc::new(#[inline] move |root,_,cb,ctx|

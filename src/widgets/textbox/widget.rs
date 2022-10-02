@@ -30,9 +30,6 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
     TBScr: TBSM<E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
-    fn child_paths(&self, _: E::WidgetPath, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
-        vec![]
-    }
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -285,7 +282,7 @@ impl<'z,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> AsWidget<'z,E> for TextBox<'z
     type Widget<'v> = Self where 'z: 'v;
 
     #[inline]
-    fn with_widget<'w,F,Ret>(&'w self, f: F, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Ret
+    fn with_widget<'w,F,Ret>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
     where
         F: dispatchor::AsWidgetDispatch<'z,Self,Ret,E>
     {
