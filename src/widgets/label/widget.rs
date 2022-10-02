@@ -1,6 +1,6 @@
 use crate::queron::Queron;
 use crate::text::layout::*;
-use crate::widget::cache::WidgetCache;
+use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::*;
@@ -31,7 +31,9 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        let mut need_render = !force_render;
+        let mut need_render = force_render;
+
+        need_render |= StdRenderCachors::current(stack).validate(&mut cache.std_render_cachors);
 
         //TODO cachor align and style stuff e.g. bg color
         //TODO text layout cachors
@@ -69,7 +71,6 @@ impl<'w,E,Text,GlyphCache> Widget<E> for Label<'w,E,Text,GlyphCache> where
     fn _size<P>(
         &self,
         stack: &P,
-        force_relayout: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -158,6 +159,7 @@ impl<'z,E,Text,GlyphCache> AsWidget<'z,E> for Label<'z,E,Text,GlyphCache> where 
 pub struct LabelCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, {
     text_cache: Option<ETextLayout<E>>,
     text_cachor: Option<Arc<dyn Any>>,
+    std_render_cachors: Option<StdRenderCachors<E>>,
     //align_cachor: Option<(f32,f32)>,
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }

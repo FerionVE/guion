@@ -2,17 +2,17 @@
 use super::*;
 use std::fmt::Debug;
 
-#[derive(Clone,Copy,Default)]
+#[derive(Clone,Copy,Default,PartialEq,Eq)]
 pub struct Offset {
     pub x: i32,
     pub y: i32,
 }
-#[derive(Clone,Copy,Default)]
+#[derive(Clone,Copy,Default,PartialEq,Eq)]
 pub struct Dims {
     pub w: u32,
     pub h: u32,
 }
-#[derive(Clone,Copy,Default)]
+#[derive(Clone,Copy,Default,PartialEq,Eq)]
 pub struct Bounds {
     pub off: Offset,
     pub size: Dims,

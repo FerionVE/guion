@@ -20,8 +20,8 @@ pub trait Style<E>: Clone + Default where E: Env {
         for<'a> StyleSelectorAppend<&'a [StdSelectag<E>],E> +
         for<'a,'b> StyleSelectorAppend<&'a [&'b StdSelectag<E>],E>;
     type Font;
-    type Cursor: From<StdCursor>+Clone+Default;
-    type Color: Color+Clone;
+    type Cursor: From<StdCursor> + Clone + Default;
+    type Color: Color + Clone + PartialEq; //TODO special eq for cachor instead of general PartialEq
     
     fn and(&self, s: &Self) -> Self; //TODO clone efficiency
 

@@ -65,12 +65,11 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn size<P>(
         &self,
         stack: &P,
-        force_relayout: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
-        ctx.build_handler()._size(self, stack, force_relayout, cache, root, ctx)
+        ctx.build_handler()._size(self, stack, cache, root, ctx)
     }
 
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
@@ -108,7 +107,6 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn _size<P>(
         &self,
         stack: &P,
-        force_relayout: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>

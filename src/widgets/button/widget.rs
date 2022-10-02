@@ -3,7 +3,7 @@ use crate::event_new::filter::QueryStdEventMode;
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::style::standard::cursor::StdCursor;
-use crate::widget::cache::WidgetCache;
+use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::for_child_widget;
 
@@ -33,7 +33,9 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        let mut need_render = !force_render;
+        let mut need_render = force_render;
+
+        need_render |= StdRenderCachors::current(stack).validate(&mut cache.std_render_cachors);
         
         let render_props = StdRenderProps::new(stack)
             .inside_spacing_border();
@@ -132,7 +134,6 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     fn _size<P>(
         &self,
         stack: &P,
-        force_relayout: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -144,7 +145,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                 |stack|
                     self.text.with_widget(AsWidgetClosure::new(
                         |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
-                            widget.size(&for_child_widget(&stack,widget), force_relayout, &mut cache.label_cache, root,ctx)
+                            widget.size(&for_child_widget(&stack,widget), &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
         );
@@ -223,6 +224,7 @@ impl<'z,E,Text,Tr,TrMut> AsWidget<'z,E> for Button<'z,E,Text,Tr,TrMut> where Sel
 #[derive(Default)]
 pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
     label_cache: LabelCache,
+    std_render_cachors: Option<StdRenderCachors<E>>,
     vartype_cachors: Option<(bool,bool,bool,bool)>,
     _p: PhantomData<E>,
     //TODO cachor borders and colors
