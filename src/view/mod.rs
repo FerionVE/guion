@@ -14,36 +14,36 @@ pub mod apply;
 pub mod message;
 //pub mod test;
 
-pub trait View<'z,E> where E: Env, Self: 'z {
-    type Viewed<'v,MutorFn>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where MutorFn: 'static, 'z: 'v;
+pub trait View<E> where E: Env {
+    type Viewed<'v,'z,MutorFn>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where MutorFn: 'static, 'z: 'v, Self: 'z;
     type WidgetCache: WidgetCache<E>;
     type Mutable<'k>: ?Sized + 'k;
 
-    fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static, //TODO does it also need Sync or only need to be Send?
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>,
+        DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd,
    ;
 }
 
-impl<'z,T,E> View<'z,E> for &'z T where T: View<'z,E> + ?Sized, E: Env, Self: 'z {
-    type Viewed<'v,MutorFn> = T::Viewed<'v,MutorFn> where MutorFn: 'static, 'z: 'v;
+impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
+    type Viewed<'v,'z,MutorFn> = T::Viewed<'v,'z,MutorFn> where MutorFn: 'static, 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
     type Mutable<'k> = T::Mutable<'k>;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn,R>(&'d self, callback: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutorFn,DispatchFn,R>(&self, callback: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>,
+        DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd,
     {
         let callback = ViewClosure::new(#[inline] move |widget,root,ctx|
             callback.call(widget, root, ctx)
@@ -65,7 +65,7 @@ pub trait ViewDyn<E> where E: Env {
     ) -> ProtectedReturn;
 }
 
-impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
+impl<T,E> ViewDyn<E> for T where T: View<E>, E: Env {
     #[inline]
     fn view_dyn(
         &self,
@@ -77,7 +77,7 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
         ) + Send + Sync + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
+        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_,_>,root,ctx|
             (callback)(widget.erase(), root, ctx)
         );
         View::view(
@@ -87,7 +87,7 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
                 (remut)(root,&(),&mut move |resolved,&(),ctx| {
                     let resolved = resolved.expect("TODO");
                     (callback)(
-                        Ok(resolved.into_everything::<'z,'_,'_,Self,E>()),
+                        Ok(resolved.into_everything::<Self,E>()),
                         &(),ctx
                     )
                 },ctx)
@@ -98,20 +98,20 @@ impl<'z,T,E> ViewDyn<E> for T where T: View<'z,E>, E: Env {
     }
 }
 
-impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
-    type Viewed<'v,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v;
+impl<E> View<E> for dyn ViewDyn<E> + '_ where E: Env {
+    type Viewed<'v,'z,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v, Self: 'z;
     type WidgetCache = DynWidgetCache<E>;
     type Mutable<'k> = Timmy;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>
+        DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd
     {
         let mut callback_return: Option<R> = None;
         self.view_dyn(
@@ -138,7 +138,7 @@ impl<'z,E> View<'z,E> for dyn ViewDyn<E> + 'z where E: Env {
 pub struct Timmy;
 
 impl Timmy {
-    fn into_everything<'z,'v,'vv,V,E>(&mut self) -> &'v mut <V as View<'z,E>>::Mutable<'vv> where V: View<'z,E>, E: Env {
+    fn into_everything<'v,'vv,V,E>(&mut self) -> &'v mut <V as View<E>>::Mutable<'vv> where V: View<E>, E: Env {
         todo!()
     }
 }
@@ -160,7 +160,7 @@ pub trait MuGator<E>: 'static where E: Env {
     type Mutable<'k>: 'k;
 }
 
-impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mutable<'k>>, M: MuGator<E>, E: Env {
+impl<T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<E,Mutable<'k>=M::Mutable<'k>>, M: MuGator<E>, E: Env {
     #[inline]
     fn view_dyn(
         &self,
@@ -172,7 +172,7 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
         ) + Send + Sync + 'static>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,_>,root,ctx|
+        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_,_>,root,ctx|
             (callback)(widget.erase(), root, ctx)
         );
         View::view(
@@ -186,20 +186,20 @@ impl<'z,T,M,E> ViewDyn2<E,M> for T where for<'k> T: View<'z,E,Mutable<'k>=M::Mut
     }
 }
 
-impl<'z,M,E> View<'z,E> for dyn ViewDyn2<E,M> + 'z where M: MuGator<E>, E: Env {
-    type Viewed<'v,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, 'z: 'v;
+impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuGator<E>, E: Env {
+    type Viewed<'v,'z,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, 'z: 'v, Self: 'z;
     type WidgetCache = DynWidgetCache<E>;
     type Mutable<'k> = M::Mutable<'k>;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Send + Sync + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutorFn,R,E>
+        DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd
     {
         let mut callback_return: Option<R> = None;
         self.view_dyn(

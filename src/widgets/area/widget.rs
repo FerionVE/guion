@@ -14,7 +14,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    W: AsWidget<'w,E>,
+    W: AsWidget<E>,
     Scroll: AtomState<E,ScrollOff>,
     MutFn: TriggerMut<E>,
 {
@@ -85,7 +85,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         let rect = render_props.absolute_bounds;
 
         let inner_size = self.inner.with_widget(
-            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 widget.size(&for_child_widget(&render_props,widget), &mut cache.inner_cache, root,ctx)
             }),
             root.fork(),ctx
@@ -98,7 +98,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
 
         self.inner.with_widget(
-            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let render_props = render_props
                     .fork_with(|r| {
                         r.absolute_bounds = inner_rect;
@@ -137,7 +137,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         let (osx,osy) = self.scroll.get(ctx);
 
         let inner_size = self.inner.with_widget(
-            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 widget.size(&for_child_widget(&stack,widget), &mut cache.inner_cache, root,ctx)
             }),
             root.fork(),ctx
@@ -159,7 +159,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
             // }
 
             self.inner.with_widget(
-                AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
                         inner: for_child_widget(&stack,widget),
                         bounds: inner_rect,
@@ -236,7 +236,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     {
         //if i != 0 {return Err(());} //TODO fix callback
         self.inner.with_widget(
-            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
+            AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -255,14 +255,14 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     );
 }
 
-impl<'z,E,W,Scroll,MutFn> AsWidget<'z,E> for Area<'z,E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
-    type Widget<'v> = Self where 'z: 'v;
+impl<E,W,Scroll,MutFn> AsWidget<E> for Area<'_,E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
+    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
+        F: dispatchor::AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         f.call(self, root, ctx)
     }

@@ -319,14 +319,14 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
     );
 }
 
-impl<'z,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> AsWidget<'z,E> for TextBox<'z,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where Self: Widget<E>, E: Env {
-    type Widget<'v> = Self where 'z: 'v;
+impl<E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> AsWidget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where Self: Widget<E>, E: Env {
+    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,Ret>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
+    fn with_widget<'w,F,Ret>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
     where
-        F: dispatchor::AsWidgetDispatch<'z,Self,Ret,E>
+        F: dispatchor::AsWidgetDispatch<'w,Self,Ret,E>, Self: 'w
     {
         f.call(self, root, ctx)
     }

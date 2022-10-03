@@ -15,7 +15,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
-    Text: AsWidget<'w,E>,
+    Text: AsWidget<E>,
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
 {
@@ -105,7 +105,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         }
 
         self.text.with_widget(
-            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let render_props = render_props
                     .inside_border_of_type(TestStyleBorderType::Component)
                     .fork_with(|p| p.style.bg_color = fill_inner_color.style.current_color() )
@@ -165,7 +165,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                 stack, TestStyleBorderType::Component,
                 |stack|
                     self.text.with_widget(AsWidgetClosure::new(
-                        |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
+                        |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
                             widget.size(&for_child_widget(&stack,widget), &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
@@ -190,7 +190,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     {
         //if i != 0 {return Err(());} //TODO fix callback
         self.text.with_widget(
-            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
+            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -214,7 +214,7 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
-    S: AsWidget<'w,E>,
+    S: AsWidget<E>,
     Tr: Trigger<E>,
     TrMut: TriggerMut<E>,
 {
@@ -229,14 +229,14 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     }
 }
 
-impl<'z,E,Text,Tr,TrMut> AsWidget<'z,E> for Button<'z,E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
-    type Widget<'v> = Self where 'z: 'v;
+impl<E,Text,Tr,TrMut> AsWidget<E> for Button<'_,E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
+    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
+        F: dispatchor::AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         f.call(self, root, ctx)
     }

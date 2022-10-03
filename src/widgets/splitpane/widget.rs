@@ -16,9 +16,9 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
-    (L,R): AsWidgets<'w,E>,
-    L: AsWidget<'w,E>,
-    R: AsWidget<'w,E>,
+    (L,R): AsWidgets<E>,
+    L: AsWidget<E>,
+    R: AsWidget<E>,
     V: AtomState<E,f32>,
     TrMut: TriggerMut<E>,
 {
@@ -96,7 +96,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 
         {
             self.childs.0.with_widget(
-                AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     widget.render(
                         &for_child_widget(render_props.slice_absolute(&bounds[0]),widget),
                         renderer,
@@ -109,7 +109,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         }
         {
             self.childs.1.with_widget(
-                AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     widget.render(
                         &for_child_widget(render_props.slice_absolute(&bounds[2]),widget),
                         renderer,
@@ -157,13 +157,13 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                     let mut wx1 = wx0 + ww as i32;
 
                     let l_min = self.childs.0.with_widget(
-                        AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                        AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                             widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.0, root,ctx) //TODO It can't be! We can't already have the bounds for the widget when constraining
                         }),
                         root.fork(),ctx
                     ).par(o).min();
                     let r_min = self.childs.1.with_widget(
-                        AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                        AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                             widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.1, root,ctx)
                         }),
                         root.fork(),ctx
@@ -194,7 +194,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         }
         if event_mode.route_to_childs {
             self.childs.0.with_widget(
-                AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
                         inner: for_child_widget(&stack,widget),
                         bounds: current.bounds & &bounds[0],
@@ -206,7 +206,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                 root.fork(),ctx
             );
             self.childs.1.with_widget(
-                AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
                         inner: for_child_widget(&stack,widget),
                         bounds: current.bounds & &bounds[2],
@@ -234,14 +234,14 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                 let mut s = ESize::<E>::empty();
 
                 self.childs.0.with_widget(
-                    AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                    AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                         s.add( &widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.0, root,ctx), self.orientation )
                     }),
                     root.fork(),ctx
                 );
                 s.add_space(self.width,self.orientation);
                 self.childs.1.with_widget(
-                    AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                    AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                         s.add( &widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.1, root,ctx), self.orientation )
                     }),
                     root,ctx
@@ -273,7 +273,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     {
         self.childs.by_index(
             i,
-            AsWidgetsClosure::new(|_,_,_,widget:&<(L,R) as AsWidgets<'_, E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
+            AsWidgetsClosure::new(|_,_,_,widget:&<(L,R) as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -309,14 +309,14 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     }
 }
 
-impl<'z,E,L,R,V,TrMut> AsWidget<'z,E> for SplitPane<'z,E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
-    type Widget<'v> = Self where 'z: 'v;
+impl<E,L,R,V,TrMut> AsWidget<E> for SplitPane<'_,E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
+    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,Ret>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
+    fn with_widget<'w,F,Ret>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
     where
-        F: dispatchor::AsWidgetDispatch<'z,Self,Ret,E>
+        F: dispatchor::AsWidgetDispatch<'w,Self,Ret,E>, Self: 'w
     {
         f.call(self, root, ctx)
     }

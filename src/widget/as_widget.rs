@@ -8,37 +8,37 @@ use super::dyn_tunnel::WidgetDyn;
 use crate::dispatchor::{AsWidgetDispatch, AsWidgetClosure};
 use crate::env::Env;
 
-pub trait AsWidget<'z,E> where E: Env, Self: 'z {
-    type Widget<'v>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v;
+pub trait AsWidget<E> where E: Env {
+    type Widget<'v,'z>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v, Self: 'z;
     type WidgetCache: WidgetCache<E>; // this ugly hack as we can't even refer to 'static types behind lifetime GATs without effect of these lifetimes
 
-    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,R,E>
+        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
    ;
 }
 
-impl<'a,E> AsWidget<'a,E> for dyn WidgetDyn<E> + 'a where E: Env {
-    type Widget<'v> = dyn WidgetDyn<E>+'v where 'a: 'v;
+impl<E> AsWidget<E> for dyn WidgetDyn<E> + '_ where E: Env {
+    type Widget<'v,'z> = dyn WidgetDyn<E>+'v where 'z: 'v, Self: 'z;
     type WidgetCache = DynWidgetCache<E>;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'a,Self,R,E>
+        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         f.call(&*self, root, ctx)
     }
 }
 
-impl<'z,T,E> AsWidget<'z,E> for &'z T where T: AsWidget<'z,E> + ?Sized, E: Env {
-    type Widget<'v> = T::Widget<'v> where 'z: 'v;
+impl<T,E> AsWidget<E> for &'_ T where T: AsWidget<E> + ?Sized, E: Env {
+    type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,R,E>
+        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
             callback.call(&widget, root, ctx)
@@ -46,14 +46,14 @@ impl<'z,T,E> AsWidget<'z,E> for &'z T where T: AsWidget<'z,E> + ?Sized, E: Env {
         (**self).with_widget(callback,root,ctx)
     }
 }
-impl<'z,T,E> AsWidget<'z,E> for &'z mut T where T: AsWidget<'z,E> + ?Sized, E: Env {
-    type Widget<'v> = T::Widget<'v> where 'z: 'v;
+impl<T,E> AsWidget<E> for &'_ mut T where T: AsWidget<E> + ?Sized, E: Env {
+    type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,R,E>
+        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
             callback.call(&widget, root, ctx)
@@ -61,14 +61,14 @@ impl<'z,T,E> AsWidget<'z,E> for &'z mut T where T: AsWidget<'z,E> + ?Sized, E: E
         (**self).with_widget(callback,root,ctx)
     }
 }
-impl<'z,T,E> AsWidget<'z,E> for Box<T> where T: AsWidget<'z,E> + ?Sized, E: Env {
-    type Widget<'v> = T::Widget<'v> where 'z: 'v;
+impl<T,E> AsWidget<E> for Box<T> where T: AsWidget<E> + ?Sized, E: Env {
+    type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,R,E>
+        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             callback.call(widget, root, ctx)
@@ -76,14 +76,14 @@ impl<'z,T,E> AsWidget<'z,E> for Box<T> where T: AsWidget<'z,E> + ?Sized, E: Env 
         (**self).with_widget(callback,root,ctx)
     }
 }
-impl<'z,T,E> AsWidget<'z,E> for std::rc::Rc<T> where T: AsWidget<'z,E> + ?Sized, E: Env {
-    type Widget<'v> = T::Widget<'v> where 'z: 'v;
+impl<T,E> AsWidget<E> for std::rc::Rc<T> where T: AsWidget<E> + ?Sized, E: Env {
+    type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,R,E>
+        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             callback.call(widget, root, ctx)
@@ -91,14 +91,14 @@ impl<'z,T,E> AsWidget<'z,E> for std::rc::Rc<T> where T: AsWidget<'z,E> + ?Sized,
         (**self).with_widget(callback,root,ctx)
     }
 }
-impl<'z,T,E> AsWidget<'z,E> for std::sync::Arc<T> where T: AsWidget<'z,E> + ?Sized, E: Env {
-    type Widget<'v> = T::Widget<'v> where 'z: 'v;
+impl<T,E> AsWidget<E> for std::sync::Arc<T> where T: AsWidget<E> + ?Sized, E: Env {
+    type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'z,Self,R,E>
+        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             callback.call(widget, root, ctx)
@@ -109,12 +109,12 @@ impl<'z,T,E> AsWidget<'z,E> for std::sync::Arc<T> where T: AsWidget<'z,E> + ?Siz
 
 #[inline] //TODO maybe Ext frontend trait workz?!
 pub fn with_as_widget<'z,W,C,R,E>(
-    w: &W, c: C, root: E::RootRef<'_>, ctx: &mut E::Context<'_>
+    w: &'z W, c: C, root: E::RootRef<'_>, ctx: &mut E::Context<'_>
 ) -> R
 where
-    W: AsWidget<'z,E> + ?Sized,
+    W: AsWidget<E> + ?Sized + 'z,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w W::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R,
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w W::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R,
 {
     w.with_widget(
         AsWidgetClosure::new(c),

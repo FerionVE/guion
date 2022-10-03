@@ -15,7 +15,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     State: AtomState<E,bool>,
-    Text: AsWidget<'w,E>,
+    Text: AsWidget<E>,
     TrMut: TriggerMut<E>,
 {
     type Cache = CheckBoxCache<Text::WidgetCache,E>;
@@ -123,7 +123,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
 
             self.text.with_widget(
-                AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
+                AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     widget.render(
                         &render_props
                             .inside_border(text_border)
@@ -188,7 +188,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
             |stack| widget_size_inside_border(
                 stack, text_border,
                 |stack|
-                    self.text.with_widget(AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
+                    self.text.with_widget(AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
                         widget.size(&stack, &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
@@ -214,7 +214,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
         F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
         self.text.with_widget(
-            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
+            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -234,14 +234,14 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     );
 }
 
-impl<'z,E,State,Text,TrMut> AsWidget<'z,E> for CheckBox<'z,E,State,Text,TrMut> where Self: Widget<E>, E: Env {
-    type Widget<'v> = Self where 'z: 'v;
+impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<'_,E,State,Text,TrMut> where Self: Widget<E>, E: Env {
+    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
+        F: dispatchor::AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         f.call(self, root, ctx)
     }

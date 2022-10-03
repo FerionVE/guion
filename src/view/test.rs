@@ -36,7 +36,7 @@ impl<'z,E> View<'z,E> for TestRoot where
     type Viewed<'v,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v;
     type Mutable<'k> = TestRoot;
 
-    fn view<'d,MutFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutFn,DispatchFn,R>(&self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
@@ -84,7 +84,7 @@ impl<'z,E> View<'z,E> for A where
     type Viewed<'v,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v;
     type Mutable<'k> = A;
 
-    fn view<'d,MutFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutFn,DispatchFn,R>(&self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
@@ -130,7 +130,7 @@ impl<'z,E> View<'z,E> for B where
     type Viewed<'v,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v;
     type Mutable<'k> = B;
 
-    fn view<'d,MutFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutFn,DispatchFn,R>(&self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),
@@ -169,7 +169,7 @@ impl<'z,E> View<'z,E> for ViewC<'z> where
     type Viewed<'v,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, Self: 'v;
     type Mutable<'k> = ViewCMut<'k>;
 
-    fn view<'d,MutFn,DispatchFn,R>(&'d self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,MutFn,DispatchFn,R>(&self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutFn: for<'s,'c,'cc> Fn(
             E::RootMut<'s>,&'s (),

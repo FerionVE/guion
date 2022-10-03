@@ -10,55 +10,55 @@ use crate::widget::dyn_tunnel::WidgetDyn;
 
 pub trait AsWidgetDispatch<'z,V,R,E>
 where
-    V: AsWidget<'z,E> + ?Sized,
+    V: AsWidget<E> + ?Sized,
     E: Env,
 {
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
-        'ww: 'w, 'z: 'ww;
+        'ww: 'w, 'z: 'ww, V: 'z;
 }
 
 pub trait ViewDispatch<'z,V,MutFn,R,E>
 where
-    V: View<'z,E> + ?Sized,
+    V: View<E> + ?Sized,
     E: Env, MutFn: 'static,
 {
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Viewed<'ww,MutFn>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Viewed<'ww,'z,MutFn>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
-        'ww: 'w, 'z: 'ww;
+        'ww: 'w, 'z: 'ww, V: 'z;
 }
 
 pub trait AsWidgetsDispatch<'z,V,R,E>
 where
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
 {
-    fn call<'w,'ww,'r,'c,'cc>(self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
-        'ww: 'w, 'z: 'ww;
+        'ww: 'w, 'z: 'ww, V: 'z;
 }
 
 pub trait AsWidgetsIndexedDispatch<'z,V,E>
 where
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
 {
-    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
+    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
     where
-        'ww: 'w, 'z: 'ww;
+        'ww: 'w, 'z: 'ww, V: 'z;
 }
 
 pub struct AsWidgetClosure<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
 where
-    V: AsWidget<'z,E> + ?Sized,
+    V: AsWidget<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
 
 impl<'z,C,V,R,E> AsWidgetClosure<'z,C,V,R,E> 
 where
-    V: AsWidget<'z,E> + ?Sized,
+    V: AsWidget<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
     pub fn new(c: C) -> Self {
@@ -68,17 +68,17 @@ where
 
 pub struct ViewClosure<'z,C,V,MutFn,R,E>(C,PhantomData<(Box<V>,MutFn,R,E,&'z ())>)
 where
-    V: View<'z,E> + ?Sized,
+    V: View<E> + ?Sized,
     MutFn: 'static,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,MutFn>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,'z,MutFn>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
 
 impl<'z,C,V,MutFn,R,E> ViewClosure<'z,C,V,MutFn,R,E> 
 where
-    V: View<'z,E> + ?Sized,
+    V: View<E> + ?Sized,
     MutFn: 'static,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,MutFn>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,'z,MutFn>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
     pub fn new(c: C) -> Self {
@@ -88,15 +88,15 @@ where
 
 pub struct AsWidgetsClosure<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
 where
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
 
 impl<'z,C,V,R,E> AsWidgetsClosure<'z,C,V,R,E> 
 where
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
     pub fn new(c: C) -> Self {
@@ -106,15 +106,15 @@ where
 
 pub struct AsWidgetsAllClosure<'z,C,V,E>(C,PhantomData<(Box<V>,E,&'z ())>)
 where
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>);
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>);
 
 impl<'z,C,V,E> AsWidgetsAllClosure<'z,C,V,E> 
 where
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>)
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
 {
     #[inline]
     pub fn new(c: C) -> Self {
@@ -124,12 +124,12 @@ where
 
 impl<'z,C,V,R,E> AsWidgetDispatch<'z,V,R,E> for AsWidgetClosure<'z,C,V,R,E> 
 where
-    V: AsWidget<'z,E> + ?Sized,
+    V: AsWidget<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww
     {
@@ -139,13 +139,13 @@ where
 
 impl<'z,C,V,MutFn,R,E> ViewDispatch<'z,V,MutFn,R,E> for ViewClosure<'z,C,V,MutFn,R,E> 
 where
-    V: View<'z,E> + ?Sized,
+    V: View<E> + ?Sized,
     MutFn: 'static,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,MutFn>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,'z,MutFn>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Viewed<'ww,MutFn>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Viewed<'ww,'z,MutFn>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where 'ww: 'w, 'z: 'ww
     {
         (self.0)(widget,root,ctx)
@@ -154,12 +154,12 @@ where
 
 impl<'z,C,V,R,E> AsWidgetsDispatch<'z,V,R,E> for AsWidgetsClosure<'z,C,V,R,E> 
 where
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+    for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww
     {
@@ -169,12 +169,12 @@ where
 
 impl<'z,C,V,E> AsWidgetsIndexedDispatch<'z,V,E> for AsWidgetsAllClosure<'z,C,V,E> 
 where
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>)
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
+    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
     where
         'ww: 'w, 'z: 'ww
     {
@@ -187,12 +187,12 @@ pub struct AsWidgetsIndexedWrap<C>(pub C);
 impl<'z,C,V,E> AsWidgetsDispatch<'z,V,(),E> for AsWidgetsIndexedWrap<C>
 where
     C: AsWidgetsIndexedDispatch<'z,V,E>,
-    V: AsWidgets<'z,E> + ?Sized,
+    V: AsWidgets<E> + ?Sized,
     E: Env,
-    //for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww>,E::RootRef<'r>,&'c mut E::Context<'cc>)
+    //for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
+    fn call<'w,'ww,'r,'c,'cc>(mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
     where
         'ww: 'w, 'z: 'ww
     {
@@ -203,7 +203,7 @@ where
 // pub struct AsWidgetToSDispatchErase<'z,C,V,W,R,E>(pub usize, pub W::Bound, pub W::ChildID, pub C, pub PhantomData<(Box<V>,Box<R>,Box<E>)>)
 // where
 //     C: AsWidgetsDispatch<'z,W,R,E>,
-//     V: AsWidget<'z,E> + ?Sized,
+//     V: AsWidget<E> + ?Sized,
 //     W: ?Sized,
 //     for<'a> W: AsWidgets<'z,E,Widget<'a>=(dyn WidgetDyn<E> + 'a)> + 'z,
 //     E: Env,
@@ -212,7 +212,7 @@ where
 // impl<'z,C,V,W,R,E> AsWidgetDispatch<'z,V,R,E> for AsWidgetToSDispatchErase<'z,C,V,W,R,E>
 // where
 //     C: AsWidgetsDispatch<'z,W,R,E>,
-//     V: AsWidget<'z,E> + ?Sized,
+//     V: AsWidget<E> + ?Sized,
 //     W: ?Sized,
 //     for<'a> W: AsWidgets<'z,E,Widget<'a>=(dyn WidgetDyn<E> + 'a)> + 'z,
 //     E: Env,
@@ -223,13 +223,13 @@ where
 
 pub struct AsWidgetClosureErased<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
 where
-    V: AsWidget<'z,E> + ?Sized,
+    V: AsWidget<E> + ?Sized,
     E: Env,
     for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w (dyn WidgetDyn<E> + 'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
 
 impl<'z,C,V,R,E> AsWidgetClosureErased<'z,C,V,R,E> 
 where
-    V: AsWidget<'z,E> + ?Sized,
+    V: AsWidget<E> + ?Sized,
     E: Env,
     for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w (dyn WidgetDyn<E> + 'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
@@ -241,12 +241,12 @@ where
 
 impl<'z,C,V,R,E> AsWidgetDispatch<'z,V,R,E> for AsWidgetClosureErased<'z,C,V,R,E>
 where
-    V: AsWidget<'z,E> + ?Sized,
+    V: AsWidget<E> + ?Sized,
     E: Env,
     for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w (dyn WidgetDyn<E> + 'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww
     {

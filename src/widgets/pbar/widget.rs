@@ -127,14 +127,14 @@ pub fn crop(i: &Bounds, v: f32, o: Orientation) -> (u32,Bounds) {
     (w,Bounds::from_ori(x, y, w, h, o))
 }
 
-impl<'z,E> AsWidget<'z,E> for ProgressBar<'z,E> where Self: Widget<E>, E: Env {
-    type Widget<'v> = Self where 'z: 'v;
+impl<E> AsWidget<E> for ProgressBar<'_,E> where Self: Widget<E>, E: Env {
+    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
+        F: dispatchor::AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         f.call(self, root, ctx)
     }
