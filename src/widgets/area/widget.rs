@@ -2,6 +2,7 @@ use crate::dispatchor::AsWidgetClosure;
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
+use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::{for_child_widget, QueryCurrentBounds, WithCurrentBounds};
 
@@ -17,6 +18,8 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     Scroll: AtomState<E,ScrollOff>,
     MutFn: TriggerMut<E>,
 {
+    type Cache = AreaCache<W::WidgetCache,E>;
+
     fn id(&self) -> E::WidgetID {
         self.id.clone()
     }
@@ -25,33 +28,59 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         &self,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
+        mut force_render: bool,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where P: Queron<E> + ?Sized {
-        let render_props = StdRenderProps::new(stack)
-            .inside_spacing_border();
+        let mut need_render = force_render;
 
-        renderer.fill_border_inner(
-            &render_props
-                .with_style_border_type(TestStyleBorderType::Component)
-                .with_style_color_type(TestStyleColorType::Border)
-                .with_vartype(
-                    false, //ctx.state().is_hovered(&self.id),
-                    ctx.state().is_focused(&self.id),
-                    false, //self.pressed(ctx).is_some(),
-                    false, //self.locked,
-                ),
-            ctx
-        );
+        let render_props = StdRenderProps::new(stack);
+
+        render_props.current_std_render_cachors()
+            .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
+
+        let (sx,sy) = self.scroll.get(ctx);
+
+        if cache.scroll_cachor != Some(((sx,sy),self.negative_scroll)) {
+            need_render = true;
+            force_render = true;
+            cache.scroll_cachor = Some(((sx,sy),self.negative_scroll));
+        }
+
+        if need_render {
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg)
+                    .with_style_border_type(TestStyleBorderType::Spacing),
+                ctx
+            );
+        }
+
+        let render_props = render_props.inside_spacing_border();
+
+        if need_render {
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_border_type(TestStyleBorderType::Component)
+                    .with_style_color_type(TestStyleColorType::Border)
+                    .with_vartype(
+                        false, //ctx.state().is_hovered(&self.id),
+                        ctx.state().is_focused(&self.id),
+                        false, //self.pressed(ctx).is_some(),
+                        false, //self.locked,
+                    ),
+                ctx
+            );
+        }
+
         let render_props = render_props.inside_border_of_type(TestStyleBorderType::Component);
 
         let rect = render_props.absolute_bounds;
 
-        let (sx,sy) = self.scroll.get(ctx);
-
         let inner_size = self.inner.with_widget(
             AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
-                widget.size(&for_child_widget(&render_props,widget),root,ctx)
+                widget.size(&for_child_widget(&render_props,widget), &mut cache.inner_cache, root,ctx)
             }),
             root.fork(),ctx
         );
@@ -73,6 +102,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
                 widget.render(
                     &for_child_widget(render_props,widget),
                     renderer,
+                    force_render, &mut cache.inner_cache,
                     root,ctx
                 )
             }),
@@ -84,6 +114,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         &self,
         stack: &P,
         event: &Evt,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
@@ -101,7 +132,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
 
         let inner_size = self.inner.with_widget(
             AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
-                widget.size(&for_child_widget(&stack,widget),root,ctx)
+                widget.size(&for_child_widget(&stack,widget), &mut cache.inner_cache, root,ctx)
             }),
             root.fork(),ctx
         );
@@ -129,7 +160,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
                         viewport: *rect,
                     };
         
-                    passed |= widget.event_direct(&stack,event,root,ctx);
+                    passed |= widget.event_direct(&stack, event, &mut cache.inner_cache, root,ctx);
                 }),
                 root.fork(),ctx
             )
@@ -176,6 +207,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     fn _size<P>(
         &self,
         stack: &P,
+        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where P: Queron<E> + ?Sized {
@@ -219,6 +251,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
 
 impl<'z,E,W,Scroll,MutFn> AsWidget<'z,E> for Area<'z,E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
     type Widget<'v> = Self where 'z: 'v;
+    type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
     fn with_widget<'w,F,R>(&'w self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
@@ -226,5 +259,19 @@ impl<'z,E,W,Scroll,MutFn> AsWidget<'z,E> for Area<'z,E,W,Scroll,MutFn> where Sel
         F: dispatchor::AsWidgetDispatch<'z,Self,R,E>
     {
         f.call(self, root, ctx)
+    }
+}
+
+#[derive(Default)]
+pub struct AreaCache<InnerCache,E> where E: Env, InnerCache: WidgetCache<E> {
+    inner_cache: InnerCache,
+    scroll_cachor: Option<(ScrollOff,bool)>,
+    std_render_cachors: Option<StdRenderCachors<E>>,
+    //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
+}
+
+impl<InnerCache,E> WidgetCache<E> for AreaCache<InnerCache,E> where E: Env, InnerCache: WidgetCache<E> {
+    fn reset_current(&mut self) {
+        self.inner_cache.reset_current()
     }
 }

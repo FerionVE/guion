@@ -246,5 +246,7 @@ pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: Rend
 }
 
 impl<LabelCache,E> WidgetCache<E> for ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
-    fn reset_current(&mut self) {}
+    fn reset_current(&mut self) {
+        self.label_cache.reset_current()
+    }
 }

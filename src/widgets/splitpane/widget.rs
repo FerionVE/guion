@@ -22,7 +22,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     V: AtomState<E,f32>,
     TrMut: TriggerMut<E>,
 {
-    type Cache = SplitPaneCache<(L::WidgetCache,R::WidgetCache),E>;
+    type Cache = SplitPaneCache<L::WidgetCache,R::WidgetCache,E>;
 
     fn id(&self) -> E::WidgetID {
         self.id.clone()
@@ -316,14 +316,17 @@ impl<'z,E,L,R,V,TrMut> AsWidget<'z,E> for SplitPane<'z,E,L,R,V,TrMut> where Self
 }
 
 #[derive(Default)]
-pub struct SplitPaneCache<ChildCaches,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, ChildCaches: Default + 'static {
-    child_caches: ChildCaches,
+pub struct SplitPaneCache<LCache,RCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LCache: WidgetCache<E>, RCache: WidgetCache<E> {
+    child_caches: (LCache,RCache),
     std_render_cachors: Option<StdRenderCachors<E>>,
     center_start_cachor: Option<Bounds>,
     _p: PhantomData<E>,
     //TODO cachor borders and colors
 }
 
-impl<ChildCaches,E> WidgetCache<E> for SplitPaneCache<ChildCaches,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, ChildCaches: Default + 'static {
-    fn reset_current(&mut self) {}
+impl<LCache,RCache,E> WidgetCache<E> for SplitPaneCache<LCache,RCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LCache: WidgetCache<E>, RCache: WidgetCache<E> {
+    fn reset_current(&mut self) {
+        self.child_caches.0.reset_current();
+        self.child_caches.1.reset_current();
+    }
 }

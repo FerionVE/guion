@@ -251,5 +251,7 @@ pub struct CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: Re
 }
 
 impl<LabelCache,E> WidgetCache<E> for CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
-    fn reset_current(&mut self) {}
+    fn reset_current(&mut self) {
+        self.label_cache.reset_current()
+    }
 }
