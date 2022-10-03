@@ -39,7 +39,13 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
         render_props.current_std_render_cachors()
             .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
 
-        if need_render {
+        if force_render {
+            renderer.fill_rect(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg),
+                ctx
+            );
+        } else if need_render {
             renderer.fill_border_inner(
                 &render_props
                     .with_style_color_type(TestStyleColorType::Bg)

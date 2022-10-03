@@ -44,7 +44,22 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         render_props.current_std_render_cachors()
             .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
 
-        if need_render {
+
+        let bounds = self.calc_bounds(&render_props.inside_spacing_border().absolute_bounds,self.state.get(ctx));
+
+        if cache.center_start_cachor != Some(bounds[1] - render_props.inside_spacing_border().absolute_bounds.off) {
+            need_render = true;
+            force_render = true;
+            cache.center_start_cachor = Some(bounds[1] - render_props.inside_spacing_border().absolute_bounds.off);
+        }
+
+        if force_render {
+            renderer.fill_rect(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg),
+                ctx
+            );
+        } else if need_render {
             renderer.fill_border_inner(
                 &render_props
                     .with_style_color_type(TestStyleColorType::Bg)
@@ -54,14 +69,6 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         }
 
         let render_props = render_props.inside_spacing_border();
-
-        let bounds = self.calc_bounds(&render_props.absolute_bounds,self.state.get(ctx));
-
-        if cache.center_start_cachor != Some(bounds[1] - render_props.absolute_bounds.off) {
-            need_render = true;
-            force_render = true;
-            cache.center_start_cachor = Some(bounds[1] - render_props.absolute_bounds.off);
-        }
 
         if need_render {
             if ctx.state().is_hovered(&self.id) {

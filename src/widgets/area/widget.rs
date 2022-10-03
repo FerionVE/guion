@@ -48,7 +48,13 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
             cache.scroll_cachor = Some(((sx,sy),self.negative_scroll));
         }
 
-        if need_render {
+        if force_render {
+            renderer.fill_rect(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg),
+                ctx
+            );
+        } else if need_render {
             renderer.fill_border_inner(
                 &render_props
                     .with_style_color_type(TestStyleColorType::Bg)

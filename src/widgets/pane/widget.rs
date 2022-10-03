@@ -38,7 +38,21 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
 
         need_render |= !cache.layout_rendered;
 
-        if need_render {
+        let new_layout = self.do_layout(
+            &render_props,
+            render_props.inside_spacing_border().absolute_bounds.size,
+            cache,
+            false, //TODO properly transfer rerender influence from parents
+            root.fork(),ctx
+        );
+
+        if force_render | new_layout {
+            renderer.fill_rect(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg),
+                ctx
+            );
+        } else if need_render {
             renderer.fill_border_inner(
                 &render_props
                     .with_style_color_type(TestStyleColorType::Bg)
@@ -48,14 +62,6 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         }
 
         let render_props = render_props.inside_spacing_border();
-
-        let new_layout = self.do_layout(
-            &render_props,
-            render_props.absolute_bounds.size,
-            cache,
-            false, //TODO properly transfer rerender influence from parents
-            root.fork(),ctx
-        );
 
         self.childs.all(
             AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
