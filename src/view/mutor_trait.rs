@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 
+use crate::ctx::queue::BoxMutEvent;
 use crate::dispatchor::{AsWidgetDispatch, ViewClosure};
 use crate::env::Env;
 use crate::error::ResolveResult;
@@ -17,8 +18,28 @@ pub trait MutorEnd<Args,E>: Clone + Send + Sync + 'static where E: Env, Args: Cl
     ) where 'cc: 'c;
 
     #[inline]
+    fn box_mut_event(&self, args: Args) -> Option<BoxMutEvent<E>> {
+        let s = self.clone();
+        Some(Box::new(move |root,_,ctx| s.with_mutor_end(root, args, ctx) ))
+    }
+
+    #[inline]
     fn _boxed(&self) -> Box<dyn MutorEndDyn<Args,E>+'static> {
         Box::new(self.clone())
+    }
+}
+
+impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Clone + Sized + Send + Sync + 'static {
+    fn with_mutor_end<'s,'c,'cc>(
+        &self,
+        _: E::RootMut<'s>,
+        _: Args,
+        _: &'c mut E::Context<'cc>,
+    ) where 'cc: 'c {}
+
+    #[inline]
+    fn box_mut_event(&self, _: Args) -> Option<BoxMutEvent<E>> {
+        None
     }
 }
 

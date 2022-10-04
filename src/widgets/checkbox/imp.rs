@@ -8,14 +8,14 @@ pub trait ICheckBox<E> where E: Env {
 impl<'w,E,State,Text,TrMut> ICheckBox<E> for CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     State: AtomState<E,bool>,
-    TrMut: TriggerMut<E>,
+    TrMut: MutorEnd<bool,E>,
 {
     #[inline]
     fn state(&self) -> &dyn AtomState<E,bool> {
         &self.state
     }
     fn set(&self, v: bool, ctx: &mut E::Context<'_>) {
-        if let Some(t) = self.updater.boxed(v) {
+        if let Some(t) = self.updater.box_mut_event(v) {
             ctx.mutate_closure(t)
         }
     }

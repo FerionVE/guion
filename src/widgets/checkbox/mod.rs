@@ -4,6 +4,8 @@ use super::label::Label;
 use crate::error::ResolveResult;
 use crate::text::stor::TextStor;
 use crate::validation::Validation;
+use crate::view::mut_target::DynAtomStateMutTarget;
+use crate::view::mutor_trait::{MutorEnd, MutorTo};
 use std::marker::PhantomData;
 use util::state::*;
 
@@ -51,7 +53,7 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     
 
     #[inline]
-    pub fn with_update<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + Send + Sync + 'static {
+    pub fn with_update<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,T> where T: MutorEnd<bool,E> {
         CheckBox{
             id: self.id,
             size: self.size,
@@ -64,26 +66,16 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl TriggerMut<E>>
+    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl MutorEnd<bool,E>>
     where
-        T: for<'r> FnOnce(
-            E::RootMut<'r>,
-            &'r (),
-            &mut (dyn FnMut(ResolveResult<&mut (dyn AtomStateMut<E,bool> + '_)>,&(),&mut E::Context<'_>)),
-            &mut E::Context<'_>,
-        ) + Clone + Send + Sync + 'static
+        T: MutorTo<(),E,Target=DynAtomStateMutTarget<bool>>
     {
-        self.with_update(move |root,x,ctx,value| {
-            (mutor)(
-                root,x,
-                &mut |state,_,ctx| {
-                    if let Ok(state) = state {
-                        state.set(value,ctx)
-                    }
-                },
-                ctx
-            )
-        })
+        self.with_update(
+            mutor.mutor_end_if((), |state,_,value,ctx| {
+                //TODO ResolveResult handling
+                state.set(value,ctx);
+            })
+        )
     }
 
     #[inline]
@@ -131,23 +123,3 @@ impl<'w,E,State,T,TrMut> CheckBox<'w,E,State,Label<'w,E,T>,TrMut> where
 }
 
 //TODO bring the immutable trigger like in Button
-
-/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
-pub trait TriggerMut<E> where E: Env {
-    fn boxed(&self, value: bool) -> Option<BoxMutEvent<E>>;
-}
-
-impl<E> TriggerMut<E> for () where E: Env {
-    #[inline]
-    fn boxed(&self, _: bool) -> Option<BoxMutEvent<E>> {
-        None
-    }
-}
-
-impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,bool) + Clone + Send + Sync + 'static, E: Env {
-    #[inline]
-    fn boxed(&self, value: bool) -> Option<BoxMutEvent<E>> {
-        let s = self.clone();
-        Some(Box::new(move |r,x,c| s(r,x,c,value) ))
-    }
-}

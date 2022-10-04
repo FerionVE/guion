@@ -16,7 +16,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     State: AtomState<E,bool>,
     Text: AsWidget<E>,
-    TrMut: TriggerMut<E>,
+    TrMut: MutorEnd<bool,E>,
 {
     type Cache = CheckBoxCache<Text::WidgetCache,E>;
 

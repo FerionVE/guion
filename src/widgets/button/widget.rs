@@ -17,7 +17,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     Text: AsWidget<E>,
     Tr: Trigger<E>,
-    TrMut: TriggerMut<E>,
+    TrMut: MutorEnd<(),E>,
 {
     type Cache = ButtonCache<Text::WidgetCache,E>;
 
@@ -216,7 +216,7 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     S: AsWidget<E>,
     Tr: Trigger<E>,
-    TrMut: TriggerMut<E>,
+    TrMut: MutorEnd<(),E>,
 {
     pub fn pressed<'l:'s,'cc: 'l,'s>(&self, ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
         ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone())

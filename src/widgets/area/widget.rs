@@ -2,6 +2,7 @@ use crate::dispatchor::AsWidgetClosure;
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
+use crate::view::mutor_trait::MutorEnd;
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::{for_child_widget, QueryCurrentBounds, WithCurrentBounds};
@@ -16,7 +17,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>,
     Scroll: AtomState<E,ScrollOff>,
-    MutFn: TriggerMut<E>,
+    MutFn: MutorEnd<ScrollUpdate,E>,
 {
     type Cache = AreaCache<W::WidgetCache,E>;
 
@@ -198,7 +199,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
                     let su = ScrollUpdate{offset:(nx-osx,ny-osy)};
 
                     if su.offset != (0,0) {
-                        if let Some(t) = self.scroll_updater.boxed(su) {
+                        if let Some(t) = self.scroll_updater.box_mut_event(su) {
                             ctx.mutate_closure(t);
                             passed = true;
                         }

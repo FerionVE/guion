@@ -33,8 +33,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> ITextBox<E> for TextBox<'w,E,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
-    TBUpd: TBMut<E>,
-    TBScr: TBSM<E>,
+    TBUpd: MutorEnd<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
+    TBScr: MutorEnd<(u32,u32),E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     fn insert_text(&self, s: &str, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
@@ -125,14 +125,14 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> ITextBox<E> for TextBox<'w,E,
 
         let off = (vb.off.x as u32, vb.off.y as u32);
         
-        if let Some(t) = self.scroll_update.boxed(off) {
+        if let Some(t) = self.scroll_update.box_mut_event(off) {
             ctx.mutate_closure(t);
         }
     }
 
     fn update(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
         if tu.is_some() || nc.is_some() {
-            if let Some(t) = self.update.boxed(tu,nc) {
+            if let Some(t) = self.update.box_mut_event((tu,nc)) {
                 ctx.mutate_closure(t);
             }
         }
@@ -150,7 +150,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> TextBox<'w,E,Text,Scroll,Curs
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
-    TBUpd: TBMut<E>,
+    TBUpd: MutorEnd<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     pub(super) fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut TextBoxCache<E>, ctx: &mut E::Context<'_>) -> ValidationStat {

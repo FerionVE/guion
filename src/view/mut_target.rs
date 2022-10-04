@@ -122,3 +122,9 @@ macro_rules! impl_tuple {
 impl_tuple!(
     A B C D F G H I J K L M N O P Q R S T U V W X Y Z AA AB AC AD AE AF AG
 );
+
+pub struct DynAtomStateMutTarget<S>(PhantomData<S>);
+
+impl<S,E> MuTarget<E> for DynAtomStateMutTarget<S> where E: Env, S: Send + Sync + 'static {
+    type Mutable<'k> = (dyn crate::widgets::util::state::AtomStateMut<E,S> + 'k);
+}

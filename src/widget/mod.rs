@@ -422,6 +422,11 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         v
     }
 
+    #[inline]
+    fn pass(self) -> Self where Self: Sized {
+        self
+    }
+
     /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
     /// The [`impl_traitcast`] macro should be used to implement this function
     #[allow(unused)]

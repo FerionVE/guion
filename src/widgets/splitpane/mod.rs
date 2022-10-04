@@ -1,4 +1,6 @@
 use crate::error::ResolveResult;
+use crate::view::mut_target::DynAtomStateMutTarget;
+use crate::view::mutor_trait::{MutorEnd, MutorTo};
 
 use super::*;
 use super::util::state::AtomStateMut;
@@ -48,7 +50,7 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     }
 
     #[inline]
-    pub fn with_update<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,f32) + Clone + Send + Sync + 'static {
+    pub fn with_update<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,T> where T: MutorEnd<f32,E> {
         SplitPane{
             id: self.id,
             childs: self.childs,
@@ -61,45 +63,15 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,impl TriggerMut<E>>
+    pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,impl MutorEnd<f32,E>>
     where
-        T: for<'r> FnOnce(
-            E::RootMut<'r>,
-            &'r (),
-            &mut (dyn FnMut(ResolveResult<&mut (dyn AtomStateMut<E,f32> + '_)>,&(),&mut E::Context<'_>)),
-            &mut E::Context<'_>,
-        ) + Clone + Send + Sync + 'static
+        T: MutorTo<(),E,Target=DynAtomStateMutTarget<f32>>,
     {
-        self.with_update(move |root,x,ctx,value| {
-            (mutor)(
-                root,x,
-                &mut |state,_,ctx| {
-                    if let Ok(state) = state {
-                        state.set(value,ctx)
-                    }
-                },
-                ctx
-            )
-        })
-    }
-}
-
-/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
-pub trait TriggerMut<E> where E: Env {
-    fn boxed(&self, value: f32) -> Option<BoxMutEvent<E>>;
-}
-
-impl<E> TriggerMut<E> for () where E: Env {
-    #[inline]
-    fn boxed(&self, _: f32) -> Option<BoxMutEvent<E>> {
-        None
-    }
-}
-
-impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,f32) + Clone + Send + Sync + 'static, E: Env {
-    #[inline]
-    fn boxed(&self, value: f32) -> Option<BoxMutEvent<E>> {
-        let s = self.clone();
-        Some(Box::new(move |r,x,c| s(r,x,c,value) ))
+        self.with_update(
+            mutor.mutor_end_if((), |state,_,value,ctx| {
+                //TODO ResolveResult handling
+                state.set(value,ctx);
+            })
+        )
     }
 }

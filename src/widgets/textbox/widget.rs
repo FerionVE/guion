@@ -10,6 +10,7 @@ use crate::text::cursel::TxtCurSelBytePos;
 use crate::text::layout::TxtLayout;
 use crate::text::layout::TxtLayoutFromStor;
 use crate::text::stor::*;
+use crate::view::mutor_trait::MutorEnd;
 use crate::widget::cache::StdRenderCachors;
 use crate::widget::cache::WidgetCache;
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -30,8 +31,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
-    TBUpd: TBMut<E>,
-    TBScr: TBSM<E>,
+    TBUpd: MutorEnd<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
+    TBScr: MutorEnd<(u32,u32),E>,
     GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
 {
     type Cache = TextBoxCache<E>;
@@ -254,7 +255,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> Widget<E> for TextBox<'w,E,Te
                 off.1.max(0).min(max_off.y) as u32,
             );
 
-            if let Some(t) = self.scroll_update.boxed(off) {
+            if let Some(t) = self.scroll_update.box_mut_event(off) {
                 ctx.mutate_closure(t);
             }
             passed = true;

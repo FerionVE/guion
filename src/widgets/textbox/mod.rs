@@ -1,3 +1,5 @@
+use crate::view::mutor_trait::MutorEnd;
+
 use super::*;
 use std::borrow::Cow;
 use std::marker::PhantomData;
@@ -65,8 +67,8 @@ impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,ETCurSe
 
 impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,LocalGlyphCache<E>> where
     E: Env,
-    TBUpd: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>) + Clone + Send + Sync + 'static,
-    TBScr: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,(u32,u32)) + Clone + Send + Sync + 'static,
+    TBUpd: MutorEnd<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
+    TBScr: MutorEnd<(u32,u32),E>,
 {
     #[inline]
     pub fn immediate_test(id: E::WidgetID, text: Text, scroll: Scroll, cursor: Curs, tbupd: TBUpd, tbscr: TBScr) -> Self {
@@ -130,46 +132,5 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> TextBox<'w,E,Text,Scroll,Curs
     pub fn with_style(mut self, style: EStyle<E>) -> Self {
         self.style = style;
         self
-    }
-}
-
-/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
-pub trait TBMut<E> where E: Env {
-    fn boxed(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>>;
-}
-
-impl<E> TBMut<E> for () where E: Env {
-    #[inline]
-    fn boxed(&self, _: Option<(Range<usize>,Cow<'static,str>)>, _: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>> {
-        None
-    }
-}
-
-impl<T,E> TBMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>) + Clone + Send + Sync + 'static, E: Env {
-    #[inline]
-    fn boxed(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>) -> Option<BoxMutEvent<E>> {
-        let s = self.clone();
-        Some(Box::new(move |r,x,c| s(r,x,c,tu,nc) ))
-    }
-}
-
-
-/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
-pub trait TBSM<E> where E: Env {
-    fn boxed(&self, value: (u32,u32)) -> Option<BoxMutEvent<E>>;
-}
-
-impl<E> TBSM<E> for () where E: Env {
-    #[inline]
-    fn boxed(&self, _: (u32,u32)) -> Option<BoxMutEvent<E>> {
-        None
-    }
-}
-
-impl<T,E> TBSM<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,(u32,u32)) + Clone + Send + Sync + 'static, E: Env {
-    #[inline]
-    fn boxed(&self, value: (u32,u32)) -> Option<BoxMutEvent<E>> {
-        let s = self.clone();
-        Some(Box::new(move |r,x,c| s(r,x,c,value) ))
     }
 }

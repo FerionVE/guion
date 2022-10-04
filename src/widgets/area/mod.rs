@@ -1,4 +1,6 @@
 use crate::error::ResolveResult;
+use crate::view::mut_target::DynAtomStateMutTarget;
+use crate::view::mutor_trait::{MutorEnd, MutorTo};
 
 use super::*;
 use super::util::state::AtomStateMut;
@@ -58,7 +60,7 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     }
 
     #[inline]
-    pub fn with_scroll_updater<T>(self, mutor: T) -> Area<'w,E,W,Scroll,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,ScrollUpdate) + Clone + Send + Sync + 'static {
+    pub fn with_scroll_updater<T>(self, mutor: T) -> Area<'w,E,W,Scroll,T> where T: MutorEnd<ScrollUpdate,E> {
         Area{
             id: self.id,
             size: self.size,
@@ -72,27 +74,17 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     }
 
     #[inline]
-    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl TriggerMut<E>>
+    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl MutorEnd<ScrollUpdate,E>>
     where
-        T: for<'r> FnOnce(
-            E::RootMut<'r>,
-            &'r (),
-            &mut (dyn FnMut(ResolveResult<&mut (dyn AtomStateMut<E,ScrollOff> + '_)>,&(),&mut E::Context<'_>)),
-            &mut E::Context<'_>,
-        ) + Clone + Send + Sync + 'static
+        T: MutorTo<(),E,Target=DynAtomStateMutTarget<ScrollOff>>,
     {
-        self.with_scroll_updater(move |root,x,ctx,ScrollUpdate { offset: (ax,ay) }| {
-            (mutor)(
-                root,x,
-                &mut |state,_,ctx| {
-                    if let Ok(state) = state {//TODO ResolveResult handling
-                        let (ox,oy) = state.get(ctx);
-                        state.set((ox+ax,oy+ay),ctx);
-                    }
-                },
-                ctx
-            )
-        })
+        self.with_scroll_updater(
+            mutor.mutor_end_if((), |state,_,ScrollUpdate { offset: (ax,ay) },ctx| {
+                //TODO ResolveResult handling
+                let (ox,oy) = state.get(ctx);
+                state.set((ox+ax,oy+ay),ctx);
+            })
+        )
     }
 
     #[inline]
@@ -112,26 +104,7 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     }
 }
 
-/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
-pub trait TriggerMut<E> where E: Env {
-    fn boxed(&self, value: ScrollUpdate) -> Option<BoxMutEvent<E>>;
-}
-
-impl<E> TriggerMut<E> for () where E: Env {
-    #[inline]
-    fn boxed(&self, _: ScrollUpdate) -> Option<BoxMutEvent<E>> {
-        None
-    }
-}
-
-impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>,ScrollUpdate) + Clone + Send + Sync + 'static, E: Env {
-    #[inline]
-    fn boxed(&self, value: ScrollUpdate) -> Option<BoxMutEvent<E>> {
-        let s = self.clone();
-        Some(Box::new(move |r,x,c| s(r,x,c,value) ))
-    }
-}
-
+#[derive(Clone)]
 pub struct ScrollUpdate {
     /// scroll offset offset. offset from previous scroll offset to new scroll offset
     pub offset: (i32,i32),

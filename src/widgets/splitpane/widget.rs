@@ -20,7 +20,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     L: AsWidget<E>,
     R: AsWidget<E>,
     V: AtomState<E,f32>,
-    TrMut: TriggerMut<E>,
+    TrMut: MutorEnd<f32,E>,
 {
     type Cache = SplitPaneCache<L::WidgetCache,R::WidgetCache,E>;
 
@@ -182,7 +182,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                         cx = cx - wx0;
                         let fcx = (cx as f32)/(ww as f32);
 
-                        if let Some(t) = self.updater.boxed(fcx) {
+                        if let Some(t) = self.updater.box_mut_event(fcx) {
                             ctx.mutate_closure(t)
                         }
 

@@ -1,5 +1,6 @@
 use super::*;
 use crate::text::stor::TextStor;
+use crate::view::mutor_trait::MutorEnd;
 use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
 use util::LocalGlyphCache;
@@ -77,7 +78,7 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, mutor: T) -> Button<'w,E,Text,Tr,T> where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + Send + Sync + 'static {
+    pub fn with_trigger_mut<T>(self, mutor: T) -> Button<'w,E,Text,Tr,T> where T: MutorEnd<(),E> {
         Button{
             id: self.id,
             size: self.size,
@@ -152,25 +153,6 @@ impl<T,E> Trigger<E> for T where T: Fn(E::RootRef<'_>,&mut E::Context<'_>), E: E
     #[inline]
     fn trigger(&self, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
         (self)(root,ctx)
-    }
-}
-
-/// blanket-implemented on all `FnMut(&mut E::Context<'_>)`
-pub trait TriggerMut<E> where E: Env {
-    fn boxed(&self) -> Option<BoxMutEvent<E>>;
-}
-
-impl<E> TriggerMut<E> for () where E: Env {
-    #[inline]
-    fn boxed(&self) -> Option<BoxMutEvent<E>> {
-        None
-    }
-}
-
-impl<T,E> TriggerMut<E> for T where T: for<'r> FnOnce(E::RootMut<'r>,&'r (),&mut E::Context<'_>) + Clone + Send + Sync + 'static, E: Env {
-    #[inline]
-    fn boxed(&self) -> Option<BoxMutEvent<E>> {
-        Some(Box::new(self.clone()))
     }
 }
 
