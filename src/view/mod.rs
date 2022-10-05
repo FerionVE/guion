@@ -2,7 +2,6 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use crate::ProtectedReturn;
-use crate::dispatchor::{ViewDispatch, ViewClosure};
 use crate::env::Env;
 use crate::error::ResolveResult;
 use crate::widget::Widget;
@@ -20,31 +19,29 @@ pub mod mutor_trait;
 pub mod mut_target;
 
 pub trait View<E> where E: Env {
-    type Viewed<'v,'z>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v, Self: 'z;
     type WidgetCache: WidgetCache<E>;
     type Mutarget: MuTarget<E>;
 
-    fn view<'d,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd,
-   ;
+    fn view<R>(&self, dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + '_>, mutor: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R;
 }
 
 impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
-    type Viewed<'v,'z> = T::Viewed<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
     type Mutarget = T::Mutarget;
 
     #[inline]
-    fn view<'d,DispatchFn,R>(&self, callback: DispatchFn, remut: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd,
+    fn view<R>(&self, callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + '_>, remut: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     {
-        let callback = ViewClosure::new(#[inline] move |widget,root,ctx|
-            callback.call(widget, root, ctx)
-        );
         (**self).view(callback,remut,root,ctx)
     }
+}
+
+pub fn box_view_cb<'a,F,R,E>(f: F) -> Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + 'a>
+where
+    E: Env,
+    F: for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + 'a
+{
+    Box::new(f)
 }
 
 // pub trait ViewDyn<E> where E: Env {
@@ -155,9 +152,6 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
         remut: Box<dyn MutorToDyn<(),M,E>>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_>,root,ctx|
-            (callback)(widget.erase(), root, ctx)
-        );
         View::view(
             self,
             callback,
@@ -169,19 +163,16 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
 }
 
 impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
-    type Viewed<'v,'z> = dyn WidgetDyn<E>+'v where 'z: 'v, Self: 'z;
     type WidgetCache = DynWidgetCache<E>;
     type Mutarget = M;
 
     #[inline]
-    fn view<'d,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd
+    fn view<R>(&self, dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + '_>, mutor: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     {
         let mut callback_return: Option<R> = None;
         self.view_dyn(
             Box::new(#[inline] |widget,root,ctx| {
-                callback_return = Some(dispatch.call(widget,root,ctx));
+                callback_return = Some((dispatch)(widget,root,ctx));
                 ProtectedReturn(PhantomData)
             }),
             Box::new(mutor),

@@ -1,13 +1,15 @@
 use std::marker::PhantomData;
 
-use crate::dispatchor::{AsWidgetDispatch, ViewClosure, AsWidgetClosure};
+use crate::dispatchor::{AsWidgetDispatch, AsWidgetClosure};
 use crate::env::Env;
 use crate::error::ResolveResult;
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::as_widget::AsWidget;
+use crate::widget::cache::DynWidgetCache;
+use crate::widget::dyn_tunnel::WidgetDyn;
 
-use super::View;
+use super::{View, box_view_cb};
 use super::mut_target::MuTarget;
 use super::mutor_trait::*;
 
@@ -23,8 +25,8 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
     MutorFn: MutorTo<(),ViewTy::Mutarget,E>,
     E: Env,
 {
-    type Widget<'v,'z2> = ViewTy::Viewed<'v,'z2> where 'z2: 'v, Self: 'z2;
-    type WidgetCache = ViewTy::WidgetCache;
+    type Widget<'v,'z2> = dyn WidgetDyn<E> + 'v where 'z2: 'v, Self: 'z2;
+    type WidgetCache = DynWidgetCache<E>;
 
     #[inline]
     fn with_widget<'w,F,R>(&self, dispatch: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
@@ -32,7 +34,7 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
         F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         let s = (self.0)();
-        let dis = ViewClosure::new(move |widget,root,ctx| {
+        let dis = box_view_cb(move |widget,root,ctx| {
             dispatch.call(widget, root, ctx)
             //todo!()
         });

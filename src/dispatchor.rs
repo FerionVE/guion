@@ -18,16 +18,6 @@ where
         'ww: 'w, 'z: 'ww, V: 'z;
 }
 
-pub trait ViewDispatch<'z,V,R,E>
-where
-    V: View<E> + ?Sized,
-    E: Env,
-{
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Viewed<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
-    where
-        'ww: 'w, 'z: 'ww, V: 'z;
-}
-
 pub trait AsWidgetsDispatch<'z,V,R,E>
 where
     V: AsWidgets<E> + ?Sized,
@@ -59,24 +49,6 @@ where
     V: AsWidget<E> + ?Sized,
     E: Env,
     for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
-{
-    #[inline]
-    pub fn new(c: C) -> Self {
-        Self(c,PhantomData)
-    }
-}
-
-pub struct ViewClosure<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
-where
-    V: View<E> + ?Sized,
-    E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
-
-impl<'z,C,V,R,E> ViewClosure<'z,C,V,R,E> 
-where
-    V: View<E> + ?Sized,
-    E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
     pub fn new(c: C) -> Self {
@@ -130,20 +102,6 @@ where
     fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww
-    {
-        (self.0)(widget,root,ctx)
-    }
-}
-
-impl<'z,C,V,R,E> ViewDispatch<'z,V,R,E> for ViewClosure<'z,C,V,R,E> 
-where
-    V: View<E> + ?Sized,
-    E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Viewed<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
-{
-    #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Viewed<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
-    where 'ww: 'w, 'z: 'ww
     {
         (self.0)(widget,root,ctx)
     }

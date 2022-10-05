@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::ctx::queue::BoxMutEvent;
-use crate::dispatchor::{AsWidgetDispatch, ViewClosure};
+use crate::dispatchor::{AsWidgetDispatch};
 use crate::env::Env;
 use crate::error::ResolveResult;
 use crate::widget::as_widget::AsWidget;
