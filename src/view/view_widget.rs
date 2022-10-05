@@ -36,7 +36,7 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
             dispatch.call(widget, root, ctx)
             //todo!()
         });
-        s.view(dis,self.1.clone(),root,ctx)
+        s.view(dis,MutorTo::_boxed(&self.1),root,ctx)
         //todo!()
     }
 }

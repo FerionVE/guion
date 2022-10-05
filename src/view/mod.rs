@@ -24,9 +24,8 @@ pub trait View<E> where E: Env {
     type WidgetCache: WidgetCache<E>;
     type Mutarget: MuTarget<E>;
 
-    fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        MutorFn: MutorTo<(),Self::Mutarget,E>, //TODO does it also need Sync or only need to be Send?
         DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd,
    ;
 }
@@ -37,9 +36,8 @@ impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
     type Mutarget = T::Mutarget;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn,R>(&self, callback: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,DispatchFn,R>(&self, callback: DispatchFn, remut: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        MutorFn: MutorTo<(),Self::Mutarget,E>,
         DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd,
     {
         let callback = ViewClosure::new(#[inline] move |widget,root,ctx|
@@ -163,7 +161,7 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
         View::view(
             self,
             callback,
-            remut.convert_to_target(),
+            remut.convert_to_target()._boxed(),
             root,
             ctx
         )
@@ -176,9 +174,8 @@ impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
     type Mutarget = M;
 
     #[inline]
-    fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<'d,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        MutorFn: MutorTo<(),Self::Mutarget,E>,
         DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd
     {
         let mut callback_return: Option<R> = None;
