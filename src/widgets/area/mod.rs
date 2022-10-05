@@ -76,7 +76,7 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     #[inline]
     pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl MutorEnd<ScrollUpdate,E>>
     where
-        T: MutorTo<(),E,Target=DynAtomStateMutTarget<ScrollOff>>,
+        T: MutorTo<(),DynAtomStateMutTarget<ScrollOff>,E>,
     {
         self.with_scroll_updater(
             mutor.mutor_end_if((), |state,_,ScrollUpdate { offset: (ax,ay) },ctx| {

@@ -65,7 +65,7 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     #[inline]
     pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,impl MutorEnd<f32,E>>
     where
-        T: MutorTo<(),E,Target=DynAtomStateMutTarget<f32>>,
+        T: MutorTo<(),DynAtomStateMutTarget<f32>,E>,
     {
         self.with_update(
             mutor.mutor_end_if((), |state,_,value,ctx| {

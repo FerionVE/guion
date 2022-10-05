@@ -26,7 +26,7 @@ pub trait View<E> where E: Env {
 
     fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        MutorFn: MutorTo<(),E,Target=Self::Mutarget>, //TODO does it also need Sync or only need to be Send?
+        MutorFn: MutorTo<(),Self::Mutarget,E>, //TODO does it also need Sync or only need to be Send?
         DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd,
    ;
 }
@@ -39,7 +39,7 @@ impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
     #[inline]
     fn view<'d,MutorFn,DispatchFn,R>(&self, callback: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        MutorFn: MutorTo<(),E,Target=Self::Mutarget>,
+        MutorFn: MutorTo<(),Self::Mutarget,E>,
         DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd,
     {
         let callback = ViewClosure::new(#[inline] move |widget,root,ctx|
@@ -144,7 +144,7 @@ pub trait ViewDyn2<E,M> where M: MuTarget<E>, E: Env {
     fn view_dyn(
         &self,
         dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: Box<dyn MutorToDyn<(),E,Target=M>>,
+        remut: Box<dyn MutorToDyn<(),M,E>>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn;
 }
@@ -154,7 +154,7 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
     fn view_dyn(
         &self,
         callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: Box<dyn MutorToDyn<(),E,Target=M>>,
+        remut: Box<dyn MutorToDyn<(),M,E>>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
         let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_,_>,root,ctx|
@@ -178,7 +178,7 @@ impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
     #[inline]
     fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        MutorFn: MutorTo<(),E,Target=Self::Mutarget>,
+        MutorFn: MutorTo<(),Self::Mutarget,E>,
         DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd
     {
         let mut callback_return: Option<R> = None;

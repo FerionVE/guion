@@ -68,7 +68,7 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     #[inline]
     pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl MutorEnd<bool,E>>
     where
-        T: MutorTo<(),E,Target=DynAtomStateMutTarget<bool>>
+        T: MutorTo<(),DynAtomStateMutTarget<bool>,E>
     {
         self.with_update(
             mutor.mutor_end_if((), |state,_,value,ctx| {
