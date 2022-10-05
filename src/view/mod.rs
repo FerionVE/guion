@@ -20,19 +20,19 @@ pub mod mutor_trait;
 pub mod mut_target;
 
 pub trait View<E> where E: Env {
-    type Viewed<'v,'z,MutorFn>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where MutorFn: 'static, 'z: 'v, Self: 'z;
+    type Viewed<'v,'z>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v, Self: 'z;
     type WidgetCache: WidgetCache<E>;
     type Mutarget: MuTarget<E>;
 
     fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: MutorTo<(),Self::Mutarget,E>, //TODO does it also need Sync or only need to be Send?
-        DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd,
+        DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd,
    ;
 }
 
 impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
-    type Viewed<'v,'z,MutorFn> = T::Viewed<'v,'z,MutorFn> where MutorFn: 'static, 'z: 'v, Self: 'z;
+    type Viewed<'v,'z> = T::Viewed<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
     type Mutarget = T::Mutarget;
 
@@ -40,7 +40,7 @@ impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
     fn view<'d,MutorFn,DispatchFn,R>(&self, callback: DispatchFn, remut: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: MutorTo<(),Self::Mutarget,E>,
-        DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd,
+        DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd,
     {
         let callback = ViewClosure::new(#[inline] move |widget,root,ctx|
             callback.call(widget, root, ctx)
@@ -96,7 +96,7 @@ impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
 // }
 
 // impl<E> View<E> for dyn ViewDyn<E> + '_ where E: Env {
-//     type Viewed<'v,'z,MutorFn> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v, Self: 'z;
+//     type Viewed<'v,'z> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v, Self: 'z;
 //     type WidgetCache = DynWidgetCache<E>;
 //     type Mutable<'k> = Timmy;
 
@@ -157,7 +157,7 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
         remut: Box<dyn MutorToDyn<(),M,E>>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
-        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_,_>,root,ctx|
+        let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_>,root,ctx|
             (callback)(widget.erase(), root, ctx)
         );
         View::view(
@@ -171,7 +171,7 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
 }
 
 impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
-    type Viewed<'v,'z,MutFn> = dyn WidgetDyn<E>+'v where MutFn: 'static, 'z: 'v, Self: 'z;
+    type Viewed<'v,'z> = dyn WidgetDyn<E>+'v where 'z: 'v, Self: 'z;
     type WidgetCache = DynWidgetCache<E>;
     type Mutarget = M;
 
@@ -179,7 +179,7 @@ impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
     fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutorFn: MutorTo<(),Self::Mutarget,E>,
-        DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd
+        DispatchFn: ViewDispatch<'d,Self,R,E>, Self: 'd
     {
         let mut callback_return: Option<R> = None;
         self.view_dyn(

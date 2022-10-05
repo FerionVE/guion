@@ -23,7 +23,7 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
     MutorFn: MutorTo<(),ViewTy::Mutarget,E>,
     E: Env,
 {
-    type Widget<'v,'z2> = ViewTy::Viewed<'v,'z2,MutorFn> where 'z2: 'v, Self: 'z2;
+    type Widget<'v,'z2> = ViewTy::Viewed<'v,'z2> where 'z2: 'v, Self: 'z2;
     type WidgetCache = ViewTy::WidgetCache;
 
     #[inline]
@@ -32,7 +32,7 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
         F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
     {
         let s = (self.0)();
-        let dis = ViewClosure::<'_,_,ViewTy,_,_,_>::new(move |widget,root,ctx| {
+        let dis = ViewClosure::new(move |widget,root,ctx| {
             dispatch.call(widget, root, ctx)
             //todo!()
         });
