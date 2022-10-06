@@ -29,9 +29,9 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
     type WidgetCache = DynWidgetCache<E>;
 
     #[inline]
-    fn with_widget<'w,F,R>(&self, dispatch: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, dispatch: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
     {
         let s = (self.0)();
         let dis = box_view_cb(move |widget,root,ctx| {

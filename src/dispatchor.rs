@@ -13,7 +13,7 @@ where
     V: AsWidget<E> + ?Sized,
     E: Env,
 {
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self: Box<Self>, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww, V: 'z;
 }
@@ -23,7 +23,7 @@ where
     V: AsWidgets<E> + ?Sized,
     E: Env,
 {
-    fn call<'w,'ww,'r,'c,'cc>(self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self: Box<Self>, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww, V: 'z;
 }
@@ -51,8 +51,8 @@ where
     for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    pub fn new(c: C) -> Self {
-        Self(c,PhantomData)
+    pub fn new<'a>(c: C) -> Box<dyn AsWidgetDispatch<'z,V,R,E>+'a> where R: 'a, V: 'a, C: 'a, 'z: 'a {
+        Box::new(Self(c,PhantomData))
     }
 }
 
@@ -69,8 +69,8 @@ where
     for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    pub fn new(c: C) -> Self {
-        Self(c,PhantomData)
+    pub fn new<'a>(c: C) -> Box<dyn AsWidgetsDispatch<'z,V,R,E>+'a> where R: 'a, V: 'a, C: 'a, 'z: 'a {
+        Box::new(Self(c,PhantomData))
     }
 }
 
@@ -87,8 +87,8 @@ where
     for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
 {
     #[inline]
-    pub fn new(c: C) -> Self {
-        Self(c,PhantomData)
+    pub fn new<'a>(c: C) -> Box<dyn AsWidgetsIndexedDispatch<'z,V,E>+'a> where V: 'a, C: 'a, 'z: 'a {
+        Box::new(Self(c,PhantomData))
     }
 }
 
@@ -99,7 +99,7 @@ where
     for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self: Box<Self>, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww
     {
@@ -114,7 +114,7 @@ where
     for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self: Box<Self>, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww
     {
@@ -147,7 +147,7 @@ where
     //for<'w,'ww,'r,'c,'cc> C: FnOnce(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
+    fn call<'w,'ww,'r,'c,'cc>(mut self: Box<Self>, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
     where
         'ww: 'w, 'z: 'ww
     {
@@ -189,8 +189,8 @@ where
     for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w (dyn WidgetDyn<E> + 'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    pub fn new(c: C) -> Self {
-        Self(c,PhantomData)
+    pub fn new<'a>(c: C) -> Box<dyn AsWidgetDispatch<'z,V,R,E>+'a> where R: 'a, V: 'a, C: 'a, 'z: 'a {
+        Box::new(Self(c,PhantomData))
     }
 }
 
@@ -201,7 +201,7 @@ where
     for<'w,'ww,'r,'c,'cc> C: FnOnce(&'w (dyn WidgetDyn<E> + 'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(self, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(self: Box<Self>, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww
     {

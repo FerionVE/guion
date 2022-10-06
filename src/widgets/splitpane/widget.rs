@@ -314,9 +314,9 @@ impl<E,L,R,V,TrMut> AsWidget<E> for SplitPane<'_,E,L,R,V,TrMut> where Self: Widg
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,Ret>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
+    fn with_widget<'w,Ret>(&self, f: Box<dyn dispatchor::AsWidgetDispatch<'w,Self,Ret,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
     where
-        F: dispatchor::AsWidgetDispatch<'w,Self,Ret,E>, Self: 'w
+        Self: 'w
     {
         f.call(self, root, ctx)
     }

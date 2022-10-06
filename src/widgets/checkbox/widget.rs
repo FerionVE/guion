@@ -239,9 +239,9 @@ impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<'_,E,State,Text,TrMut> where S
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: Box<dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: dispatchor::AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
     {
         f.call(self, root, ctx)
     }

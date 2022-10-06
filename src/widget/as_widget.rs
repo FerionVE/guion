@@ -12,9 +12,9 @@ pub trait AsWidget<E> where E: Env {
     type Widget<'v,'z>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v, Self: 'z;
     type WidgetCache: WidgetCache<E>; // this ugly hack as we can't even refer to 'static types behind lifetime GATs without effect of these lifetimes
 
-    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
    ;
 }
 
@@ -23,9 +23,9 @@ impl<E> AsWidget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     type WidgetCache = DynWidgetCache<E>;
 
     #[inline]
-    fn with_widget<'w,F,R>(&self, f: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
     {
         f.call(&*self, root, ctx)
     }
@@ -36,9 +36,9 @@ impl<T,E> AsWidget<E> for &'_ T where T: AsWidget<E> + ?Sized, E: Env {
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, callback: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
             callback.call(&widget, root, ctx)
@@ -51,9 +51,9 @@ impl<T,E> AsWidget<E> for &'_ mut T where T: AsWidget<E> + ?Sized, E: Env {
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, callback: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
             callback.call(&widget, root, ctx)
@@ -66,9 +66,9 @@ impl<T,E> AsWidget<E> for Box<T> where T: AsWidget<E> + ?Sized, E: Env {
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, callback: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             callback.call(widget, root, ctx)
@@ -81,9 +81,9 @@ impl<T,E> AsWidget<E> for std::rc::Rc<T> where T: AsWidget<E> + ?Sized, E: Env {
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, callback: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             callback.call(widget, root, ctx)
@@ -96,9 +96,9 @@ impl<T,E> AsWidget<E> for std::sync::Arc<T> where T: AsWidget<E> + ?Sized, E: En
     type WidgetCache = T::WidgetCache;
 
     #[inline]
-    fn with_widget<'w,F,R>(&self, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, callback: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        F: AsWidgetDispatch<'w,Self,R,E>, Self: 'w
+        Self: 'w
     {
         let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
             callback.call(widget, root, ctx)
