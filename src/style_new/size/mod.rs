@@ -1,3 +1,4 @@
+#[non_exhaustive]
 pub enum StdUnit { //TODO use float with smart eq in cachors (e.g. int(f+(1/64)*(1/32)))
     /// Pixel unit
     Px(i32),

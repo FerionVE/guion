@@ -9,6 +9,8 @@ use crate::queron::query::Query;
 
 pub mod select;
 
+#[non_exhaustive]
+#[derive(Default)]
 pub struct SetStdProps<E> where E: Env {
     font_family: Option<ESFont<E>>,
     accent_color: Option<ESColor<E>>,
@@ -20,6 +22,7 @@ pub struct WithStdPropsForVariant<S,V,E> where S: Queron<E>, E: Env, V: VariantD
     _p: PhantomData<V>,
 }
 
+#[non_exhaustive]
 #[derive(Clone)]
 pub struct QueriedStdProps<E> where E: Env {
     font_family: ESFont<E>,

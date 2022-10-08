@@ -3,6 +3,7 @@ use crate::queron::query::QueryStack;
 
 use super::*;
 
+#[non_exhaustive]
 #[derive(Clone)]
 pub enum SelectStdColorType<E> where E: Env {
     Bg,
@@ -11,6 +12,7 @@ pub enum SelectStdColorType<E> where E: Env {
     Custom(ESColor<E>),
 }
 
+#[non_exhaustive]
 #[derive(Clone,Copy)]
 pub enum SelectStdBorderType<E> where E: Env {
     Component,
