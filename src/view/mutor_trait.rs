@@ -62,8 +62,8 @@ impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Sized + Send + Sync + '
 
 pub trait MutorEndBuilderExt<Args,E>: MutorEndBuilder<Args,E> + Send + Sync where E: Env, Args: Sized + Send + Sync + 'static {
     #[inline]
-    fn erase<'a>(&'a self) -> &'a BoxingMutorEndBuilder<Args,Self,E> {
-        unsafe{std::mem::transmute::<&'a Self,&'a BoxingMutorEndBuilder<Args,Self,E>>(self)}
+    fn erase<'a>(&'a self) -> BoxingMutorEndBuilder<'a,Args,Self,E> {
+        BoxingMutorEndBuilder(PhantomData,self)
     }
 }
 impl<Args,T,E> MutorEndBuilderExt<Args,E> for T where T: MutorEndBuilder<Args,E> + Send + Sync + ?Sized, E: Env, Args: Sized + Send + Sync + 'static {}
@@ -331,13 +331,13 @@ pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Size
 
 pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send + Sync where E: Env, Args: Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     #[inline]
-    fn erase<'a>(&'a self) -> &'a BoxingMutorToBuilder<Args,Target,Self,E> {
-        unsafe{std::mem::transmute::<&'a Self,&'a BoxingMutorToBuilder<Args,Target,Self,E>>(self)}
+    fn erase<'a>(&'a self) -> BoxingMutorToBuilder<Args,Target,Self,E> {
+        BoxingMutorToBuilder(PhantomData,self)
     }
 
     #[inline]
-    fn convert_to_target<'a,T>(&'a self) -> &'a ConvertToTargetBuilder<Self,Target,T,Args,E> where for<'b> T: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
-        unsafe{std::mem::transmute::<&'a Self,&'a ConvertToTargetBuilder<Self,Target,T,Args,E>>(self)}
+    fn convert_to_target<'a,T>(&'a self) -> ConvertToTargetBuilder<'a,Self,Target,T,Args,E> where for<'b> T: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
+        ConvertToTargetBuilder(PhantomData,self)
     }
 }
 impl<Args,Target,T,E> MutorToBuilderExt<Args,Target,E> for T
@@ -1051,13 +1051,13 @@ where
 // }
 
 #[repr(transparent)]
-pub struct BoxingMutorEndBuilder<Args,T,E>(PhantomData<(Args,E)>,T)
+pub struct BoxingMutorEndBuilder<'a,Args,T,E>(PhantomData<(Args,E)>,&'a T)
 where
     E: Env,
     Args: Sized + Send + Sync + 'static,
     T: MutorEndBuilder<Args,E> + ?Sized;
 
-impl<Args,T,E> MutorEndBuilder<Args,E> for BoxingMutorEndBuilder<Args,T,E>
+impl<'a,Args,T,E> MutorEndBuilder<Args,E> for BoxingMutorEndBuilder<'a,Args,T,E>
 where
     E: Env,
     Args: Sized + Send + Sync + 'static,
@@ -1076,14 +1076,14 @@ where
 }
 
 #[repr(transparent)]
-pub struct BoxingMutorToBuilder<Args,Target,T,E>(PhantomData<(Args,&'static Target,E)>,T)
+pub struct BoxingMutorToBuilder<'a,Args,Target,T,E>(PhantomData<(Args,&'static Target,E)>,&'a T)
 where
     E: Env,
     Args: Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
     T: MutorToBuilder<Args,Target,E> + ?Sized;
 
-impl<Args,Target,T,E> MutorToBuilder<Args,Target,E> for BoxingMutorToBuilder<Args,Target,T,E>
+impl<'a,Args,Target,T,E> MutorToBuilder<Args,Target,E> for BoxingMutorToBuilder<'a,Args,Target,T,E>
 where
     E: Env,
     Args: Sized + Send + Sync + 'static,
@@ -1128,7 +1128,7 @@ impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Ta
 
 
 #[repr(transparent)]
-pub struct ConvertToTargetBuilder<T,Target,NewTarget,Args,E>(PhantomData<(Args,&'static Target,&'static NewTarget,E)>,T)
+pub struct ConvertToTargetBuilder<'i,T,Target,NewTarget,Args,E>(PhantomData<(Args,&'static Target,&'static NewTarget,E)>,&'i T)
 where
     E: Env,
     Args: Sized + Send + Sync + 'static,
@@ -1138,7 +1138,7 @@ where
     ConvertToTargetor<T::Built,Target,NewTarget,Args,E>: Sized,
     for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>;
 
-impl<Args,Target,NewTarget,T,E> MutorToBuilder<Args,NewTarget,E> for ConvertToTargetBuilder<T,Target,NewTarget,Args,E>
+impl<'i,Args,Target,NewTarget,T,E> MutorToBuilder<Args,NewTarget,E> for ConvertToTargetBuilder<'i,T,Target,NewTarget,Args,E>
 where
     E: Env,
     Args: Sized + Send + Sync + 'static,
@@ -1166,7 +1166,7 @@ where
     E: Env,
     Args: Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
-    T: MutorTo<Args,Target,E> + ?Sized,
+    T: MutorTo<Args,Target,E> + Sized,
     for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>;
 
 impl<Args,Target,NewTarget,T,E> MutorTo<Args,NewTarget,E> for ConvertToTargetor<T,Target,NewTarget,Args,E>
@@ -1174,7 +1174,7 @@ where
     E: Env,
     Args: Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
-    T: MutorTo<Args,Target,E> + ?Sized,
+    T: MutorTo<Args,Target,E> + Sized,
     for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>
 {
     #[inline]
