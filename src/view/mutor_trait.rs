@@ -9,7 +9,7 @@ use crate::widget::as_widget::AsWidget;
 use super::View;
 use super::mut_target::{MuTarget, RootMutTarget};
 
-pub trait MutorEndBuilder<Args,E>: Send + Sync where E: Env, Args: Sized + Send + Sync + 'static {
+pub trait MutorEndBuilder<Args,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     type Built: MutorEnd<Args,E> + Sized + Send + Sync + 'static;
 
     //fn _erase_builder(&self) -> &MutorEndBuilderDyn<'_,Args,E>;
@@ -24,7 +24,7 @@ pub trait MutorEndBuilder<Args,E>: Send + Sync where E: Env, Args: Sized + Send 
 
 pub type MutorEndBuilderDyn<'a,Args,E> = dyn MutorEndBuilder<Args,E,Built=Box<dyn MutorEnd<Args,E>>> + 'a;
 
-impl<Args,E> MutorEndBuilder<Args,E> for () where E: Env, Args: Sized + Send + Sync + 'static {
+impl<Args,E> MutorEndBuilder<Args,E> for () where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     type Built = ();
     // #[inline]
     // fn _erase_builder(&self) -> &MutorEndBuilderDyn<'_,Args,E> {
@@ -36,7 +36,7 @@ impl<Args,E> MutorEndBuilder<Args,E> for () where E: Env, Args: Sized + Send + S
     }
 }
 
-pub trait MutorEnd<Args,E>: Send + Sync + 'static where E: Env, Args: Sized + Send + Sync + 'static {
+pub trait MutorEnd<Args,E>: Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     fn with_mutor_end<'s,'c,'cc>(
         &self,
         root: E::RootMut<'s>,
@@ -50,7 +50,7 @@ pub trait MutorEnd<Args,E>: Send + Sync + 'static where E: Env, Args: Sized + Se
     // }
 }
 
-impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Sized + Send + Sync + 'static {
+impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     #[inline]
     fn with_mutor_end<'s,'c,'cc>(
         &self,
@@ -60,15 +60,15 @@ impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Sized + Send + Sync + '
     ) where 'cc: 'c {}
 }
 
-pub trait MutorEndBuilderExt<Args,E>: MutorEndBuilder<Args,E> + Send + Sync where E: Env, Args: Sized + Send + Sync + 'static {
+pub trait MutorEndBuilderExt<Args,E>: MutorEndBuilder<Args,E> + Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     #[inline]
     fn erase<'a>(&'a self) -> BoxingMutorEndBuilder<'a,Args,Self,E> {
         BoxingMutorEndBuilder(PhantomData,self)
     }
 }
-impl<Args,T,E> MutorEndBuilderExt<Args,E> for T where T: MutorEndBuilder<Args,E> + Send + Sync + ?Sized, E: Env, Args: Sized + Send + Sync + 'static {}
+impl<Args,T,E> MutorEndBuilderExt<Args,E> for T where T: MutorEndBuilder<Args,E> + Send + Sync + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {}
 
-pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     type Built: MutorTo<Args,Target,E> + Sized + Send + Sync + 'static;
 
     //fn _erase_builder(&self) -> &MutorToBuilderDyn<'_,Args,Target,E>;
@@ -83,7 +83,7 @@ pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Sized +
 
 pub type MutorToBuilderDyn<'a,Args,Target,E> = dyn MutorToBuilder<Args,Target,E,Built=Box<dyn MutorTo<Args,Target,E>>> + 'a;
 
-pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
         &self,
         root: E::RootMut<'s>,
@@ -91,11 +91,6 @@ pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Size
         args: Args,
         ctx: &'c mut E::Context<'cc>,
     ) where 'cc: 'c;
-
-    // #[inline]
-    // fn _boxed_to(&self) -> Box<dyn MutorToDyn<Args,Target,E>+'static> {
-    //     Box::new(self.clone())
-    // }
 
     // fn for_view_cb<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForTarget<NewTarget,RightArgs,MutorForViewCB<Self,Args,Target,NewTarget,RightArgs,RightFn,E>,E>
     // where
@@ -329,7 +324,7 @@ pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Size
     // }
 }
 
-pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send + Sync where E: Env, Args: Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     #[inline]
     fn erase<'a>(&'a self) -> BoxingMutorToBuilder<Args,Target,Self,E> {
         BoxingMutorToBuilder(PhantomData,self)
@@ -339,23 +334,109 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
     fn convert_to_target<'a,T>(&'a self) -> ConvertToTargetBuilder<'a,Self,Target,T,Args,E> where for<'b> T: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
         ConvertToTargetBuilder(PhantomData,self)
     }
+
+    #[inline]
+    fn for_view_cb<'a,NewTarget,RightArgs,RightFn>(&'a self, larg: Args, fun: RightFn) -> ForTargetCBBuilder<'a,Self,Args,Target,RightArgs,NewTarget,RightFn,E>
+    where
+        E: Env,
+        RightArgs: Clone + Sized + Send + Sync + 'static,
+        NewTarget: MuTarget<E> + ?Sized,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            ResolveResult<&'s mut Target::Mutable<'ss>>,&'ss (),
+            &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+            RightArgs,
+            &'c mut E::Context<'cc>
+        ) + Clone + Send + Sync + 'static
+    {
+        ForTargetCBBuilder(self,larg,fun,PhantomData)
+    }
+
+    #[inline]
+    fn for_view_cb_if<'a,NewTarget,RightArgs,RightFn>(&'a self, larg: Args, fun: RightFn) -> ForTargetCBBuilder<
+        'a,Self,Args,Target,RightArgs,NewTarget,
+        CBRightFnIf<Self,Args,Target,NewTarget,RightArgs,RightFn,E>
+        ,E
+    >
+    where
+        E: Env,
+        RightArgs: Clone + Sized + Send + Sync + 'static,
+        NewTarget: MuTarget<E> + ?Sized,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut Target::Mutable<'ss>,&'ss (),
+            &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+            RightArgs,
+            &'c mut E::Context<'cc>
+        ) + Clone + Send + Sync + 'static
+    {
+        ForTargetCBBuilder(
+            self,larg,
+            move |targ,_,callback,argus,ctx| {
+                match targ {
+                    Ok(v) => (fun)(v,&(),callback,argus,ctx),
+                    Err(e) => (callback)(Err(e),&(),ctx),
+                }
+            },
+            PhantomData
+        )
+    }
+
+    #[inline]
+    fn mutor_end<'a,RightArgs,RightFn>(&'a self, larg: Args, fun: RightFn) -> EndorBuilder<'a,Self,Args,Target,RightArgs,RightFn,E>
+    where
+        E: Env,
+        RightArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            ResolveResult<&'s mut Target::Mutable<'ss>>,&'ss (),
+            RightArgs,
+            &'c mut E::Context<'cc>
+        ) + Clone + Send + Sync + 'static
+    {
+        EndorBuilder(self,larg,fun,PhantomData)
+    }
+
+    #[inline]
+    fn mutor_end_if<'a,RightArgs,RightFn>(&'a self, larg: Args, fun: RightFn) -> EndorBuilder<
+        'a,Self,Args,Target,RightArgs,
+        EndorBuilderIf<Self,Args,Target,RightArgs,RightFn,E>
+        ,E
+    >
+    where
+        E: Env,
+        RightArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut Target::Mutable<'ss>,&'ss (),
+            RightArgs,
+            &'c mut E::Context<'cc>
+        ) + Clone + Send + Sync + 'static
+    {
+        EndorBuilder(
+            self,larg,
+            move |targ,_,argus,ctx| {
+                match targ {
+                    Ok(v) => (fun)(v,&(),argus,ctx),
+                    Err(e) => {}, //TODO detect lost mutor debug mode
+                }
+            },
+            PhantomData
+        )
+    }
 }
 impl<Args,Target,T,E> MutorToBuilderExt<Args,Target,E> for T
 where
     T: MutorToBuilder<Args,Target,E> + Send + Sync + ?Sized,
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized
 {}
 
 pub struct ForTargetCBBuilder
-    <LeftMutor,LeftArgs,LeftTarget,RightArgs,RightTarget,RightFn,E>
-    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static RightTarget,&'static LeftTarget,RightArgs,E)>)
+    <'a,LeftMutor,LeftArgs,LeftTarget,RightArgs,RightTarget,RightFn,E>
+    (&'a LeftMutor,LeftArgs,RightFn,PhantomData<(&'static RightTarget,&'static LeftTarget,RightArgs,E)>)
 where
     E: Env,
-    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E>,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
     LeftTarget: MuTarget<E> + ?Sized,
-    LeftArgs: Clone + Sized + Send + Sync + 'static ,
+    LeftArgs: Clone + Sized + Send + Sync + 'static,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
     RightFn: for<'s,'ss,'c,'cc> Fn(
@@ -365,11 +446,11 @@ where
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static;
 
-impl<LeftMutor,LeftArgs,LeftTarget,RightArgs,RightTarget,RightFn,E> MutorToBuilder<RightArgs,RightTarget,E> for
-ForTargetCBBuilder<LeftMutor,LeftArgs,LeftTarget,RightArgs,RightTarget,RightFn,E>
+impl<'a,LeftMutor,LeftArgs,LeftTarget,RightArgs,RightTarget,RightFn,E> MutorToBuilder<RightArgs,RightTarget,E> for
+ForTargetCBBuilder<'a,LeftMutor,LeftArgs,LeftTarget,RightArgs,RightTarget,RightFn,E>
 where
     E: Env,
-    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E>,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
     LeftTarget: MuTarget<E> + ?Sized,
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -382,10 +463,7 @@ where
     ) + Clone + Send + Sync + 'static
 {
     type Built = impl MutorTo<RightArgs,RightTarget,E>;
-    // #[inline]
-    // fn _erase_builder(&self) -> &MutorToBuilderDyn<'_,RightArgs,RightTarget,E> {
-    //     self
-    // }
+
     #[inline]
     fn build(&self) -> Self::Built {
         let left = self.0.build();
@@ -403,6 +481,94 @@ where
         })
     }
 }
+
+type CBRightFnIf<LeftMutor,LeftArgs,LeftTarget,RightTarget,RightArgs,RightFn,E>
+where
+    E: Env,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
+    LeftArgs: Clone + Sized + Send + Sync + 'static,
+    LeftTarget: MuTarget<E> + ?Sized,
+    RightArgs: Clone + Sized + Send + Sync + 'static,
+    RightTarget: MuTarget<E> + ?Sized,
+    RightFn: for<'s,'ss,'c,'cc> Fn(
+        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        RightArgs,
+        &'c mut E::Context<'cc>
+    ) + Clone + Send + Sync + 'static
+= impl for<'s,'ss,'c,'cc> Fn(
+    ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+    &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+    RightArgs,
+    &'c mut E::Context<'cc>
+) + Clone + Send + Sync + 'static;
+
+pub struct EndorBuilder
+    <'a,LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
+    (&'a LeftMutor,LeftArgs,RightFn,PhantomData<(&'static LeftTarget,RightArgs,E)>)
+where
+    E: Env,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
+    LeftTarget: MuTarget<E> + ?Sized,
+    LeftArgs: Clone + Sized + Send + Sync + 'static ,
+    RightArgs: Clone + Sized + Send + Sync + 'static,
+    RightFn: for<'s,'ss,'c,'cc> Fn(
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+        RightArgs,
+        &'c mut E::Context<'cc>
+    ) + Clone + Send + Sync + 'static;
+
+impl<'a,LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E> MutorEndBuilder<RightArgs,E> for
+EndorBuilder<'a,LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
+where
+    E: Env,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
+    LeftTarget: MuTarget<E> + ?Sized,
+    LeftArgs: Clone + Sized + Send + Sync + 'static ,
+    RightArgs: Clone + Sized + Send + Sync + 'static,
+    RightFn: for<'s,'ss,'c,'cc> Fn(
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+        RightArgs,
+        &'c mut E::Context<'cc>
+    ) + Clone + Send + Sync + 'static
+{
+    type Built = impl MutorEnd<RightArgs,E>;
+
+    #[inline]
+    fn build(&self) -> Self::Built {
+        let left = self.0.build();
+        let larg = self.1.clone();
+        let fun = self.2.clone();
+
+        MutorEnde::new(#[inline] move |root,_,rarg: RightArgs,ctx| {
+            left.with_mutor_cb(
+                root,
+                &mut |med,_,ctx| {
+                    (fun)(med,&(),rarg.clone(),ctx)
+                },
+                larg.clone(),ctx
+            )
+        })
+    }
+}
+
+type EndorBuilderIf<LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
+where
+    E: Env,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
+    LeftArgs: Clone + Sized + Send + Sync + 'static,
+    LeftTarget: MuTarget<E> + ?Sized,
+    RightArgs: Clone + Sized + Send + Sync + 'static,
+    RightFn: for<'s,'ss,'c,'cc> Fn(
+        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+        RightArgs,
+        &'c mut E::Context<'cc>
+    ) + Clone + Send + Sync + 'static
+= impl for<'s,'ss,'c,'cc> Fn(
+    ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+    RightArgs,
+    &'c mut E::Context<'cc>
+) + Clone + Send + Sync + 'static;
 
 // pub type MutorForViewCB<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,RightFn,E>
 //     where
@@ -643,7 +809,7 @@ where
     Self: 'static,
     E: Env,
     Targ: MuTarget<E> + ?Sized,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,&'s (),
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
@@ -692,32 +858,32 @@ where
 //     }
 // }
 
-// pub struct MutorEnde<Args,MutorFn,E>(MutorFn,PhantomData<(Args,E)>)
-// where
-//     Self: 'static,
-//     E: Env,
-//     Args: Sized,
-//     MutorFn: for<'s,'c,'cc> Fn(
-//         E::RootMut<'s>,&'s (),
-//         Args,
-//         &'c mut E::Context<'cc>
-//     ) + Send + Sync + 'static;
+pub struct MutorEnde<Args,MutorFn,E>(MutorFn,PhantomData<(Args,E)>)
+where
+    Self: 'static,
+    E: Env,
+    Args: Clone + Send + Sync + Sized,
+    MutorFn: for<'s,'c,'cc> Fn(
+        E::RootMut<'s>,&'s (),
+        Args,
+        &'c mut E::Context<'cc>
+    ) + Send + Sync + 'static;
 
-// impl<MutorFn,Args,E> MutorEnde<Args,MutorFn,E>
-// where
-//     Self: 'static,
-//     E: Env,
-//     Args: Sized,
-//     MutorFn: for<'s,'c,'cc> Fn(
-//         E::RootMut<'s>,&'s (),
-//         Args,
-//         &'c mut E::Context<'cc>
-//     ) + Send + Sync + 'static
-// {
-//     pub fn new(f: MutorFn) -> Self {
-//         Self(f,PhantomData)
-//     }
-// }
+impl<MutorFn,Args,E> MutorEnde<Args,MutorFn,E>
+where
+    Self: 'static,
+    E: Env,
+    Args: Clone + Send + Sync + Sized,
+    MutorFn: for<'s,'c,'cc> Fn(
+        E::RootMut<'s>,&'s (),
+        Args,
+        &'c mut E::Context<'cc>
+    ) + Send + Sync + 'static
+{
+    pub fn new(f: MutorFn) -> Self {
+        Self(f,PhantomData)
+    }
+}
 
 // impl<Args,MutorFn,E> MutorEnd<Args,E> for MutorFn
 // where
@@ -757,27 +923,26 @@ where
 //     }
 // }
 
-// impl<MutorFn,Args,E> MutorEnd<Args,E> for MutorEnde<Args,MutorFn,E>
-// where
-//     Self: 'static,
-//     E: Env,
-//     Args: Sized + Send + Sync + 'static,
-//     MutorFn: for<'s,'c,'cc> Fn(
-//         E::RootMut<'s>,&'s (),
-//         Args,
-//         &'c mut E::Context<'cc>
-//     ) + Send + Sync + 'static
-// {
-
-//     fn with_mutor_end<'s,'c,'cc>(
-//         &self,
-//         root: E::RootMut<'s>,
-//         args: Args,
-//         ctx: &'c mut E::Context<'cc>,
-//     ) where 'cc: 'c {
-//         (self.0)(root,&(),args,ctx);
-//     }
-// }
+impl<MutorFn,Args,E> MutorEnd<Args,E> for MutorEnde<Args,MutorFn,E>
+where
+    Self: 'static,
+    E: Env,
+    Args: Clone + Sized + Send + Sync + 'static,
+    MutorFn: for<'s,'c,'cc> Fn(
+        E::RootMut<'s>,&'s (),
+        Args,
+        &'c mut E::Context<'cc>
+    ) + Send + Sync + 'static
+{
+    fn with_mutor_end<'s,'c,'cc>(
+        &self,
+        root: E::RootMut<'s>,
+        args: Args,
+        ctx: &'c mut E::Context<'cc>,
+    ) where 'cc: 'c {
+        (self.0)(root,&(),args,ctx);
+    }
+}
 
 // pub struct ConvertToTarget<MutorTy,LeftTarget,RightTarget,Args,E>(MutorTy,PhantomData<(&'static LeftTarget,&'static RightTarget,Args,E)>)
 // where
@@ -1054,13 +1219,13 @@ where
 pub struct BoxingMutorEndBuilder<'a,Args,T,E>(PhantomData<(Args,E)>,&'a T)
 where
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     T: MutorEndBuilder<Args,E> + ?Sized;
 
 impl<'a,Args,T,E> MutorEndBuilder<Args,E> for BoxingMutorEndBuilder<'a,Args,T,E>
 where
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     T: MutorEndBuilder<Args,E> + ?Sized
 {
     type Built = Box<dyn MutorEnd<Args,E>>;
@@ -1079,14 +1244,14 @@ where
 pub struct BoxingMutorToBuilder<'a,Args,Target,T,E>(PhantomData<(Args,&'static Target,E)>,&'a T)
 where
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
     T: MutorToBuilder<Args,Target,E> + ?Sized;
 
 impl<'a,Args,Target,T,E> MutorToBuilder<Args,Target,E> for BoxingMutorToBuilder<'a,Args,Target,T,E>
 where
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
     T: MutorToBuilder<Args,Target,E> + ?Sized
 {
@@ -1102,7 +1267,7 @@ where
     }
 }
 
-impl<Args,T,E> MutorEnd<Args,E> for Box<T> where T: MutorEnd<Args,E> + ?Sized, E: Env, Args: Sized + Send + Sync + 'static {
+impl<Args,T,E> MutorEnd<Args,E> for Box<T> where T: MutorEnd<Args,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {
     #[inline]
     fn with_mutor_end<'s,'c,'cc>(
         &self,
@@ -1114,7 +1279,7 @@ impl<Args,T,E> MutorEnd<Args,E> for Box<T> where T: MutorEnd<Args,E> + ?Sized, E
     }
 }
 
-impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Target,E> + ?Sized, E: Env, Args: Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Target,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
         &self,
         root: <E as Env>::RootMut<'s>,
@@ -1131,7 +1296,7 @@ impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Ta
 pub struct ConvertToTargetBuilder<'i,T,Target,NewTarget,Args,E>(PhantomData<(Args,&'static Target,&'static NewTarget,E)>,&'i T)
 where
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
     T: MutorToBuilder<Args,Target,E> + ?Sized,
     T::Built: Sized,
@@ -1141,7 +1306,7 @@ where
 impl<'i,Args,Target,NewTarget,T,E> MutorToBuilder<Args,NewTarget,E> for ConvertToTargetBuilder<'i,T,Target,NewTarget,Args,E>
 where
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
     T: MutorToBuilder<Args,Target,E> + ?Sized,
     T::Built: Sized,
@@ -1164,7 +1329,7 @@ where
 pub struct ConvertToTargetor<T,Target,NewTarget,Args,E>(PhantomData<(Args,&'static Target,&'static NewTarget,E)>,T)
 where
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
     T: MutorTo<Args,Target,E> + Sized,
     for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>;
@@ -1172,7 +1337,7 @@ where
 impl<Args,Target,NewTarget,T,E> MutorTo<Args,NewTarget,E> for ConvertToTargetor<T,Target,NewTarget,Args,E>
 where
     E: Env,
-    Args: Sized + Send + Sync + 'static,
+    Args: Clone + Sized + Send + Sync + 'static,
     Target: MuTarget<E> + ?Sized,
     T: MutorTo<Args,Target,E> + Sized,
     for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>
