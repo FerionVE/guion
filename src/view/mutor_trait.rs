@@ -93,11 +93,6 @@ pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Size
     ) where 'cc: 'c;
 
     // #[inline]
-    // fn convert_to_target<T>(&self) -> ConvertToTarget<Self,Target,T,Args,E> where for<'a> T: MuTarget<E,Mutable<'a>=Target::Mutable<'a>> {
-    //     ConvertToTarget(self.clone(),PhantomData)
-    // }
-
-    // #[inline]
     // fn _boxed_to(&self) -> Box<dyn MutorToDyn<Args,Target,E>+'static> {
     //     Box::new(self.clone())
     // }
@@ -338,6 +333,11 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
     #[inline]
     fn erase<'a>(&'a self) -> &'a BoxingMutorToBuilder<Args,Target,Self,E> {
         unsafe{std::mem::transmute::<&'a Self,&'a BoxingMutorToBuilder<Args,Target,Self,E>>(self)}
+    }
+
+    #[inline]
+    fn convert_to_target<'a,T>(&'a self) -> &'a ConvertToTargetBuilder<Self,Target,T,Args,E> where for<'b> T: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
+        unsafe{std::mem::transmute::<&'a Self,&'a ConvertToTargetBuilder<Self,Target,T,Args,E>>(self)}
     }
 }
 impl<Args,Target,T,E> MutorToBuilderExt<Args,Target,E> for T
@@ -1123,5 +1123,68 @@ impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Ta
         ctx: &'c mut <E as Env>::Context<'cc>,
     ) where 'cc: 'c {
         (**self).with_mutor_cb(root, callback, args, ctx)
+    }
+}
+
+
+#[repr(transparent)]
+pub struct ConvertToTargetBuilder<T,Target,NewTarget,Args,E>(PhantomData<(Args,&'static Target,&'static NewTarget,E)>,T)
+where
+    E: Env,
+    Args: Sized + Send + Sync + 'static,
+    Target: MuTarget<E> + ?Sized,
+    T: MutorToBuilder<Args,Target,E> + ?Sized,
+    T::Built: Sized,
+    ConvertToTargetor<T::Built,Target,NewTarget,Args,E>: Sized,
+    for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>;
+
+impl<Args,Target,NewTarget,T,E> MutorToBuilder<Args,NewTarget,E> for ConvertToTargetBuilder<T,Target,NewTarget,Args,E>
+where
+    E: Env,
+    Args: Sized + Send + Sync + 'static,
+    Target: MuTarget<E> + ?Sized,
+    T: MutorToBuilder<Args,Target,E> + ?Sized,
+    T::Built: Sized,
+    ConvertToTargetor<T::Built,Target,NewTarget,Args,E>: Sized,
+    for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>
+{
+    type Built = ConvertToTargetor<T::Built,Target,NewTarget,Args,E>;
+    
+    #[inline]
+    fn build(&self) -> Self::Built {
+        ConvertToTargetor(PhantomData,self.1.build())
+    }
+    // #[inline]
+    // fn build_boxed(&self) -> Box<dyn MutorTo<Args,Target,E>> {
+    //     unsafe{std::mem::transmute(self.1.build_boxed())}
+    // }
+}
+
+#[repr(transparent)]
+pub struct ConvertToTargetor<T,Target,NewTarget,Args,E>(PhantomData<(Args,&'static Target,&'static NewTarget,E)>,T)
+where
+    E: Env,
+    Args: Sized + Send + Sync + 'static,
+    Target: MuTarget<E> + ?Sized,
+    T: MutorTo<Args,Target,E> + ?Sized,
+    for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>;
+
+impl<Args,Target,NewTarget,T,E> MutorTo<Args,NewTarget,E> for ConvertToTargetor<T,Target,NewTarget,Args,E>
+where
+    E: Env,
+    Args: Sized + Send + Sync + 'static,
+    Target: MuTarget<E> + ?Sized,
+    T: MutorTo<Args,Target,E> + ?Sized,
+    for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>
+{
+    #[inline]
+    fn with_mutor_cb<'s,'c,'cc>(
+        &self,
+        root: <E as Env>::RootMut<'s>,
+        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        args: Args,
+        ctx: &'c mut <E as Env>::Context<'cc>,
+    ) where 'cc: 'c {
+        self.1.with_mutor_cb(root, callback, args, ctx)
     }
 }

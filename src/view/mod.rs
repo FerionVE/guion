@@ -9,7 +9,7 @@ use crate::widget::cache::{WidgetCache, WidgetCacheDyn, DynWidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use self::mut_target::MuTarget;
-use self::mutor_trait::{MutorTo, MutorToBuilder, MutorToBuilderDyn};
+use self::mutor_trait::{MutorTo, MutorToBuilder, MutorToBuilderDyn, MutorToBuilderExt};
 
 pub mod view_widget;
 pub mod apply;
@@ -157,7 +157,7 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
         View::view(
             self,
             callback,
-            todo!(),//remut.convert_to_target()._boxed_to(),
+            remut.convert_to_target::<T::Mutarget>().erase(),
             root,
             ctx
         )
