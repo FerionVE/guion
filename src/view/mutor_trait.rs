@@ -820,6 +820,30 @@ where
 //     }
 // }
 
+impl<Targ,Args,MutorFn,E> MutorToBuilder<Args,Targ,E> for MutorForTarget<Targ,Args,MutorFn,E>
+where
+    Self: 'static,
+    E: Env,
+    Targ: MuTarget<E> + ?Sized,
+    Args: Clone + Sized + Send + Sync + 'static,
+    MutorFn: for<'s,'c,'cc> Fn(
+        E::RootMut<'s>,&'s (),
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        Args,
+        &'c mut E::Context<'cc>
+    ) + Clone + Send + Sync + 'static
+{
+    type Built = Self;
+    #[inline]
+    fn erase<'a>(&'a self) -> &'a (dyn MutorToBuilderDyn<Args,Targ,E>+'_) {
+        self
+    }
+    #[inline]
+    fn build(&self) -> Self::Built {
+        Self(self.0.clone(),PhantomData)
+    }
+}
+
 impl<Targ,Args,MutorFn,E> MutorTo<Args,Targ,E> for MutorForTarget<Targ,Args,MutorFn,E>
 where
     Self: 'static,
@@ -833,6 +857,7 @@ where
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static
 {
+    #[inline]
     fn with_mutor_cb<'s,'c,'cc>(
         &self,
         root: E::RootMut<'s>,
@@ -896,6 +921,7 @@ where
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static
 {
+    #[inline]
     pub fn new(f: MutorFn) -> Self {
         Self(f,PhantomData)
     }
@@ -939,6 +965,28 @@ where
 //     }
 // }
 
+impl<MutorFn,Args,E> MutorEndBuilder<Args,E> for MutorEnde<Args,MutorFn,E>
+where
+    Self: 'static,
+    E: Env,
+    Args: Clone + Sized + Send + Sync + 'static,
+    MutorFn: for<'s,'c,'cc> Fn(
+        E::RootMut<'s>,&'s (),
+        Args,
+        &'c mut E::Context<'cc>
+    ) + Clone + Send + Sync + 'static
+{
+    type Built = Self;
+    #[inline]
+    fn erase<'a>(&'a self) -> &'a (dyn MutorEndBuilderDyn<Args,E>+'_) {
+        self
+    }
+    #[inline]
+    fn build(&self) -> Self::Built {
+        Self(self.0.clone(),PhantomData)
+    }
+}
+
 impl<MutorFn,Args,E> MutorEnd<Args,E> for MutorEnde<Args,MutorFn,E>
 where
     Self: 'static,
@@ -950,6 +998,7 @@ where
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static
 {
+    #[inline]
     fn with_mutor_end<'s,'c,'cc>(
         &self,
         root: E::RootMut<'s>,

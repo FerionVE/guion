@@ -51,7 +51,7 @@ where
     E: Env,
     RightViewFn: Fn()->RightView,
     LeftArgs: Clone + Sized + Send + Sync + 'static,
-    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E>,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
     LeftTarget: MuTarget<E> + ?Sized,
     RightView: View<E>,
     MutorFn: for<'s,'ss,'c,'cc> Fn(
@@ -130,7 +130,7 @@ where
     E: Env,
     RightViewFn: Fn()->RightView,
     LeftArgs: Clone + Sized + Send + Sync + 'static,
-    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E>,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
     LeftTarget: MuTarget<E> + ?Sized,
     RightView: View<E>,
     MutorFn: for<'s,'ss,'c,'cc> Fn(
