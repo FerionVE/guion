@@ -24,7 +24,7 @@ pub trait View<E> where E: Env {
     type WidgetCache: WidgetCache<E>;
     type Mutarget: MuTarget<E>;
 
-    fn view<R>(&self, dispatch: DynViewDispatch<'_,R,E>, mutor: &MutorToBuilderDyn<'_,(),Self::Mutarget,E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R;
+    fn view<R>(&self, dispatch: DynViewDispatch<'_,R,E>, mutor: &(dyn MutorToBuilderDyn<(),Self::Mutarget,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R;
 }
 
 impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
@@ -32,7 +32,7 @@ impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
     type Mutarget = T::Mutarget;
 
     #[inline]
-    fn view<R>(&self, callback: DynViewDispatch<'_,R,E>, remut: &MutorToBuilderDyn<'_,(),Self::Mutarget,E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<R>(&self, callback: DynViewDispatch<'_,R,E>, remut: &(dyn MutorToBuilderDyn<(),Self::Mutarget,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     {
         (**self).view(callback,remut,root,ctx)
     }
@@ -141,7 +141,7 @@ pub trait ViewDyn2<E,M> where M: MuTarget<E>, E: Env {
     fn view_dyn(
         &self,
         dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: &MutorToBuilderDyn<'_,(),M,E>,
+        remut: &(dyn MutorToBuilderDyn<(),M,E>+'_),
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn;
 }
@@ -151,13 +151,13 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
     fn view_dyn(
         &self,
         callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: &MutorToBuilderDyn<'_,(),M,E>,
+        remut: &(dyn MutorToBuilderDyn<(),M,E>+'_),
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
         View::view(
             self,
             callback,
-            &remut.convert_to_target::<T::Mutarget>().erase(),
+            remut.erase_convert(),
             root,
             ctx
         )
@@ -169,7 +169,7 @@ impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
     type Mutarget = M;
 
     #[inline]
-    fn view<R>(&self, dispatch: DynViewDispatch<'_,R,E>, mutor: &MutorToBuilderDyn<'_,(),Self::Mutarget,E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<R>(&self, dispatch: DynViewDispatch<'_,R,E>, mutor: &(dyn MutorToBuilderDyn<(),M,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     {
         let mut callback_return: Option<R> = None;
         self.view_dyn(

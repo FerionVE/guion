@@ -9,14 +9,13 @@ use crate::widget::stack::QueryCurrentBounds;
 use super::*;
 use imp::ICheckBox;
 
-impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
+impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     State: AtomState<E,bool>,
     Text: AsWidget<E>,
-    TrMut: MutorEnd<bool,E>,
 {
     type Cache = CheckBoxCache<Text::WidgetCache,E>;
 
@@ -234,7 +233,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     );
 }
 
-impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<'_,E,State,Text,TrMut> where Self: Widget<E>, E: Env {
+impl<E,State,Text> AsWidget<E> for CheckBox<'_,E,State,Text> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

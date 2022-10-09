@@ -1,4 +1,4 @@
-use crate::view::mutor_trait::MutorEnd;
+use crate::view::mutor_trait::{MutorEnd, MutorEndBuilder, MutorEndBuilderDyn};
 
 use super::*;
 use std::borrow::Cow;
@@ -10,7 +10,7 @@ pub mod widget;
 pub mod state;
 pub mod imp;
 
-pub struct TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where
+pub struct TextBox<'w,E,Text,Scroll,Curs> where
     E: Env,
     Self: 'w,
 {
@@ -20,13 +20,12 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where
     pub text: Text,
     pub scroll: Scroll,
     pub cursor: Curs,
-    pub glyph_cache: GlyphCache,
-    pub update: TBUpd,
-    pub scroll_update: TBScr,
-    p: PhantomData<&'w (Text,Scroll,Curs,TBUpd,TBScr,GlyphCache)>,
+    pub update: Option<&'w (dyn MutorEndBuilderDyn<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>+'w)>,
+    pub scroll_update: Option<&'w (dyn MutorEndBuilderDyn<(u32,u32),E>+'w)>,
+    p: PhantomData<&'w (Text,Scroll,Curs)>,
 }
 
-impl<'w,E> TextBox<'w,E,String,(u32,u32),ETCurSel<E>,(),(),LocalGlyphCache<E>> where
+impl<'w,E> TextBox<'w,E,String,(u32,u32),ETCurSel<E>> where
     E: Env,
 {
     #[inline]
@@ -38,14 +37,13 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),ETCurSel<E>,(),(),LocalGlyphCache<E>> w
             text: "".to_owned(),
             scroll: (0,0),
             cursor: Default::default(), //TODO default trait
-            glyph_cache: None,
-            update: (),
-            scroll_update: (),
+            update: None,
+            scroll_update: None,
             p: PhantomData,
         }
     }
 }
-impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,ETCurSel<E>>,(),(),RemoteState<E,LocalGlyphCache<E>>> where
+impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,ETCurSel<E>>> where
     E: Env,
 {
     #[inline]
@@ -56,42 +54,44 @@ impl<'w,E,Text> TextBox<'w,E,Text,RemoteState<E,(u32,u32)>,RemoteState<E,ETCurSe
             text,
             scroll: RemoteState::for_widget(id.clone()),
             cursor: RemoteState::for_widget(id.clone()), //TODO default trait
-            glyph_cache: RemoteState::for_widget(id.clone()),
-            update: (),
-            scroll_update: (),
+            update: None,
+            scroll_update: None,
             id,
             p: PhantomData,
         }
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,LocalGlyphCache<E>> where
+impl<'w,E,Text,Scroll,Curs> TextBox<'w,E,Text,Scroll,Curs> where
     E: Env,
-    TBUpd: MutorEnd<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
-    TBScr: MutorEnd<(u32,u32),E>,
+    //TBUpd: MutorEndBuilder<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
+    //TBScr: MutorEndBuilder<(u32,u32),E>,
 {
     #[inline]
-    pub fn immediate_test(id: E::WidgetID, text: Text, scroll: Scroll, cursor: Curs, tbupd: TBUpd, tbscr: TBScr) -> Self {
+    pub fn immediate_test<TBUpd,TBScr>(id: E::WidgetID, text: Text, scroll: Scroll, cursor: Curs, tbupd: &'w TBUpd, tbscr: &'w TBScr) -> Self 
+    where
+        TBUpd: MutorEndBuilder<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
+        TBScr: MutorEndBuilder<(u32,u32),E>,
+    {
         Self{
             size: Gonstraints::empty(),
             style: Default::default(),
             text,
             scroll: scroll,
             cursor: cursor, //TODO default trait
-            glyph_cache: None, //TODO fix caching
-            update: tbupd,
-            scroll_update: tbscr,
+            update: Some(tbupd.erase()),
+            scroll_update: Some(tbscr.erase()),
             id,
             p: PhantomData,
         }
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> where
+impl<'w,E,Text,Scroll,Curs> TextBox<'w,E,Text,Scroll,Curs> where
     E: Env,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,TBUpd,TBScr,GlyphCache> where T: 'w {
+    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs> where T: 'w {
         TextBox{
             id: self.id,
             size: self.size,
@@ -99,7 +99,6 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> TextBox<'w,E,Text,Scroll,Curs
             text,
             scroll: self.scroll,
             cursor: self.cursor,
-            glyph_cache: self.glyph_cache,
             scroll_update: self.scroll_update,
             update: self.update,
             p: PhantomData,
@@ -107,21 +106,21 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr,GlyphCache> TextBox<'w,E,Text,Scroll,Curs
     }
 
     //TODO use a unified state object
-    #[inline]
-    pub fn with_states<PScroll,CCurs>(self, scroll: PScroll, cursor: CCurs) -> TextBox<'w,E,Text,PScroll,CCurs,TBUpd,TBScr,GlyphCache> where PScroll: 'w, CCurs: 'w {
-        TextBox{
-            id: self.id,
-            size: self.size,
-            style: self.style,
-            text: self.text,
-            scroll,
-            cursor,
-            glyph_cache: self.glyph_cache,
-            update: self.update,
-            scroll_update: self.scroll_update,
-            p: PhantomData,
-        }
-    }
+    // #[inline]
+    // pub fn with_states<PScroll,CCurs>(self, scroll: PScroll, cursor: CCurs) -> TextBox<'w,E,Text,PScroll,CCurs,TBUpd,TBScr,GlyphCache> where PScroll: 'w, CCurs: 'w {
+    //     TextBox{
+    //         id: self.id,
+    //         size: self.size,
+    //         style: self.style,
+    //         text: self.text,
+    //         scroll,
+    //         cursor,
+    //         glyph_cache: self.glyph_cache,
+    //         update: self.update,
+    //         scroll_update: self.scroll_update,
+    //         p: PhantomData,
+    //     }
+    // }
 
     #[inline]
     pub fn with_size(mut self, s: ESize<E>) -> Self {

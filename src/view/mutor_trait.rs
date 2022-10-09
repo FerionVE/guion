@@ -12,7 +12,7 @@ use super::mut_target::{MuTarget, RootMutTarget};
 pub trait MutorEndBuilder<Args,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     type Built: MutorEnd<Args,E> + Sized + Send + Sync + 'static;
 
-    //fn _erase_builder(&self) -> &MutorEndBuilderDyn<'_,Args,E>;
+    fn erase<'a>(&'a self) -> &'a (dyn MutorEndBuilderDyn<Args,E>+'_);
 
     fn build(&self) -> Self::Built;
 
@@ -22,14 +22,14 @@ pub trait MutorEndBuilder<Args,E>: Send + Sync where E: Env, Args: Clone + Sized
     }
 }
 
-pub type MutorEndBuilderDyn<'a,Args,E> = dyn MutorEndBuilder<Args,E,Built=Box<dyn MutorEnd<Args,E>>> + 'a;
+//pub type MutorEndBuilderDyn<'a,Args,E> = dyn MutorEndBuilder<Args,E,Built=Box<dyn MutorEnd<Args,E>>> + 'a;
 
 impl<Args,E> MutorEndBuilder<Args,E> for () where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     type Built = ();
-    // #[inline]
-    // fn _erase_builder(&self) -> &MutorEndBuilderDyn<'_,Args,E> {
-    //     self
-    // }
+    #[inline]
+    fn erase<'a>(&'a self) -> &'a (dyn MutorEndBuilderDyn<Args,E>+'_) {
+        self
+    }
     #[inline]
     fn build(&self) -> Self::Built {
         ()
@@ -62,8 +62,9 @@ impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Clone + Sized + Send + 
 
 pub trait MutorEndBuilderExt<Args,E>: MutorEndBuilder<Args,E> + Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     #[inline]
-    fn erase<'a>(&'a self) -> BoxingMutorEndBuilder<'a,Args,Self,E> {
-        BoxingMutorEndBuilder(PhantomData,self)
+    fn build_box_mut_event(&self, args: Args) -> BoxMutEvent<E> {
+        let b = self.build();
+        Box::new(#[inline] move |root,_,ctx| b.with_mutor_end(root, args, ctx) )
     }
 }
 impl<Args,T,E> MutorEndBuilderExt<Args,E> for T where T: MutorEndBuilder<Args,E> + Send + Sync + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {}
@@ -71,7 +72,12 @@ impl<Args,T,E> MutorEndBuilderExt<Args,E> for T where T: MutorEndBuilder<Args,E>
 pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     type Built: MutorTo<Args,Target,E> + Sized + Send + Sync + 'static;
 
-    //fn _erase_builder(&self) -> &MutorToBuilderDyn<'_,Args,Target,E>;
+    fn erase<'a>(&'a self) -> &'a (dyn MutorToBuilderDyn<Args,Target,E>+'_);
+
+    #[inline]
+    fn erase_convert<'a,NewTarget>(&'a self) -> &'a dyn MutorToBuilderDyn<Args,NewTarget,E> where for<'b> NewTarget: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
+        unsafe{std::mem::transmute(self.erase())} //TODO absolutely unsound temphack
+    }
 
     fn build(&self) -> Self::Built;
 
@@ -81,7 +87,7 @@ pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Clone +
     }
 }
 
-pub type MutorToBuilderDyn<'a,Args,Target,E> = dyn MutorToBuilder<Args,Target,E,Built=Box<dyn MutorTo<Args,Target,E>>> + 'a;
+//pub type MutorToBuilderDyn<'a,Args,Target,E> = dyn MutorToBuilder<Args,Target,E,Built=Box<dyn MutorTo<Args,Target,E>>> + 'a;
 
 pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
@@ -325,15 +331,15 @@ pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Clon
 }
 
 pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
-    #[inline]
-    fn erase<'a>(&'a self) -> BoxingMutorToBuilder<Args,Target,Self,E> {
-        BoxingMutorToBuilder(PhantomData,self)
-    }
+    // #[inline]
+    // fn erase<'a>(&'a self) -> BoxingMutorToBuilder<Args,Target,Self,E> {
+    //     BoxingMutorToBuilder(PhantomData,self)
+    // }
 
-    #[inline]
-    fn convert_to_target<'a,T>(&'a self) -> ConvertToTargetBuilder<'a,Self,Target,T,Args,E> where for<'b> T: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
-        ConvertToTargetBuilder(PhantomData,self)
-    }
+    // #[inline]
+    // fn convert_to_target<'a,T>(&'a self) -> ConvertToTargetBuilder<'a,Self,Target,T,Args,E> where for<'b> T: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
+    //     ConvertToTargetBuilder(PhantomData,self)
+    // }
 
     #[inline]
     fn for_view_cb<'a,NewTarget,RightArgs,RightFn>(&'a self, larg: Args, fun: RightFn) -> ForTargetCBBuilder<'a,Self,Args,Target,RightArgs,NewTarget,RightFn,E>
@@ -465,6 +471,11 @@ where
     type Built = impl MutorTo<RightArgs,RightTarget,E>;
 
     #[inline]
+    fn erase<'h>(&'h self) -> &'h dyn MutorToBuilderDyn<RightArgs,RightTarget,E> {
+        self
+    }
+
+    #[inline]
     fn build(&self) -> Self::Built {
         let left = self.0.build();
         let larg = self.1.clone();
@@ -533,6 +544,11 @@ where
     ) + Clone + Send + Sync + 'static
 {
     type Built = impl MutorEnd<RightArgs,E>;
+
+    #[inline]
+    fn erase<'h>(&'h self) -> &'h dyn MutorEndBuilderDyn<RightArgs,E> {
+        self
+    }
 
     #[inline]
     fn build(&self) -> Self::Built {
@@ -1215,57 +1231,57 @@ where
 //     }
 // }
 
-#[repr(transparent)]
-pub struct BoxingMutorEndBuilder<'a,Args,T,E>(PhantomData<(Args,E)>,&'a T)
-where
-    E: Env,
-    Args: Clone + Sized + Send + Sync + 'static,
-    T: MutorEndBuilder<Args,E> + ?Sized;
+// #[repr(transparent)]
+// pub struct BoxingMutorEndBuilder<'a,Args,T,E>(PhantomData<(Args,E)>,&'a T)
+// where
+//     E: Env,
+//     Args: Clone + Sized + Send + Sync + 'static,
+//     T: MutorEndBuilder<Args,E> + ?Sized;
 
-impl<'a,Args,T,E> MutorEndBuilder<Args,E> for BoxingMutorEndBuilder<'a,Args,T,E>
-where
-    E: Env,
-    Args: Clone + Sized + Send + Sync + 'static,
-    T: MutorEndBuilder<Args,E> + ?Sized
-{
-    type Built = Box<dyn MutorEnd<Args,E>>;
+// impl<'a,Args,T,E> MutorEndBuilder<Args,E> for BoxingMutorEndBuilder<'a,Args,T,E>
+// where
+//     E: Env,
+//     Args: Clone + Sized + Send + Sync + 'static,
+//     T: MutorEndBuilder<Args,E> + ?Sized
+// {
+//     type Built = Box<dyn MutorEnd<Args,E>>;
 
-    #[inline]
-    fn build(&self) -> Self::Built {
-        self.1.build_boxed()
-    }
-    #[inline]
-    fn build_boxed(&self) -> Box<dyn MutorEnd<Args,E>> {
-        self.1.build_boxed()
-    }
-}
+//     #[inline]
+//     fn build(&self) -> Self::Built {
+//         self.1.build_boxed()
+//     }
+//     #[inline]
+//     fn build_boxed(&self) -> Box<dyn MutorEnd<Args,E>> {
+//         self.1.build_boxed()
+//     }
+// }
 
-#[repr(transparent)]
-pub struct BoxingMutorToBuilder<'a,Args,Target,T,E>(PhantomData<(Args,&'static Target,E)>,&'a T)
-where
-    E: Env,
-    Args: Clone + Sized + Send + Sync + 'static,
-    Target: MuTarget<E> + ?Sized,
-    T: MutorToBuilder<Args,Target,E> + ?Sized;
+// #[repr(transparent)]
+// pub struct BoxingMutorToBuilder<'a,Args,Target,T,E>(PhantomData<(Args,&'static Target,E)>,&'a T)
+// where
+//     E: Env,
+//     Args: Clone + Sized + Send + Sync + 'static,
+//     Target: MuTarget<E> + ?Sized,
+//     T: MutorToBuilder<Args,Target,E> + ?Sized;
 
-impl<'a,Args,Target,T,E> MutorToBuilder<Args,Target,E> for BoxingMutorToBuilder<'a,Args,Target,T,E>
-where
-    E: Env,
-    Args: Clone + Sized + Send + Sync + 'static,
-    Target: MuTarget<E> + ?Sized,
-    T: MutorToBuilder<Args,Target,E> + ?Sized
-{
-    type Built = Box<dyn MutorTo<Args,Target,E>>;
+// impl<'a,Args,Target,T,E> MutorToBuilder<Args,Target,E> for BoxingMutorToBuilder<'a,Args,Target,T,E>
+// where
+//     E: Env,
+//     Args: Clone + Sized + Send + Sync + 'static,
+//     Target: MuTarget<E> + ?Sized,
+//     T: MutorToBuilder<Args,Target,E> + ?Sized
+// {
+//     type Built = Box<dyn MutorTo<Args,Target,E>>;
     
-    #[inline]
-    fn build(&self) -> Self::Built {
-        self.1.build_boxed()
-    }
-    #[inline]
-    fn build_boxed(&self) -> Box<dyn MutorTo<Args,Target,E>> {
-        self.1.build_boxed()
-    }
-}
+//     #[inline]
+//     fn build(&self) -> Self::Built {
+//         self.1.build_boxed()
+//     }
+//     #[inline]
+//     fn build_boxed(&self) -> Box<dyn MutorTo<Args,Target,E>> {
+//         self.1.build_boxed()
+//     }
+// }
 
 impl<Args,T,E> MutorEnd<Args,E> for Box<T> where T: MutorEnd<Args,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {
     #[inline]
@@ -1314,6 +1330,11 @@ where
     for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>
 {
     type Built = ConvertToTargetor<T::Built,Target,NewTarget,Args,E>;
+
+    #[inline]
+    fn erase<'a>(&'a self) -> &'a (dyn MutorToBuilderDyn<Args,NewTarget,E>+'_) {
+        self
+    }
     
     #[inline]
     fn build(&self) -> Self::Built {
@@ -1351,5 +1372,74 @@ where
         ctx: &'c mut <E as Env>::Context<'cc>,
     ) where 'cc: 'c {
         self.1.with_mutor_cb(root, callback, args, ctx)
+    }
+}
+
+pub trait MutorEndBuilderDyn<Args,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static {
+    fn _build_dyn(&self) -> Box<dyn MutorEnd<Args,E>>;
+}
+
+pub trait MutorToBuilderDyn<Args,Target,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+    fn _build_dyn(&self) -> Box<dyn MutorTo<Args,Target,E>>;
+}
+
+impl<T,Args,E> MutorEndBuilderDyn<Args,E> for T where T: MutorEndBuilder<Args,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {
+    #[inline]
+    fn _build_dyn(&self) -> Box<dyn MutorEnd<Args,E>> {
+        (*self).build_boxed()
+    }
+}
+
+// impl<T,Target,NewTarget,Args,E> MutorToBuilderDyn<Args,NewTarget,E> for T
+// where
+//     T: MutorToBuilder<Args,Target,E> + ?Sized,
+//     Args: Clone + Sized + Send + Sync + 'static,
+//     Target: MuTarget<E> + ?Sized,
+//     for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>
+// {
+//     #[inline]
+//     fn _build_dyn(&self) -> Box<dyn MutorTo<Args,NewTarget,E>> {
+//         (**self).build_boxed()
+//         //ConvertToTargetor(PhantomData,(**self).build())
+//     }
+// }
+
+impl<T,Target,Args,E> MutorToBuilderDyn<Args,Target,E> for T
+where
+    E: Env,
+    T: MutorToBuilder<Args,Target,E> + ?Sized,
+    Args: Clone + Sized + Send + Sync + 'static,
+    Target: MuTarget<E> + ?Sized,
+{
+    #[inline]
+    fn _build_dyn(&self) -> Box<dyn MutorTo<Args,Target,E>> {
+        (*self).build_boxed()
+        //ConvertToTargetor(PhantomData,(**self).build())
+    }
+}
+
+impl<Args,E> MutorEndBuilder<Args,E> for dyn MutorEndBuilderDyn<Args,E> + '_ where E: Env, Args: Clone + Sized + Send + Sync + 'static {
+    type Built = Box<dyn MutorEnd<Args,E>>;
+    #[inline]
+    fn build(&self) -> Self::Built {
+        (*self)._build_dyn()
+    }
+
+    #[inline]
+    fn erase<'a>(&'a self) -> &'a dyn MutorEndBuilderDyn<Args,E> {
+        self
+    }
+}
+
+impl<Args,Target,E> MutorToBuilder<Args,Target,E> for dyn MutorToBuilderDyn<Args,Target,E> + '_ where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+    type Built = Box<dyn MutorTo<Args,Target,E>>;
+    #[inline]
+    fn build(&self) -> Self::Built {
+        (*self)._build_dyn()
+    }
+
+    #[inline]
+    fn erase<'a>(&'a self) -> &'a dyn MutorToBuilderDyn<Args,Target,E> {
+        self
     }
 }

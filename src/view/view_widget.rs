@@ -13,7 +13,7 @@ use super::{View, box_view_cb};
 use super::mut_target::MuTarget;
 use super::mutor_trait::*;
 
-pub struct ViewWidget<'a,'b,ViewTy,ViewFn,E>(ViewFn,&'a MutorToBuilderDyn<'b,(),ViewTy::Mutarget,E>,PhantomData<(ViewTy,E)>) where
+pub struct ViewWidget<'a,'b,ViewTy,ViewFn,E>(ViewFn,&'a (dyn MutorToBuilderDyn<(),ViewTy::Mutarget,E>+'b),PhantomData<(ViewTy,E)>) where
     ViewFn: Fn()->ViewTy,
     ViewTy: View<E>,
     E: Env;

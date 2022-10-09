@@ -10,14 +10,13 @@ use crate::widget::stack::{for_child_widget, QueryCurrentBounds, WithCurrentBoun
 use super::*;
 use util::{state::*};
 
-impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
+impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
     W: AsWidget<E>,
     Scroll: AtomState<E,ScrollOff>,
-    MutFn: MutorEnd<ScrollUpdate,E>,
 {
     type Cache = AreaCache<W::WidgetCache,E>;
 
@@ -199,10 +198,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
                     let su = ScrollUpdate{offset:(nx-osx,ny-osy)};
 
                     if su.offset != (0,0) {
-                        if let Some(t) = self.scroll_updater.box_mut_event(su) {
-                            ctx.mutate_closure(t);
-                            passed = true;
-                        }
+                        passed != self.scroll_updater.submit_update(su, ctx);
                     }
                 }
             }
@@ -256,7 +252,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     );
 }
 
-impl<E,W,Scroll,MutFn> AsWidget<E> for Area<'_,E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
+impl<E,W,Scroll> AsWidget<E> for Area<'_,E,W,Scroll> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
