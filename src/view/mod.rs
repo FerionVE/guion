@@ -157,7 +157,7 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
         View::view(
             self,
             callback,
-            remut.erase_convert(),
+            remut.convert_to_target().erase(),
             root,
             ctx
         )

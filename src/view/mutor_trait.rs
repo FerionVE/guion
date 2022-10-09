@@ -75,8 +75,8 @@ pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Clone +
     fn erase<'a>(&'a self) -> &'a (dyn MutorToBuilderDyn<Args,Target,E>+'_);
 
     #[inline]
-    fn erase_convert<'a,NewTarget>(&'a self) -> &'a dyn MutorToBuilderDyn<Args,NewTarget,E> where for<'b> NewTarget: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
-        unsafe{std::mem::transmute(self.erase())} //TODO absolutely unsound temphack
+    fn convert_to_target<'a,NewTarget>(&'a self) -> ConvertToTargetBuilder<'a,Self,Target,NewTarget,Args,E> where for<'b> NewTarget: MuTarget<E,Mutable<'b>=Target::Mutable<'b>> {
+        ConvertToTargetBuilder(PhantomData,self)
     }
 
     fn build(&self) -> Self::Built;
@@ -1253,6 +1253,10 @@ where
 //     #[inline]
 //     fn build_boxed(&self) -> Box<dyn MutorEnd<Args,E>> {
 //         self.1.build_boxed()
+//     }
+//     #[inline]
+//     fn erase<'h>(&'h self) -> &'h (dyn MutorEndBuilderDyn<Args,E>+'_) {
+//         self
 //     }
 // }
 
