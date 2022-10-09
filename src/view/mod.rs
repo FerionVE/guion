@@ -9,7 +9,7 @@ use crate::widget::cache::{WidgetCache, WidgetCacheDyn, DynWidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use self::mut_target::MuTarget;
-use self::mutor_trait::{MutorTo, MutorToDyn};
+use self::mutor_trait::{MutorTo, MutorToBuilder, MutorToBuilderDyn};
 
 pub mod view_widget;
 pub mod apply;
@@ -18,11 +18,13 @@ pub mod message;
 pub mod mutor_trait;
 pub mod mut_target;
 
+pub type DynViewDispatch<'a,R,E> = Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),<E as Env>::RootRef<'r>,&'c mut <E as Env>::Context<'cc>) -> R + 'a>;
+
 pub trait View<E> where E: Env {
     type WidgetCache: WidgetCache<E>;
     type Mutarget: MuTarget<E>;
 
-    fn view<R>(&self, dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + '_>, mutor: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R;
+    fn view<R>(&self, dispatch: DynViewDispatch<'_,R,E>, mutor: &MutorToBuilderDyn<'_,(),Self::Mutarget,E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R;
 }
 
 impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
@@ -30,13 +32,13 @@ impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
     type Mutarget = T::Mutarget;
 
     #[inline]
-    fn view<R>(&self, callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + '_>, remut: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<R>(&self, callback: DynViewDispatch<'_,R,E>, remut: &MutorToBuilderDyn<'_,(),Self::Mutarget,E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     {
         (**self).view(callback,remut,root,ctx)
     }
 }
 
-pub fn box_view_cb<'a,F,R,E>(f: F) -> Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + 'a>
+pub fn box_view_cb<'a,F,R,E>(f: F) -> DynViewDispatch<'a,R,E>
 where
     E: Env,
     F: for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + 'a
@@ -139,7 +141,7 @@ pub trait ViewDyn2<E,M> where M: MuTarget<E>, E: Env {
     fn view_dyn(
         &self,
         dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: Box<dyn MutorToDyn<(),M,E>>,
+        remut: &MutorToBuilderDyn<'_,(),M,E>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn;
 }
@@ -149,13 +151,13 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
     fn view_dyn(
         &self,
         callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-        remut: Box<dyn MutorToDyn<(),M,E>>,
+        remut: &MutorToBuilderDyn<'_,(),M,E>,
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
         View::view(
             self,
             callback,
-            remut.convert_to_target()._boxed(),
+            todo!(),//remut.convert_to_target()._boxed_to(),
             root,
             ctx
         )
@@ -167,7 +169,7 @@ impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
     type Mutarget = M;
 
     #[inline]
-    fn view<R>(&self, dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + '_>, mutor: Box<dyn MutorToDyn<(),Self::Mutarget,E>>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<R>(&self, dispatch: DynViewDispatch<'_,R,E>, mutor: &MutorToBuilderDyn<'_,(),Self::Mutarget,E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     {
         let mut callback_return: Option<R> = None;
         self.view_dyn(
@@ -175,7 +177,7 @@ impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
                 callback_return = Some((dispatch)(widget,root,ctx));
                 ProtectedReturn(PhantomData)
             }),
-            Box::new(mutor),
+            mutor,
             root,
             ctx
         );
