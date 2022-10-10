@@ -43,7 +43,7 @@ impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Clone + Sized + Send + 
     }
 }
 
-pub trait MutorTo<Args,Target,E>: MutorEnd<Args,E> + Clone + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
         &self,
         root: E::RootMut<'s>,
@@ -645,30 +645,6 @@ where
     }
 }
 
-impl<MutorTy,LeftTarget,RightTarget,Args,E> MutorEnd<Args,E> for ConvertToTarget<MutorTy,LeftTarget,RightTarget,Args,E>
-where
-    E: Env,
-    Args: Clone + Sized + Send + Sync + 'static,
-    MutorTy: MutorTo<Args,LeftTarget,E>,
-    LeftTarget: MuTarget<E> + ?Sized,
-    RightTarget: MuTarget<E> + ?Sized,
-    for<'a> RightTarget: MuTarget<E,Mutable<'a>=LeftTarget::Mutable<'a>>
-{
-    fn with_mutor_end<'s,'c,'cc>(
-        &self,
-        root: E::RootMut<'s>,
-        args: Args,
-        ctx: &'c mut E::Context<'cc>,
-    ) where 'cc: 'c {
-        self.0.with_mutor_end(root, args, ctx)
-    }
-
-    #[inline]
-    fn _boxed(&self) -> Box<dyn MutorEndDyn<Args,E>+'static> {
-        MutorEnd::_boxed(&self.0)
-    }
-}
-
 impl<MutorTy,LeftTarget,RightTarget,Args,E> MutorTo<Args,RightTarget,E> for ConvertToTarget<MutorTy,LeftTarget,RightTarget,Args,E>
 where
     E: Env,
@@ -710,7 +686,7 @@ pub trait MutorEndDyn<Args,E>: Send + Sync + 'static where E: Env, Args: Clone +
     fn _boxed_dyn(&self) -> Box<dyn MutorEndDyn<Args,E>+'static>;
 }
 
-pub trait MutorToDyn<Args,Target,E>: MutorEndDyn<Args,E> + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+pub trait MutorToDyn<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb_dyn<'s,'c,'cc>(
         &self,
         root: E::RootMut<'s>,
@@ -785,22 +761,6 @@ impl<Args,E,Targ> Clone for Box<dyn MutorToDyn<Args,Targ,E> + 'static> where E: 
     }
 }
 
-impl<Args,E,Targ> MutorEnd<Args,E> for Box<dyn MutorToDyn<Args,Targ,E> + 'static> where E: Env, Targ: MuTarget<E> + ?Sized, Args: Clone + Sized + Send + Sync + 'static {
-    fn with_mutor_end<'s,'c,'cc>(
-        &self,
-        root: E::RootMut<'s>,
-        args: Args,
-        ctx: &'c mut E::Context<'cc>,
-    ) where 'cc: 'c {
-        (**self).with_mutor_end_dyn(root, args, ctx)
-    }
-
-    #[inline]
-    fn _boxed(&self) -> Box<dyn MutorEndDyn<Args,E>+'static> {
-        MutorEndDyn::_boxed_dyn(&**self)
-    }
-}
-
 impl<Args,E,Targ> MutorTo<Args,Targ,E> for Box<dyn MutorToDyn<Args,Targ,E> + 'static> where E: Env, Targ: MuTarget<E> + ?Sized, Args: Clone + Sized + Send + Sync + 'static {
     fn with_mutor_cb<'s,'c,'cc>(
         &self,
@@ -819,22 +779,6 @@ impl<Args,E,Targ> MutorTo<Args,Targ,E> for Box<dyn MutorToDyn<Args,Targ,E> + 'st
 }
 
 impl<Args,E> MutorEnd<Args,E> for std::sync::Arc<dyn MutorEndDyn<Args,E> + 'static> where E: Env, Args: Clone + Sized + Send + Sync + 'static {
-    fn with_mutor_end<'s,'c,'cc>(
-        &self,
-        root: E::RootMut<'s>,
-        args: Args,
-        ctx: &'c mut E::Context<'cc>,
-    ) where 'cc: 'c {
-        (**self).with_mutor_end_dyn(root, args, ctx)
-    }
-
-    #[inline]
-    fn _boxed(&self) -> Box<dyn MutorEndDyn<Args,E>+'static> {
-        MutorEndDyn::_boxed_dyn(&**self)
-    }
-}
-
-impl<Args,E,Targ> MutorEnd<Args,E> for std::sync::Arc<dyn MutorToDyn<Args,Targ,E> + 'static> where E: Env, Targ: MuTarget<E> + ?Sized, Args: Clone + Sized + Send + Sync + 'static {
     fn with_mutor_end<'s,'c,'cc>(
         &self,
         root: E::RootMut<'s>,
