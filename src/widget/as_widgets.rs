@@ -27,11 +27,11 @@ pub trait AsWidgets<E> where E: Env {
     type ChildID: ChildIDSerialize<E> + Clone + 'static; // + AppendToPathResolvor
     type IdIdxIter: Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
 
-    fn by_index<'w,R>(&self, idx: usize, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w;
 
-    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w;
 
@@ -43,29 +43,29 @@ pub trait AsWidgets<E> where E: Env {
 
     fn full_bounds(&self) -> Self::Bound;
 
-    fn all<'w>(&self, callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all<'w>(&self, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
         self.all_filtered(#[inline] |_,_,_| true, callback, root, ctx)
     }
 
-    fn all_filtered<'w>(&self, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_filtered<'w>(&self, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w;
 
-    fn all_in_bounds<'w>(&self, bound: &Self::Bound, callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds<'w>(&self, bound: &Self::Bound, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
         self.all_in_bounds_filtered(bound, #[inline] |_,_,_| true, callback, root, ctx)
     }
 
-    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w;
 
-    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w;
 }
@@ -78,25 +78,25 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
     type IdIdxIter = T::IdIdxIter;
 
     #[inline]
-    fn by_index<'w,R>(&self, idx: usize, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
-        let callback = AsWidgetsClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
             callback.call(idx, bound, child_id, widget, root, ctx)
         });
-        (**self).by_index(idx, callback, root, ctx)
+        (**self).by_index(idx, &mut callback, root, ctx)
     }
 
     #[inline]
-    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
-        let callback = AsWidgetsClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
             callback.call(idx, bound, child_id, widget, root, ctx)
         });
-        (**self).by_id(id, callback, root, ctx)
+        (**self).by_id(id, &mut callback, root, ctx)
     }
 
     #[inline]
@@ -115,58 +115,58 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
     }
 
     #[inline]
-    fn all<'w>(&self, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all<'w>(&self, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        let callback = AsWidgetsAllClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
             callback.call(idx, bound, child_id, widget, root, ctx)
         });
-        (**self).all(callback, root, ctx)
+        (**self).all(&mut callback, root, ctx)
     }
 
     #[inline]
-    fn all_filtered<'w>(&self, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_filtered<'w>(&self, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        let callback = AsWidgetsAllClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
             callback.call(idx, bound, child_id, widget, root, ctx)
         });
-        (**self).all_filtered(filter, callback, root, ctx)
+        (**self).all_filtered(filter, &mut callback, root, ctx)
     }
 
     #[inline]
-    fn all_in_bounds<'w>(&self, bound: &Self::Bound, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds<'w>(&self, bound: &Self::Bound, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        let callback = AsWidgetsAllClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
             callback.call(idx, bound, child_id, widget, root, ctx)
         });
-        (**self).all_in_bounds(bound, callback, root, ctx)
+        (**self).all_in_bounds(bound, &mut callback, root, ctx)
     }
 
     #[inline]
-    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        let callback = AsWidgetsAllClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
             callback.call(idx, bound, child_id, widget, root, ctx)
         });
-        (**self).all_in_bounds_filtered(bound, filter, callback, root, ctx)
+        (**self).all_in_bounds_filtered(bound, filter, &mut callback, root, ctx)
     }
 
     #[inline]
-    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
-        let callback = AsWidgetsClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsClosure::new(#[inline] |idx,bound,child_id,widget,root,ctx| {
             callback.call(idx, bound, child_id, widget, root, ctx)
         });
-        (**self).resolve(path, callback, root, ctx)
+        (**self).resolve(path, &mut callback, root, ctx)
     }
 }
 
@@ -178,28 +178,28 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
 
     #[inline]
-    fn by_index<'w,R>(&self, idx: usize, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
         self.get(idx).map(#[inline] |v| {
-            let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+            let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                 callback.call(idx, idx..idx+1, idx, widget, root, ctx)
             });
-            v.with_widget(callback,root,ctx)
+            v.with_widget(&mut callback,root,ctx)
         })
     }
 
     #[inline]
-    fn by_id<'w,R>(&self, &id: &Self::ChildID, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_id<'w,R>(&self, &id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
         self.get(id).map(#[inline] |v| {
-            let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+            let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                 callback.call(id, id..id+1, id, widget, root, ctx)
             });
-            v.with_widget(callback,root,ctx)
+            v.with_widget(&mut callback,root,ctx)
         })
     }
 
@@ -219,22 +219,22 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     }
 
     #[inline]
-    fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
         for (i,v) in self.iter().enumerate() {
             if (filter)(i,&(i..i+1),&i) {
-                let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+                let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(i, i..i+1, i, widget, root, ctx)
                 });
-                v.with_widget(callback,root.fork(),ctx)
+                v.with_widget(&mut callback,root.fork(),ctx)
             }
         }
     }
 
     #[inline]
-    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
@@ -243,7 +243,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
         }
     }
 
-    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
@@ -263,28 +263,28 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
 
     #[inline]
-    fn by_index<'w,R>(&self, idx: usize, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
         self.get(idx).map(#[inline] |v| {
-            let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+            let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                 callback.call(idx, idx..idx+1, idx, widget, root, ctx)
             });
-            v.with_widget(callback,root,ctx)
+            v.with_widget(&mut callback,root,ctx)
         })
     }
 
     #[inline]
-    fn by_id<'w,R>(&self, &id: &Self::ChildID, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_id<'w,R>(&self, &id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
         self.get(id).map(#[inline] |v| {
-            let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+            let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                 callback.call(id, id..id+1, id, widget, root, ctx)
             });
-            v.with_widget(callback,root,ctx)
+            v.with_widget(&mut callback,root,ctx)
         })
     }
 
@@ -304,42 +304,42 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     }
 
     #[inline]
-    fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
         for (i,v) in self.iter().enumerate() {
             if (filter)(i,&(i..i+1),&i) {
-                let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+                let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(i, i..i+1, i, widget, root, ctx)
                 });
-                v.with_widget(callback,root.fork(),ctx)
+                v.with_widget(&mut callback,root.fork(),ctx)
             }
         }
     }
 
     #[inline]
-    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
         if let Some(s) = self.get(bound.start .. bound.end.min(self.len())) {
             for (i,v) in self.iter().enumerate() {
                 if (filter)(i,&(i..i+1),&i) {
-                    let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+                    let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                         callback.call(i, i..i+1, i, widget, root, ctx)
                     });
-                    v.with_widget(callback,root.fork(),ctx)
+                    v.with_widget(&mut callback,root.fork(),ctx)
                 }
             }
-            // let callback = AsWidgetsAllClosure::<'_,_,[T],E>::new(#[inline] |a,b,c,widget,root,ctx| {
+            // let mut callback = AsWidgetsAllClosure::<'_,_,[T],E>::new(#[inline] |a,b,c,widget,root,ctx| {
             //     callback.call(a, b, c, widget, root, ctx)
             // });
             // s.all_filtered(filter,callback,root,ctx)
         }
     }
 
-    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
@@ -367,25 +367,25 @@ where
     type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
 
     #[inline]
-    fn by_index<'w,R>(&self, idx: usize, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
-        let callback = AsWidgetsClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
             callback.call(idx, bound.scaled_mul(self.0.clone()), child_id, widget, root, ctx)
         });
-        self.1.by_index(idx, callback, root, ctx)
+        self.1.by_index(idx, &mut callback, root, ctx)
     }
 
     #[inline]
-    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
-        let callback = AsWidgetsClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
             callback.call(idx, bound.scaled_mul(self.0.clone()), child_id, widget, root, ctx)
         });
-        self.1.by_id(id, callback, root, ctx)
+        self.1.by_id(id, &mut callback, root, ctx)
     }
 
     #[inline]
@@ -405,70 +405,70 @@ where
     }
 
     #[inline]
-    fn all<'w>(&self, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all<'w>(&self, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        let callback = AsWidgetsAllClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
             callback.call(idx, bound.scaled_mul(self.0.clone()), child_id, widget, root, ctx)
         });
-        self.1.all(callback, root, ctx)
+        self.1.all(&mut callback, root, ctx)
     }
 
     #[inline]
-    fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        let callback = AsWidgetsAllClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
             callback.call(idx, bound.scaled_mul(self.0.clone()), child_id, widget, root, ctx)
         });
         self.1.all_filtered(
             #[inline] move |i,b,id|
                 (filter)(i,&b.scaled_mul(self.0.clone()),id),
-            callback,
+            &mut callback,
             root,
             ctx
         )
     }
 
     #[inline]
-    fn all_in_bounds<'w>(&self, bound: &Self::Bound, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds<'w>(&self, bound: &Self::Bound, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        let callback = AsWidgetsAllClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
             callback.call(idx, bound.scaled_mul(self.0.clone()), child_id, widget, root, ctx)
         });
-        self.1.all_in_bounds(&bound.scaled_div(self.0.clone()), callback, root, ctx)
+        self.1.all_in_bounds(&bound.scaled_div(self.0.clone()), &mut callback, root, ctx)
     }
 
     #[inline]
-    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        let callback = AsWidgetsAllClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
             callback.call(idx, bound.scaled_mul(self.0.clone()), child_id, widget, root, ctx)
         });
         self.1.all_in_bounds_filtered(
             &bound.scaled_div(self.0.clone()),
             #[inline] move |i,b,id|
                 (filter)(i,&b.scaled_mul(self.0.clone()),id),
-            callback,
+            &mut callback,
             root,
             ctx
         )
     }
 
-    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
-        let callback = AsWidgetsClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
+        let mut callback = AsWidgetsClosure::new(#[inline] |idx,bound:Self::Bound,child_id,widget,root,ctx| {
             callback.call(idx, bound.scaled_mul(self.0.clone()), child_id, widget, root, ctx)
         });
-        self.1.resolve(path, callback, root, ctx)
+        self.1.resolve(path, &mut callback, root, ctx)
     }
 }
 
@@ -523,30 +523,30 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
     type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
 
     #[inline]
-    fn by_index<'w,R>(&self, idx: usize, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
         self.0.get(idx).map(#[inline] |(id,v)| {
-            let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+            let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                 callback.call(idx, idx..idx+1, id.clone(), widget, root, ctx)
             });
-            v.with_widget(callback,root,ctx)
+            v.with_widget(&mut callback,root,ctx)
         })
     }
 
     #[inline]
-    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
         self.0.iter().enumerate()
             .find(#[inline] |(_,(i,_))| *i == *id)
             .map(#[inline] |(i,(id,v))| {
-                let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+                let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(i, i..i+1, id.clone(), widget, root, ctx)
                 });
-                v.with_widget(callback,root,ctx)
+                v.with_widget(&mut callback,root,ctx)
             })
     }
 
@@ -566,35 +566,35 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
     }
 
     #[inline]
-    fn all<'w>(&self, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all<'w>(&self, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
         for (i,(id,v)) in self.0.iter().enumerate() {
-            let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+            let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                 callback.call(i, i..i+1, id.clone(), widget, root, ctx)
             });
-            v.with_widget(callback,root.fork(),ctx)
+            v.with_widget(&mut callback,root.fork(),ctx)
         }
     }
 
     #[inline]
-    fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
         for (i,(id,v)) in self.0.iter().enumerate() {
             if (filter)(i,&(i..i+1),id) {
-                let callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+                let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(i, i..i+1, id.clone(), widget, root, ctx)
                 });
-                v.with_widget(callback,root.fork(),ctx)
+                v.with_widget(&mut callback,root.fork(),ctx)
             }
         }
     }
 
     #[inline]
-    fn all_in_bounds<'w>(&self, bound: &Self::Bound, callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds<'w>(&self, bound: &Self::Bound, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
@@ -604,7 +604,7 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
     }
 
     #[inline]
-    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
@@ -613,7 +613,7 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
         }
     }
 
-    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: Box<dyn AsWidgetsDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
+    fn resolve<'w,R>(&self, path: &[DynIDFragment], callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<R>
     where
         Self: 'w
     {
@@ -689,7 +689,7 @@ macro_rules! impl_tuple {
             type IdIdxIter = impl Iterator<Item=(usize,Self::Bound,Self::ChildID)>;
         
             #[inline]
-            fn by_index<'w,XR>(&self, idx: usize, callback: Box<dyn AsWidgetsDispatch<'w,Self,XR,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
+            fn by_index<'w,XR>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
             where
                 Self: 'w
             {
@@ -699,7 +699,7 @@ macro_rules! impl_tuple {
                     $m => 
                         Some(AsWidget::with_widget(
                             & $x,
-                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
                                 callback.call(idx, idx..idx+1, idx, widget, root, ctx)
                             }),
                             root,ctx,
@@ -708,7 +708,7 @@ macro_rules! impl_tuple {
                     $($mm => 
                         Some(AsWidget::with_widget(
                             & $xx,
-                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
                                 callback.call(idx, idx..idx+1, idx, widget, root, ctx)
                             }),
                             root,ctx,
@@ -719,7 +719,7 @@ macro_rules! impl_tuple {
             }
         
             #[inline]
-            fn by_id<'w,XR>(&self, id: &Self::ChildID, callback: Box<dyn AsWidgetsDispatch<'w,Self,XR,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
+            fn by_id<'w,XR>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
             where
                 Self: 'w
             {
@@ -742,7 +742,7 @@ macro_rules! impl_tuple {
             }
         
             #[inline]
-            fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            fn all_filtered<'w>(&self, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
             where
                 Self: 'w
             {
@@ -757,7 +757,7 @@ macro_rules! impl_tuple {
                     if (filter)(idx,&(idx..idx+1),&idx) {
                         AsWidget::with_widget(
                             $l,
-                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
                                 callback.call(idx, idx..idx+1, idx, widget, root, ctx)
                             }),
                             root.fork(),ctx,
@@ -771,7 +771,7 @@ macro_rules! impl_tuple {
                     if (filter)(idx,&(idx..idx+1),&idx) {
                         AsWidget::with_widget(
                             $ll,
-                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
                                 callback.call(idx, idx..idx+1, idx, widget, root, ctx)
                             }),
                             root.fork(),ctx,
@@ -781,7 +781,7 @@ macro_rules! impl_tuple {
             }
         
             #[inline]
-            fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: Box<dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            fn all_in_bounds_filtered<'w>(&self, bound: &Self::Bound, mut filter: impl for<'a> FnMut(usize,&'a Self::Bound,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
             where
                 Self: 'w
             {
@@ -796,7 +796,7 @@ macro_rules! impl_tuple {
                     if idx >= bound.start && idx < bound.end && (filter)(current_idx,&(current_idx..current_idx+1),&current_idx) {
                         AsWidget::with_widget(
                             $l,
-                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
                                 callback.call(idx, idx..idx+1, idx, widget, root, ctx)
                             }),
                             root.fork(),ctx,
@@ -810,7 +810,7 @@ macro_rules! impl_tuple {
                     if idx >= bound.start && idx < bound.end && (filter)(current_idx,&(current_idx..current_idx+1),&current_idx) {
                         AsWidget::with_widget(
                             $ll,
-                            AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
                                 callback.call(idx, idx..idx+1, idx, widget, root, ctx)
                             }),
                             root.fork(),ctx,
@@ -819,7 +819,7 @@ macro_rules! impl_tuple {
                 })*
             }
         
-            fn resolve<'w,XR>(&self, path: &[DynIDFragment], callback: Box<dyn AsWidgetsDispatch<'w,Self,XR,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
+            fn resolve<'w,XR>(&self, path: &[DynIDFragment], callback: &mut (dyn AsWidgetsDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Option<XR>
             where
                 Self: 'w
             {

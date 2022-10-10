@@ -323,7 +323,7 @@ impl<E,Text,Scroll,Curs> AsWidget<E> for TextBox<'_,E,Text,Scroll,Curs> where Se
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,Ret>(&self, f: Box<dyn dispatchor::AsWidgetDispatch<'w,Self,Ret,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
+    fn with_widget<'w,Ret>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,Ret,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
     where
         Self: 'w
     {

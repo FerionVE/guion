@@ -124,7 +124,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         ctx: &mut E::Context<'_>
     ) -> R
     where
-        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+        F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
    ;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
@@ -177,12 +177,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn with_resolve<'s,F,R>(
         &'s self,
         sub_path: E::WidgetPath,
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
     where
-        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
+        F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
     {
         if sub_path.is_empty() {
             return (callback)(Ok(self.erase()),ctx);
@@ -193,7 +193,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                 //TODO assert that with_child always calls the callback
                 self.with_child(
                     c,
-                    #[inline] |child,ctx| child.unwrap().with_resolve(sub, callback, root.fork(), ctx),
+                    #[inline] |child,ctx| child.unwrap().with_resolve(sub.clone(), &mut callback, root.fork(), ctx),
                     root.fork(), ctx,
                 )
             },
@@ -313,7 +313,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                 #[inline] |child_widget, ctx| {
                     let child_widget = child_widget.unwrap();
                     let stack = stack::for_child_widget(stack, child_widget);
-                    child_widget._tabulate(&stack, to, dir, root.fork(), ctx)
+                    child_widget._tabulate(&stack, to.clone(), dir, root.fork(), ctx)
                 }, 
                 root.fork(), ctx
             )

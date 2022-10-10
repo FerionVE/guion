@@ -27,16 +27,16 @@ impl<'a,ViewTy,ViewFn,E> AsWidget<E> for ViewWidget<'a,ViewTy,ViewFn,E> where
     type WidgetCache = DynWidgetCache<E>;
 
     #[inline]
-    fn with_widget<'w,R>(&self, dispatch: Box<dyn AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, dispatch: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {
         let s = (self.0)();
-        let dis = box_view_cb(move |widget,root,ctx| {
+        let mut dis = box_view_cb(move |widget,root,ctx| {
             dispatch.call(widget, root, ctx)
             //todo!()
         });
-        s.view(dis,&*self.1,root,ctx)
+        s.view(&mut dis,&*self.1,root,ctx)
         //todo!()
     }
 }

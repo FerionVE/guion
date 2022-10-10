@@ -11,11 +11,13 @@ pub enum TabulateDirection { //TODO trait
     Backward,
 }
 
+#[derive(Clone)]
 pub enum TabulateOrigin<E> where E: Env {
     Resolve(E::WidgetPath),
     Enter,
 }
 
+#[derive(Clone)]
 pub enum TabulateResponse<E> where E: Env {
     Done(E::WidgetPath),
     Leave,

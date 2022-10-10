@@ -64,7 +64,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         let render_props = render_props.inside_spacing_border();
 
         self.childs.all(
-            AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 widget.render(
                     &for_child_widget(
                         render_props
@@ -111,7 +111,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         let mut passed = false;
 
         self.childs.all(
-            AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let stack = WithCurrentBounds {
                     inner: for_child_widget(&stack,widget),
                     bounds: bounds.bounds.slice(cache.childs[idx].relative_bounds_cache.as_ref().unwrap()),
@@ -168,16 +168,16 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     fn with_child<'s,F,R>(
         &'s self,
         i: usize,
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
     where
-        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+        F: for<'www,'ww,'c,'cc> FnMut(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
         self.childs.by_index(
             i,
-            AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+            &mut AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -210,7 +210,7 @@ impl<'w,E,T> Pane<'w,E,T> where
         for (idx,child_cache) in cache.childs.iter_mut().enumerate() {
             self.childs.by_index(
                 idx,
-                AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                &mut AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     if child_cache.widget_id != Some(widget.id()) {
                         *child_cache = Default::default();
                         child_cache.widget_id = Some(widget.id());
@@ -256,7 +256,7 @@ impl<'w,E,T> Pane<'w,E,T> where
         for (idx,child_cache) in cache.childs.iter_mut().enumerate() {
             self.childs.by_index(
                 idx,
-                AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                &mut AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     if child_cache.widget_id != Some(widget.id()) {
                         *child_cache = Default::default();
                         child_cache.widget_id = Some(widget.id());
@@ -313,7 +313,7 @@ impl<E,T> AsWidget<E> for Pane<'_,E,T> where Self: Widget<E>, E: Env {
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: Box<dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {

@@ -15,7 +15,7 @@ pub trait RootRef<E> where E: Env {
         ctx: &mut E::Context<'_>,
     ) -> R
     where 
-        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R,
+        F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R,
         Self: 'l;
 
     #[inline]

@@ -104,7 +104,7 @@ impl<'w,E,Text,Tr> Widget<E> for Button<'w,E,Text,Tr> where
         }
 
         self.text.with_widget(
-            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let render_props = render_props
                     .inside_border_of_type(TestStyleBorderType::Component)
                     .fork_with(|p| p.style.bg_color = fill_inner_color.style.current_color() )
@@ -163,7 +163,7 @@ impl<'w,E,Text,Tr> Widget<E> for Button<'w,E,Text,Tr> where
             |stack| widget_size_inside_border_type(
                 stack, TestStyleBorderType::Component,
                 |stack|
-                    self.text.with_widget(AsWidgetClosure::new(
+                    self.text.with_widget(&mut AsWidgetClosure::new(
                         |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
                             widget.size(&for_child_widget(&stack,widget), &mut cache.label_cache, root,ctx)
                     ),root,ctx)
@@ -180,16 +180,16 @@ impl<'w,E,Text,Tr> Widget<E> for Button<'w,E,Text,Tr> where
     fn with_child<'s,F,R>(
         &'s self,
         i: usize,
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
     where
-        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+        F: for<'www,'ww,'c,'cc> FnMut(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
         //if i != 0 {return Err(());} //TODO fix callback
         self.text.with_widget(
-            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+            &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -232,7 +232,7 @@ impl<E,Text,Tr> AsWidget<E> for Button<'_,E,Text,Tr> where Self: Widget<E>, E: E
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: Box<dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {

@@ -18,7 +18,7 @@ pub mod message;
 pub mod mutor_trait;
 pub mod mut_target;
 
-pub type DynViewDispatch<'a,R,E> = Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),<E as Env>::RootRef<'r>,&'c mut <E as Env>::Context<'cc>) -> R + 'a>;
+pub type DynViewDispatch<'a,R,E> = &'a mut (dyn for<'w,'ww,'r,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),<E as Env>::RootRef<'r>,&'c mut <E as Env>::Context<'cc>) -> R + 'a);
 
 pub trait View<E> where E: Env {
     type WidgetCache: WidgetCache<E>;
@@ -38,12 +38,12 @@ impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
     }
 }
 
-pub fn box_view_cb<'a,F,R,E>(f: F) -> DynViewDispatch<'a,R,E>
+pub fn box_view_cb<'a,F,R,E>(f: F) -> F
 where
     E: Env,
-    F: for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + 'a
+    F: for<'w,'ww,'r,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> R + 'a
 {
-    Box::new(f)
+    f
 }
 
 // pub trait ViewDyn<E> where E: Env {
@@ -71,7 +71,7 @@ where
 //         ) + Send + Sync + 'static>,
 //         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
 //     ) -> ProtectedReturn {
-//         let callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_,_>,root,ctx|
+//         let mut callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_,_>,root,ctx|
 //             (callback)(widget.erase(), root, ctx)
 //         );
 //         View::view(
@@ -140,7 +140,7 @@ where
 pub trait ViewDyn2<E,M> where M: MuTarget<E>, E: Env {
     fn view_dyn(
         &self,
-        dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
+        dispatch: &mut (dyn for<'w,'ww,'r,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_),
         remut: &(dyn MutorToBuilderDyn<(),M,E>+'_),
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn;
@@ -150,7 +150,7 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
     #[inline]
     fn view_dyn(
         &self,
-        callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
+        callback: &mut (dyn for<'w,'ww,'r,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_),
         remut: &(dyn MutorToBuilderDyn<(),M,E>+'_),
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
@@ -173,10 +173,10 @@ impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
     {
         let mut callback_return: Option<R> = None;
         self.view_dyn(
-            Box::new(#[inline] |widget,root,ctx| {
+            &mut |widget,root,ctx| {
                 callback_return = Some((dispatch)(widget,root,ctx));
                 ProtectedReturn(PhantomData)
-            }),
+            },
             mutor,
             root,
             ctx

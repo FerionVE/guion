@@ -122,7 +122,7 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
             let text_border = Border::new(size+4/*TODO fix border impl*/*2,0,0,0);
 
             self.text.with_widget(
-                AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     widget.render(
                         &render_props
                             .inside_border(text_border)
@@ -187,7 +187,7 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
             |stack| widget_size_inside_border(
                 stack, text_border,
                 |stack|
-                    self.text.with_widget(AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
+                    self.text.with_widget(&mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
                         widget.size(&stack, &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
@@ -205,15 +205,15 @@ impl<'w,E,State,Text> Widget<E> for CheckBox<'w,E,State,Text> where
     fn with_child<'s,F,R>(
         &'s self,
         i: usize,
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
     where
-        F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+        F: for<'www,'ww,'c,'cc> FnMut(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
         self.text.with_widget(
-            AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+            &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -238,7 +238,7 @@ impl<E,State,Text> AsWidget<E> for CheckBox<'_,E,State,Text> where Self: Widget<
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: Box<dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {

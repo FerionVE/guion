@@ -423,19 +423,18 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn with_child<'s,F,R>(
         &'s self,
         i: usize,
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
     where
-        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+        F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
-        let mut callback = Some(callback);
         let mut callback_return: Option<R> = None;
         unsafe{self.with_child_dyn(
             i,
             &mut |w,ctx| {
-                let r = (callback.take().unwrap_unchecked())(w,ctx);
+                let r = (callback)(w,ctx);
                 callback_return = Some(r);
                 ProtectedReturn(PhantomData)
             },
