@@ -29,6 +29,20 @@ pub trait MutorEnd<Args,E>: Clone + Send + Sync + 'static where E: Env, Args: Cl
     }
 }
 
+impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Clone + Sized + Send + Sync + 'static {
+    fn with_mutor_end<'s,'c,'cc>(
+        &self,
+        _: E::RootMut<'s>,
+        _: Args,
+        _: &'c mut E::Context<'cc>,
+    ) where 'cc: 'c {}
+
+    #[inline]
+    fn box_mut_event(&self, _: Args) -> Option<BoxMutEvent<E>> {
+        None
+    }
+}
+
 pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
         &self,
@@ -411,7 +425,7 @@ pub type MutorEndorIf<LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
 = impl MutorEnd<RightArgs,E>;
 
 #[inline]
-fn create_mutor_to<Targ,Args,MutorFn,E>(f: MutorFn) -> impl MutorTo<Args,Targ,E>
+pub fn create_mutor_to<Targ,Args,MutorFn,E>(f: MutorFn) -> impl MutorTo<Args,Targ,E>
 where
     E: Env,
     Targ: MuTarget<E> + ?Sized,
