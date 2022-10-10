@@ -46,7 +46,7 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
 pub fn view_widget_cb<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
-    MutorForTarget<RightView::Mutarget,(),MutorForViewCB<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+    MutorForViewCB<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
     E
     >
 where
@@ -73,7 +73,7 @@ where
 pub fn view_widget_ret<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
-    MutorForTarget<RightView::Mutarget,(),MutorForViewRet<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+    MutorForViewRet<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
     E
     >
 where
@@ -100,7 +100,7 @@ where
 pub fn view_widget_ref<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
-    MutorForTarget<RightView::Mutarget,(),MutorForViewRef<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+    MutorForViewRef<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
     E
     >
 where
@@ -126,7 +126,7 @@ where
 pub fn view_widget_cb_if<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
-    MutorForTarget<RightView::Mutarget,(),MutorForViewCBIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+    MutorForViewCBIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
     E
     >
 where
@@ -180,7 +180,7 @@ where
 pub fn view_widget_ret_if<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
-    MutorForTarget<RightView::Mutarget,(),MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+    MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
     E
     >
 where
@@ -207,7 +207,7 @@ where
 pub fn view_widget_ret_if_2<RightTarget,RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
-    MutorForTarget<RightTarget,(),MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,RightTarget,(),MutorFn,E>,E>,
+    MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,RightTarget,(),MutorFn,E>,
     E
     >
 where
@@ -235,7 +235,7 @@ where
 pub fn view_widget_ref_if<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
-    MutorForTarget<RightView::Mutarget,(),MutorForViewRefIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+    MutorForViewRefIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
     E
     >
 where

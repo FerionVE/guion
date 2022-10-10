@@ -29,20 +29,6 @@ pub trait MutorEnd<Args,E>: Clone + Send + Sync + 'static where E: Env, Args: Cl
     }
 }
 
-impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Clone + Sized + Send + Sync + 'static {
-    fn with_mutor_end<'s,'c,'cc>(
-        &self,
-        _: E::RootMut<'s>,
-        _: Args,
-        _: &'c mut E::Context<'cc>,
-    ) where 'cc: 'c {}
-
-    #[inline]
-    fn box_mut_event(&self, _: Args) -> Option<BoxMutEvent<E>> {
-        None
-    }
-}
-
 pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
         &self,
@@ -62,7 +48,7 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         Box::new(self.clone())
     }
 
-    fn for_view_cb<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForTarget<NewTarget,RightArgs,MutorForViewCB<Self,Args,Target,NewTarget,RightArgs,RightFn,E>,E>
+    fn for_view_cb<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForViewCB<Self,Args,Target,NewTarget,RightArgs,RightFn,E>
     where
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -75,7 +61,8 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         ) + Clone + Send + Sync + 'static
     {
         let left = self.clone();
-        MutorForTarget::<NewTarget,RightArgs,_,E>::new(
+
+        create_mutor_to(
             #[inline] move |root,_,callback,rarg: RightArgs,ctx| {
                 left.with_mutor_cb(
                     root,
@@ -88,7 +75,7 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         )
     }
 
-    fn for_view_ret<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForTarget<NewTarget,RightArgs,MutorForViewRet<Self,Args,Target,NewTarget,RightArgs,RightFn,E>,E>
+    fn for_view_ret<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForViewRet<Self,Args,Target,NewTarget,RightArgs,RightFn,E>
     where
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -101,7 +88,8 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         ) -> ResolveResult<NewTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
     {
         let left = self.clone();
-        MutorForTarget::<NewTarget,RightArgs,_,E>::new(
+
+        create_mutor_to(
             #[inline] move |root,_,callback,rarg: RightArgs,ctx| {
                 left.with_mutor_cb(
                     root,
@@ -118,7 +106,7 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         )
     }
 
-    fn for_view_ref<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForTarget<NewTarget,RightArgs,MutorForViewRef<Self,Args,Target,NewTarget,RightArgs,RightFn,E>,E>
+    fn for_view_ref<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForViewRef<Self,Args,Target,NewTarget,RightArgs,RightFn,E>
     where
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -130,7 +118,8 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         ) -> ResolveResult<&'s mut NewTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
     {
         let left = self.clone();
-        MutorForTarget::<NewTarget,RightArgs,_,E>::new(
+
+        create_mutor_to(
             #[inline] move |root,_,callback,rarg: RightArgs,ctx| {
                 left.with_mutor_cb(
                     root,
@@ -147,7 +136,7 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         )
     }
 
-    fn for_view_cb_if<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForTarget<NewTarget,RightArgs,MutorForViewCBIf<Self,Args,Target,NewTarget,RightArgs,RightFn,E>,E>
+    fn for_view_cb_if<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForViewCBIf<Self,Args,Target,NewTarget,RightArgs,RightFn,E>
     where
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -160,7 +149,8 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         ) + Clone + Send + Sync + 'static
     {
         let left = self.clone();
-        MutorForTarget::<NewTarget,RightArgs,_,E>::new(
+
+        create_mutor_to(
             #[inline] move |root,_,callback,rarg: RightArgs,ctx| {
                 left.with_mutor_cb(
                     root,
@@ -177,7 +167,7 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         )
     }
 
-    fn for_view_ret_if<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForTarget<NewTarget,RightArgs,MutorForViewRetIf<Self,Args,Target,NewTarget,RightArgs,RightFn,E>,E>
+    fn for_view_ret_if<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForViewRetIf<Self,Args,Target,NewTarget,RightArgs,RightFn,E>
     where
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -190,7 +180,8 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         ) -> ResolveResult<NewTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
     {
         let left = self.clone();
-        MutorForTarget::<NewTarget,RightArgs,_,E>::new(
+
+        create_mutor_to(
             #[inline] move |root,_,callback,rarg: RightArgs,ctx| {
                 left.with_mutor_cb(
                     root,
@@ -210,7 +201,7 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         )
     }
 
-    fn for_view_ref_if<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForTarget<NewTarget,RightArgs,MutorForViewRefIf<Self,Args,Target,NewTarget,RightArgs,RightFn,E>,E>
+    fn for_view_ref_if<NewTarget,RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorForViewRefIf<Self,Args,Target,NewTarget,RightArgs,RightFn,E>
     where
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -222,7 +213,8 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         ) -> ResolveResult<&'s mut NewTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
     {
         let left = self.clone();
-        MutorForTarget::<NewTarget,RightArgs,_,E>::new(
+
+        create_mutor_to(
             #[inline] move |root,_,callback,rarg: RightArgs,ctx| {
                 left.with_mutor_cb(
                     root,
@@ -242,7 +234,7 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         )
     }
 
-    fn mutor_end<RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorEnde<RightArgs,MutorEndor<Self,Args,Target,RightArgs,RightFn,E>,E>
+    fn mutor_end<RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorEndor<Self,Args,Target,RightArgs,RightFn,E>
     where
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -253,7 +245,8 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         ) + Clone + Send + Sync + 'static
     {
         let left = self.clone();
-        MutorEnde::<RightArgs,_,E>::new(
+
+        create_mutor_end(
             #[inline] move |root,_,rarg: RightArgs,ctx| {
                 left.with_mutor_cb(
                     root,
@@ -266,7 +259,7 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         )
     }
 
-    fn mutor_end_if<RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorEnde<RightArgs,MutorEndorIf<Self,Args,Target,RightArgs,RightFn,E>,E>
+    fn mutor_end_if<RightArgs,RightFn>(&self, larg: Args, fun: RightFn) -> MutorEndorIf<Self,Args,Target,RightArgs,RightFn,E>
     where
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
@@ -277,7 +270,8 @@ pub trait MutorTo<Args,Target,E>: Clone + Send + Sync + 'static where E: Env, Ar
         ) + Clone + Send + Sync + 'static
     {
         let left = self.clone();
-        MutorEnde::<RightArgs,_,E>::new(
+
+        create_mutor_end(
             #[inline] move |root,_,rarg: RightArgs,ctx| {
                 left.with_mutor_cb(
                     root,
@@ -308,12 +302,7 @@ pub type MutorForViewCB<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,RightF
             RightArgs,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
- = impl for<'s,'c,'cc> Fn(
-    E::RootMut<'s>,&'s (),
-    &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
-    RightArgs,
-    &'c mut E::Context<'cc>
-) + Clone + Send + Sync + 'static;
+ = impl MutorTo<RightArgs,NewTarget,E>;
  
 pub type MutorForViewRet<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,RightFn,E>
     where
@@ -329,12 +318,7 @@ pub type MutorForViewRet<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,Right
             RightArgs,
             &'c mut E::Context<'cc>
         ) -> ResolveResult<NewTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
-= impl for<'s,'c,'cc> Fn(
-    E::RootMut<'s>,&'s (),
-    &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
-    RightArgs,
-    &'c mut E::Context<'cc>
-) + Clone + Send + Sync + 'static;
+= impl MutorTo<RightArgs,NewTarget,E>;
 
 pub type MutorForViewRef<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,RightFn,E>
     where
@@ -349,12 +333,7 @@ pub type MutorForViewRef<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,Right
             RightArgs,
             &'c mut E::Context<'cc>
         ) -> ResolveResult<&'s mut NewTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
-= impl for<'s,'c,'cc> Fn(
-    E::RootMut<'s>,&'s (),
-    &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
-    RightArgs,
-    &'c mut E::Context<'cc>
-) + Clone + Send + Sync + 'static;
+= impl MutorTo<RightArgs,NewTarget,E>;
 
 pub type MutorForViewCBIf<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,RightFn,E>
     where
@@ -370,12 +349,7 @@ pub type MutorForViewCBIf<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,Righ
             RightArgs,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
- = impl for<'s,'c,'cc> Fn(
-    E::RootMut<'s>,&'s (),
-    &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
-    RightArgs,
-    &'c mut E::Context<'cc>
-) + Clone + Send + Sync + 'static;
+ = impl MutorTo<RightArgs,NewTarget,E>;
  
 pub type MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,RightFn,E>
     where
@@ -391,12 +365,7 @@ pub type MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,Rig
             RightArgs,
             &'c mut E::Context<'cc>
         ) -> ResolveResult<NewTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
-= impl for<'s,'c,'cc> Fn(
-    E::RootMut<'s>,&'s (),
-    &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
-    RightArgs,
-    &'c mut E::Context<'cc>
-) + Clone + Send + Sync + 'static;
+= impl MutorTo<RightArgs,NewTarget,E>;
 
 pub type MutorForViewRefIf<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,RightFn,E>
     where
@@ -411,12 +380,7 @@ pub type MutorForViewRefIf<LeftMutor,LeftArgs,LeftTarget,NewTarget,RightArgs,Rig
             RightArgs,
             &'c mut E::Context<'cc>
         ) -> ResolveResult<&'s mut NewTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
-= impl for<'s,'c,'cc> Fn(
-    E::RootMut<'s>,&'s (),
-    &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
-    RightArgs,
-    &'c mut E::Context<'cc>
-) + Clone + Send + Sync + 'static;
+= impl MutorTo<RightArgs,NewTarget,E>;
 
 pub type MutorEndor<LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
     where
@@ -430,11 +394,7 @@ pub type MutorEndor<LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
             RightArgs,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
-= impl for<'s,'c,'cc> Fn(
-    E::RootMut<'s>,&'s (),
-    RightArgs,
-    &'c mut E::Context<'cc>
-) + Clone + Send + Sync + 'static;
+= impl MutorEnd<RightArgs,E>;
 
 pub type MutorEndorIf<LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
     where
@@ -448,28 +408,11 @@ pub type MutorEndorIf<LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
             RightArgs,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
-= impl for<'s,'c,'cc> Fn(
-    E::RootMut<'s>,&'s (),
-    RightArgs,
-    &'c mut E::Context<'cc>
-) + Clone + Send + Sync + 'static;
+= impl MutorEnd<RightArgs,E>;
 
-pub struct MutorForTarget<Targ,Args,MutorFn,E>(MutorFn,PhantomData<(&'static Targ,Args,E)>)
+#[inline]
+fn create_mutor_to<Targ,Args,MutorFn,E>(f: MutorFn) -> impl MutorTo<Args,Targ,E>
 where
-    Self: 'static,
-    E: Env,
-    Targ: MuTarget<E> + ?Sized,
-    Args: Clone + Sized + Send + Sync + 'static,
-    MutorFn: for<'s,'c,'cc> Fn(
-        E::RootMut<'s>,&'s (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
-        Args,
-        &'c mut E::Context<'cc>
-    ) + Clone + Send + Sync + 'static;
-
-impl<Targ,Args,MutorFn,E> MutorForTarget<Targ,Args,MutorFn,E>
-where
-    Self: 'static,
     E: Env,
     Targ: MuTarget<E> + ?Sized,
     Args: Clone + Sized + Send + Sync + 'static,
@@ -480,30 +423,10 @@ where
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
 {
-    pub fn new(f: MutorFn) -> Self {
-        Self(f,PhantomData)
-    }
+    f
 }
 
-impl<Targ,Args,MutorFn,E> Clone for MutorForTarget<Targ,Args,MutorFn,E>
-where
-    Self: 'static,
-    E: Env,
-    Targ: MuTarget<E> + ?Sized,
-    Args: Clone + Sized + Send + Sync + 'static,
-    MutorFn: for<'s,'c,'cc> Fn(
-        E::RootMut<'s>,&'s (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
-        Args,
-        &'c mut E::Context<'cc>
-    ) + Clone + Send + Sync + 'static
-{
-    fn clone(&self) -> Self {
-        Self(self.0.clone(),PhantomData)
-    }
-}
-
-impl<Targ,Args,MutorFn,E> MutorTo<Args,Targ,E> for MutorForTarget<Targ,Args,MutorFn,E>
+impl<Targ,Args,MutorFn,E> MutorTo<Args,Targ,E> for MutorFn
 where
     Self: 'static,
     E: Env,
@@ -523,7 +446,7 @@ where
         args: Args,
         ctx: &'c mut E::Context<'cc>,
     ) where 'cc: 'c {
-        (self.0)(root,&(),callback,args,ctx)
+        (self)(root,&(),callback,args,ctx)
     }
 
     // type MutorConvertTarget<T> = MutorForTarget<MutorFn,T,Args,E>
@@ -534,73 +457,21 @@ where
     // }
 }
 
-impl<Targ,Args,MutorFn,E> MutorEnd<Args,E> for MutorForTarget<Targ,Args,MutorFn,E>
+#[inline]
+pub fn create_mutor_end<Args,MutorFn,E>(f: MutorFn) -> impl MutorEnd<Args,E>
 where
-    Self: 'static,
     E: Env,
-    Targ: MuTarget<E> + ?Sized,
     Args: Clone + Sized + Send + Sync + 'static,
     MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,&'s (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
         Args,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
 {
-    fn with_mutor_end<'s,'c,'cc>(
-        &self,
-        root: E::RootMut<'s>,
-        args: Args,
-        ctx: &'c mut E::Context<'cc>,
-    ) where 'cc: 'c {
-        (self.0)(root,&(),&mut |_,_,_|{},args,ctx)
-    }
+    f
 }
 
-pub struct MutorEnde<Args,MutorFn,E>(MutorFn,PhantomData<(Args,E)>)
-where
-    Self: 'static,
-    E: Env,
-    Args: Sized,
-    MutorFn: for<'s,'c,'cc> Fn(
-        E::RootMut<'s>,&'s (),
-        Args,
-        &'c mut E::Context<'cc>
-    ) + Clone + Send + Sync + 'static;
-
-impl<MutorFn,Args,E> MutorEnde<Args,MutorFn,E>
-where
-    Self: 'static,
-    E: Env,
-    Args: Sized,
-    MutorFn: for<'s,'c,'cc> Fn(
-        E::RootMut<'s>,&'s (),
-        Args,
-        &'c mut E::Context<'cc>
-    ) + Clone + Send + Sync + 'static
-{
-    pub fn new(f: MutorFn) -> Self {
-        Self(f,PhantomData)
-    }
-}
-
-impl<MutorFn,Args,E> Clone for MutorEnde<Args,MutorFn,E>
-where
-    Self: 'static,
-    E: Env,
-    Args: Sized + 'static,
-    MutorFn: for<'s,'c,'cc> Fn(
-        E::RootMut<'s>,&'s (),
-        Args,
-        &'c mut E::Context<'cc>
-    ) + Clone + Send + Sync + 'static
-{
-    fn clone(&self) -> Self {
-        Self(self.0.clone(),PhantomData)
-    }
-}
-
-impl<MutorFn,Args,E> MutorEnd<Args,E> for MutorEnde<Args,MutorFn,E>
+impl<MutorFn,Args,E> MutorEnd<Args,E> for MutorFn
 where
     Self: 'static,
     E: Env,
@@ -618,7 +489,7 @@ where
         args: Args,
         ctx: &'c mut E::Context<'cc>,
     ) where 'cc: 'c {
-        (self.0)(root,&(),args,ctx);
+        (self)(root,&(),args,ctx);
     }
 }
 
