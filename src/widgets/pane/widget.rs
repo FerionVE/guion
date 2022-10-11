@@ -6,6 +6,7 @@ use crate::widget::as_widgets::AsWidgets;
 use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds, for_child_widget};
+use crate::layout::calc::calc_bounds2;
 
 use super::*;
 
@@ -201,30 +202,31 @@ impl<'w,E,T> Pane<'w,E,T> where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E> {
-        cache.childs.resize_with(self.childs(), Default::default);
+        if let Some(gonstraints) = cache.current_gonstraints.as_ref() {return gonstraints.clone();}
 
-        if cache.current_gonstraints.is_some() {return cache.current_gonstraints.clone().unwrap();}
+        cache.childs.resize_with(self.childs(), Default::default);
 
         let mut all_gonstraints = ESize::<E>::empty();
 
-        for (idx,child_cache) in cache.childs.iter_mut().enumerate() {
-            self.childs.by_index(
-                idx,
-                &mut AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                    if child_cache.widget_id != Some(widget.id()) {
-                        *child_cache = Default::default();
-                        child_cache.widget_id = Some(widget.id());
-                    }
+        self.childs.all(
+            &mut AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                let child_cache = &mut cache.childs[idx];
 
-                    let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
-                        widget.size(&for_child_widget(&stack,widget), &mut child_cache.widget_cache, root,ctx)
-                    );
+                let widget_id = widget.id();
 
-                    all_gonstraints.add(&current_gonstraint, self.orientation);
-                }),
-                root.fork(),ctx
-            );
-        }
+                if child_cache.widget_id != Some(widget_id.clone()) {
+                    *child_cache = Default::default();
+                    child_cache.widget_id = Some(widget_id);
+                }
+
+                let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
+                    widget.size(&for_child_widget(&stack,widget), &mut child_cache.widget_cache, root,ctx)
+                );
+
+                all_gonstraints.add(&current_gonstraint, self.orientation);
+            }),
+            root.fork(),ctx
+        );
 
         cache.current_gonstraints = Some(all_gonstraints.clone());
 
@@ -240,8 +242,6 @@ impl<'w,E,T> Pane<'w,E,T> where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> bool {
-        cache.childs.resize_with(self.childs(), Default::default);
-
         if cache.orientation_cachor != Some((dims_inside_border,self.orientation)) {
             need_relayout = true;
             cache.orientation_cachor = Some((dims_inside_border,self.orientation));
@@ -251,34 +251,37 @@ impl<'w,E,T> Pane<'w,E,T> where
 
         if cache.current_layouted {return false;}
 
+        cache.childs.resize_with(self.childs(), Default::default);
+
         let mut all_gonstraints = ESize::<E>::empty();
 
-        for (idx,child_cache) in cache.childs.iter_mut().enumerate() {
-            self.childs.by_index(
-                idx,
-                &mut AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                    if child_cache.widget_id != Some(widget.id()) {
-                        *child_cache = Default::default();
-                        child_cache.widget_id = Some(widget.id());
-                        need_relayout = true;
-                    }
+        self.childs.all(
+            &mut AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                let child_cache = &mut cache.childs[idx];
 
-                    need_relayout |= child_cache.relative_bounds_cache.is_none();
+                let widget_id = widget.id();
 
-                    let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
-                        widget.size(&for_child_widget(&stack,widget), &mut child_cache.widget_cache, root,ctx)
-                    );
+                if child_cache.widget_id != Some(widget_id.clone()) {
+                    *child_cache = Default::default();
+                    child_cache.widget_id = Some(widget_id);
+                    need_relayout = true;
+                }
 
-                    all_gonstraints.add(&current_gonstraint, self.orientation);
+                need_relayout |= child_cache.relative_bounds_cache.is_none();
 
-                    if child_cache.gonstraint_cachor != child_cache.current_gonstraint {
-                        child_cache.gonstraint_cachor = child_cache.current_gonstraint.clone();
-                        need_relayout = true;
-                    }
-                }),
-                root.fork(),ctx
-            );
-        }
+                let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
+                    widget.size(&for_child_widget(&stack,widget), &mut child_cache.widget_cache, root,ctx)
+                );
+
+                all_gonstraints.add(&current_gonstraint, self.orientation);
+
+                if child_cache.gonstraint_cachor != child_cache.current_gonstraint {
+                    child_cache.gonstraint_cachor = child_cache.current_gonstraint.clone();
+                    need_relayout = true;
+                }
+            }),
+            root.fork(),ctx
+        );
 
         cache.current_layouted &= !need_relayout;
 
@@ -287,10 +290,13 @@ impl<'w,E,T> Pane<'w,E,T> where
         if need_relayout {
             cache.layout_rendered = false;
 
-            let new_bounds = calc_bounds(
+            let par_axis = cache.childs.iter()
+                .map(|child_cache| child_cache.gonstraint_cachor.clone().unwrap().into().par(self.orientation) )
+                .collect::<Vec<StdGonstraintAxis>>();
+
+            let new_bounds = calc_bounds2(
                 &dims_inside_border,
-                &cache.childs,
-                |child| child.gonstraint_cachor.clone().unwrap(),
+                &par_axis,
                 self.orientation,
             );
 

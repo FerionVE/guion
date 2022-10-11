@@ -94,35 +94,28 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
             );
         }
 
-        {
-            self.childs.0.with_widget(
-                &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                    widget.render(
-                        &for_child_widget(render_props.slice_absolute(&bounds[0]),widget),
-                        renderer,
-                        force_render, &mut cache.child_caches.0,
-                        root,ctx
-                    )
-                }),
-                root.fork(),ctx
-            );
-        }
-        {
-            self.childs.1.with_widget(
-                &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                    widget.render(
-                        &for_child_widget(render_props.slice_absolute(&bounds[2]),widget),
-                        renderer,
-                        force_render, &mut cache.child_caches.1,
-                        root,ctx
-                    )
-                }),
-                root,ctx
-            );
-        }
-        {
-            //TODO render center
-        }
+        self.childs.0.with_widget(
+            &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                widget.render(
+                    &for_child_widget(render_props.slice_absolute(&bounds[0]),widget),
+                    renderer,
+                    force_render, &mut cache.child_caches.0,
+                    root,ctx
+                )
+            }),
+            root.fork(),ctx
+        );
+        self.childs.1.with_widget(
+            &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                widget.render(
+                    &for_child_widget(render_props.slice_absolute(&bounds[2]),widget),
+                    renderer,
+                    force_render, &mut cache.child_caches.1,
+                    root,ctx
+                )
+            }),
+            root,ctx
+        );
         //TODO FIX viewport
     }
     

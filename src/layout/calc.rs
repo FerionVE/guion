@@ -3,14 +3,20 @@ use super::*;
 pub fn calc_bounds<S,SK>(outer: &Dims, child_constraints: &[SK], mut constraint_key: impl FnMut(&SK) -> S, o: Orientation) -> Vec<Bounds> where S: Gonstraints {
     if child_constraints.is_empty() {return vec![];}
 
-    let width = outer.par(o) as u32;
-
     let pars: Vec<StdGonstraintAxis> = child_constraints.iter()
         .map(|x| (constraint_key)(x).into().par(o) )
         .collect();
 
+    calc_bounds2(outer, &pars, o)
+}
+
+pub fn calc_bounds2(outer: &Dims, parallel_child_axis: &[StdGonstraintAxis], o: Orientation) -> Vec<Bounds> {
+    if parallel_child_axis.is_empty() {return vec![];}
+
+    let width = outer.par(o) as u32;
+
     let snap = {
-        let axis_sum: StdGonstraintAxis = pars.iter().fold(StdGonstraintAxis::empty(), |acc,v| acc+v );
+        let axis_sum: StdGonstraintAxis = parallel_child_axis.iter().fold(StdGonstraintAxis::empty(), |acc,v| acc+v );
 
         if axis_sum.min > width {
             0
@@ -35,7 +41,7 @@ pub fn calc_bounds<S,SK>(outer: &Dims, child_constraints: &[SK], mut constraint_
         ((free as f32)*my_pressure/pressure_sum) as u32
     }
 
-    let mut v: Vec<Option<u32>> = vec![None;child_constraints.len()];
+    let mut v: Vec<Option<u32>> = vec![None;parallel_child_axis.len()];
 
     let mut allocated = 0u32;
 
@@ -47,11 +53,11 @@ pub fn calc_bounds<S,SK>(outer: &Dims, child_constraints: &[SK], mut constraint_
         let free = width-allocated;
         let mut pressure_sum = 0f32;
 
-        for (_,axis) in v.iter().zip(pars.iter()).filter(|(s,_)| s.is_none() ) {
+        for (_,axis) in v.iter().zip(parallel_child_axis.iter()).filter(|(s,_)| s.is_none() ) {
             pressure_sum += axis.pressure;
         }
 
-        for (val,axis) in v.iter_mut().zip(pars.iter()).filter(|(s,_)| s.is_none() ) {
+        for (val,axis) in v.iter_mut().zip(parallel_child_axis.iter()).filter(|(s,_)| s.is_none() ) {
             let should = press_part(axis.pressure,free,pressure_sum);
 
             let lower = lower(axis,snap);
@@ -78,7 +84,7 @@ pub fn calc_bounds<S,SK>(outer: &Dims, child_constraints: &[SK], mut constraint_
 
     let mut out_off = 0u32;
 
-    let mut dest = Vec::with_capacity(child_constraints.len());
+    let mut dest = Vec::with_capacity(parallel_child_axis.len());
 
     for v in v.iter() {
         let par = v.unwrap();
