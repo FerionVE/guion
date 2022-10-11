@@ -13,14 +13,16 @@ use super::{View, box_view_cb};
 use super::mut_target::MuTarget;
 use super::mutor_trait::*;
 
-pub struct ViewWidget<'a,ViewTy,ViewFn,E>(ViewFn,Box<dyn MutorToBuilderDyn<(),ViewTy::Mutarget,E>+'a>,PhantomData<(ViewTy,E)>) where
+pub struct ViewWidget<ViewTy,ViewFn,MutorFn,E>(ViewFn,MutorFn,PhantomData<(ViewTy,E)>) where
     ViewFn: Fn()->ViewTy,
     ViewTy: View<E>,
+    MutorFn: MutorToBuilder<(),ViewTy::Mutarget,E>,
     E: Env;
 
-impl<'a,ViewTy,ViewFn,E> AsWidget<E> for ViewWidget<'a,ViewTy,ViewFn,E> where
+impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E> where
     ViewFn: Fn()->ViewTy,
     ViewTy: View<E>,
+    MutorFn: MutorToBuilder<(),ViewTy::Mutarget,E>,
     E: Env,
 {
     type Widget<'v,'z2> = dyn WidgetDyn<E> + 'v where 'z2: 'v, Self: 'z2;
@@ -36,22 +38,22 @@ impl<'a,ViewTy,ViewFn,E> AsWidget<E> for ViewWidget<'a,ViewTy,ViewFn,E> where
             dispatch.call(widget, root, ctx)
             //todo!()
         });
-        s.view(&mut dis,&*self.1,root,ctx)
+        s.view(&mut dis,self.1.erase(),root,ctx)
         //todo!()
     }
 }
 
-pub fn view_widget_cb<'a,RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: &'a LeftMutor, f: MutorFn) -> ViewWidget<
-    'a,
+pub fn view_widget_cb<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
+    ForTargetCBBuilder<LeftMutor,LeftArgs,LeftTarget,(),RightView::Mutarget,MutorFn,E>,
     E
     >
 where
     E: Env,
     RightViewFn: Fn()->RightView,
     LeftArgs: Clone + Sized + Send + Sync + 'static,
-    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E>,
     LeftTarget: MuTarget<E> + ?Sized,
     RightView: View<E>,
     MutorFn: for<'s,'ss,'c,'cc> Fn(
@@ -63,7 +65,7 @@ where
 {
     ViewWidget(
         v,
-        Box::new(m.for_view_cb::<RightView::Mutarget,(),MutorFn>(a, f)),
+        m.for_view_cb::<RightView::Mutarget,(),MutorFn>(a, f),
         PhantomData
     )
 }
@@ -71,7 +73,7 @@ where
 // pub fn view_widget_ret<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
 //     RightView,
 //     RightViewFn,
-//     MutorForTarget<RightView::Mutarget,(),MutorForViewRet<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+//     MutorForViewRet<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
 //     E
 //     >
 // where
@@ -98,7 +100,7 @@ where
 // pub fn view_widget_ref<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
 //     RightView,
 //     RightViewFn,
-//     MutorForTarget<RightView::Mutarget,(),MutorForViewRef<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+//     MutorForViewRef<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
 //     E
 //     >
 // where
@@ -121,16 +123,17 @@ where
 //     )
 // }
 
-pub fn view_widget_cb_if<'a,RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: &'a LeftMutor, f: MutorFn) -> ViewWidget<
+pub fn view_widget_cb_if<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
+    ForTargetCBIfBuilder<LeftMutor,LeftArgs,LeftTarget,(),RightView::Mutarget,MutorFn,E>,
     E
     >
 where
     E: Env,
     RightViewFn: Fn()->RightView,
     LeftArgs: Clone + Sized + Send + Sync + 'static,
-    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + ?Sized,
+    LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E>,
     LeftTarget: MuTarget<E> + ?Sized,
     RightView: View<E>,
     MutorFn: for<'s,'ss,'c,'cc> Fn(
@@ -142,7 +145,7 @@ where
 {
     ViewWidget(
         v,
-        Box::new(m.for_view_cb_if::<RightView::Mutarget,(),MutorFn>(a, f)),
+        m.for_view_cb_if::<RightView::Mutarget,(),MutorFn>(a, f),
         PhantomData
     )
 }
@@ -177,7 +180,7 @@ where
 // pub fn view_widget_ret_if<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
 //     RightView,
 //     RightViewFn,
-//     MutorForTarget<RightView::Mutarget,(),MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+//     MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
 //     E
 //     >
 // where
@@ -204,7 +207,7 @@ where
 // pub fn view_widget_ret_if_2<RightTarget,RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
 //     RightView,
 //     RightViewFn,
-//     MutorForTarget<RightTarget,(),MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,RightTarget,(),MutorFn,E>,E>,
+//     MutorForViewRetIf<LeftMutor,LeftArgs,LeftTarget,RightTarget,(),MutorFn,E>,
 //     E
 //     >
 // where
@@ -232,7 +235,7 @@ where
 // pub fn view_widget_ref_if<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
 //     RightView,
 //     RightViewFn,
-//     MutorForTarget<RightView::Mutarget,(),MutorForViewRefIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,E>,
+//     MutorForViewRefIf<LeftMutor,LeftArgs,LeftTarget,RightView::Mutarget,(),MutorFn,E>,
 //     E
 //     >
 // where

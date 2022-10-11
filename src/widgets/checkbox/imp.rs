@@ -5,16 +5,19 @@ pub trait ICheckBox<E> where E: Env {
     fn set(&self, v: bool, ctx: &mut E::Context<'_>);
 }
 
-impl<'w,E,State,Text> ICheckBox<E> for CheckBox<'w,E,State,Text> where
+impl<'w,E,State,Text,TrMut> ICheckBox<E> for CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     State: AtomState<E,bool>,
+    TrMut: MutorEndBuilder<bool,E>,
 {
     #[inline]
     fn state(&self) -> &dyn AtomState<E,bool> {
         &self.state
     }
     fn set(&self, v: bool, ctx: &mut E::Context<'_>) {
-        self.updater.submit_update(v, ctx);
+        if let Some(t) = self.updater.build_box_mut_event(v) {
+            ctx.mutate_closure(t)
+        }
     }
 }
 

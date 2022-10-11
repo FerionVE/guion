@@ -11,7 +11,6 @@ use crate::text::layout::TxtLayout;
 use crate::text::layout::TxtLayoutFromStor;
 use crate::text::stor::*;
 use crate::view::mutor_trait::MutorEnd;
-use crate::view::mutor_trait::MutorEndBuilderExt;
 use crate::widget::cache::StdRenderCachors;
 use crate::widget::cache::WidgetCache;
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -23,7 +22,7 @@ use util::{state::*, LocalGlyphCache};
 use super::imp::*;
 use validation::*;
 
-impl<'w,E,Text,Scroll,Curs> Widget<E> for TextBox<'w,E,Text,Scroll,Curs> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -32,6 +31,8 @@ impl<'w,E,Text,Scroll,Curs> Widget<E> for TextBox<'w,E,Text,Scroll,Curs> where
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
+    TBUpd: MutorEndBuilder<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
+    TBScr: MutorEndBuilder<(u32,u32),E>,
 {
     type Cache = TextBoxCache<E>;
 
@@ -253,10 +254,9 @@ impl<'w,E,Text,Scroll,Curs> Widget<E> for TextBox<'w,E,Text,Scroll,Curs> where
                 off.1.max(0).min(max_off.y) as u32,
             );
 
-            if let Some(t) = self.scroll_update {
-                ctx.mutate_closure(t.build_box_mut_event(off));
+            if let Some(t) = self.scroll_update.build_box_mut_event(off) {
+                ctx.mutate_closure(t);
             }
-            
             passed = true;
         } else {
             if let Some(mouse) = ctx.state().cursor_pos() { //TODO strange event handling
@@ -318,7 +318,7 @@ impl<'w,E,Text,Scroll,Curs> Widget<E> for TextBox<'w,E,Text,Scroll,Curs> where
     );
 }
 
-impl<E,Text,Scroll,Curs> AsWidget<E> for TextBox<'_,E,Text,Scroll,Curs> where Self: Widget<E>, E: Env {
+impl<E,Text,Scroll,Curs,TBUpd,TBScr> AsWidget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd,TBScr> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

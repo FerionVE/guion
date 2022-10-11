@@ -10,13 +10,14 @@ use crate::widget::stack::for_child_widget;
 use super::*;
 use super::imp::*;
 
-impl<'w,E,Text,Tr> Widget<E> for Button<'w,E,Text,Tr> where
+impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     Text: AsWidget<E>,
     Tr: Trigger<E>,
+    TrMut: MutorEndBuilder<(),E>,
 {
     type Cache = ButtonCache<Text::WidgetCache,E>;
 
@@ -208,13 +209,14 @@ impl<'w,E,Text,Tr> Widget<E> for Button<'w,E,Text,Tr> where
     );
 }
 
-impl<'w,E,S,Tr> Button<'w,E,S,Tr> where
+impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
     S: AsWidget<E>,
     Tr: Trigger<E>,
+    TrMut: MutorEndBuilder<(),E>,
 {
     pub fn pressed<'l:'s,'cc: 'l,'s>(&self, ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
         ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone())
@@ -227,7 +229,7 @@ impl<'w,E,S,Tr> Button<'w,E,S,Tr> where
     }
 }
 
-impl<E,Text,Tr> AsWidget<E> for Button<'_,E,Text,Tr> where Self: Widget<E>, E: Env {
+impl<E,Text,Tr,TrMut> AsWidget<E> for Button<'_,E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

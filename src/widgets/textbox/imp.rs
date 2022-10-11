@@ -4,7 +4,6 @@ use crate::text::cursel::{Direction, TxtCurSel};
 use crate::text::layout::TxtLayoutFromStor;
 use crate::text::stor::TextStor;
 use crate::text::layout::TxtLayout;
-use crate::view::mutor_trait::MutorEndBuilderExt;
 use crate::widget::cache::ValidationStat;
 
 use super::*;
@@ -25,7 +24,7 @@ pub trait ITextBox<E> where E: Env {
     fn update(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
 }
 
-impl<'w,E,Text,Scroll,Curs> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -34,6 +33,8 @@ impl<'w,E,Text,Scroll,Curs> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs> where
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
+    TBUpd: MutorEndBuilder<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
+    TBScr: MutorEndBuilder<(u32,u32),E>,
 {
     fn insert_text(&self, s: &str, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
         let mut cursor = self.cursor.get(ctx);
@@ -123,15 +124,15 @@ impl<'w,E,Text,Scroll,Curs> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs> where
 
         let off = (vb.off.x as u32, vb.off.y as u32);
         
-        if let Some(t) = self.scroll_update {
-            ctx.mutate_closure(t.build_box_mut_event(off));
+        if let Some(t) = self.scroll_update.build_box_mut_event(off) {
+            ctx.mutate_closure(t);
         }
     }
 
     fn update(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
         if tu.is_some() || nc.is_some() {
-            if let Some(t) = self.update {
-                ctx.mutate_closure(t.build_box_mut_event((tu,nc)));
+            if let Some(t) = self.update.build_box_mut_event((tu,nc)) {
+                ctx.mutate_closure(t);
             }
         }
     }
@@ -139,7 +140,7 @@ impl<'w,E,Text,Scroll,Curs> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs> where
 
 traitcast_for_from_widget!(ITextBox<E>);
 
-impl<'w,E,Text,Scroll,Curs> TextBox<'w,E,Text,Scroll,Curs> where
+impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -148,6 +149,7 @@ impl<'w,E,Text,Scroll,Curs> TextBox<'w,E,Text,Scroll,Curs> where
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
+    TBUpd: MutorEndBuilder<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
 {
     pub(super) fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut TextBoxCache<E>, ctx: &mut E::Context<'_>) -> ValidationStat {
         //TODO also cachor e.g. style that affects text

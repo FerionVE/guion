@@ -1,6 +1,6 @@
 use super::*;
 use crate::text::stor::TextStor;
-use crate::view::mutor_trait::{MutorEnd, MutorEndBuilderDyn, MutorEndBuilder};
+use crate::view::mutor_trait::MutorEndBuilder;
 use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
 use util::LocalGlyphCache;
@@ -9,22 +9,22 @@ use label::Label;
 pub mod widget;
 pub mod imp;
 
-pub struct Button<'w,E,Text,Tr> where
+pub struct Button<'w,E,Text,Tr,TrMut> where
     E: Env,
     Self: 'w,
 {
     pub trigger: Tr,
-    pub trigger_mut: Option<&'w (dyn MutorEndBuilderDyn<(),E>+'w)>,
+    pub trigger_mut: TrMut,
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub text: Text,
-    p: PhantomData<&'w (Text,Tr)>,
+    p: PhantomData<&'w (Text,Tr,TrMut)>,
 }
 
-impl<'w,E> Button<'w,E,Label<'w,E,&'static str>,()> where
+impl<'w,E> Button<'w,E,Label<'w,E,&'static str>,(),()> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {
@@ -35,7 +35,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str>,()> where
             size: constraint!(0|0).into(),
             style: Default::default(),
             trigger: (),
-            trigger_mut: None,
+            trigger_mut: (),
             locked: false,
             text: Label::new(E::WidgetID::new_id()),
             p: PhantomData,
@@ -43,7 +43,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str>,()> where
     }
 }
 
-impl<'w,E,Text> Button<'w,E,Text,()> where
+impl<'w,E,Text> Button<'w,E,Text,(),()> where
     E: Env,
 {
     #[inline]
@@ -53,7 +53,7 @@ impl<'w,E,Text> Button<'w,E,Text,()> where
             size: constraint!(0|0).into(),
             style: Default::default(),
             trigger: (),
-            trigger_mut: None,
+            trigger_mut: (),
             locked: false,
             text,
             p: PhantomData,
@@ -61,11 +61,11 @@ impl<'w,E,Text> Button<'w,E,Text,()> where
     }
 }
 
-impl<'w,E,Text,Tr> Button<'w,E,Text,Tr> where
+impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     E: Env,
 {
     #[inline]
-    pub fn with_trigger<T>(self, mutor: T) -> Button<'w,E,Text,T> where T: Fn(E::RootRef<'_>,&mut E::Context<'_>) {
+    pub fn with_trigger<T>(self, mutor: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(E::RootRef<'_>,&mut E::Context<'_>) {
         Button{
             id: self.id,
             size: self.size,
@@ -78,20 +78,20 @@ impl<'w,E,Text,Tr> Button<'w,E,Text,Tr> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, mutor: &'w T) -> Button<'w,E,Text,Tr> where T: MutorEndBuilder<(),E> {
+    pub fn with_trigger_mut<T>(self, mutor: T) -> Button<'w,E,Text,Tr,T> where T: MutorEndBuilder<(),E> {
         Button{
             id: self.id,
             size: self.size,
             style: self.style,
             trigger: self.trigger,
-            trigger_mut: Some(mutor.erase()),
+            trigger_mut: mutor,
             locked: self.locked,
             text: self.text,
             p: PhantomData,
         }
     }
     #[inline]
-    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T,Tr> where T: 'w {
+    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T,Tr,TrMut> where T: 'w {
         Button{
             id: self.id,
             size: self.size,
@@ -121,11 +121,11 @@ impl<'w,E,Text,Tr> Button<'w,E,Text,Tr> where
     }
 }
 
-impl<'w,E,T,Tr> Button<'w,E,Label<'w,E,T>,Tr> where
+impl<'w,E,T,Tr,TrMut> Button<'w,E,Label<'w,E,T>,Tr,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT>,Tr> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT>,Tr,TrMut> where TT: TextStor<E>+Validation<E>+'w {
         Button{
             id: self.id,
             size: self.size,

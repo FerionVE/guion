@@ -1,6 +1,6 @@
 use crate::error::ResolveResult;
 use crate::view::mut_target::DynAtomStateMutTarget;
-use crate::view::mutor_trait::{MutorEnd, MutorTo, MutorEndBuilderDyn, MutorToBuilderDyn, MutorEndBuilderExt, MutorToBuilder, MutorEndBuilder, MutorToBuilderExt};
+use crate::view::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
 
 use super::*;
 use super::util::state::AtomStateMut;
@@ -8,21 +8,21 @@ use std::{marker::PhantomData};
 
 pub mod widget;
 
-pub struct SplitPane<'w,E,L,R,V> where
+pub struct SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     Self: 'w,
 {
     id: E::WidgetID,
     pub childs: (L,R),
     pub state: V,
-    updater: SplitPaneUpdater<'w,E>,
+    updater: TrMut,
     pub orientation: Orientation,
     pub width: u32, //TODO with from style
     pub style: EStyle<E>,
-    p: PhantomData<&'w (L,R,V)>,
+    p: PhantomData<&'w (L,R,V,TrMut)>,
 }
 
-impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
+impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
     E: Env,
 {
     #[inline]
@@ -31,7 +31,7 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
             id,
             childs,
             state,
-            updater: SplitPaneUpdater::None,
+            updater: (),
             orientation,
             width: 8,
             style: Default::default(),
@@ -40,7 +40,7 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
     }
 }
 
-impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
+impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
 {   
     #[inline]
@@ -50,12 +50,12 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
     }
 
     #[inline]
-    pub fn with_update<T>(self, mutor: &'w T) -> SplitPane<'w,E,L,R,V> where T: MutorEndBuilder<f32,E> {
+    pub fn with_update<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,T> where T: MutorEndBuilder<f32,E> {
         SplitPane{
             id: self.id,
             childs: self.childs,
             state: self.state,
-            updater: SplitPaneUpdater::Apply(mutor.erase()),
+            updater: mutor,
             orientation: self.orientation,
             width: self.width,
             style: self.style,
@@ -63,41 +63,15 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: &'w T) -> SplitPane<'w,E,L,R,V>
+    pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,impl MutorEndBuilder<f32,E>>
     where
-        T: MutorToBuilder<(),DynAtomStateMutTarget<f32>,E>,
+        T: MutorToBuilder<(),DynAtomStateMutTarget<f32>,E> + 'w,
     {
-        SplitPane{
-            id: self.id,
-            childs: self.childs,
-            state: self.state,
-            updater: SplitPaneUpdater::Atomstate(mutor.erase()),
-            orientation: self.orientation,
-            width: self.width,
-            style: self.style,
-            p: PhantomData,
-        }
-    }
-}
-
-pub enum SplitPaneUpdater<'w,E> where E: Env {
-    None,
-    Apply(&'w (dyn MutorEndBuilderDyn<f32,E>+'w)),
-    Atomstate(&'w (dyn MutorToBuilderDyn<(),DynAtomStateMutTarget<f32>,E>+'w)),
-}
-
-impl<'w,E> SplitPaneUpdater<'w,E> where E: Env {
-    fn submit_update(&self, update: f32, ctx: &mut E::Context<'_>) -> bool {
-        match self {
-            SplitPaneUpdater::None => {return false;},
-            &SplitPaneUpdater::Apply(x) => ctx.mutate_closure(x.build_box_mut_event(update)),
-            &SplitPaneUpdater::Atomstate(x) => ctx.mutate_closure(
-                x.mutor_end_if((), |state,_,value,ctx| {
-                    //TODO ResolveResult handling
-                    state.set(value,ctx);
-                }).build_box_mut_event(update)
-            ),
-        }
-        true
+        self.with_update(
+            mutor.mutor_end_if((), |state,_,value,ctx| {
+                //TODO ResolveResult handling
+                state.set(value,ctx);
+            })
+        )
     }
 }

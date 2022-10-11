@@ -11,7 +11,7 @@ use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::stack::{for_child_widget, QueryCurrentBounds, WithCurrentBounds}; //TODO fix req of this import
 
-impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
+impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -20,6 +20,7 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     L: AsWidget<E>,
     R: AsWidget<E>,
     V: AtomState<E,f32>,
+    TrMut: MutorEndBuilder<f32,E>,
 {
     type Cache = SplitPaneCache<L::WidgetCache,R::WidgetCache,E>;
 
@@ -181,7 +182,9 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
                         cx = cx - wx0;
                         let fcx = (cx as f32)/(ww as f32);
 
-                        self.updater.submit_update(fcx, ctx);
+                        if let Some(t) = self.updater.build_box_mut_event(fcx) {
+                            ctx.mutate_closure(t)
+                        }
 
                         bounds = self.calc_bounds(&current.bounds,fcx);
                     }
@@ -286,7 +289,7 @@ impl<'w,E,L,R,V> Widget<E> for SplitPane<'w,E,L,R,V> where
     );
 }
 
-impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
+impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     V: AtomState<E,f32>,
 {
@@ -306,7 +309,7 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V> where
     }
 }
 
-impl<E,L,R,V> AsWidget<E> for SplitPane<'_,E,L,R,V> where Self: Widget<E>, E: Env {
+impl<E,L,R,V,TrMut> AsWidget<E> for SplitPane<'_,E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

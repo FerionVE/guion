@@ -32,9 +32,9 @@ impl<T,E> View<E> for &'_ T where T: View<E> + ?Sized, E: Env {
     type Mutarget = T::Mutarget;
 
     #[inline]
-    fn view<R>(&self, callback: DynViewDispatch<'_,R,E>, remut: &(dyn MutorToBuilderDyn<(),Self::Mutarget,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn view<R>(&self, callback: DynViewDispatch<'_,R,E>, mutor: &(dyn MutorToBuilderDyn<(),Self::Mutarget,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     {
-        (**self).view(callback,remut,root,ctx)
+        (**self).view(callback,mutor,root,ctx)
     }
 }
 
@@ -45,97 +45,6 @@ where
 {
     f
 }
-
-// pub trait ViewDyn<E> where E: Env {
-//     fn view_dyn(
-//         &self,
-//         dispatch: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-//         remut: Arc<dyn for<'s,'c,'cc> Fn( //TODO Arc slow
-//             E::RootMut<'s>,&'s (),
-//             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
-//             &'c mut E::Context<'cc>
-//         ) + Send + Sync + 'static>,
-//         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
-//     ) -> ProtectedReturn;
-// }
-
-// impl<T,E> ViewDyn<E> for T where T: View<E>, E: Env {
-//     #[inline]
-//     fn view_dyn(
-//         &self,
-//         callback: Box<dyn for<'w,'ww,'r,'c,'cc> FnOnce(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_>,
-//         remut: Arc<dyn for<'s,'c,'cc> Fn(
-//             E::RootMut<'s>,&'s (),
-//             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Timmy>,&'iss (),&'c mut E::Context<'cc>)),
-//             &'c mut E::Context<'cc>
-//         ) + Send + Sync + 'static>,
-//         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
-//     ) -> ProtectedReturn {
-//         let mut callback = ViewClosure::new(#[inline] move |widget: &T::Viewed<'_,'_,_>,root,ctx|
-//             (callback)(widget.erase(), root, ctx)
-//         );
-//         View::view(
-//             self,
-//             callback,
-//             move |root,_,callback,ctx| {
-//                 (remut)(root,&(),&mut move |resolved,&(),ctx| {
-//                     let resolved = resolved.expect("TODO");
-//                     (callback)(
-//                         Ok(resolved.into_everything::<Self,E>()),
-//                         &(),ctx
-//                     )
-//                 },ctx)
-//             },
-//             root,
-//             ctx
-//         )
-//     }
-// }
-
-// impl<E> View<E> for dyn ViewDyn<E> + '_ where E: Env {
-//     type Viewed<'v,'z> = dyn WidgetDyn<E>+'v where MutorFn: 'static, 'z: 'v, Self: 'z;
-//     type WidgetCache = DynWidgetCache<E>;
-//     type Mutable<'k> = Timmy;
-
-//     #[inline]
-//     fn view<'d,MutorFn,DispatchFn,R>(&self, dispatch: DispatchFn, mutor: MutorFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-//     where
-//         MutorFn: for<'s,'c,'cc> Fn(
-//             E::RootMut<'s>,&'s (),
-//             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
-//             &'c mut E::Context<'cc>
-//         ) + Clone + Send + Sync + 'static,
-//         DispatchFn: ViewDispatch<'d,Self,MutorFn,R,E>, Self: 'd
-//     {
-//         let mut callback_return: Option<R> = None;
-//         self.view_dyn(
-//             Box::new(|widget,root,ctx| {
-//                 callback_return = Some(dispatch.call(widget,root,ctx));
-//                 ProtectedReturn(PhantomData)
-//             }),
-//             Arc::new(move |root,_,cb,ctx| {
-//                 (mutor)(
-//                     root,&(),
-//                     &mut move |resolved: ResolveResult<&mut Timmy>,&(),ctx| {
-//                         (cb)(resolved,&(),ctx);
-//                     },
-//                     ctx
-//                 )
-//             }),
-//             root,
-//             ctx
-//         );
-//         callback_return.unwrap()
-//     }
-// }
-
-// pub struct Timmy;
-
-// impl Timmy {
-//     fn into_everything<'v,'vv,V,E>(&mut self) -> &'v mut <V as View<E>>::Mutable<'vv> where V: View<E>, E: Env {
-//         todo!()
-//     }
-// }
 
 pub trait ViewDyn2<E,M> where M: MuTarget<E>, E: Env {
     fn view_dyn(
@@ -151,13 +60,13 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
     fn view_dyn(
         &self,
         callback: &mut (dyn for<'w,'ww,'r,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),E::RootRef<'r>,&'c mut E::Context<'cc>) -> ProtectedReturn + '_),
-        remut: &(dyn MutorToBuilderDyn<(),M,E>+'_),
+        mutor: &(dyn MutorToBuilderDyn<(),M,E>+'_),
         root: E::RootRef<'_>, ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
         View::view(
             self,
             callback,
-            remut.convert_to_target().erase(),
+            mutor.convert_to_target().erase(),
             root,
             ctx
         )

@@ -5,18 +5,18 @@ use crate::error::ResolveResult;
 use crate::text::stor::TextStor;
 use crate::validation::Validation;
 use crate::view::mut_target::DynAtomStateMutTarget;
-use crate::view::mutor_trait::{MutorEnd, MutorTo, MutorEndBuilderDyn, MutorToBuilderDyn, MutorEndBuilder, MutorToBuilder, MutorToBuilderExt, MutorEndBuilderExt};
+use crate::view::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
 use std::marker::PhantomData;
 use util::state::*;
 
 pub mod widget;
 pub mod imp;
 
-pub struct CheckBox<'w,E,State,Text> where
+pub struct CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
     Self: 'w,
 {
-    pub updater: CheckBoxUpdater<'w,E>,
+    pub updater: TrMut,
     id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
@@ -24,10 +24,10 @@ pub struct CheckBox<'w,E,State,Text> where
     //pressed: Option<EEKey<E>>,
     pub text: Text,
     pub state: State,
-    p: PhantomData<&'w (State,Text)>,
+    p: PhantomData<&'w (State,Text,TrMut)>,
 }
 
-impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str>,> where
+impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str>,()> where
     E: Env,
     E::WidgetID: WidgetIDAlloc,
 {
@@ -37,7 +37,7 @@ impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str>,> where
             id,
             size: ESize::<E>::empty(),
             style: Default::default(),
-            updater: CheckBoxUpdater::None,
+            updater: (),
             locked: false,
             text: Label::new(E::WidgetID::new_id())
                 .with_align((0.,0.5)),
@@ -47,18 +47,18 @@ impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str>,> where
     }
 }
 
-impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
+impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
 {
     
 
     #[inline]
-    pub fn with_update<T>(self, mutor: &'w T) -> CheckBox<'w,E,State,Text> where T: MutorEndBuilder<bool,E> {
+    pub fn with_update<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,T> where T: MutorEndBuilder<bool,E> {
         CheckBox{
             id: self.id,
             size: self.size,
             style: self.style,
-            updater: CheckBoxUpdater::Apply(mutor.erase()),
+            updater: mutor,
             locked: self.locked,
             text: self.text,
             state: self.state,
@@ -66,24 +66,20 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: &'w T) -> CheckBox<'w,E,State,Text>
+    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl MutorEndBuilder<bool,E>>
     where
-        T: MutorToBuilder<(),DynAtomStateMutTarget<bool>,E>
+        T: MutorToBuilder<(),DynAtomStateMutTarget<bool>,E> + 'w
     {
-        CheckBox{
-            id: self.id,
-            size: self.size,
-            style: self.style,
-            updater: CheckBoxUpdater::Atomstate(mutor.erase()),
-            locked: self.locked,
-            text: self.text,
-            state: self.state,
-            p: PhantomData,
-        }
+        self.with_update(
+            mutor.mutor_end_if((), |state,_,value,ctx| {
+                //TODO ResolveResult handling
+                state.set(value,ctx);
+            })
+        )
     }
 
     #[inline]
-    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T> {
+    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,TrMut> {
         CheckBox{
             id: self.id,
             size: self.size,
@@ -108,11 +104,11 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     }
 }
 
-impl<'w,E,State,T> CheckBox<'w,E,State,Label<'w,E,T>> where
+impl<'w,E,State,T,TrMut> CheckBox<'w,E,State,Label<'w,E,T>,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT>> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT>,TrMut> where TT: TextStor<E>+Validation<E>+'w {
         CheckBox{
             updater: self.updater,
             id: self.id,
@@ -127,24 +123,3 @@ impl<'w,E,State,T> CheckBox<'w,E,State,Label<'w,E,T>> where
 }
 
 //TODO bring the immutable trigger like in Button
-
-pub enum CheckBoxUpdater<'w,E> where E: Env {
-    None,
-    Apply(&'w (dyn MutorEndBuilderDyn<bool,E>+'w)),
-    Atomstate(&'w (dyn MutorToBuilderDyn<(),DynAtomStateMutTarget<bool>,E>+'w)),
-}
-
-impl<'w,E> CheckBoxUpdater<'w,E> where E: Env {
-    fn submit_update(&self, update: bool, ctx: &mut E::Context<'_>) -> bool {
-        match self {
-            CheckBoxUpdater::None => {return false;},
-            &CheckBoxUpdater::Apply(x) => ctx.mutate_closure(x.build_box_mut_event(update)),
-            &CheckBoxUpdater::Atomstate(x) => ctx.mutate_closure(
-                x.mutor_end_if((), |state,_,v,ctx| {
-                    state.set(v,ctx);
-                }).build_box_mut_event(update)
-            ),
-        }
-        true
-    }
-}
