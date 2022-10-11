@@ -235,7 +235,8 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     where
         F: for<'www,'ww,'c,'cc> FnMut(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
-        //if i != 0 {return Err(());} //TODO fix callback
+        if i != 0 { return (callback)(Err(()),ctx); }
+        
         self.inner.with_widget(
             &mut AsWidgetClosure::new(move |widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)

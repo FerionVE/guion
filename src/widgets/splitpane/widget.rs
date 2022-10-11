@@ -277,7 +277,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
-        ).unwrap_or_else(|| todo!()/*(callback)(Err(()),ctx)*/ )
+        ).unwrap_or_else(|| (callback)(Err(()),ctx) )
     }
 
     fn focusable(&self) -> bool {

@@ -181,7 +181,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
-        ).unwrap_or_else(|| todo!()/*(callback)(Err(()),ctx)*/ )
+        ).unwrap_or_else(|| (callback)(Err(()),ctx) ) //TODO AsWidgetsDispatch result is the wrong way around, instead of Result in widget param if conditionally at return
     }
 
     fn focusable(&self) -> bool {

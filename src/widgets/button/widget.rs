@@ -188,7 +188,8 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     where
         F: for<'www,'ww,'c,'cc> FnMut(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
-        //if i != 0 {return Err(());} //TODO fix callback
+        if i != 0 { return (callback)(Err(()),ctx); }
+        
         self.text.with_widget(
             &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)

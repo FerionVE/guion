@@ -213,6 +213,8 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     where
         F: for<'www,'ww,'c,'cc> FnMut(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
+        if i != 0 { return (callback)(Err(()),ctx); }
+        
         self.text.with_widget(
             &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)

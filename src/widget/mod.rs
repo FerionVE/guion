@@ -190,7 +190,6 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         //TODO resolve_child could also return it's ref resolve
         match self.resolve_child(&sub_path,root.fork(),ctx) {
             Ok((c,sub)) => {
-                //TODO assert that with_child always calls the callback
                 self.with_child(
                     c,
                     #[inline] |child,ctx| child.unwrap().with_resolve(sub.clone(), &mut callback, root.fork(), ctx),
