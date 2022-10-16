@@ -1,8 +1,8 @@
 use super::*;
 use util::state::*;
-use crate::dispatchor::{AsWidgetClosure, AsWidgetsClosure, AsWidgetsResult, AsWidgetsResolveClosure, AsWidgetsAllClosure};
+use crate::dispatchor::{AsWidgetClosure, AsWidgetsClosure, AsWidgetsResult, AsWidgetsResolveClosure, AsWidgetsAllClosure, AsWidgetsResolveResult};
 use crate::event::key::Key;
-use crate::newpath::{PathStack, FixedIdx, PathResolvusDyn};
+use crate::newpath::{PathStack, FixedIdx, PathResolvusDyn, PathResolvus};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
@@ -69,7 +69,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         let render_props = render_props.inside_spacing_border();
 
         if need_render {
-            if ctx.state().is_hovered(&self.id) {
+            if ctx.state().is_hovered(path._erase()) {
                 let cursor = match self.orientation {
                     Orientation::Horizontal => StdCursor::SizeWE,
                     Orientation::Vertical => StdCursor::SizeNS,
@@ -83,8 +83,8 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                     .slice_absolute(&bounds[1])
                     .with_style_color_type(TestStyleColorType::Fg)
                     .with_vartype(
-                        ctx.state().is_hovered(&self.id),
-                        ctx.state().is_focused(&self.id),
+                        ctx.state().is_hovered(path._erase()),
+                        ctx.state().is_focused(path._erase()),
                         false, //self.pressed(ctx).is_some(),
                         false, //self.locked, //TODO add locked
                     ),
@@ -134,21 +134,20 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         let current = QueryCurrentBounds.query_in(&stack).unwrap();
         let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
-        let route_to_childs = event_mode.route_to_childs && route_to_widget.map_or(false, |i| i.inner().is_some() );
         let receive_self = event_mode.receive_self && route_to_widget.map_or(true, |i| i.inner().is_none() );
 
-        if !route_to_childs && !receive_self {return false;}
+        if !event_mode.route_to_childs && !receive_self {return false;}
 
         let o = self.orientation;
         let mut bounds = self.calc_bounds(&current.bounds,self.state.get(ctx)); 
 
         let mut passed = false;
 
-        if event_mode.receive_self {
+        if receive_self {
         //if let Some(e) = e.slice_bounds(&bounds[1]).filter(&l) {
-            if let Some(mm) = event.query_variant::<MouseMove,_>(path,&stack) {
+            if let Some(mm) = event.query_variant::<MouseMove,_,_>(path,&stack) {
                 //if mouse is down and was pressed on us
-                if let Some(_) = ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone()) {
+                if let Some(_) = ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()) {
                     let cursor = ctx.state().cursor_pos().expect("TODO");
                     let mut cx = cursor.par(o);
                     let (mut wx0, ww) = current.bounds.par(o);
@@ -191,76 +190,51 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         //}
         }
         if event_mode.route_to_childs {
-            // self.childs.0.with_widget(
-            //     &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-            //         let stack = WithCurrentBounds {
-            //             inner: stack,
-            //             bounds: current.bounds & &bounds[0],
-            //             viewport: current.viewport.clone(),
-            //         };
-        
-            //         passed |= widget.event_direct(&FixedIdx(0usize).push_on_stack(path),&stack,event, &mut cache.child_caches.0, root,ctx);
-            //     }),
-            //     root.fork(),ctx
-            // );
-            // self.childs.1.with_widget(
-            //     &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-            //         let stack = WithCurrentBounds {
-            //             inner: stack,
-            //             bounds: current.bounds & &bounds[2],
-            //             viewport: current.viewport.clone(),
-            //         };
-        
-            //         passed |= widget.event_direct(&FixedIdx(1usize).push_on_stack(path),&stack,event, &mut cache.child_caches.1, root,ctx);
-            //     }),
-            //     root,ctx
-            // );
+            if route_to_widget.as_ref().map_or(false, |&r| PathResolvus::inner(r).is_none() ) {
+                // If the event now resolved to us, disable route_to_widget and send to all childs
+                route_to_widget = None;
+            }
 
-            if let Some(route_to_widget) = route_to_widget {
-                if route_to_widget.inner.is_none() {
-                    // The event is for us
-                    return false;
-                }
-                self.childs.resolve(
-                    route_to_widget,
-                    &mut AsWidgetsResolveClosure::new(|result,root,ctx: &mut E::Context<'_>| {
-                        if let Some(result) = result {
-                            let stack = WithCurrentBounds {
-                                inner: stack,
-                                bounds: current.bounds & &bounds[result.idx.min(1) * 2],
-                                viewport: current.viewport.clone(),
-                            };
-                
-                            passed |= result.widget.event_direct(
-                                result.child_id.push_to_stack(path),
-                                &stack,
-                                event,
-                                result.resolvus,
-                                &mut cache.childs[result.idx].widget_cache,
-                                root,ctx);
-                        }
-                    }),
-                    root,ctx
-                )
-            } else {
-                self.childs.idx_range(
-                    0..self.childs.len(), //TODO there could be a prefilter which checks whether idx child bounds visible in visible-filter mode
-                    &mut AsWidgetsAllClosure::new(|idx,child_id,widget:&<(L,R) as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            if soft_single_child_resolve_check(route_to_widget.clone(),FixedIdx(0)) {
+                self.childs.0.with_widget(
+                    &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                         let stack = WithCurrentBounds {
                             inner: stack,
-                            bounds: current.bounds & &bounds[idx.min(1) * 2],
+                            bounds: current.bounds & &bounds[0],
                             viewport: current.viewport.clone(),
                         };
-            
+
                         passed |= widget.event_direct(
-                            child_id.push_to_stack(path),
+                            &FixedIdx(0).push_on_stack(path),
                             &stack,
                             event,
-                            route_to_widget.inner().unwrap(), //TODO this should be done by the AsWidgets
-                            &mut cache.childs[idx].widget_cache,
-                            root,ctx);
+                            route_to_widget.and_then(PathResolvus::inner),
+                            &mut cache.child_caches.0, 
+                            root,ctx
+                        );
                     }),
-                    root,ctx
+                    root.fork(),ctx
+                );
+            }
+            if soft_single_child_resolve_check(route_to_widget.clone(),FixedIdx(1)) {
+                self.childs.1.with_widget(
+                    &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                        let stack = WithCurrentBounds {
+                            inner: stack,
+                            bounds: current.bounds & &bounds[2],
+                            viewport: current.viewport.clone(),
+                        };
+
+                        passed |= widget.event_direct(
+                            &FixedIdx(1).push_on_stack(path),
+                            &stack,
+                            event,
+                            route_to_widget.and_then(PathResolvus::inner),
+                            &mut cache.child_caches.1, 
+                            root,ctx
+                        );
+                    }),
+                    root.fork(),ctx
                 );
             }
         }
@@ -326,6 +300,59 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                 match result {
                     Some(v) => (callback)(Ok(v.widget.erase()),ctx),
                     None => (callback)(Err(()),ctx)
+                }
+            ),
+            root,ctx
+        )
+    }
+
+    fn with_resolve_child<'s,F,Ret>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> Ret
+    where
+        F: for<'a,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'a,E>,E::Error>,&'c mut E::Context<'cc>) -> Ret
+    {
+        if sub_path.inner().is_none() { return (callback)(Err(todo!()),ctx); }
+
+        self.childs.resolve(
+            sub_path,
+            &mut AsWidgetsResolveClosure::new(|result: Option<AsWidgetsResolveResult<(L,R),E>>,root,ctx: &mut E::Context<'_>| {
+                match result {
+                    Some(result) => (callback)(Ok(WidgetWithResolveChildDyn {
+                        idx: result.idx,
+                        sub_path: result.resolvus,
+                        widget: result.widget.erase(),
+                    }),ctx),
+                    None => (callback)(Err(todo!()),ctx),
+                }
+            }),
+            root,ctx,
+        )
+    }
+
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        idx: usize,
+        path: &Ph,
+        stack: &P,
+        op: TabulateOrigin<E>,
+        dir: TabulateDirection,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        self.childs.by_index(
+            idx,
+            &mut AsWidgetsClosure::new(#[inline] |result: Option<AsWidgetsResult<(L,R),E>>,_,ctx: &mut E::Context<'_>|
+                match result {
+                    Some(v) => v.widget._tabulate(&v.child_id.push_on_stack(path), stack, op, dir, root, ctx),
+                    None => Err(todo!()),
                 }
             ),
             root,ctx

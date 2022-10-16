@@ -1,4 +1,4 @@
-use crate::newpath::PathStack;
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -72,6 +72,7 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
         path: &Ph,
         stack: &P,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -104,6 +105,35 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
         F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
         (callback)(Err(()),ctx)
+    }
+
+    fn with_resolve_child<'s,F,R>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'a,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'a,E>,E::Error>,&'c mut E::Context<'cc>) -> R
+    {
+        (callback)(Err(todo!()),ctx)
+    }
+
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        idx: usize,
+        path: &Ph,
+        stack: &P,
+        op: TabulateOrigin<E>,
+        dir: TabulateDirection,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        Err(todo!())
     }
     
     // fn child_bounds<P,Ph>(&self, path: &Ph,

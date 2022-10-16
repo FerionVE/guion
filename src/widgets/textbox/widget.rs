@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use crate::newpath::PathResolvus;
+use crate::newpath::PathResolvusDyn;
 use crate::newpath::PathStack;
 use crate::queron::Queron;
 use crate::queron::query::Query;
@@ -66,14 +68,14 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         //cursor.fix_boundaries(&*g);
         let off: Offset = self.scroll.get(ctx).into();
 
-        let selected = ctx.state().is_focused(&self.id);
+        let selected = ctx.state().is_focused(path._erase());
 
         if cache.scroll_curs_cachor != Some((cursor.cachor(),off,selected)) {
             need_render = true;
             cache.scroll_curs_cachor = Some((cursor.cachor(),off,selected));
         }
 
-        if ctx.state().is_hovered(&self.id) {
+        if ctx.state().is_hovered(path._erase()) {
             renderer.set_cursor_specific(&StdCursor::IBeam.into(),ctx);
         }
 
@@ -138,6 +140,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         path: &Ph,
         stack: &P,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -146,9 +149,11 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
 
         let style = QueryTestStyle.query_in(&stack).unwrap();
         let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
-        let event_mode = event.query_std_event_mode(&stack).unwrap();
+        let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
-        if !event_mode.receive_self {return false;}
+        let receive_self = event_mode.receive_self && route_to_widget.map_or(true, |i| i.inner().is_none() );
+
+        if !receive_self {return false;}
 
         self.glyphs(&stack, cache, ctx);
 
@@ -163,7 +168,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
 
         let mut passed = false;
 
-        if let Some(ee) = event.query_variant::<TextInput,_>(&stack)  {
+        if let Some(ee) = event.query_variant::<TextInput,_,_>(path,&stack)  {
             if !ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 let s = ee.text.clone();
                 
@@ -172,7 +177,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
 
                 passed = true;
             }
-        } else if let Some(ee) = event.query_variant::<KbdPress<E>,_>(&stack) {
+        } else if let Some(ee) = event.query_variant::<KbdPress<E>,_,_>(path,&stack) {
             if
                 ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdBackspace ||
                 ee.key == MatchKeyCode::KbdLeft || ee.key == MatchKeyCode::KbdRight
@@ -238,7 +243,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
 
                 passed = true;
             }
-        } else if let Some(ee) = event.query_variant::<MouseScroll,_>(&stack) {
+        } else if let Some(ee) = event.query_variant::<MouseScroll,_,_>(path,&stack) {
             //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
             let off = self.scroll.get(ctx);
             let max_off = max_off::<E>(&g,&b);
@@ -260,8 +265,8 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         } else {
             if let Some(mouse) = ctx.state().cursor_pos() { //TODO strange event handling
 
-                let mouse_down = event.query_variant::<MouseDown<E>,_>(&stack).cloned();
-                let mouse_pressed = ctx.state().is_hovered(&self.id()) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone()).is_some();
+                let mouse_down = event.query_variant::<MouseDown<E>,_,_>(path,&stack).cloned();
+                let mouse_pressed = ctx.state().is_hovered(path._erase()) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()).is_some();
                 let b = b.clone();
 
                 self._m(mouse_down,mouse_pressed,mouse,b,g,root.fork(),ctx);
@@ -300,6 +305,35 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         F: for<'www,'ww,'c,'cc> FnOnce(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
         (callback)(Err(()),ctx)
+    }
+
+    fn with_resolve_child<'s,F,R>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'a,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'a,E>,E::Error>,&'c mut E::Context<'cc>) -> R
+    {
+        (callback)(Err(todo!()),ctx)
+    }
+
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        idx: usize,
+        path: &Ph,
+        stack: &P,
+        op: TabulateOrigin<E>,
+        dir: TabulateDirection,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        Err(todo!())
     }
 
     // fn child_bounds<P,Ph>(&self, path: &Ph,

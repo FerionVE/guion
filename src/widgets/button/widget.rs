@@ -1,6 +1,6 @@
 use crate::dispatchor::AsWidgetClosure;
 use crate::event_new::filter::QueryStdEventMode;
-use crate::newpath::{PathStack, SimpleId};
+use crate::newpath::{PathStack, SimpleId, PathResolvusDyn, PathResolvus, PathStackDyn, FwdCompareStat};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::style::standard::cursor::StdCursor;
@@ -57,9 +57,9 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         let render_props = render_props.inside_spacing_border();
 
         let vartypes = (
-            ctx.state().is_hovered(&self.id),
-            ctx.state().is_focused(&self.id),
-            self.pressed(ctx).is_some(),
+            ctx.state().is_hovered(path._erase()),
+            ctx.state().is_focused(path._erase()),
+            self.pressed(path._erase(),ctx).is_some(),
             self.locked,
         );
 
@@ -112,7 +112,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                     );
 
                 widget.render(
-                    SimpleId(ButtonChild).push_on_stack(path), &render_props,
+                    &SimpleId(ButtonChild).push_on_stack(path), &render_props,
                     renderer,
                     force_render,
                     &mut cache.label_cache,
@@ -128,22 +128,25 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         path: &Ph,
         stack: &P,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         let stack = with_inside_spacing_border(stack);
-        let event_mode = event.query_std_event_mode(&stack).unwrap();
+        let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
-        if !event_mode.receive_self {return false;}
+        let receive_self = event_mode.receive_self && route_to_widget.map_or(true, |i| i.inner().is_none() );
 
-        if let Some(ee) = event.query_variant::<MouseUp<E>,_>(&stack) {
-            if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(path) && ctx.state().is_hovered(path) && !self.locked {
+        if !receive_self {return false;}
+
+        if let Some(ee) = event.query_variant::<MouseUp<E>,_,_>(path,&stack) {
+            if ee.key == MatchKeyCode::MouseLeft && path.fwd_compare(&*ee.down_widget) == FwdCompareStat::Equal && ctx.state().is_hovered(path._erase()) && !self.locked {
                 self.trigger(root,ctx);
                 return true;
             }
-        } else if let Some(ee) = event.query_variant::<KbdPress<E>,_>(&stack) {
-            if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.is(path) {
+        } else if let Some(ee) = event.query_variant::<KbdPress<E>,_,_>(path,&stack) {
+            if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && path.fwd_compare(&*ee.down_widget) == FwdCompareStat::Equal {
                 self.trigger(root,ctx);
                 return true;
             }
@@ -166,7 +169,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                 |stack|
                     self.text.with_widget(&mut AsWidgetClosure::new(
                         |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
-                            widget.size(SimpleId(ButtonChild).push_on_stack(path), &stack, &mut cache.label_cache, root,ctx)
+                            widget.size(&SimpleId(ButtonChild).push_on_stack(path), &stack, &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
         );
@@ -197,6 +200,58 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
             root,ctx
         )
     }
+
+    fn with_resolve_child<'s,F,R>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'a,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'a,E>,E::Error>,&'c mut E::Context<'cc>) -> R
+    {
+        if sub_path.try_fragment::<SimpleId<ButtonChild>>().is_some() {
+            self.text.with_widget(
+                &mut AsWidgetClosure::new(move |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+                    (callback)(
+                        Ok(WidgetWithResolveChildDyn {
+                            idx: 0,
+                            sub_path: sub_path.inner().unwrap(),
+                            widget: widget.erase(),
+                        }),
+                        ctx,
+                    )
+                ),
+                root,ctx
+            )
+        } else {
+            (callback)(Err(todo!()),ctx)
+        }
+    }
+
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        idx: usize,
+        path: &Ph,
+        stack: &P,
+        op: TabulateOrigin<E>,
+        dir: TabulateDirection,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        if idx != 0 { return Err(todo!()); }
+
+        self.text.with_widget(
+            &mut AsWidgetClosure::new(move |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+                widget._tabulate(&SimpleId(ButtonChild).push_on_stack(path), stack, op, dir, root, ctx)
+            ),
+            root,ctx
+        )
+    }
     
     // fn child_bounds<P,Ph>(&self, path: &Ph,
     //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
@@ -220,13 +275,13 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     Tr: Trigger<E>,
     TrMut: MutorEndBuilder<(),E>,
 {
-    pub fn pressed<'l:'s,'cc: 'l,'s>(&self, ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
-        ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,self.id.clone())
+    pub fn pressed<'l:'s,'cc: 'l,'s>(&self, path: &(dyn PathStackDyn<E>+'_), ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
+        ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path)
             .or_else(||
-                ctx.state().is_pressed_and_id(MatchKeyCode::KbdReturn,self.id.clone())
+                ctx.state().is_pressed_and_id(MatchKeyCode::KbdReturn,path)
             )
             .or_else(||
-                ctx.state().is_pressed_and_id(MatchKeyCode::KbdSpace,self.id.clone())
+                ctx.state().is_pressed_and_id(MatchKeyCode::KbdSpace,path)
             )
     }
 }

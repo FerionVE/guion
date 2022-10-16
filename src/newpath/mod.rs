@@ -4,7 +4,7 @@ use std::ops::Add;
 use std::sync::Arc;
 use crate::env::Env;
 
-pub trait PathFragment<E>: 'static {
+pub trait PathFragment<E>: PartialEq + 'static { //TODO cachor_eq instead of partialeq
     type Stack<I>: PathStack<E> where I: PathStack<E> + Sized;
     type Resolvus<I>: PathResolvus<E> where I: PathResolvus<E> + Sized;
 

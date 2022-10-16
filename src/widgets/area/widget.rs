@@ -1,5 +1,5 @@
 use crate::dispatchor::AsWidgetClosure;
-use crate::newpath::{PathStack, SimpleId, PathFragment};
+use crate::newpath::{PathStack, SimpleId, PathFragment, PathResolvusDyn, PathResolvus};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
@@ -71,7 +71,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
                     .with_style_color_type(TestStyleColorType::Border)
                     .with_vartype(
                         false, //ctx.state().is_hovered(&self.id),
-                        ctx.state().is_focused(&self.id),
+                        ctx.state().is_focused(path._erase()),
                         false, //self.pressed(ctx).is_some(),
                         false, //self.locked,
                     ),
@@ -120,6 +120,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         path: &Ph,
         stack: &P,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -128,9 +129,11 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         let stack = with_inside_border_by_type(stack,TestStyleBorderType::Component);
         
         let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
-        let event_mode = event.query_std_event_mode(&stack).unwrap();
+        let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
-        if !event_mode.route_to_childs && !event_mode.receive_self {return false;}
+        let receive_self = event_mode.receive_self && route_to_widget.map_or(true, |i| i.inner().is_none() );
+
+        if !event_mode.route_to_childs && !receive_self {return false;}
         
         let rect = bounds.bounds;
 
@@ -152,28 +155,24 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         let mut passed = false;
 
         if event_mode.route_to_childs {
-            // let mut l = l.for_child(0).unwrap();
-            // let e = e.with_bounds(inner_rect);
-            // if let Some(ee) = e.filter(&l) { //TODO API OOF not filtering breaks for_child mechanism
-            //     passed |= l.event_direct(&ee);
-            // }
-
-            self.inner.with_widget(
-                &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                    let stack = WithCurrentBounds {
-                        inner: stack,
-                        bounds: inner_rect,
-                        viewport: *rect,
-                    };
-        
-                    passed |= widget.event_direct(&SimpleId(AreaChild).push_on_stack(path), &stack, event, &mut cache.inner_cache, root,ctx);
-                }),
-                root.fork(),ctx
-            )
+            if soft_single_child_resolve_check(route_to_widget.clone(),SimpleId(AreaChild)) {
+                self.inner.with_widget(
+                    &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                        let stack = WithCurrentBounds {
+                            inner: stack,
+                            bounds: inner_rect,
+                            viewport: *rect,
+                        };
+            
+                        passed |= widget.event_direct(&SimpleId(AreaChild).push_on_stack(path), &stack, event, route_to_widget.and_then(PathResolvus::inner), &mut cache.inner_cache, root,ctx);
+                    }),
+                    root.fork(),ctx
+                )
+            }
         }
 
         if !passed && event_mode.receive_self { //TODO passed stack doof
-            if let Some(ee) = event.query_variant::<KbdPress<E>,_>(&stack) {
+            if let Some(ee) = event.query_variant::<KbdPress<E>,_,_>(path,&stack) {
                 if
                     ee.key == MatchKeyCode::KbdUp || ee.key == MatchKeyCode::KbdDown ||
                     ee.key == MatchKeyCode::KbdLeft || ee.key == MatchKeyCode::KbdRight
@@ -240,6 +239,58 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         self.inner.with_widget(
             &mut AsWidgetClosure::new(move |widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
+            ),
+            root,ctx
+        )
+    }
+
+    fn with_resolve_child<'s,F,R>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'a,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'a,E>,E::Error>,&'c mut E::Context<'cc>) -> R
+    {
+        if sub_path.try_fragment::<SimpleId<AreaChild>>().is_some() {
+            self.inner.with_widget(
+                &mut AsWidgetClosure::new(move |widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+                    (callback)(
+                        Ok(WidgetWithResolveChildDyn {
+                            idx: 0,
+                            sub_path: sub_path.inner().unwrap(),
+                            widget: widget.erase(),
+                        }),
+                        ctx,
+                    )
+                ),
+                root,ctx
+            )
+        } else {
+            (callback)(Err(todo!()),ctx)
+        }
+    }
+
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        idx: usize,
+        path: &Ph,
+        stack: &P,
+        op: TabulateOrigin<E>,
+        dir: TabulateDirection,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        if idx != 0 { return Err(todo!()); }
+
+        self.inner.with_widget(
+            &mut AsWidgetClosure::new(move |widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+                widget._tabulate(&SimpleId(AreaChild).push_on_stack(path), stack, op, dir, root, ctx)
             ),
             root,ctx
         )
