@@ -2,7 +2,7 @@
 use std::any::TypeId;
 use std::sync::Arc;
 
-use crate::newpath::PathStack;
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 
 use super::*;
@@ -39,6 +39,7 @@ pub trait Handler<E>: 'static where E: Env {
         path: &Ph,
         stack: &S,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -50,6 +51,7 @@ pub trait Handler<E>: 'static where E: Env {
         path: &Ph,
         stack: &S,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -106,6 +108,7 @@ impl<E> Handler<E> for () where E: Env {
         path: &Ph,
         stack: &S,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -113,7 +116,7 @@ impl<E> Handler<E> for () where E: Env {
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     {
-        widget._event_direct(path, stack, event, cache, root, ctx)
+        widget._event_direct(path, stack, event, route_to_widget, cache, root, ctx)
     }
     #[inline] 
     fn _event_root<W,Ph,S,Evt>(
@@ -122,6 +125,7 @@ impl<E> Handler<E> for () where E: Env {
         path: &Ph,
         stack: &S,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -131,7 +135,7 @@ impl<E> Handler<E> for () where E: Env {
     {
         if !event._root_only() {//TODO warn eprint??
             //TODO everything wrong here with event root propagation and tail
-            widget._event_direct(path, stack, event, cache, root, ctx)
+            widget._event_direct(path, stack, event, route_to_widget, cache, root, ctx)
             //l.ctx.event_direct(l.widget,e)
         }else{
             false

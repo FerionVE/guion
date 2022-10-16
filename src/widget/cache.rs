@@ -1,8 +1,6 @@
 use std::marker::PhantomData;
 use std::ops::{BitOrAssign, BitAndAssign};
 
-use crate::cachialize::cache::Cache;
-
 use super::*;
 
 pub trait WidgetCache<E>: Default + Sized + 'static {

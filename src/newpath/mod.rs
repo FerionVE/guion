@@ -61,6 +61,7 @@ pub trait PathResolvus<E> { // non-reverse: inner = child widget
     //fn _clone_into_box(&self) -> Arc<dyn PathResolvusDyn<E>>;
 }
 
+#[derive(PartialEq,Clone,Copy)]
 pub enum FwdCompareStat {
     Falsified,
     Equal,
@@ -313,6 +314,25 @@ impl<E,T> PathResolvus<E> for &T where T: PathResolvus<E> + ?Sized {
 pub struct SimpleId<V>(pub V) where V: Clone + PartialEq + 'static;
 
 impl<V,E> PathFragment<E> for SimpleId<V> where V: Clone + PartialEq + 'static, E: Env {
+    type Stack<I> = SimplePathStack<Self,E,I> where I: PathStack<E> + Sized;
+    type Resolvus<I> = SimplePathResolvus<Self,E,I> where I: PathResolvus<E> + Sized;
+
+    #[inline]
+    fn _as_any(&self) -> &dyn Any {
+        self
+    }
+
+    #[inline]
+    fn push_on_stack<I>(&self, target_stack: I) -> Self::Stack<I> where I: PathStack<E> + Sized {
+        SimplePathStack { inner: target_stack, value: self.clone(), _p: PhantomData }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+#[repr(transparent)]
+pub struct FixedIdx(pub usize);
+
+impl<E> PathFragment<E> for FixedIdx where E: Env {
     type Stack<I> = SimplePathStack<Self,E,I> where I: PathStack<E> + Sized;
     type Resolvus<I> = SimplePathResolvus<Self,E,I> where I: PathResolvus<E> + Sized;
 

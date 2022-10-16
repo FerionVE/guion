@@ -2,7 +2,7 @@
 use super::*;
 
 use crate::event::key_combo::{KeyCombo, MatchKey, Matches};
-use crate::newpath::PathResolvusDyn;
+use crate::newpath::{PathResolvusDyn, PathResolvus, FwdCompareStat, PathStackDyn, PathStack};
 
 pub mod handler;
 pub mod dyn_state;
@@ -25,12 +25,12 @@ pub trait StdState<E> where E: Env {
     fn selected(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)>;
 
     #[inline]
-    fn is_hovered(&self, i: &(dyn PathResolvusDyn<E>+'_)) -> bool {
-        self.hovered().map_or(false, #[inline] |w| w == *i )
+    fn is_hovered(&self, i: &(dyn PathStackDyn<E>+'_)) -> bool {
+        self.hovered().map_or(false, #[inline] |w| i.fwd_compare(w) == FwdCompareStat::Equal )
     }
     #[inline]
-    fn is_focused(&self, i: &(dyn PathResolvusDyn<E>+'_)) -> bool {
-        self.selected().map_or(false, #[inline] |w| w == *i )
+    fn is_focused(&self, i: &(dyn PathStackDyn<E>+'_)) -> bool {
+        self.selected().map_or(false, #[inline] |w| i.fwd_compare(w) == FwdCompareStat::Equal )
     }
 
     /*fn pressed(&self) -> &[Self::K];
@@ -55,9 +55,9 @@ pub trait StdState<E> where E: Env {
         }
     }
     #[inline]
-    fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: &(dyn PathResolvusDyn<E>+'_)) -> Option<&Self::K> {
+    fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: &(dyn PathStackDyn<E>+'_)) -> Option<&Self::K> {
         if let Some(v) = self.is_pressed(c) {
-            if v.widget().is(id.clone()) {
+            if id.fwd_compare(&*v.widget()) == FwdCompareStat::Equal {
                 return Some(v);
             }
         }

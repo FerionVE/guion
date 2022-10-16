@@ -16,7 +16,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     T: AsWidgets<E>,
 {
-    type Cache = PaneCache<E,T::WidgetCache,T::ChildID>;
+    type Cache = PaneCache<E,T::WidgetCache,Option<T::ChildID>>;
 
     fn _render<P,Ph>(
         &self,
@@ -99,7 +99,9 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
 
         //dbg!(event._debug(),&event_mode);
 
-        if !event_mode.route_to_childs || route_to_widget.map_or(false, |i| i.inner().is_some() ) {return false;}
+        let route_to_childs = event_mode.route_to_childs && route_to_widget.map_or(false, |i| i.inner().is_some() );
+
+        if !route_to_childs {return false;}
 
         self.do_layout(
             path,
@@ -241,7 +243,7 @@ impl<'w,E,T> Pane<'w,E,T> where
         &self,
         path: &(impl PathStack<E> + ?Sized),
         stack: &(impl Queron<E> + ?Sized),
-        cache: &mut PaneCache<E,T::WidgetCache,T::ChildID>,
+        cache: &mut PaneCache<E,T::WidgetCache,Option<T::ChildID>>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E> {
@@ -282,7 +284,7 @@ impl<'w,E,T> Pane<'w,E,T> where
         path: &(impl PathStack<E> + ?Sized),
         stack: &(impl Queron<E> + ?Sized),
         dims_inside_border: Dims,
-        cache: &mut PaneCache<E,T::WidgetCache,T::ChildID>,
+        cache: &mut PaneCache<E,T::WidgetCache,Option<T::ChildID>>,
         mut need_relayout: bool,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -374,10 +376,10 @@ impl<E,T> AsWidget<E> for Pane<'_,E,T> where Self: Widget<E>, E: Env {
 }
 
 #[derive(Default)]
-pub struct PaneCache<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache<E>, ChildID: Clone + 'static {
+pub struct PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Default + Clone + 'static {
     std_render_cachors: Option<StdRenderCachors<E>>,
     orientation_cachor: Option<(Dims,Orientation)>,
-    childs: Vec<PaneCacheChild<E,ChildCache,ChildID>>,
+    childs: Vec<PaneCacheChild<E,ChildCache,ChildIDCachor>>,
     //valid_layout: bool,
     current_gonstraints: Option<ESize<E>>,
     current_layouted: bool,
@@ -385,32 +387,33 @@ pub struct PaneCache<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }
 
-pub struct PaneCacheChild<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache<E>, ChildID: Clone + 'static {
+pub struct PaneCacheChild<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Default + Clone + 'static {
     current_gonstraint: Option<ESize<E>>,
     relative_bounds_cache: Option<Bounds>,
     gonstraint_cachor: Option<ESize<E>>,
-    widget_id: Option<ChildID>, //TODO ALARM how to cachor ChildIDs
+    widget_id: ChildIDCachor, //TODO ALARM how to cachor ChildIDs
     widget_cache: ChildCache,
 }
 
-impl<E,ChildCache,ChildID> Default for PaneCacheChild<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache<E>, ChildID: Clone + 'static {
+impl<E,ChildCache,ChildIDCachor> Default for PaneCacheChild<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Default + Clone + 'static {
     fn default() -> Self {
         Self {
             relative_bounds_cache: None,
             gonstraint_cachor: None,
-            widget_id: None,
+            widget_id: Default::default(),
             widget_cache: Default::default(),
             current_gonstraint: None,
         }
     }
 }
 
-impl<E,ChildCache,ChildID> WidgetCache<E> for PaneCache<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache<E>, ChildID: Clone + 'static {
+impl<E,ChildCache,ChildIDCachor> WidgetCache<E> for PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Default + Clone + 'static {
     fn reset_current(&mut self) {
         self.current_gonstraints = None;
         self.current_layouted = false;
         for c in &mut self.childs {
             c.current_gonstraint = None;
+            c.widget_id = None;
             c.widget_cache.reset_current();
         }
     }

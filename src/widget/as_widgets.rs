@@ -2,7 +2,7 @@ use std::ops::{Range, Mul, Div};
 
 use crate::dispatchor::*;
 use crate::env::Env;
-use crate::newpath::{PathFragment, PathResolvusDyn, SimpleId};
+use crate::newpath::{PathFragment, PathResolvusDyn, FixedIdx};
 use crate::root::RootRef;
 use crate::widget::cache::DynWidgetCache;
 
@@ -145,7 +145,7 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
 impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
-    type ChildID = SimpleId<usize>;
+    type ChildID = FixedIdx;
     type IdIdxIter = impl Iterator<Item=(usize,Self::ChildID)>;
 
     #[inline]
@@ -156,7 +156,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
         match self.get(idx) {
             Some(inner) => {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(AsWidgetsResult::from_some(idx,SimpleId(idx),widget), root, ctx)
+                    callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
                 });
                 inner.with_widget(&mut callback,root,ctx)
             },
@@ -182,7 +182,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
 
     #[inline]
     fn iter_ids(&self) -> Self::IdIdxIter {
-        (0..self.len()).map(#[inline] |i| (i,SimpleId(i)))
+        (0..self.len()).map(#[inline] |i| (i,FixedIdx(i)))
     }
 
     #[inline]
@@ -196,9 +196,9 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
         Self: 'w
     {
         for (i,v) in self[idx_range].iter().enumerate() {
-            if (filter)(i,&SimpleId(i)) {
+            if (filter)(i,&FixedIdx(i)) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(i, SimpleId(i), widget, root, ctx)
+                    callback.call(i, FixedIdx(i), widget, root, ctx)
                 });
                 v.with_widget(&mut callback,root.fork(),ctx)
             }
@@ -221,7 +221,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
 impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
-    type ChildID = SimpleId<usize>;
+    type ChildID = FixedIdx;
     type IdIdxIter = impl Iterator<Item=(usize,Self::ChildID)>;
 
     #[inline]
@@ -232,7 +232,7 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
         match self.get(idx) {
             Some(inner) => {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(AsWidgetsResult::from_some(idx,SimpleId(idx),widget), root, ctx)
+                    callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
                 });
                 inner.with_widget(&mut callback,root,ctx)
             },
@@ -258,7 +258,7 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
 
     #[inline]
     fn iter_ids(&self) -> Self::IdIdxIter {
-        (0..self.len()).map(#[inline] |i| (i,SimpleId(i)))
+        (0..self.len()).map(#[inline] |i| (i,FixedIdx(i)))
     }
 
     #[inline]
@@ -272,9 +272,9 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
         Self: 'w
     {
         for (i,v) in self[idx_range].iter().enumerate() {
-            if (filter)(i,&SimpleId(i)) {
+            if (filter)(i,&FixedIdx(i)) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(i, SimpleId(i), widget, root, ctx)
+                    callback.call(i, FixedIdx(i), widget, root, ctx)
                 });
                 v.with_widget(&mut callback,root.fork(),ctx)
             }
@@ -447,7 +447,7 @@ macro_rules! impl_tuple {
         {
             type Widget<'v,'z> = dyn WidgetDyn<E> + 'v where 'z: 'v, Self: 'z;
             type WidgetCache = DynWidgetCache<E>;
-            type ChildID = SimpleId<usize>;
+            type ChildID = FixedIdx;
             type IdIdxIter = impl Iterator<Item=(usize,Self::ChildID)>;
         
             #[inline]
@@ -462,7 +462,7 @@ macro_rules! impl_tuple {
                         AsWidget::with_widget(
                             & $x,
                             &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
-                                callback.call(AsWidgetsResult::from_some(idx,SimpleId(idx),widget), root, ctx)
+                                callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
                             }),
                             root,ctx,
                         )
@@ -471,7 +471,7 @@ macro_rules! impl_tuple {
                         AsWidget::with_widget(
                             & $xx,
                             &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
-                                callback.call(AsWidgetsResult::from_some(idx,SimpleId(idx),widget), root, ctx)
+                                callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
                             }),
                             root,ctx,
                         )
@@ -512,7 +512,7 @@ macro_rules! impl_tuple {
         
             #[inline]
             fn iter_ids(&self) -> Self::IdIdxIter {
-                (0..self.len()).map(#[inline] |i| (i,SimpleId(i)))
+                (0..self.len()).map(#[inline] |i| (i,FixedIdx(i)))
             }
         
             #[inline]
@@ -534,11 +534,11 @@ macro_rules! impl_tuple {
                     i += 1;
 
                     if idx >= range.start && idx < range.end {
-                        if (filter)(idx,&SimpleId(idx)) {
+                        if (filter)(idx,&FixedIdx(idx)) {
                             AsWidget::with_widget(
                                 $l,
                                 &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
-                                    callback.call(idx, SimpleId(idx), widget, root, ctx)
+                                    callback.call(idx, FixedIdx(idx), widget, root, ctx)
                                 }),
                                 root.fork(),ctx,
                             )
@@ -550,11 +550,11 @@ macro_rules! impl_tuple {
                     i += 1;
 
                     if idx >= range.start && idx < range.end {
-                        if (filter)(idx,&SimpleId(idx)) {
+                        if (filter)(idx,&FixedIdx(idx)) {
                             AsWidget::with_widget(
                                 $ll,
                                 &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
-                                    callback.call(idx, SimpleId(idx), widget, root, ctx)
+                                    callback.call(idx, FixedIdx(idx), widget, root, ctx)
                                 }),
                                 root.fork(),ctx,
                             )

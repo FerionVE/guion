@@ -4,7 +4,7 @@
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
 
-use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::newpath::{PathStack, PathResolvusDyn, PathResolvus};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
@@ -32,6 +32,12 @@ pub mod stack;
 
 pub mod cache;
 
+pub struct WidgetWithResolveChildDyn<'a,E> {
+    pub idx: usize,
+    pub sub_path: &'a (dyn PathResolvusDyn<E>+'a),
+    pub widget: &'a (dyn WidgetDyn<E>+'a),
+}
+
 /// Core Trait of guion ™️
 pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E: Env + 'static {
     type Cache: WidgetCache<E> + 'static;
@@ -47,7 +53,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        ctx.build_handler()._render(self, stack, renderer, force_render, cache, root, ctx)
+        ctx.build_handler()._render(self, path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
     fn event_direct<P,Ph,Evt>(
@@ -55,12 +61,12 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         path: &Ph,
         stack: &P,
         event: &Evt,
-        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        ctx.build_handler()._event_direct(self, stack, event, cache, root, ctx)
+        ctx.build_handler()._event_direct(self, path, stack, event, route_to_widget, cache, root, ctx)
     }
     #[inline]
     fn size<P,Ph>(
@@ -71,7 +77,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        ctx.build_handler()._size(self, stack, cache, root, ctx)
+        ctx.build_handler()._size(self, path, stack, cache, root, ctx)
     }
 
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
@@ -99,7 +105,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         path: &Ph,
         stack: &P,
         event: &Evt, // what if e.g. bounds change, if it's validated by parents then it's not signaled here
-        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -178,43 +184,66 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// An empty path will resolve to this widget
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
-    #[inline]
-    #[deprecated]
     fn with_resolve<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        mut callback: F,
+        callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
     where
         F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
     {
-        if sub_path.is_empty() {
+        if sub_path.inner().is_none() {
             return (callback)(Ok(self.erase()),ctx);
         }
-        //TODO resolve_child could also return it's ref resolve
-        match self.resolve_child(&sub_path,root.fork(),ctx) {
-            Ok((c,sub)) => {
-                self.with_child(
-                    c,
-                    #[inline] |child,ctx| child.unwrap().with_resolve(sub.clone(), &mut callback, root.fork(), ctx),
-                    root.fork(), ctx,
-                )
+
+        self.with_resolve_child(
+            sub_path,
+            #[inline] |result,ctx| {
+                match result {
+                    Ok(result) => result.widget.with_resolve(result.sub_path, callback, root, ctx),
+                    Err(e) => (callback)(Err(e),ctx),
+                }
             },
-            Err(e) => {
-                (callback)(Err(e),ctx)
-            },
-        }
+            root,ctx,
+        )
     }
-    // /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    // /// To (or through) which child path would the given sub_path resolve?
-    // /// 
-    // /// Returns the child index and the subpath inside the child widget to resolve further
-    // /// 
-    // /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
-    // #[inline]
-    // fn resolve_child(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+    // {
+    //     if sub_path.is_empty() {
+    //         return (callback)(Ok(self.erase()),ctx);
+    //     }
+    //     //TODO resolve_child could also return it's ref resolve
+    //     match self.resolve_child(&sub_path,root.fork(),ctx) {
+    //         Ok((c,sub)) => {
+    //             self.with_child(
+    //                 c,
+    //                 #[inline] |child,ctx| child.unwrap().with_resolve(sub.clone(), &mut callback, root.fork(), ctx),
+    //                 root.fork(), ctx,
+    //             )
+    //         },
+    //         Err(e) => {
+    //             (callback)(Err(e),ctx)
+    //         },
+    //     }
+    // }
+    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
+    /// To (or through) which child path would the given sub_path resolve?
+    /// 
+    /// Returns the child index and the subpath inside the child widget to resolve further
+    /// 
+    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
+    //#[inline]
+    /// This should fail if sub_path is empty
+    fn with_resolve_child<'s,F,R>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'w,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'w,E>,E::Error>,&'c mut E::Context<'cc>) -> R;// { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
     //     for c in 0..self.childs() {
     //         if let Some(r) = self.with_child(
     //             c, 
@@ -310,6 +339,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             loop {
                 // determine the targeted next child
                 let targeted_child = self._tabulate_next_child(
+                    path,
                     stack,
                     TabulateNextChildOrigin::child_or_this(child_id),
                     dir,
@@ -328,7 +358,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                     }
                     TabulateNextChildResponse::This =>
                         if self.focusable() {
-                            return Ok(TabulateResponse::Done(current_path.clone()))
+                            return Ok(TabulateResponse::Done(current_path.into_resolvus()))
                         }else{
                             // we aren't focusable, repeat
                             child_id = None;
@@ -348,10 +378,18 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         };
         match op {
             TabulateOrigin::Resolve(p) => {
-                if !p.is_empty() {
+                if p.inner().is_some() {
                     // pass 1: resolve to previous focused widget
-                    let (child_id,sub_path) = self.resolve_child(&p,root.fork(),ctx)?;
-                    return enter_child(child_id, TabulateOrigin::Resolve(sub_path),ctx);
+                    return self.with_resolve_child(
+                        p,
+                        #[inline] |result,ctx| {
+                            match result {
+                                Ok(result) => enter_child(result.idx, TabulateOrigin::Resolve(result.sub_path),ctx),
+                                Err(e) => Err(e),
+                            }
+                        },
+                        root,ctx,
+                    );
                 }else{
                     // pass 2: we are the previous focused widget and should tabulate away
                     return next_child(None,ctx);
@@ -361,6 +399,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                 // we got entered from the parent widget
 
                 let enter_dir = self._tabulate_next_child(
+                    path,
                     stack,
                     TabulateNextChildOrigin::Enter,
                     dir,
@@ -371,7 +410,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                     // tabulate into enter the targeted child
                     TabulateNextChildResponse::Child(t) => return enter_child(t, TabulateOrigin::Enter,ctx),
                     // tabulate to self
-                    TabulateNextChildResponse::This => return Ok(TabulateResponse::Done(current_path.clone())),
+                    TabulateNextChildResponse::This => return Ok(TabulateResponse::Done(current_path.into_resolvus())),
                     TabulateNextChildResponse::Leave => return Ok(TabulateResponse::Leave),
                 }
             },
@@ -471,7 +510,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             .collect::<Vec<_>>();
         GuionError::ResolveError(Box::new(ResolveError{
             op,
-            sub_path: sub_path.clone(),
+            sub_path: todo!(),
             widget_type,
             child_info,
         })).into()
@@ -482,8 +521,9 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         GuionResolveErrorChildInfo {
             child_idx,
             widget_type: self.debugged_type_name(),
-            widget_path_if_path: None,
-            widget_id: Some(self.id()),
+            // widget_path_if_path: None,
+            // widget_id: Some(self.id()),
+            path: todo!(),
         }
     }
 }

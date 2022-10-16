@@ -37,8 +37,9 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
                 filter_point: None,
                 direct_only: false,
                 //filter_path_strict: true,
+                _p: PhantomData,
             };
-            root_widget.event_direct(root_path,stack,&event,cache,root,ctx)
+            root_widget.event_direct(root_path,stack,&event,Some(&*widget),cache,root,ctx)
         } else {
             false
         }
@@ -55,8 +56,9 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
             filter_point: None,
             direct_only: false,
             //filter_path_strict: true,
+            _p: PhantomData
         };
-        Ok(root_widget.event_direct(root_path,stack,&event,cache,root,ctx))
+        Ok(root_widget.event_direct(root_path,stack,&event,Some(&*p),cache,root,ctx))
     }
 }
 

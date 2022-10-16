@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::marker::PhantomData;
 use std::sync::Arc;
 
 use crate::env::Env;
@@ -19,6 +20,7 @@ pub struct StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
     //pub filter_path_strict: bool,
     pub direct_only: bool,
     pub filter_point: Option<Offset>,
+    pub _p: PhantomData<E>,
 }
 
 impl<V,E> Debug for StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
@@ -39,7 +41,7 @@ impl<V,E> StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
     /// nofilter
     #[inline]
     pub fn new(variant: V, ts: u64) -> Self {
-        Self { variant, ts, filter_point: None, direct_only: false }
+        Self { variant, ts, filter_point: None, direct_only: false, _p: PhantomData }
     }
     // #[inline]
     // pub fn with_filter_path(mut self, filter_path: Arc<dyn PathResolvusDyn<E>>) -> Self {
@@ -81,7 +83,7 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone + 'sta
             let mut route_to_childs = true; // !self.direct_only; //TODO fix route_to_path_strict
 
             let mut child_filter_point = None;
-            let mut child_filter_absolute_path = None;
+            //let mut child_filter_absolute_path = None;
 
             // if let Some(filter_path) = &self.filter_path {
             //     let current_path = path;
@@ -129,6 +131,7 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone + 'sta
                 route_to_childs,
                 child_filter_point,
                 //child_filter_sub_path,
+                _p: PhantomData,
             };
 
             *builder = Some(mode);

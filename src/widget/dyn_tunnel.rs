@@ -27,7 +27,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
-        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -58,7 +58,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
-        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -76,7 +76,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn childs_dyn(&self) -> usize;
 
     #[deprecated]
-    unsafe fn with_child_dyn<'s>(
+    fn with_child_dyn<'s>(
         &'s self,
         i: usize,
         callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> ProtectedReturn,
@@ -95,11 +95,18 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     // #[deprecated]
     // fn child_paths_dyn(&self, own_path: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath>;
 
-    #[deprecated]
-    unsafe fn with_resolve_dyn<'s>(
+    fn with_resolve_dyn<'s>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
         callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> ProtectedReturn,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> ProtectedReturn;
+
+    fn with_resolve_child_dyn<'s>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: &mut dyn for<'w,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'w,E>,E::Error>,&'c mut E::Context<'cc>) -> ProtectedReturn,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> ProtectedReturn;
@@ -167,7 +174,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
-        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -204,7 +211,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
-        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut DynWidgetCache<E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -229,7 +236,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[allow(deprecated)]
     #[inline]
-    unsafe fn with_child_dyn<'s>(
+    fn with_child_dyn<'s>(
         &'s self,
         i: usize,
         callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> ProtectedReturn,
@@ -253,9 +260,8 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     // fn child_paths_dyn(&self, own_path: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
     //     self.child_paths(own_path, root, ctx)
     // }
-    #[allow(deprecated)]
     #[inline]
-    unsafe fn with_resolve_dyn<'s>(
+    fn with_resolve_dyn<'s>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
         callback: &mut dyn for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> ProtectedReturn,
@@ -263,6 +269,16 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         ctx: &mut E::Context<'_>
     ) -> ProtectedReturn {
         self.with_resolve(sub_path, callback, root, ctx)
+    }
+    #[inline]
+    fn with_resolve_child_dyn<'s>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: &mut dyn for<'w,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'w,E>,E::Error>,&'c mut E::Context<'cc>) -> ProtectedReturn,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> ProtectedReturn {
+        self.with_resolve_child(sub_path, callback, root, ctx)
     }
     // #[inline]
     // fn resolve_child_dyn(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error> {
@@ -370,7 +386,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         path: &Ph,
         stack: &P,
         event: &Evt,
-        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -407,7 +423,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         path: &Ph,
         stack: &P,
         event: &Evt,
-        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -442,7 +458,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
     {
         let mut callback_return: Option<R> = None;
-        unsafe{self.with_child_dyn(
+        self.with_child_dyn(
             i,
             &mut |w,ctx| {
                 let r = (callback)(w,ctx);
@@ -450,7 +466,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
                 ProtectedReturn(PhantomData)
             },
             root, ctx,
-        )};
+        );
         callback_return.unwrap()
     }
     #[allow(deprecated)]
@@ -481,19 +497,41 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         ctx: &mut E::Context<'_>
     ) -> R
     where
-        F: for<'w,'ww,'c,'cc> FnOnce(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
+        F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
     {
-        let mut callback = Some(callback);
         let mut callback_return: Option<R> = None;
-        unsafe{self.with_resolve_dyn(
+        self.with_resolve_dyn(
             sub_path,
             &mut |w,ctx| {
-                let r = (callback.take().unwrap_unchecked())(w,ctx);
+                let r = (callback)(w,ctx);
                 callback_return = Some(r);
                 ProtectedReturn(PhantomData)
             },
             root, ctx,
-        )};
+        );
+        callback_return.unwrap()
+    }
+
+    fn with_resolve_child<'s,F,R>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'w,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'w,E>,E::Error>,&'c mut E::Context<'cc>) -> R
+    {
+        let mut callback_return: Option<R> = None;
+        self.with_resolve_child_dyn(
+            sub_path,
+            &mut |w,ctx| {
+                let r = (callback)(w,ctx);
+                callback_return = Some(r);
+                ProtectedReturn(PhantomData)
+            },
+            root, ctx,
+        );
         callback_return.unwrap()
     }
     // #[inline]
