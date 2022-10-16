@@ -35,6 +35,7 @@ pub mod compat;
 pub mod dispatchor;
 pub mod cachialize;
 pub mod queron;
+pub mod newpath;
 
 pub(crate) use aliases::*;
 pub(crate) use backend::*;

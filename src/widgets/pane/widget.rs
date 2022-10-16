@@ -1,4 +1,4 @@
-use crate::dispatchor::{AsWidgetsClosure, AsWidgetsAllClosure};
+use crate::dispatchor::{AsWidgetsClosure, AsWidgetsAllClosure, AsWidgetsResult};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
@@ -180,11 +180,14 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     {
         self.childs.by_index(
             i,
-            &mut AsWidgetsClosure::new(|_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
-                (callback)(Ok(widget.erase()),ctx)
+            &mut AsWidgetsClosure::new(#[inline] |result: Option<AsWidgetsResult<T,E>>,_,ctx: &mut E::Context<'_>|
+                match result {
+                    Some(v) => (callback)(Ok(v.widget.erase()),ctx),
+                    None => (callback)(Err(()),ctx)
+                }
             ),
             root,ctx
-        ).unwrap_or_else(|| (callback)(Err(()),ctx) ) //TODO AsWidgetsDispatch result is the wrong way around, instead of Result in widget param if conditionally at return
+        )
     }
 
     fn focusable(&self) -> bool {

@@ -1,6 +1,6 @@
 use super::*;
 use util::state::*;
-use crate::dispatchor::{AsWidgetClosure, AsWidgetsClosure};
+use crate::dispatchor::{AsWidgetClosure, AsWidgetsClosure, AsWidgetsResult};
 use crate::event::key::Key;
 use crate::queron::Queron;
 use crate::queron::query::Query;
@@ -266,11 +266,14 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     {
         self.childs.by_index(
             i,
-            &mut AsWidgetsClosure::new(|_,_,widget:&<(L,R) as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
-                (callback)(Ok(widget.erase()),ctx)
+            &mut AsWidgetsClosure::new(#[inline] |result: Option<AsWidgetsResult<(L,R),E>>,_,ctx: &mut E::Context<'_>|
+                match result {
+                    Some(v) => (callback)(Ok(v.widget.erase()),ctx),
+                    None => (callback)(Err(()),ctx)
+                }
             ),
             root,ctx
-        ).unwrap_or_else(|| (callback)(Err(()),ctx) )
+        )
     }
 
     fn focusable(&self) -> bool {
