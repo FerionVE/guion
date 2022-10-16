@@ -13,9 +13,6 @@ pub trait Env: Sized + Clone + Copy + Default + PartialEq + Debug + Send + Sync 
     type Context<'a>: Context<'a, Self> + 'a;
     type RootRef<'a>: RootRef<Self> + 'a;
     type RootMut<'a>: RootMut<Self> + 'a;
-    type WidgetID: WidgetID;
-    /// Implementation of path to resolve [`Widget`]
-    type WidgetPath: WidgetPath<Self>;
     type ValidState: ValidState;
     type Message;
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;

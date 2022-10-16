@@ -14,7 +14,7 @@ pub enum GuionError<E> where E: Env {
 #[derive(Clone)]
 pub struct ResolveError<E> where E: Env {
     pub op: &'static str,
-    pub sub_path: E::WidgetPath,
+    //pub sub_path: E::WidgetPath,
     pub widget_type: Vec<&'static str>,
     pub child_info: Vec<GuionResolveErrorChildInfo<E>>,
 }
@@ -29,8 +29,8 @@ pub struct TraitcastError {
 pub struct GuionResolveErrorChildInfo<E> where E: Env {
     pub child_idx: usize,
     pub widget_type: Vec<&'static str>,
-    pub widget_path_if_path: Option<E::WidgetPath>,
-    pub widget_id: Option<E::WidgetID>,
+    //pub widget_path_if_path: Option<E::WidgetPath>,
+    //pub widget_id: Option<E::WidgetID>,
 }
 
 impl<E> Error for GuionError<E> where E: Env {

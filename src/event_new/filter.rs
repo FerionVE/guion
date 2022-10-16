@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use crate::env::Env;
+use crate::newpath::PathResolvusDyn;
 use crate::queron::query::Query;
 use crate::util::bounds::Offset;
 
@@ -28,14 +30,14 @@ pub struct StdEventMode<E> where E: Env {
     /// 
     /// If no child_filters are set, the event will be routed to all childs
     pub child_filter_point: Option<Offset>,
-    /// If set, the event only needs be routed to the widget and maybe also it's childs with the specified path
-    /// 
-    /// child_filters may be ignored by widgets and events routed to all childs
-    /// 
-    /// Only relevent if route_to_childs is enabled
-    /// 
-    /// If no child_filters are set, the event will be routed to all childs
-    pub child_filter_sub_path: Option<E::WidgetPath>,
+    // /// If set, the event only needs be routed to the widget and maybe also it's childs with the specified path
+    // /// 
+    // /// child_filters may be ignored by widgets and events routed to all childs
+    // /// 
+    // /// Only relevent if route_to_childs is enabled
+    // /// 
+    // /// If no child_filters are set, the event will be routed to all childs
+    // pub child_filter_absolute_path: Option<Arc<dyn PathResolvusDyn<E>>>,
 }
 
 #[derive(Clone)]

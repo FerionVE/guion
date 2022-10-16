@@ -15,7 +15,6 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
 {
     pub trigger: Tr,
     pub trigger_mut: TrMut,
-    id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub locked: bool,
@@ -26,18 +25,16 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
 
 impl<'w,E> Button<'w,E,Label<'w,E,&'static str>,(),()> where
     E: Env,
-    E::WidgetID: WidgetIDAlloc,
 {
     #[inline]
-    pub fn new(id: E::WidgetID) -> Self {
+    pub fn new() -> Self {
         Button{
-            id,
             size: constraint!(0|0).into(),
             style: Default::default(),
             trigger: (),
             trigger_mut: (),
             locked: false,
-            text: Label::new(E::WidgetID::new_id()),
+            text: Label::new(),
             p: PhantomData,
         }
     }
@@ -47,9 +44,8 @@ impl<'w,E,Text> Button<'w,E,Text,(),()> where
     E: Env,
 {
     #[inline]
-    pub fn immediate(id: E::WidgetID, text: Text) -> Self {
+    pub fn of_text(text: Text) -> Self {
         Self{
-            id,
             size: constraint!(0|0).into(),
             style: Default::default(),
             trigger: (),
@@ -67,7 +63,6 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     #[inline]
     pub fn with_trigger<T>(self, mutor: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(E::RootRef<'_>,&mut E::Context<'_>) {
         Button{
-            id: self.id,
             size: self.size,
             style: self.style,
             trigger: mutor,
@@ -80,7 +75,6 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     #[inline]
     pub fn with_trigger_mut<T>(self, mutor: T) -> Button<'w,E,Text,Tr,T> where T: MutorEndBuilder<(),E> {
         Button{
-            id: self.id,
             size: self.size,
             style: self.style,
             trigger: self.trigger,
@@ -93,7 +87,6 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     #[inline]
     pub fn with_caption<T>(self, text: T) -> Button<'w,E,T,Tr,TrMut> where T: 'w {
         Button{
-            id: self.id,
             size: self.size,
             style: self.style,
             trigger: self.trigger,
@@ -127,7 +120,6 @@ impl<'w,E,T,Tr,TrMut> Button<'w,E,Label<'w,E,T>,Tr,TrMut> where
     #[inline]
     pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT>,Tr,TrMut> where TT: TextStor<E>+Validation<E>+'w {
         Button{
-            id: self.id,
             size: self.size,
             style: self.style,
             trigger: self.trigger,

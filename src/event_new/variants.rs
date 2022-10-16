@@ -1,43 +1,58 @@
 use std::fmt::Debug;
+use std::sync::Arc;
 
 use crate::env::Env;
 use crate::event::variant::Variant;
-use crate::path::{WidgetPath, RelationToSelfRelation};
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::queron::query::{QueryStack, Query};
 use crate::util::bounds::Offset;
-use crate::widget::stack::{QueryCurrentWidget, QueryCurrentBounds};
+use crate::widget::stack::{QueryCurrentBounds};
 
 use super::filter::{QueryVariant, StdEventMode, QueryStdEventMode};
 
-#[derive(Clone,Debug)]
+#[derive(Clone)]
 pub struct StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
     pub variant: V,
     pub ts: u64,
-    pub filter_path: Option<E::WidgetPath>,
-    pub filter_path_strict: bool,
+    //pub filter_path: Option<Arc<dyn PathResolvusDyn<E>>>,
+    //pub filter_path_strict: bool,
     pub direct_only: bool,
     pub filter_point: Option<Offset>,
+}
+
+impl<V,E> Debug for StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f
+            .debug_struct("StdVariant")
+                .field("variant", &self.variant)
+                .field("ts", &self.ts)
+                //.field("filter_path", &self.filter_path) //TODO make PathResolvus debugable
+                //.field("filter_path_strict", &self.filter_path_strict)
+                .field("direct_only", &self.direct_only)
+                .field("filter_point", &self.filter_point)
+            .finish()
+    }
 }
 
 impl<V,E> StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env { 
     /// nofilter
     #[inline]
     pub fn new(variant: V, ts: u64) -> Self {
-        Self { variant, ts, filter_path: None, filter_path_strict: false, filter_point: None, direct_only: false }
+        Self { variant, ts, filter_point: None, direct_only: false }
     }
-    #[inline]
-    pub fn with_filter_path(mut self, filter_path: E::WidgetPath) -> Self {
-        self.filter_path = Some(filter_path);
-        self.filter_path_strict = false;
-        self
-    }
-    #[inline]
-    pub fn with_filter_path_strict(mut self, filter_path: E::WidgetPath) -> Self {
-        self.filter_path = Some(filter_path);
-        self.filter_path_strict = true;
-        self
-    }
+    // #[inline]
+    // pub fn with_filter_path(mut self, filter_path: Arc<dyn PathResolvusDyn<E>>) -> Self {
+    //     self.filter_path = Some(filter_path);
+    //     self.filter_path_strict = false;
+    //     self
+    // }
+    // #[inline]
+    // pub fn with_filter_path_strict(mut self, filter_path: Arc<dyn PathResolvusDyn<E>>) -> Self {
+    //     self.filter_path = Some(filter_path);
+    //     self.filter_path_strict = true;
+    //     self
+    // }
     #[inline]
     pub fn direct_only(mut self) -> Self {
         self.direct_only = true;
@@ -58,44 +73,44 @@ impl<V,E> StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
 impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
     type WithPrefetch<R> = R where R: Queron<E>;
 
-    fn _query<'a,Q,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a {
+    fn _query<'a,Q,Ph,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, path: &Ph, stack: &S) where Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
         if let Some((_,builder)) = builder.downcast::<'_,QueryVariant<V>>() {
             *builder = Some(&self.variant);
         } else if let Some((_,builder)) = builder.downcast::<'_,QueryStdEventMode>() {
             let mut receive_self = true;
-            let mut route_to_childs = !self.direct_only;
+            let mut route_to_childs = true; // !self.direct_only; //TODO fix route_to_path_strict
 
             let mut child_filter_point = None;
-            let mut child_filter_sub_path = None;
+            let mut child_filter_absolute_path = None;
 
-            if let Some(filter_path) = &self.filter_path {
-                let current_path = QueryCurrentWidget.query_in(stack).unwrap();
-                match filter_path.relation_to_self(current_path.path) {
-                    RelationToSelfRelation::ParentOfSelf(self_in_parent) => {
-                        // currently in parent of route-to widget
-                        receive_self = false;
-                        child_filter_sub_path = Some(self_in_parent);
-                    },
-                    RelationToSelfRelation::Identical => {
-                        if self.filter_path_strict {
-                            route_to_childs = false;
-                        }
-                    },
-                    RelationToSelfRelation::ChildOfSelf(_) => {
-                        if self.filter_path_strict {
-                            receive_self = false;
-                            route_to_childs = false;
-                            debug_assert!(false, "Misrouted");
-                        }
-                    },
-                    RelationToSelfRelation::Invalid => {
-                        // misrouted
-                        receive_self = false;
-                        route_to_childs = false;
-                        //debug_assert!(false, "Misrouted");
-                    },
-                }
-            }
+            // if let Some(filter_path) = &self.filter_path {
+            //     let current_path = path;
+            //     match path.fwd_compare(&**filter_path) {
+            //         FwdCompareStat::ChildOfSelf {
+            //             // currently in parent of route-to widget
+            //             receive_self = false;
+            //             //child_filter_sub_path = Some(self_in_parent);
+            //         },
+            //         FwdCompareStat::Equal => {
+            //             if self.filter_path_strict {
+            //                 route_to_childs = false;
+            //             }
+            //         },
+            //         FwdCompareStat::ParentOfSelf(_) => {
+            //             if self.filter_path_strict {
+            //                 receive_self = false;
+            //                 route_to_childs = false;
+            //                 debug_assert!(false, "Misrouted");
+            //             }
+            //         },
+            //         FwdCompareStat::Falsified => {
+            //             // misrouted
+            //             receive_self = false;
+            //             route_to_childs = false;
+            //             //debug_assert!(false, "Misrouted");
+            //         },
+            //     }
+            // }
 
             if let Some(filter_point) = self.filter_point {
                 let current_bounds = QueryCurrentBounds.query_in(stack).unwrap();
@@ -113,7 +128,7 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone + 'sta
                 receive_self,
                 route_to_childs,
                 child_filter_point,
-                child_filter_sub_path,
+                //child_filter_sub_path,
             };
 
             *builder = Some(mode);

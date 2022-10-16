@@ -1,11 +1,11 @@
 use crate::dispatchor::AsWidgetClosure;
 use crate::event_new::filter::QueryStdEventMode;
+use crate::newpath::{PathStack, SimpleId};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::style::standard::cursor::StdCursor;
 use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
-use crate::widget::stack::for_child_widget;
 
 use super::*;
 use super::imp::*;
@@ -21,19 +21,17 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
 {
     type Cache = ButtonCache<Text::WidgetCache,E>;
 
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
     
-    fn _render<P>(
+    fn _render<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where P: Queron<E> + ?Sized {
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -114,7 +112,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                     );
 
                 widget.render(
-                    &for_child_widget(render_props,widget),
+                    SimpleId(ButtonChild).push_on_stack(path), &render_props,
                     renderer,
                     force_render,
                     &mut cache.label_cache,
@@ -125,26 +123,27 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         );
     }
 
-    fn _event_direct<P,Evt>(
+    fn _event_direct<P,Ph,Evt>(
         &self,
+        path: &Ph,
         stack: &P,
         event: &Evt,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         let stack = with_inside_spacing_border(stack);
         let event_mode = event.query_std_event_mode(&stack).unwrap();
 
         if !event_mode.receive_self {return false;}
 
         if let Some(ee) = event.query_variant::<MouseUp<E>,_>(&stack) {
-            if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(self.id()) && ctx.state().is_hovered(&self.id) && !self.locked {
+            if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.is(path) && ctx.state().is_hovered(path) && !self.locked {
                 self.trigger(root,ctx);
                 return true;
             }
         } else if let Some(ee) = event.query_variant::<KbdPress<E>,_>(&stack) {
-            if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.is(self.id()) {
+            if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.is(path) {
                 self.trigger(root,ctx);
                 return true;
             }
@@ -152,13 +151,14 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         false
     }
 
-    fn _size<P>(
+    fn _size<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where P: Queron<E> + ?Sized {
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let size = widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
             |stack| widget_size_inside_border_type(
@@ -166,7 +166,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
                 |stack|
                     self.text.with_widget(&mut AsWidgetClosure::new(
                         |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
-                            widget.size(&for_child_widget(&stack,widget), &mut cache.label_cache, root,ctx)
+                            widget.size(SimpleId(ButtonChild).push_on_stack(path), &stack, &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
         );
@@ -198,10 +198,11 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
         )
     }
     
-    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
-        todo!();
-        Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
-    }
+    // fn child_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    //     todo!();
+    //     Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
+    // }
     fn focusable(&self) -> bool { true }
 
     impl_traitcast!( dyn WidgetDyn<E>:
@@ -257,3 +258,6 @@ impl<LabelCache,E> WidgetCache<E> for ButtonCache<LabelCache,E> where E: Env, fo
         self.label_cache.reset_current()
     }
 }
+
+#[derive(Copy,Clone,PartialEq,Eq)]
+pub struct ButtonChild;

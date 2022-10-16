@@ -1,5 +1,6 @@
 use crate::aliases::EStyle;
 use crate::env::Env;
+use crate::newpath::PathResolvusDyn;
 //use crate::widget::resolved::Resolved;
 use crate::util::bounds::Bounds;
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -10,7 +11,7 @@ pub trait RootRef<E> where E: Env {
     //TODO fix old resolve stack
     fn with_widget<'s,'l:'s,F,R>(
         &'s self,
-        i: E::WidgetPath,
+        i: &(dyn PathResolvusDyn<E>+'_),
         callback: F,
         ctx: &mut E::Context<'_>,
     ) -> R
@@ -19,12 +20,12 @@ pub trait RootRef<E> where E: Env {
         Self: 'l;
 
     #[inline]
-    fn has_widget(&self, i: E::WidgetPath, ctx: &mut E::Context<'_>) -> bool {
+    fn has_widget(&self, i: &(dyn PathResolvusDyn<E>+'_), ctx: &mut E::Context<'_>) -> bool {
         self.with_widget(i, #[inline] |w,_| w.is_ok(), ctx)
     }
 
     #[deprecated] 
-    fn trace_bounds(&self, ctx: &mut E::Context<'_>, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error>;
+    fn trace_bounds(&self, ctx: &mut E::Context<'_>, i: &(dyn PathResolvusDyn<E>+'_), b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error>;
 }
 
 pub trait RootMut<E> where E: Env {

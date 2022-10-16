@@ -9,7 +9,6 @@ pub struct Pane<'w,E,T> where
     E: Env,
     Self: 'w,
 {
-    id: E::WidgetID,
     pub childs: T,
     pub orientation: Orientation,
     pub style: EStyle<E>,
@@ -20,9 +19,8 @@ impl<'w,E,T> Pane<'w,E,T> where
     E: Env,
 {
     #[inline]
-    pub fn new(id: E::WidgetID, orientation: Orientation, childs: T) -> Self {
+    pub fn new(orientation: Orientation, childs: T) -> Self {
         Pane{
-            id,
             childs,
             orientation,
             style: Default::default(),

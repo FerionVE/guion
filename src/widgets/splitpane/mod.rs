@@ -12,7 +12,6 @@ pub struct SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     Self: 'w,
 {
-    id: E::WidgetID,
     pub childs: (L,R),
     pub state: V,
     updater: TrMut,
@@ -26,9 +25,8 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
     E: Env,
 {
     #[inline]
-    pub fn new(id: E::WidgetID, orientation: Orientation, state: V, childs: (L,R)) -> Self {
+    pub fn new(orientation: Orientation, state: V, childs: (L,R)) -> Self {
         Self{
-            id,
             childs,
             state,
             updater: (),
@@ -52,7 +50,6 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     #[inline]
     pub fn with_update<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,T> where T: MutorEndBuilder<f32,E> {
         SplitPane{
-            id: self.id,
             childs: self.childs,
             state: self.state,
             updater: mutor,

@@ -2,6 +2,7 @@ use super::*;
 use util::state::*;
 use crate::dispatchor::{AsWidgetClosure, AsWidgetsClosure, AsWidgetsResult};
 use crate::event::key::Key;
+use crate::newpath::{PathStack, SimpleId};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
@@ -9,7 +10,7 @@ use crate::style::standard::cursor::StdCursor;
 use crate::widget::as_widgets::AsWidgets;
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
-use crate::widget::stack::{for_child_widget, QueryCurrentBounds, WithCurrentBounds}; //TODO fix req of this import
+use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds}; //TODO fix req of this import
 
 impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
@@ -24,19 +25,16 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 {
     type Cache = SplitPaneCache<L::WidgetCache,R::WidgetCache,E>;
 
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
-
-    fn _render<P>(
+    fn _render<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where P: Queron<E> + ?Sized {
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -97,7 +95,8 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         self.childs.0.with_widget(
             &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 widget.render(
-                    &for_child_widget(render_props.slice_absolute(&bounds[0]),widget),
+                    SimpleId(0usize) + path,
+                    &render_props.slice_absolute(&bounds[0]),
                     renderer,
                     force_render, &mut cache.child_caches.0,
                     root,ctx
@@ -108,7 +107,8 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         self.childs.1.with_widget(
             &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 widget.render(
-                    &for_child_widget(render_props.slice_absolute(&bounds[2]),widget),
+                    SimpleId(1usize) + path,
+                    &render_props.slice_absolute(&bounds[2]),
                     renderer,
                     force_render, &mut cache.child_caches.1,
                     root,ctx
@@ -119,14 +119,15 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         //TODO FIX viewport
     }
     
-    fn _event_direct<P,Evt>(
+    fn _event_direct<P,Ph,Evt>(
         &self,
+        path: &Ph,
         stack: &P,
         event: &Evt,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         let stack = with_inside_spacing_border(stack);
 
         let current = QueryCurrentBounds.query_in(&stack).unwrap();
@@ -151,13 +152,13 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 
                     let l_min = self.childs.0.with_widget(
                         &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                            widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.0, root,ctx) //TODO It can't be! We can't already have the bounds for the widget when constraining
+                            widget.size(SimpleId(0usize) + path, &stack, &mut cache.child_caches.0, root,ctx) //TODO It can't be! We can't already have the bounds for the widget when constraining
                         }),
                         root.fork(),ctx
                     ).par(o).min();
                     let r_min = self.childs.1.with_widget(
                         &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                            widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.1, root,ctx)
+                            widget.size(SimpleId(1usize) + path, &stack, &mut cache.child_caches.1, root,ctx)
                         }),
                         root.fork(),ctx
                     ).par(o).min();
@@ -189,24 +190,24 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
             self.childs.0.with_widget(
                 &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
-                        inner: for_child_widget(&stack,widget),
+                        inner: stack,
                         bounds: current.bounds & &bounds[0],
                         viewport: current.viewport.clone(),
                     };
         
-                    passed |= widget.event_direct(&stack,event, &mut cache.child_caches.0, root,ctx);
+                    passed |= widget.event_direct(SimpleId(0usize) + path,&stack,event, &mut cache.child_caches.0, root,ctx);
                 }),
                 root.fork(),ctx
             );
             self.childs.1.with_widget(
                 &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
-                        inner: for_child_widget(&stack,widget),
+                        inner: stack,
                         bounds: current.bounds & &bounds[2],
                         viewport: current.viewport.clone(),
                     };
         
-                    passed |= widget.event_direct(&stack,event, &mut cache.child_caches.1, root,ctx);
+                    passed |= widget.event_direct(SimpleId(1usize) + path,&stack,event, &mut cache.child_caches.1, root,ctx);
                 }),
                 root,ctx
             );
@@ -214,13 +215,14 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         passed
     }
 
-    fn _size<P>(
+    fn _size<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where P: Queron<E> + ?Sized {
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let size = widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
             |stack| {
@@ -228,14 +230,14 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 
                 self.childs.0.with_widget(
                     &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                        s.add( &widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.0, root,ctx), self.orientation )
+                        s.add( &widget.size(SimpleId(0usize) + path, &stack, &mut cache.child_caches.0, root,ctx), self.orientation )
                     }),
                     root.fork(),ctx
                 );
                 s.add_space(self.width,self.orientation);
                 self.childs.1.with_widget(
                     &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                        s.add( &widget.size(&for_child_widget(&stack,widget), &mut cache.child_caches.1, root,ctx), self.orientation )
+                        s.add( &widget.size(SimpleId(1usize) + path, &stack, &mut cache.child_caches.1, root,ctx), self.orientation )
                     }),
                     root,ctx
                 );
@@ -247,9 +249,10 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         size
     }
 
-    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
-        Ok(self.calc_bounds(b,self.state.get(ctx)).into())
-    }
+    // fn child_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    //     Ok(self.calc_bounds(b,self.state.get(ctx)).into())
+    // }
     fn childs(&self) -> usize {
         self.childs.len()
     }

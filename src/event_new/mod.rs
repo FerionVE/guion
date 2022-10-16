@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use crate::env::Env;
+use crate::newpath::{PathStack, PathStackDyn};
 use crate::queron::Queron;
 use crate::queron::dyn_tunnel::QueronDyn;
 use crate::queron::query::{Query, QueryStack, DynQuery};
@@ -18,29 +19,29 @@ pub trait Event<E> where E: Env {
     type WithPrefetch<R>: Queron<E> where R: Queron<E>;
 
     #[inline]
-    fn query<'a,Q,S>(&'a self, query: &Q, stack: &S) -> Option<Q::Out<'a>> where Q: Query<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
+    fn query<'a,Q,Ph,S>(&'a self, query: &Q, path: &Ph, stack: &S) -> Option<Q::Out<'a>> where Q: Query<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
         let mut builder = query.new_builder();
         let qstack = QueryStack::new(query, &mut builder);
-        self._query(qstack,stack);
+        self._query(qstack,path,stack);
         query.end_builder(builder)
     }
 
-    fn _query<'a,Q,S>(&'a self, builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a;
+    fn _query<'a,Q,Ph,S>(&'a self, builder: QueryStack<'_,'a,Q,E>, path: &Ph, stack: &S) where Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a;
 
     //TODO move to QBase
     fn erase<'s,'ss>(&'s self) -> &'s (dyn EventDyn<E>+'ss) where 'ss: 's, Self: 'ss;
 
     #[deprecated]
     #[inline]
-    fn query_std_event_mode<'a,S>(&'a self, stack: &S) -> Option<StdEventMode<E>> where S: Queron<E> + ?Sized, Self: 'a {
-        self.query(&QueryStdEventMode, stack)
+    fn query_std_event_mode<'a,Ph,S>(&'a self, path: &Ph, stack: &S) -> Option<StdEventMode<E>> where Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
+        self.query(&QueryStdEventMode, path, stack)
     }
 
     /// query legacy variant
     #[deprecated="The old \"variants\" will be replaced"]
     #[inline]
-    fn query_variant<'a,V,S>(&'a self, stack: &S) -> Option<&'a V> where S: Queron<E> + ?Sized, V: Clone + 'static, Self: 'a {
-        self.query(&QueryVariant(PhantomData), stack)
+    fn query_variant<'a,V,Ph,S>(&'a self, path: &Ph, stack: &S) -> Option<&'a V> where Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, V: Clone + 'static, Self: 'a {
+        self.query(&QueryVariant(PhantomData), path, stack)
     }
 
     #[deprecated]
@@ -60,7 +61,7 @@ pub trait Event<E> where E: Env {
 
 /// This trait is only for bridging thru trait objects
 pub trait EventDyn<E> {
-    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, stack: &dyn QueronDyn<E>);
+    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_));
     fn ts_dyn(&self) -> u64;
     fn _root_only_dyn(&self) -> bool;
     fn _debug_dyn(&self) -> &dyn Debug;
@@ -68,8 +69,8 @@ pub trait EventDyn<E> {
 }
 impl<T,E> EventDyn<E> for T where T: Event<E> + ?Sized, E: Env {
     #[inline]
-    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, stack: &dyn QueronDyn<E>) {
-        self._query(builder,stack)
+    fn _query_dyn<'a>(&'a self, builder: QueryStack<'_,'a,DynQuery,E>, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_)) {
+        self._query(builder,path,stack)
     }
     #[inline]
     fn ts_dyn(&self) -> u64 {
@@ -94,8 +95,8 @@ impl<E> Event<E> for dyn EventDyn<E> + '_ where E: Env {
     type WithPrefetch<R> = R where R: Queron<E>;
 
     #[inline]
-    fn _query<'a,Q,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, stack: &S) where S: Queron<E> + ?Sized, Self: 'a {
-        self._query_dyn(builder.fork_dyn(),stack.erase())
+    fn _query<'a,Q,Ph,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, path: &Ph, stack: &S) where Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
+        self._query_dyn(builder.fork_dyn(),path._erase(),stack.erase())
     }
     #[inline]
     fn erase<'s,'ss>(&'s self) -> &'s (dyn EventDyn<E>+'ss) where 'ss: 's, Self: 'ss {

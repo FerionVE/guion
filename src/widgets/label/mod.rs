@@ -3,7 +3,7 @@ use crate::validation::Validation;
 
 use super::*;
 use std::marker::PhantomData;
-use util::{LocalGlyphCache, remote_state::RemoteState};
+use util::{LocalGlyphCache};
 
 pub mod widget;
 
@@ -11,7 +11,6 @@ pub struct Label<'w,E,Text> where
     E: Env,
     Self: 'w,
 {
-    id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub text: Text,
@@ -23,9 +22,8 @@ impl<'w,E> Label<'w,E,&'static str> where
     E: Env,
 {
     #[inline]
-    pub fn new(id: E::WidgetID) -> Self {
+    pub fn new() -> Self {
         Self{
-            id,
             size: ESize::<E>::empty(),
             style: Default::default(),
             text: "",
@@ -40,9 +38,8 @@ impl<'w,E,Text> Label<'w,E,Text> where
     Text: TextStor<E>+Validation<E>,
 {
     #[inline]
-    pub fn immediate(id: E::WidgetID, text: Text) -> Self {
+    pub fn of_text(text: Text) -> Self {
         Self{
-            id: id.clone(),
             size: ESize::<E>::empty(),
             style: Default::default(),
             text,
@@ -58,7 +55,6 @@ impl<'w,E,Text> Label<'w,E,Text> where
     #[inline]
     pub fn with_text<T>(self, text: T) -> Label<'w,E,T> where T: TextStor<E>+Validation<E>+'w {
         Label{
-            id: self.id,
             size: self.size,
             style: self.style,
             text,

@@ -1,3 +1,4 @@
+use crate::newpath::PathStack;
 use crate::queron::Queron;
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -10,20 +11,17 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
 {
     type Cache = ProgressBarCache<E>;
-
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
     
-    fn _render<P>(
+    fn _render<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where P: Queron<E> + ?Sized {
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -69,24 +67,26 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
         );
     }
 
-    fn _event_direct<P,Evt>(
+    fn _event_direct<P,Ph,Evt>(
         &self,
+        path: &Ph,
         stack: &P,
         event: &Evt,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         false
     }
 
-    fn _size<P>(
+    fn _size<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where P: Queron<E> + ?Sized {
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         self.size.clone() //TODO shouldn't the borders be added?
     }
 
@@ -106,9 +106,10 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
         (callback)(Err(()),ctx)
     }
     
-    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
-        Ok(vec![])
-    }
+    // fn child_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    //     Ok(vec![])
+    // }
     fn focusable(&self) -> bool {
         false
     }

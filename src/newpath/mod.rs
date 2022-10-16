@@ -1,5 +1,7 @@
 use std::any::Any;
 use std::marker::PhantomData;
+use std::ops::Add;
+use std::sync::Arc;
 use crate::env::Env;
 
 pub trait PathFragment<E>: 'static {
@@ -28,11 +30,11 @@ pub trait PathStack<E> { // reverse: inner = parent widget
     }
 
     #[inline]
-    fn into_resolvus(&self) -> Box<dyn PathResolvusDyn<E>> {
+    fn into_resolvus(&self) -> Arc<dyn PathResolvusDyn<E>> {
         self._build_resolvus(())
     }
 
-    fn _build_resolvus<I>(&self, i: I) -> Box<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static;// {
+    fn _build_resolvus<I>(&self, i: I) -> Arc<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static;// {
     //     self.inner._build_resolvus(SelfResolvus{inner: i, fragment: self.fragment})
     // }
 
@@ -55,6 +57,8 @@ pub trait PathResolvus<E> { // non-reverse: inner = child widget
     }
 
     fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat;
+
+    //fn _clone_into_box(&self) -> Arc<dyn PathResolvusDyn<E>>;
 }
 
 pub enum FwdCompareStat {
@@ -67,12 +71,13 @@ pub enum FwdCompareStat {
 pub trait PathStackDyn<E> {
     fn inner_dyn(&self) -> Option<&(dyn PathStackDyn<E>+'_)>;
     fn _fragment_dyn(&self) -> &dyn Any;
-    fn _build_resolvus_dyn(&self, i: Box<dyn PathResolvusDyn<E>>) -> Box<dyn PathResolvusDyn<E>>;
+    fn _build_resolvus_dyn(&self, i: Box<dyn PathResolvusDyn<E>>) -> Arc<dyn PathResolvusDyn<E>>;
     fn _build_resolvus_for_fwd_compare_dyn(&self, i: &(dyn PathResolvusDyn<E>+'_), other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat;
 }
 
 pub trait PathResolvusDyn<E> { // non-reverse: inner = child widget
     fn inner_dyn(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)>;
+    //fn _clone_into_box_dyn(&self) -> Arc<dyn PathResolvusDyn<E>>;
     fn _fragment_dyn(&self) -> &dyn Any;
     fn fwd_compare_dyn<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat;
 }
@@ -87,7 +92,7 @@ impl<T,E> PathStackDyn<E> for T where T: PathStack<E>, E: 'static {
         (*self)._fragment()
     }
     #[inline]
-    fn _build_resolvus_dyn(&self, i: Box<dyn PathResolvusDyn<E>>) -> Box<dyn PathResolvusDyn<E>> {
+    fn _build_resolvus_dyn(&self, i: Box<dyn PathResolvusDyn<E>>) -> Arc<dyn PathResolvusDyn<E>> {
         (*self)._build_resolvus(i)
     }
     #[inline]
@@ -109,6 +114,10 @@ impl<T,E> PathResolvusDyn<E> for T where T: PathResolvus<E> {
     fn fwd_compare_dyn<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         (*self).fwd_compare(other)
     }
+    // #[inline]
+    // fn _clone_into_box_dyn(&self) -> Arc<dyn PathResolvusDyn<E>> {
+    //     (*self)._clone_into_box()
+    // }
 }
 
 impl<E> PathStack<E> for dyn PathStackDyn<E> + '_ {
@@ -125,7 +134,7 @@ impl<E> PathStack<E> for dyn PathStackDyn<E> + '_ {
         (*self)._fragment_dyn()
     }
     #[inline]
-    fn _build_resolvus<I>(&self, i: I) -> Box<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
+    fn _build_resolvus<I>(&self, i: I) -> Arc<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
         (*self)._build_resolvus_dyn(Box::new(i))
     }
     #[inline]
@@ -151,6 +160,10 @@ impl<E> PathResolvus<E> for dyn PathResolvusDyn<E> + '_ {
     fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         (*self).fwd_compare_dyn(other)
     }
+    // #[inline]
+    // fn _clone_into_box(&self) -> Arc<dyn PathResolvusDyn<E>> {
+    //     (*self)._clone_into_box_dyn()
+    // }
 }
 
 impl<E> PathStack<E> for () where E: 'static {
@@ -167,14 +180,13 @@ impl<E> PathStack<E> for () where E: 'static {
         self
     }
     #[inline]
-    fn _build_resolvus<I>(&self, i: I) -> Box<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
-        Box::new(i) //TODO avoid boxing twice at this step
+    fn _build_resolvus<I>(&self, i: I) -> Arc<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
+        Arc::new(i) //TODO avoid boxing twice at this step
     }
     #[inline]
     fn _build_resolvus_for_fwd_compare<I>(&self, i: I, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat where I: PathResolvus<E> {
         i.fwd_compare(other)
     }
-    
 }
 
 impl<E> PathResolvus<E> for () {
@@ -198,6 +210,10 @@ impl<E> PathResolvus<E> for () {
             FwdCompareStat::Equal
         }
     }
+    // #[inline]
+    // fn _clone_into_box(&self) -> Arc<dyn PathResolvusDyn<E>> {
+    //     Box::new(())
+    // }
 }
 
 impl<E,T> PathStack<E> for Box<T> where T: PathStack<E> + ?Sized {
@@ -214,7 +230,7 @@ impl<E,T> PathStack<E> for Box<T> where T: PathStack<E> + ?Sized {
         (**self)._fragment()
     }
     #[inline]
-    fn _build_resolvus<I>(&self, i: I) -> Box<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
+    fn _build_resolvus<I>(&self, i: I) -> Arc<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
         (**self)._build_resolvus(i)
     }
     #[inline]
@@ -237,7 +253,7 @@ impl<E,T> PathStack<E> for &T where T: PathStack<E> + ?Sized {
         (**self)._fragment()
     }
     #[inline]
-    fn _build_resolvus<I>(&self, i: I) -> Box<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
+    fn _build_resolvus<I>(&self, i: I) -> Arc<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
         (**self)._build_resolvus(i)
     }
     #[inline]
@@ -263,6 +279,10 @@ impl<E,T> PathResolvus<E> for Box<T> where T: PathResolvus<E> + ?Sized {
     fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         (**self).fwd_compare(other)
     }
+    // #[inline]
+    // fn _clone_into_box(&self) -> Arc<dyn PathResolvusDyn<E>> {
+    //     (**self)._clone_into_box()
+    // }
 }
 
 impl<E,T> PathResolvus<E> for &T where T: PathResolvus<E> + ?Sized {
@@ -282,6 +302,10 @@ impl<E,T> PathResolvus<E> for &T where T: PathResolvus<E> + ?Sized {
     fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         (**self).fwd_compare(other)
     }
+    // #[inline]
+    // fn _clone_into_box(&self) -> Arc<dyn PathResolvusDyn<E>> {
+    //     (**self)._clone_into_box()
+    // }
 }
 
 #[derive(Clone, PartialEq)]
@@ -302,6 +326,22 @@ impl<V,E> PathFragment<E> for SimpleId<V> where V: Clone + PartialEq + 'static, 
         SimplePathStack { inner: target_stack, value: self.clone(), _p: PhantomData }
     }
 }
+
+// impl<V,E,I> Add<I> for SimpleId<V> where I: PathStack<E> + Sized {
+//     type Output = <Self as PathFragment<E>>::Stack<I>;
+
+//     fn add(self, rhs: Self) -> Self::Output {
+//         self.push_to_stack(rhs)
+//     }
+// }
+
+// impl<V,E,I> Add<I> for &SimpleId<V> where I: PathStack<E> + Sized {
+//     type Output = <Self as PathFragment<E>>::Stack<I>;
+
+//     fn add(self, rhs: Self) -> Self::Output {
+//         self.push_to_stack(rhs)
+//     }
+// }
 
 pub struct SimplePathStack<V,E,S> where V: PathFragment<E> + Clone + PartialEq, E: Env {
     pub inner: S,
@@ -332,7 +372,7 @@ impl<V,S,E> PathStack<E> for SimplePathStack<V,E,S> where S: PathStack<E>, V: Pa
     }
 
     #[inline]
-    fn _build_resolvus<I>(&self, i: I) -> Box<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
+    fn _build_resolvus<I>(&self, i: I) -> Arc<dyn PathResolvusDyn<E>> where I: PathResolvus<E> + 'static {
         self.inner._build_resolvus(SimplePathResolvus { inner: i, value: self.value.clone(), _p: PhantomData })
     }
 
@@ -371,4 +411,8 @@ impl<V,S,E> PathResolvus<E> for SimplePathResolvus<V,E,S> where S: PathResolvus<
             FwdCompareStat::ParentOfSelf
         }
     }
+    // #[inline]
+    // fn _clone_into_box(&self) -> Arc<dyn PathResolvusDyn<E>> {
+    //     Box::new(Self{ inner: self.inner._clone_into_box(), value: self.value.clone(), _p: PhantomData })
+    // }
 }

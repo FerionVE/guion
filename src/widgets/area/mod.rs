@@ -13,7 +13,6 @@ pub struct Area<'w,E,W,Scroll,TrMut> where
     E: Env,
     Self: 'w,
 {
-    id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub inner: W,
@@ -27,9 +26,8 @@ impl<'w,E,W> Area<'w,E,W,ScrollOff,()> where
     E: Env,
 {
     #[inline]
-    pub fn new(id: E::WidgetID, inner: W) -> Self {
+    pub fn new(inner: W) -> Self {
         Self{
-            id,
             size: Gonstraints::empty(),
             style: Default::default(),
             inner,
@@ -48,7 +46,6 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     #[inline]
     pub fn with_state<PScroll>(self, scroll: PScroll) -> Area<'w,E,W,PScroll,TrMut> where PScroll: 'w {
         Area{
-            id: self.id,
             size: self.size,
             style: self.style,
             inner: self.inner,
@@ -62,7 +59,6 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     #[inline]
     pub fn with_scroll_updater<T>(self, mutor: T) -> Area<'w,E,W,Scroll,T> where T: MutorEndBuilder<ScrollUpdate,E> {
         Area{
-            id: self.id,
             size: self.size,
             style: self.style,
             inner: self.inner,

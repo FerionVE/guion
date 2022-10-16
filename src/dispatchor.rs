@@ -60,19 +60,20 @@ impl<'z,'w,'ww,V,E> AsWidgetsResult<'z,'w,'ww,V,E>
 where
     'ww: 'w, 'z: 'ww, V: 'z,
     V: AsWidgets<E> + ?Sized,
+    V::ChildID: Clone,
     E: Env,
 {
     pub fn from_some(idx: usize, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>) -> Option<Self> {
         Some(Self { idx, child_id, widget })
     }
 
-    // pub fn as_ref<'y>(&'y self) -> AsWidgetsResult<'z,'w,'ww,&'y V,E> where 'w: 'y, 'ww: 'y, 'z: 'y {
-    //     AsWidgetsResult {
-    //         idx: self.idx,
-    //         child_id: self.child_id,
-    //         widget: self.widget,
-    //     }
-    // }
+    pub fn convert<W>(self) -> AsWidgetsResult<'z,'w,'ww,W,E> where W: 'z, for<'a,'b> W: AsWidgets<E,Widget<'a,'b>=V::Widget<'a,'b>,WidgetCache=V::WidgetCache,ChildID=V::ChildID> {
+        AsWidgetsResult {
+            idx: self.idx,
+            child_id: self.child_id.clone(),
+            widget: self.widget,
+        }
+    }
 }
 
 pub trait AsWidgetsResolveDispatch<'z,V,R,E>
@@ -109,14 +110,14 @@ where
         Some(Self { idx, child_id, resolvus, widget })
     }
 
-    // pub fn as_ref<'y>(&'y self) -> AsWidgetsResolveResult<'z,'w,'ww,'p,'pp,&'y V,E> where 'w: 'y, 'ww: 'y, 'z: 'y {
-    //     AsWidgetsResolveResult {
-    //         idx: self.idx,
-    //         child_id: self.child_id,
-    //         resolvus: self.resolvus,
-    //         widget: self.widget,
-    //     }
-    // }
+    pub fn convert<W>(self) -> AsWidgetsResolveResult<'z,'w,'ww,'p,'pp,W,E> where W: 'z, W: 'p, for<'a,'b> W: AsWidgets<E,Widget<'a,'b>=V::Widget<'a,'b>,WidgetCache=V::WidgetCache,ChildID=V::ChildID> {
+        AsWidgetsResolveResult {
+            idx: self.idx,
+            child_id: self.child_id.clone(),
+            resolvus: self.resolvus,
+            widget: self.widget,
+        }
+    }
 }
 
 impl<'z,'w,'ww,'p,'pp,'y,V,E> AsWidgetsResolveResult<'z,'w,'ww,'p,'pp,&'y V,E>

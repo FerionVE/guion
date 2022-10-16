@@ -1,19 +1,22 @@
 use crate::EventResp;
 use crate::env::Env;
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::widget::Widget;
 
 pub trait EventDowncastMap<E> where E: Env {
-    fn event_downcast_map<W,S,Evt>(
+    fn event_downcast_map<W,Ph,S,Evt>(
         widget: &W,
+        path: &Ph,
         stack: &S,
         event: &Evt,
+        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
     where
-        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: crate::event_new::Event<E> + ?Sized;
+        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: crate::event_new::Event<E> + ?Sized;
 }
 
 #[macro_export]
@@ -41,17 +44,19 @@ macro_rules! event_downcast_map_tryion {
 
 impl<E> EventDowncastMap<E> for () where E: Env {
     #[inline]
-    fn event_downcast_map<W,S,Evt>(
+    fn event_downcast_map<W,Ph,S,Evt>(
         widget: &W,
+        path: &Ph,
         stack: &S,
         event: &Evt,
+        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
     where
-        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: crate::event_new::Event<E> + ?Sized
+        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: crate::event_new::Event<E> + ?Sized
     {
-        widget.event_direct(stack, event, cache, root, ctx)
+        widget.event_direct(path, stack, event, route_to_widget, cache, root, ctx)
     }
 }

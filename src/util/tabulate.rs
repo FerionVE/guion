@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
-use crate::widget::stack::{WithCurrentWidget, QueryCurrentWidget};
 
 use super::*;
 
@@ -12,26 +14,25 @@ pub enum TabulateDirection { //TODO trait
 }
 
 #[derive(Clone)]
-pub enum TabulateOrigin<E> where E: Env {
-    Resolve(E::WidgetPath),
+pub enum TabulateOrigin<'a,E> where E: Env {
+    Resolve(&'a (dyn PathResolvusDyn<E>+'a)),
     Enter,
 }
 
 #[derive(Clone)]
 pub enum TabulateResponse<E> where E: Env {
-    Done(E::WidgetPath),
+    Done(Arc<dyn PathResolvusDyn<E>>),
     Leave,
 }
 
-pub fn tabi<E>(root_widget: &(impl Widget<E> + ?Sized), root_stack: &(impl Queron<E> + ?Sized), old_path: E::WidgetPath, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<E::WidgetPath,E::Error> where E: Env { //TODO rename to tabulate_root
-    let widget_data = QueryCurrentWidget.query_in(root_stack).unwrap();
-
-    let mut current = old_path.clone();
-    let result = root_widget._tabulate(&root_stack, TabulateOrigin::Resolve( old_path.strip_prefix(&widget_data.path).unwrap() ), dir, root.fork(), ctx)?;
+pub fn tabi<E>(root_widget: &(impl Widget<E> + ?Sized), root_path: &(impl PathStack<E> + ?Sized), root_stack: &(impl Queron<E> + ?Sized), old_path: Arc<dyn PathResolvusDyn<E>>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Arc<dyn PathResolvusDyn<E>>,E::Error> where E: Env { //TODO rename to tabulate_root
+    assert!(root_path.inner().is_none());
+    let mut current: Arc<dyn PathResolvusDyn<E>> = old_path.clone();
+    let result = root_widget._tabulate(root_path, root_stack, TabulateOrigin::Resolve( &*old_path /*TODO strip_prefix*/ ), dir, root.fork(), ctx)?;
     match result {
         TabulateResponse::Done(p) => current = p,
         TabulateResponse::Leave => {
-            let result = root_widget._tabulate(&root_stack, TabulateOrigin::Enter, dir, root, ctx)?;
+            let result = root_widget._tabulate(root_path, root_stack, TabulateOrigin::Enter, dir, root, ctx)?;
             match result {
                 TabulateResponse::Done(p) => current = p,
                 TabulateResponse::Leave => {},

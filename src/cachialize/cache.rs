@@ -10,6 +10,6 @@ pub trait Cache<E> where E: Env {
     fn clear(&mut self);
 }
 
-pub struct StdCache<E> where E: Env {
-    inner: HashMap<(E::WidgetPath,TypeId,Vec<u8>),(Vec<u8>,Box<dyn Any+Send+Sync>)>,
-}
+// pub struct StdCache<E> where E: Env {
+//     inner: HashMap<(E::WidgetPath,TypeId,Vec<u8>),(Vec<u8>,Box<dyn Any+Send+Sync>)>,
+// }

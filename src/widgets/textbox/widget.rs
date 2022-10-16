@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::newpath::PathStack;
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
@@ -35,20 +36,17 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
     TBScr: MutorEndBuilder<(u32,u32),E>,
 {
     type Cache = TextBoxCache<E>;
-
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
     
-    fn _render<P>(
+    fn _render<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where P: Queron<E> + ?Sized {
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -135,14 +133,15 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         cache.text_rendered = true;
     }
     
-    fn _event_direct<P,Evt>(
+    fn _event_direct<P,Ph,Evt>(
         &self,
+        path: &Ph,
         stack: &P,
         event: &Evt,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         let stack = with_inside_spacing_border(stack);
 
         let style = QueryTestStyle.query_in(&stack).unwrap();
@@ -276,13 +275,14 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         passed
     }
 
-    fn _size<P>(
+    fn _size<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where P: Queron<E> + ?Sized {
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         self.size.clone()
     }
 
@@ -302,9 +302,10 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         (callback)(Err(()),ctx)
     }
 
-    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
-        Ok(vec![])
-    }
+    // fn child_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    //     Ok(vec![])
+    // }
     fn focusable(&self) -> bool {
         true
     }

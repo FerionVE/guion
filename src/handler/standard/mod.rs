@@ -1,9 +1,9 @@
 //! Standard Handler featuring hovering/focusing of widgets and tracking of keyboard/mouse state
 use crate::*;
 use crate::event_new::variants::StdVariant;
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::root::RootRef;
-use crate::widget::stack::{WithCurrentBounds, WithCurrentWidget};
 use std::marker::PhantomData;
 use std::sync::Arc;
 use state::standard::StdStdState;
@@ -28,35 +28,35 @@ impl<S,E> StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarS
 }
 
 impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
-    pub fn unfocus<W,S>(&self, root_widget: &W, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
+    pub fn unfocus<W,Ph,S>(&self, root_widget: &W, root_path: &Ph, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> EventResp where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
         if let Some(widget) = (self.access)(ctx).state.kbd.focused.take() {
             let event = StdVariant {
                 variant: Unfocus{},
                 ts,
-                filter_path: Some(widget.refc().path),
+                //filter_path: Some(widget.refc().path),
                 filter_point: None,
                 direct_only: false,
-                filter_path_strict: true,
+                //filter_path_strict: true,
             };
-            root_widget.event_direct(stack,&event,cache,root,ctx)
-        }else{
+            root_widget.event_direct(root_path,stack,&event,cache,root,ctx)
+        } else {
             false
         }
     }
 
-    pub fn focus<W,S>(&self, root_widget: &W, p: E::WidgetPath, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<EventResp,E::Error> where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
-        self.unfocus(root_widget,stack,ts,cache,root.fork(),ctx);
-        (self.access)(ctx).state.kbd.focused = Some(WidgetIdent::from_path(p.refc(),&root,ctx)?);
+    pub fn focus<W,Ph,S>(&self, root_widget: &W, root_path: &Ph, p: Arc<dyn PathResolvusDyn<E>>, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<EventResp,E::Error> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
+        self.unfocus(root_widget,root_path,stack,ts,cache,root.fork(),ctx);
+        (self.access)(ctx).state.kbd.focused = Some(p);
         
         let event = StdVariant {
             variant: Focus{},
             ts,
-            filter_path: Some(p),
+            //filter_path: Some(p),
             filter_point: None,
             direct_only: false,
-            filter_path_strict: true,
+            //filter_path_strict: true,
         };
-        Ok(root_widget.event_direct(stack,&event,cache,root,ctx))
+        Ok(root_widget.event_direct(root_path,stack,&event,cache,root,ctx))
     }
 }
 

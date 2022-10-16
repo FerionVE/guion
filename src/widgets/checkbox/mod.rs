@@ -17,7 +17,6 @@ pub struct CheckBox<'w,E,State,Text,TrMut> where
     Self: 'w,
 {
     pub updater: TrMut,
-    id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub locked: bool,
@@ -29,17 +28,15 @@ pub struct CheckBox<'w,E,State,Text,TrMut> where
 
 impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str>,()> where
     E: Env,
-    E::WidgetID: WidgetIDAlloc,
 {
     #[inline]
-    pub fn new(id: E::WidgetID, state: State) -> Self {
+    pub fn new(state: State) -> Self {
         Self{
-            id,
             size: ESize::<E>::empty(),
             style: Default::default(),
             updater: (),
             locked: false,
-            text: Label::new(E::WidgetID::new_id())
+            text: Label::new()
                 .with_align((0.,0.5)),
             state,
             p: PhantomData,
@@ -50,12 +47,9 @@ impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str>,()> where
 impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
 {
-    
-
     #[inline]
     pub fn with_update<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,T> where T: MutorEndBuilder<bool,E> {
         CheckBox{
-            id: self.id,
             size: self.size,
             style: self.style,
             updater: mutor,
@@ -81,7 +75,6 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     #[inline]
     pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,TrMut> {
         CheckBox{
-            id: self.id,
             size: self.size,
             style: self.style,
             updater: self.updater,
@@ -111,7 +104,6 @@ impl<'w,E,State,T,TrMut> CheckBox<'w,E,State,Label<'w,E,T>,TrMut> where
     pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT>,TrMut> where TT: TextStor<E>+Validation<E>+'w {
         CheckBox{
             updater: self.updater,
-            id: self.id,
             size: self.size,
             style: self.style,
             locked: self.locked,

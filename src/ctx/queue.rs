@@ -1,4 +1,7 @@
 //! [`Queue`] trait and util fns for implementors
+use std::sync::Arc;
+
+use crate::newpath::PathResolvusDyn;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::*;
@@ -17,14 +20,14 @@ pub enum StdEnqueueable<E> where E: Env {
     Event{event: EEvent<E>, ts: u64},
     MutateRoot{f: PtrMutEvent<E>},
     MutateRootClosure{f: BoxMutEvent<E>},
-    AccessWidget{path: E::WidgetPath, f: PtrAccessWidget<E>},
-    AccessWidgetClosure{path: E::WidgetPath, f: BoxAccessWidget<E>},
+    AccessWidget{path: Arc<dyn PathResolvusDyn<E>>, f: PtrAccessWidget<E>},
+    AccessWidgetClosure{path: Arc<dyn PathResolvusDyn<E>>, f: BoxAccessWidget<E>},
     AccessRoot{f: PtrAccessRoot<E>},
     AccessRootClosure{f: BoxAccessRoot<E>},
-    MutMessage{path: E::WidgetPath, msg: E::Message},
-    InvalidateWidget{path: E::WidgetPath},
-    ValidateWidgetRender{path: E::WidgetPath},
-    ValidateWidgetSize{path: E::WidgetPath, size: ESize<E>},
+    MutMessage{path: Arc<dyn PathResolvusDyn<E>>, msg: E::Message},
+    InvalidateWidget{path: Arc<dyn PathResolvusDyn<E>>},
+    ValidateWidgetRender{path: Arc<dyn PathResolvusDyn<E>>},
+    ValidateWidgetSize{path: Arc<dyn PathResolvusDyn<E>>, size: ESize<E>},
 }
 
 pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;

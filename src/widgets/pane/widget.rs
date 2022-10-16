@@ -1,11 +1,12 @@
-use crate::dispatchor::{AsWidgetsClosure, AsWidgetsAllClosure, AsWidgetsResult};
+use crate::dispatchor::{AsWidgetsClosure, AsWidgetsAllClosure, AsWidgetsResult, AsWidgetsResolveClosure};
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::widget::as_widgets::AsWidgets;
 use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
-use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds, for_child_widget};
+use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds};
 use crate::layout::calc::calc_bounds2;
 
 use super::*;
@@ -15,21 +16,18 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     T: AsWidgets<E>,
 {
-    type Cache = PaneCache<E,T::WidgetCache>;
+    type Cache = PaneCache<E,T::WidgetCache,T::ChildID>;
 
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
-
-    fn _render<P>(
+    fn _render<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where P: Queron<E> + ?Sized {
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -40,6 +38,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         need_render |= !cache.layout_rendered;
 
         let new_layout = self.do_layout(
+            path,
             &render_props,
             render_props.inside_spacing_border().absolute_bounds.size,
             cache,
@@ -66,13 +65,11 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetsAllClosure::new(|idx,child_id,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 widget.render(
-                    &for_child_widget(
-                        render_props
-                            .slice(cache.childs[idx].relative_bounds_cache.unwrap()),
-                        widget
-                    ),
+                    child_id.push_to_stack(path),
+                    &render_props
+                        .slice(cache.childs[idx].relative_bounds_cache.unwrap()),
                     renderer,
                     new_layout | force_render,&mut cache.childs[idx].widget_cache,
                     root,ctx
@@ -85,24 +82,27 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         //TODO FIX viewport
     }
 
-    fn _event_direct<P,Evt>(
+    fn _event_direct<P,Ph,Evt>(
         &self,
+        path: &Ph,
         stack: &P,
         event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         let stack = with_inside_spacing_border(stack);
 
         let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
-        let event_mode = event.query_std_event_mode(&stack).unwrap();
+        let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
         //dbg!(event._debug(),&event_mode);
 
-        if !event_mode.route_to_childs {return false;}
+        if !event_mode.route_to_childs || route_to_widget.map_or(false, |i| i.inner().is_some() ) {return false;}
 
         self.do_layout(
+            path,
             &stack,
             bounds.bounds.size,
             cache,
@@ -112,34 +112,70 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
 
         let mut passed = false;
 
-        self.childs.idx_range(
-            0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                let stack = WithCurrentBounds {
-                    inner: for_child_widget(&stack,widget),
-                    bounds: bounds.bounds.slice(cache.childs[idx].relative_bounds_cache.as_ref().unwrap()),
-                    viewport: bounds.viewport.clone(),
-                };
-    
-                passed |= widget.event_direct(&stack,event,&mut cache.childs[idx].widget_cache,root,ctx);
-            }),
-            root,ctx
-        );
+        if let Some(route_to_widget) = route_to_widget {
+            if route_to_widget.inner.is_none() {
+                // The event is for us
+                return false;
+            }
+            self.childs.resolve(
+                route_to_widget,
+                &mut AsWidgetsResolveClosure::new(|result,root,ctx: &mut E::Context<'_>| {
+                    if let Some(result) = result {
+                        let stack = WithCurrentBounds {
+                            inner: stack,
+                            bounds: bounds.bounds.slice(cache.childs[result.idx].relative_bounds_cache.as_ref().unwrap()),
+                            viewport: bounds.viewport.clone(),
+                        };
+            
+                        passed |= result.widget.event_direct(
+                            result.child_id.push_to_stack(path),
+                            &stack,
+                            event,
+                            result.resolvus,
+                            &mut cache.childs[result.idx].widget_cache,
+                            root,ctx);
+                    }
+                }),
+                root,ctx
+            )
+        } else {
+            self.childs.idx_range(
+                0..self.childs.len(), //TODO there could be a prefilter which checks whether idx child bounds visible in visible-filter mode
+                &mut AsWidgetsAllClosure::new(|idx,child_id,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                    let stack = WithCurrentBounds {
+                        inner: stack,
+                        bounds: bounds.bounds.slice(cache.childs[idx].relative_bounds_cache.as_ref().unwrap()),
+                        viewport: bounds.viewport.clone(),
+                    };
+        
+                    passed |= widget.event_direct(
+                        child_id.push_to_stack(path),
+                        &stack,
+                        event,
+                        route_to_widget.inner().unwrap(), //TODO this should be done by the AsWidgets
+                        &mut cache.childs[idx].widget_cache,
+                        root,ctx);
+                }),
+                root,ctx
+            );
+        }
 
         passed
     }
 
-    fn _size<P>(
+    fn _size<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where P: Queron<E> + ?Sized {
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
             |stack| //TODO no bounds available in Widget::size
                 self.do_gonstraints(
+                    path,
                     &stack,
                     cache,
                     root,ctx
@@ -147,23 +183,24 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
         )
     }
 
-    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized {
-        //TODO holy stack
-        // let mut child_sizes = Vec::with_capacity(self.childs());
+    // fn child_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    //     //TODO holy stack
+    //     // let mut child_sizes = Vec::with_capacity(self.childs());
 
-        // self.childs.all(
-        //     AsWidgetsAllClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
-        //         //TODO bounds could never be used in constraints calc, else we would already need to have the child bounds calculates, which also requires the constraints
-        //         child_sizes.push( widget.size(&for_child_widget(&stack,widget),root,ctx) )
-        //     ),
-        //     root,ctx
-        // );
+    //     // self.childs.all(
+    //     //     AsWidgetsAllClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
+    //     //         //TODO bounds could never be used in constraints calc, else we would already need to have the child bounds calculates, which also requires the constraints
+    //     //         child_sizes.push( widget.size(SimpleId(_) + path, &stack,root,ctx) )
+    //     //     ),
+    //     //     root,ctx
+    //     // );
 
-        // let bounds = calc_bounds(&b.size,&child_sizes,std::convert::identity,self.orientation); 
+    //     // let bounds = calc_bounds(&b.size,&child_sizes,std::convert::identity,self.orientation); 
 
-        // Ok(bounds)
-        todo!()
-    }
+    //     // Ok(bounds)
+    //     todo!()
+    // }
     fn childs(&self) -> usize {
         self.childs.len()
     }
@@ -202,8 +239,9 @@ impl<'w,E,T> Pane<'w,E,T> where
 {
     fn do_gonstraints(
         &self,
+        path: &(impl PathStack<E> + ?Sized),
         stack: &(impl Queron<E> + ?Sized),
-        cache: &mut PaneCache<E,T::WidgetCache>,
+        cache: &mut PaneCache<E,T::WidgetCache,T::ChildID>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E> {
@@ -215,7 +253,7 @@ impl<'w,E,T> Pane<'w,E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetsAllClosure::new(|idx,child_id,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let child_cache = &mut cache.childs[idx];
 
                 let widget_id = widget.id();
@@ -226,7 +264,7 @@ impl<'w,E,T> Pane<'w,E,T> where
                 }
 
                 let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
-                    widget.size(&for_child_widget(&stack,widget), &mut child_cache.widget_cache, root,ctx)
+                    widget.size(child_id.push_to_stack(path), &stack, &mut child_cache.widget_cache, root,ctx)
                 );
 
                 all_gonstraints.add(&current_gonstraint, self.orientation);
@@ -241,9 +279,10 @@ impl<'w,E,T> Pane<'w,E,T> where
 
     fn do_layout(
         &self,
+        path: &(impl PathStack<E> + ?Sized),
         stack: &(impl Queron<E> + ?Sized),
         dims_inside_border: Dims,
-        cache: &mut PaneCache<E,T::WidgetCache>,
+        cache: &mut PaneCache<E,T::WidgetCache,T::ChildID>,
         mut need_relayout: bool,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -263,7 +302,7 @@ impl<'w,E,T> Pane<'w,E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetsAllClosure::new(|idx,child_id,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let child_cache = &mut cache.childs[idx];
 
                 let widget_id = widget.id();
@@ -277,7 +316,7 @@ impl<'w,E,T> Pane<'w,E,T> where
                 need_relayout |= child_cache.relative_bounds_cache.is_none();
 
                 let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
-                    widget.size(&for_child_widget(&stack,widget), &mut child_cache.widget_cache, root,ctx)
+                    widget.size(child_id.push_to_stack(path), &stack, &mut child_cache.widget_cache, root,ctx)
                 );
 
                 all_gonstraints.add(&current_gonstraint, self.orientation);
@@ -335,10 +374,10 @@ impl<E,T> AsWidget<E> for Pane<'_,E,T> where Self: Widget<E>, E: Env {
 }
 
 #[derive(Default)]
-pub struct PaneCache<E,ChildCache> where E: Env, ChildCache: WidgetCache<E> {
+pub struct PaneCache<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache<E>, ChildID: Clone + 'static {
     std_render_cachors: Option<StdRenderCachors<E>>,
     orientation_cachor: Option<(Dims,Orientation)>,
-    childs: Vec<PaneCacheChild<E,ChildCache>>,
+    childs: Vec<PaneCacheChild<E,ChildCache,ChildID>>,
     //valid_layout: bool,
     current_gonstraints: Option<ESize<E>>,
     current_layouted: bool,
@@ -346,15 +385,15 @@ pub struct PaneCache<E,ChildCache> where E: Env, ChildCache: WidgetCache<E> {
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }
 
-pub struct PaneCacheChild<E,ChildCache> where E: Env, ChildCache: WidgetCache<E> {
+pub struct PaneCacheChild<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache<E>, ChildID: Clone + 'static {
     current_gonstraint: Option<ESize<E>>,
     relative_bounds_cache: Option<Bounds>,
     gonstraint_cachor: Option<ESize<E>>,
-    widget_id: Option<E::WidgetID>,
+    widget_id: Option<ChildID>, //TODO ALARM how to cachor ChildIDs
     widget_cache: ChildCache,
 }
 
-impl<E,ChildCache> Default for PaneCacheChild<E,ChildCache> where E: Env, ChildCache: WidgetCache<E> {
+impl<E,ChildCache,ChildID> Default for PaneCacheChild<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache<E>, ChildID: Clone + 'static {
     fn default() -> Self {
         Self {
             relative_bounds_cache: None,
@@ -366,7 +405,7 @@ impl<E,ChildCache> Default for PaneCacheChild<E,ChildCache> where E: Env, ChildC
     }
 }
 
-impl<E,ChildCache> WidgetCache<E> for PaneCache<E,ChildCache> where E: Env, ChildCache: WidgetCache<E> {
+impl<E,ChildCache,ChildID> WidgetCache<E> for PaneCache<E,ChildCache,ChildID> where E: Env, ChildCache: WidgetCache<E>, ChildID: Clone + 'static {
     fn reset_current(&mut self) {
         self.current_gonstraints = None;
         self.current_layouted = false;

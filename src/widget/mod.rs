@@ -4,13 +4,13 @@
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
 
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
 
 use self::cache::WidgetCache;
 use self::dyn_tunnel::WidgetDyn;
-use self::stack::QueryCurrentWidget;
 
 use super::*;
 use std::any::{TypeId, type_name};
@@ -36,39 +36,41 @@ pub mod cache;
 pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E: Env + 'static {
     type Cache: WidgetCache<E> + 'static;
 
-    fn id(&self) -> E::WidgetID;
-
     #[inline]
-    fn render<P>(
+    fn render<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where P: Queron<E> + ?Sized {
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         ctx.build_handler()._render(self, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
-    fn event_direct<P,Evt>(
+    fn event_direct<P,Ph,Evt>(
         &self,
+        path: &Ph,
         stack: &P,
         event: &Evt,
+        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         ctx.build_handler()._event_direct(self, stack, event, cache, root, ctx)
     }
     #[inline]
-    fn size<P>(
+    fn size<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where P: Queron<E> + ?Sized {
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         ctx.build_handler()._size(self, stack, cache, root, ctx)
     }
 
@@ -77,40 +79,44 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::render`]
-    fn _render<P>(
+    fn _render<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where P: Queron<E> + ?Sized;
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::event`](Link::send_event)
-    fn _event_direct<P,Evt>(
+    fn _event_direct<P,Ph,Evt>(
         &self,
+        path: &Ph,
         stack: &P,
         event: &Evt, // what if e.g. bounds change, if it's validated by parents then it's not signaled here
+        route_to_widget: &(dyn PathResolvusDyn<E>+'_),
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::size`]
-    fn _size<P>(
+    fn _size<P,Ph>(
         &self,
+        path: &Ph,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where P: Queron<E> + ?Sized;
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn childs(&self) -> usize;
@@ -147,24 +153,24 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         }
     }
     
-    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    #[deprecated]
-    fn child_paths(&self, own_path: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
-        let mut dest = Vec::with_capacity(self.childs());
+    // /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
+    // #[deprecated]
+    // fn child_paths(&self, own_path: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
+    //     let mut dest = Vec::with_capacity(self.childs());
 
-        for i in 0..self.childs() {
-            self.with_child(
-                i,
-                #[inline] |wg,ctx| {
-                    let w = wg.unwrap();
-                    dest.push(w.in_parent_path(own_path.refc()));
-                }, 
-                root.fork(), ctx,
-            );
-        }
+    //     for i in 0..self.childs() {
+    //         self.with_child(
+    //             i,
+    //             #[inline] |wg,ctx| {
+    //                 let w = wg.unwrap();
+    //                 dest.push(w.in_parent_path(own_path.refc()));
+    //             }, 
+    //             root.fork(), ctx,
+    //         );
+    //     }
 
-        dest
-    }
+    //     dest
+    // }
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Resolve a deep child item by the given relative path
@@ -176,7 +182,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     #[deprecated]
     fn with_resolve<'s,F,R>(
         &'s self,
-        sub_path: E::WidgetPath,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
         mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
@@ -201,55 +207,43 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             },
         }
     }
-    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// To (or through) which child path would the given sub_path resolve?
-    /// 
-    /// Returns the child index and the subpath inside the child widget to resolve further
-    /// 
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
-    #[inline]
-    fn resolve_child(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
-        for c in 0..self.childs() {
-            if let Some(r) = self.with_child(
-                c, 
-                #[inline] |w,_| w.unwrap().resolved_by_path(sub_path),
-                root.fork(), ctx,
-            ) {
-                return Ok((c,r.sub_path));
-            }
-        }
-        Err(self.gen_diag_error_resolve_fail(sub_path, "resolve",root.fork(),ctx))
-    }
-    /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
-    #[inline]
-    fn trace_bounds<P>(&self, stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error> where P: Queron<E> + ?Sized {
-        if i.is_empty() {
-            return Ok(*b)
-        }
-        let (child,_) = self.resolve_child(&i,root.fork(),ctx)?;
-        let bounds = self.child_bounds(stack,b,force,root,ctx)?;
+    // /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
+    // /// To (or through) which child path would the given sub_path resolve?
+    // /// 
+    // /// Returns the child index and the subpath inside the child widget to resolve further
+    // /// 
+    // /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
+    // #[inline]
+    // fn resolve_child(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(usize,E::WidgetPath),E::Error> { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
+    //     for c in 0..self.childs() {
+    //         if let Some(r) = self.with_child(
+    //             c, 
+    //             #[inline] |w,_| w.unwrap().resolved_by_path(sub_path),
+    //             root.fork(), ctx,
+    //         ) {
+    //             return Ok((c,r.sub_path));
+    //         }
+    //     }
+    //     Err(self.gen_diag_error_resolve_fail(sub_path, "resolve",root.fork(),ctx))
+    // }
+    // /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
+    // #[inline]
+    // fn trace_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    //     if i.is_empty() {
+    //         return Ok(*b)
+    //     }
+    //     let (child,_) = self.resolve_child(&i,root.fork(),ctx)?;
+    //     let bounds = self.child_bounds(stack,b,force,root,ctx)?;
         
-        Ok(bounds[child])
-    }
-    /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
-    fn child_bounds<P>(&self, stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where P: Queron<E> + ?Sized;
+    //     Ok(bounds[child])
+    // }
+    // /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
+    // fn child_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
     
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Attach widget's id to the given parent path
-    #[inline]
-    #[deprecated]
-    fn in_parent_path(&self, parent: E::WidgetPath) -> E::WidgetPath {
-        parent.for_child_widget_id(self.id())
-    }
-    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// Refer [`WidgetPath::resolves_thru`](WidgetPath::resolves_thru_child_id)
-    /// 
-    /// `sub_path`: subpath in parent widget (which contains this widget as child) which would probably resolve to/through this widget
-    #[inline]
-    #[deprecated]
-    fn resolved_by_path(&self, sub_path: &E::WidgetPath) -> Option<ResolvesThruResult<E>> {
-        E::WidgetPath::resolves_thru_child_id(self.id(), sub_path)
-    }
 
     /// If the widget should be focusable
     /// 
@@ -267,7 +261,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
     /// Determines the next child in this widget in the tabulation step
     #[inline]
-    fn _tabulate_next_child<P>(&self, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse where P: Queron<E> + ?Sized {
+    fn _tabulate_next_child<P,Ph>(&self, path: &Ph, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         match origin {
             // This widget is entered
             TabulateNextChildOrigin::Enter => match dir {
@@ -303,19 +297,14 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         }
     }
 
-    fn _tabulate<P>(&self, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where P: Queron<E> + ?Sized {
-        let current_path = QueryCurrentWidget.query_in(stack).unwrap().path;
+    #[deprecated]
+    fn _call_tabulate_on_child_idx<P,Ph>(&self, idx: usize, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+
+    fn _tabulate<P,Ph>(&self, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+        let current_path = path;
         // fn to tabulate to the next child away from the previous child (child_id None = self)
         let enter_child_sub = |child_id: usize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
-            self.with_child(
-                child_id,
-                #[inline] |child_widget, ctx| {
-                    let child_widget = child_widget.unwrap();
-                    let stack = stack::for_child_widget(stack, child_widget);
-                    child_widget._tabulate(&stack, to.clone(), dir, root.fork(), ctx)
-                }, 
-                root.fork(), ctx
-            )
+            self._call_tabulate_on_child_idx(child_id, path, stack, to.clone(), dir, root, ctx)
         };
         let next_child = |mut child_id: Option<usize>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
             loop {
@@ -461,7 +450,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
 
     #[inline(never)]
-    fn gen_diag_error_resolve_fail(&self, sub_path: &E::WidgetPath, op: &'static str, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> E::Error {
+    fn gen_diag_error_resolve_fail(&self, sub_path: &(dyn PathResolvusDyn<E>+'_), op: &'static str, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> E::Error {
         /*
         Failed to resolve 3/5/2 in Pane<Vec<WidgetRefMut<E>>>
             Child #0: 6 Button<E,Label<&str>>

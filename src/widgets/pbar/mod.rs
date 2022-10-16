@@ -6,7 +6,6 @@ pub mod widget;
 pub struct ProgressBar<'w,E> where 
     E: Env,
 {
-    id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub value: f32,
@@ -18,9 +17,8 @@ impl<'w,E> ProgressBar<'w,E> where
     E: Env,
 {
     #[inline]
-    pub fn new(id: E::WidgetID, o: Orientation) -> Self {
+    pub fn new(o: Orientation) -> Self {
         Self {
-            id,
             size: Gonstraints::empty(),
             style: Default::default(),
             value: 0.0,

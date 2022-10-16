@@ -2,6 +2,7 @@
 use super::*;
 
 use crate::event::key_combo::{KeyCombo, MatchKey, Matches};
+use crate::newpath::PathResolvusDyn;
 
 pub mod handler;
 pub mod dyn_state;
@@ -20,15 +21,15 @@ pub trait CtxStdState<'cc,E>: Context<'cc,E> + Sized + 'cc where E: Env {
 pub trait StdState<E> where E: Env {
     type K: PressedKey<E> + 'static;
     
-    fn hovered(&self) -> Option<E::WidgetID>;
-    fn selected(&self) -> Option<E::WidgetID>;
+    fn hovered(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)>;
+    fn selected(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)>;
 
     #[inline]
-    fn is_hovered(&self, i: &E::WidgetID) -> bool {
+    fn is_hovered(&self, i: &(dyn PathResolvusDyn<E>+'_)) -> bool {
         self.hovered().map_or(false, #[inline] |w| w == *i )
     }
     #[inline]
-    fn is_focused(&self, i: &E::WidgetID) -> bool {
+    fn is_focused(&self, i: &(dyn PathResolvusDyn<E>+'_)) -> bool {
         self.selected().map_or(false, #[inline] |w| w == *i )
     }
 
@@ -54,7 +55,7 @@ pub trait StdState<E> where E: Env {
         }
     }
     #[inline]
-    fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: E::WidgetID) -> Option<&Self::K> {
+    fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: &(dyn PathResolvusDyn<E>+'_)) -> Option<&Self::K> {
         if let Some(v) = self.is_pressed(c) {
             if v.widget().is(id.clone()) {
                 return Some(v);

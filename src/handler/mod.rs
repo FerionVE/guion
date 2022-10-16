@@ -2,6 +2,7 @@
 use std::any::TypeId;
 use std::sync::Arc;
 
+use crate::newpath::PathStack;
 use crate::queron::Queron;
 
 use super::*;
@@ -19,9 +20,10 @@ pub trait HandlerBuilder<E>: 'static where E: Env {
 /// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
 pub trait Handler<E>: 'static where E: Env {
     //TODO move into feature traits
-    fn _render<W,S>(
+    fn _render<W,Ph,S>(
         &self,
         widget: &W,
+        path: &Ph,
         stack: &S,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
@@ -29,36 +31,39 @@ pub trait Handler<E>: 'static where E: Env {
         //handler_root: &ECHandlerBuilt<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized;
+    ) where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized;
 
-    fn _event_direct<W,S,Evt>(
+    fn _event_direct<W,Ph,S,Evt>(
         &self,
         widget: &W,
+        path: &Ph,
         stack: &S,
         event: &Evt,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> EventResp where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
 
-    fn _event_root<W,S,Evt>(
+    fn _event_root<W,Ph,S,Evt>(
         &self,
         widget: &W,
+        path: &Ph,
         stack: &S,
         event: &Evt,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> EventResp where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
 
-    fn _size<W,S>(
+    fn _size<W,Ph,S>(
         &self,
         widget: &W,
+        path: &Ph,
         stack: &S,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> ESize<E> where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized;
+    ) -> ESize<E> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized;
 
     //fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's;
 
@@ -78,9 +83,10 @@ pub trait Handler<E>: 'static where E: Env {
 
 impl<E> Handler<E> for () where E: Env {
     #[inline] 
-    fn _render<W,S>(
+    fn _render<W,Ph,S>(
         &self,
         widget: &W,
+        path: &Ph,
         stack: &S,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
@@ -89,14 +95,15 @@ impl<E> Handler<E> for () where E: Env {
         ctx: &mut E::Context<'_>,
     )
     where
-        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
+        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized
     {
-        widget._render(stack, renderer, force_render, cache, root, ctx)
+        widget._render(path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline] 
-    fn _event_direct<W,S,Evt>(
+    fn _event_direct<W,Ph,S,Evt>(
         &self,
         widget: &W,
+        path: &Ph,
         stack: &S,
         event: &Evt,
         cache: &mut W::Cache,
@@ -104,14 +111,15 @@ impl<E> Handler<E> for () where E: Env {
         ctx: &mut E::Context<'_>,
     ) -> EventResp
     where
-        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
+        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     {
-        widget._event_direct(stack, event, cache, root, ctx)
+        widget._event_direct(path, stack, event, cache, root, ctx)
     }
     #[inline] 
-    fn _event_root<W,S,Evt>(
+    fn _event_root<W,Ph,S,Evt>(
         &self,
         widget: &W,
+        path: &Ph,
         stack: &S,
         event: &Evt,
         cache: &mut W::Cache,
@@ -119,29 +127,30 @@ impl<E> Handler<E> for () where E: Env {
         ctx: &mut E::Context<'_>,
     ) -> EventResp
     where
-        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
+        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     {
         if !event._root_only() {//TODO warn eprint??
             //TODO everything wrong here with event root propagation and tail
-            widget._event_direct(stack, event, cache, root, ctx)
+            widget._event_direct(path, stack, event, cache, root, ctx)
             //l.ctx.event_direct(l.widget,e)
         }else{
             false
         }
     }
     #[inline] 
-    fn _size<W,S>(
+    fn _size<W,Ph,S>(
         &self,
         widget: &W,
+        path: &Ph,
         stack: &S,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E>
     where
-        W: Widget<E> + ?Sized, S: Queron<E> + ?Sized
+        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized
     {
-        widget._size(stack, cache, root, ctx)
+        widget._size(path, stack, cache, root, ctx)
     }
 
     // fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's {
