@@ -23,7 +23,7 @@ where
     V: AsWidgets<E> + ?Sized,
     E: Env,
 {
-    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww, V: 'z;
 }
@@ -33,7 +33,7 @@ where
     V: AsWidgets<E> + ?Sized,
     E: Env,
 {
-    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
+    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
     where
         'ww: 'w, 'z: 'ww, V: 'z;
 }
@@ -60,13 +60,13 @@ pub struct AsWidgetsClosure<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R;
 
 impl<'z,C,V,R,E> AsWidgetsClosure<'z,C,V,R,E> 
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
     pub fn new<'a>(c: C) -> Self where R: 'a, V: 'a, C: 'a, 'z: 'a {
@@ -78,13 +78,13 @@ pub struct AsWidgetsAllClosure<'z,C,V,E>(C,PhantomData<(Box<V>,E,&'z ())>)
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>);
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>);
 
 impl<'z,C,V,E> AsWidgetsAllClosure<'z,C,V,E> 
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
 {
     #[inline]
     pub fn new<'a>(c: C) -> Self where V: 'a, C: 'a, 'z: 'a {
@@ -111,14 +111,14 @@ impl<'z,C,V,R,E> AsWidgetsDispatch<'z,V,R,E> for AsWidgetsClosure<'z,C,V,R,E>
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>) -> R
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
+    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>) -> R
     where
         'ww: 'w, 'z: 'ww
     {
-        (self.0)(idx,bound,child_id,widget,root,ctx)
+        (self.0)(idx,child_id,widget,root,ctx)
     }
 }
 
@@ -126,14 +126,14 @@ impl<'z,C,V,E> AsWidgetsIndexedDispatch<'z,V,E> for AsWidgetsAllClosure<'z,C,V,E
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
-    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
+    for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
+    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
     where
         'ww: 'w, 'z: 'ww
     {
-        (self.0)(idx,bound,child_id,widget,root,ctx)
+        (self.0)(idx,child_id,widget,root,ctx)
     }
 }
 
@@ -147,11 +147,11 @@ where
     //for<'w,'ww,'r,'c,'cc> C: FnMut(usize,V::Bound,V::ChildID,&'w V::Widget<'ww,'z>,E::RootRef<'r>,&'c mut E::Context<'cc>)
 {
     #[inline]
-    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, bound: V::Bound, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
+    fn call<'w,'ww,'r,'c,'cc>(&mut self, idx: usize, child_id: V::ChildID, widget: &'w V::Widget<'ww,'z>, root: E::RootRef<'r>, ctx: &'c mut E::Context<'cc>)
     where
         'ww: 'w, 'z: 'ww
     {
-        self.0.call(idx,bound,child_id,widget,root,ctx)
+        self.0.call(idx,child_id,widget,root,ctx)
     }
 }
 

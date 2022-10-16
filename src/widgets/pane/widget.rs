@@ -64,8 +64,9 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
 
         let render_props = render_props.inside_spacing_border();
 
-        self.childs.all(
-            &mut AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+        self.childs.idx_range(
+            0..self.childs.len(),
+            &mut AsWidgetsAllClosure::new(|idx,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 widget.render(
                     &for_child_widget(
                         render_props
@@ -111,8 +112,9 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
 
         let mut passed = false;
 
-        self.childs.all(
-            &mut AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+        self.childs.idx_range(
+            0..self.childs.len(),
+            &mut AsWidgetsAllClosure::new(|idx,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let stack = WithCurrentBounds {
                     inner: for_child_widget(&stack,widget),
                     bounds: bounds.bounds.slice(cache.childs[idx].relative_bounds_cache.as_ref().unwrap()),
@@ -178,7 +180,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     {
         self.childs.by_index(
             i,
-            &mut AsWidgetsClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+            &mut AsWidgetsClosure::new(|_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -208,8 +210,9 @@ impl<'w,E,T> Pane<'w,E,T> where
 
         let mut all_gonstraints = ESize::<E>::empty();
 
-        self.childs.all(
-            &mut AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+        self.childs.idx_range(
+            0..self.childs.len(),
+            &mut AsWidgetsAllClosure::new(|idx,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let child_cache = &mut cache.childs[idx];
 
                 let widget_id = widget.id();
@@ -255,8 +258,9 @@ impl<'w,E,T> Pane<'w,E,T> where
 
         let mut all_gonstraints = ESize::<E>::empty();
 
-        self.childs.all(
-            &mut AsWidgetsAllClosure::new(|idx,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+        self.childs.idx_range(
+            0..self.childs.len(),
+            &mut AsWidgetsAllClosure::new(|idx,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                 let child_cache = &mut cache.childs[idx];
 
                 let widget_id = widget.id();

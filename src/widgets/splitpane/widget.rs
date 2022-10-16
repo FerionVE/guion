@@ -266,7 +266,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     {
         self.childs.by_index(
             i,
-            &mut AsWidgetsClosure::new(|_,_,_,widget:&<(L,R) as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+            &mut AsWidgetsClosure::new(|_,_,widget:&<(L,R) as AsWidgets<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
