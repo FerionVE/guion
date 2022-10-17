@@ -1,62 +1,25 @@
-use std::ops::{Range, Mul, Div};
-
-use crate::dispatchor::*;
-use crate::env::Env;
-use crate::newpath::{PathFragment, PathResolvusDyn, FixedIdx};
-use crate::root::RootRef;
-use crate::widget::cache::DynWidgetCache;
-
 use super::*;
-use super::as_widget::AsWidget;
 
-pub trait AsWidgets<E> where E: Env {
-    type Widget<'v,'z>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v, Self: 'z;
-    type WidgetCache: WidgetCache<E>;
-    type ChildID: PathFragment<E> + Clone + 'static; // + AppendToPathResolvor
-    type IdIdxIter: Iterator<Item=(usize,Self::ChildID)>;
+#[repr(transparent)]
+pub struct WidgetsFixedIdx<T>(pub T) where T: ?Sized;
 
-    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        Self: 'w;
-
-    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        Self: 'w;
-
-    fn iter_ids(&self) -> Self::IdIdxIter;
-
-    //fn sliced
-
-    fn len(&self) -> usize;
-
-    fn idx_range<'w>(&self, range: Range<usize>, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    where
-        Self: 'w
-    {
-        self.idx_range_filtered(range, #[inline] |_, _| true, callback, root, ctx)
-    }
-
-    fn idx_range_filtered<'w>(&self, range: Range<usize>, filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    where
-        Self: 'w;
-
-    fn resolve<'w,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: &mut (dyn AsWidgetsResolveDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        Self: 'w;
+#[inline]
+fn bender<'a,'b,T>(v: &'a WidgetsFixedIdx<&'b T>) -> &'a WidgetsFixedIdx<T> where 'b: 'a, T: 'b + Sized {
+    unsafe{std::mem::transmute(v)}
 }
 
-impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
-    type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
-    type WidgetCache = T::WidgetCache;
-    type ChildID = T::ChildID;
-    type IdIdxIter = T::IdIdxIter;
+impl<E,T> AsWidgets<E> for WidgetsFixedIdx<&'_ T> where T: Sized, WidgetsFixedIdx<T>: AsWidgets<E>, E: Env {
+    type Widget<'v,'z> = <WidgetsFixedIdx<T> as AsWidgets<E>>::Widget<'v,'z> where 'z: 'v, Self: 'z;
+    type WidgetCache = <WidgetsFixedIdx<T> as AsWidgets<E>>::WidgetCache;
+    type ChildID = <WidgetsFixedIdx<T> as AsWidgets<E>>::ChildID;
+    type IdIdxIter = <WidgetsFixedIdx<T> as AsWidgets<E>>::IdIdxIter;
 
     #[inline]
     fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {
-        let mut callback = AsWidgetsClosure::<'_,_,T,R,E>::new(#[inline] |result,root,ctx| {
+        let mut callback = AsWidgetsClosure::new(#[inline] |result,root,ctx| {
             let result = match result {
                 Some(r) => Some(AsWidgetsResult {
                     idx: r.idx,
@@ -67,7 +30,7 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
             };
             callback.call(result, root, ctx)
         });
-        (**self).by_index(idx, &mut callback, root, ctx)
+        (*bender(self)).by_index(idx, &mut callback, root, ctx)
     }
 
     #[inline]
@@ -86,17 +49,17 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
             };
             callback.call(result, root, ctx)
         });
-        (**self).by_id(id, &mut callback, root, ctx)
+        (*bender(self)).by_id(id, &mut callback, root, ctx)
     }
 
     #[inline]
     fn iter_ids(&self) -> Self::IdIdxIter {
-        (**self).iter_ids()
+        (*bender(self)).iter_ids()
     }
 
     #[inline]
     fn len(&self) -> usize {
-        (**self).len()
+        (*bender(self)).len()
     }
 
     #[inline]
@@ -107,7 +70,7 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
         let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,child_id,widget,root,ctx| {
             callback.call(idx, child_id, widget, root, ctx)
         });
-        (**self).idx_range(range, &mut callback, root, ctx)
+        (*bender(self)).idx_range(range, &mut callback, root, ctx)
     }
 
     #[inline]
@@ -118,7 +81,7 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
         let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,child_id,widget,root,ctx| {
             callback.call(idx, child_id, widget, root, ctx)
         });
-        (**self).idx_range_filtered(range, filter, &mut callback, root, ctx)
+        (*bender(self)).idx_range_filtered(range, filter, &mut callback, root, ctx)
     }
 
     #[inline]
@@ -138,11 +101,11 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
             };
             callback.call(result, root, ctx)
         });
-        (**self).resolve(path, &mut callback, root, ctx)
+        (*bender(self)).resolve(path, &mut callback, root, ctx)
     }
 }
 
-impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
+impl<E,T> AsWidgets<E> for WidgetsFixedIdx<[T]> where T: AsWidget<E>, E: Env {
     type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
     type ChildID = FixedIdx;
@@ -153,7 +116,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     where
         Self: 'w
     {
-        match self.get(idx) {
+        match self.0.get(idx) {
             Some(inner) => {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
@@ -169,7 +132,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     where
         Self: 'w
     {
-        match self.get(id.0) {
+        match self.0.get(id.0) {
             Some(inner) => {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(AsWidgetsResult::from_some(id.0,id.clone(),widget), root, ctx)
@@ -187,7 +150,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
 
     #[inline]
     fn len(&self) -> usize {
-        <[T]>::len(self)
+        <[T]>::len(&self.0)
     }
 
     #[inline]
@@ -195,7 +158,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     where
         Self: 'w
     {
-        for (i,v) in self[idx_range].iter().enumerate() {
+        for (i,v) in self.0[idx_range].iter().enumerate() {
             if (filter)(i,&FixedIdx(i)) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(i, FixedIdx(i), widget, root, ctx)
@@ -211,7 +174,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     {
         if let Some(v) = path.try_fragment::<Self::ChildID>() {
             let idx = v.0;
-            if let Some(inner) = self.get(idx) {
+            if let Some(inner) = self.0.get(idx) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
                 });
@@ -223,7 +186,7 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     }
 }
 
-impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
+impl<E,T,const N: usize> AsWidgets<E> for WidgetsFixedIdx<[T;N]> where T: AsWidget<E>, E: Env {
     type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
     type ChildID = FixedIdx;
@@ -234,7 +197,7 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     where
         Self: 'w
     {
-        match self.get(idx) {
+        match self.0.get(idx) {
             Some(inner) => {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
@@ -250,7 +213,7 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     where
         Self: 'w
     {
-        match self.get(id.0) {
+        match self.0.get(id.0) {
             Some(inner) => {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(AsWidgetsResult::from_some(id.0,id.clone(),widget), root, ctx)
@@ -276,7 +239,7 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     where
         Self: 'w
     {
-        for (i,v) in self[idx_range].iter().enumerate() {
+        for (i,v) in self.0[idx_range].iter().enumerate() {
             if (filter)(i,&FixedIdx(i)) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(i, FixedIdx(i), widget, root, ctx)
@@ -292,7 +255,7 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     {
         if let Some(v) = path.try_fragment::<Self::ChildID>() {
             let idx = v.0;
-            if let Some(inner) = self.get(idx) {
+            if let Some(inner) = self.0.get(idx) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
                 });
@@ -304,13 +267,10 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     }
 }
 
-#[repr(transparent)]
-pub struct Tupled<T>(pub T) where T: ?Sized;
-
-impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E: Env, I: PathFragment<E> + Clone + PartialEq + 'static {
+impl<E,T> AsWidgets<E> for WidgetsFixedIdx<&'_ [T]> where T: AsWidget<E>, E: Env {
     type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
-    type ChildID = I;
+    type ChildID = FixedIdx;
     type IdIdxIter = impl Iterator<Item=(usize,Self::ChildID)>;
 
     #[inline]
@@ -319,11 +279,11 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
         Self: 'w
     {
         match self.0.get(idx) {
-            Some((id,inner)) => {
+            Some(inner) => {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(AsWidgetsResult::from_some(idx,id.clone(),widget), root, ctx)
+                    callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
                 });
-                (*inner).with_widget(&mut callback,root,ctx)
+                inner.with_widget(&mut callback,root,ctx)
             },
             None => callback.call(None,root,ctx),
         }
@@ -334,15 +294,12 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
     where
         Self: 'w
     {
-        let res = self.0.iter().enumerate()
-            .find(#[inline] |(_,(i,_))| *i == *id);
-        
-        match res {
-            Some((idx,(id,inner))) => {
+        match self.0.get(id.0) {
+            Some(inner) => {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(AsWidgetsResult::from_some(idx,id.clone(),widget), root, ctx)
+                    callback.call(AsWidgetsResult::from_some(id.0,id.clone(),widget), root, ctx)
                 });
-                (*inner).with_widget(&mut callback,root,ctx)
+                inner.with_widget(&mut callback,root,ctx)
             },
             None => callback.call(None,root,ctx),
         }
@@ -350,36 +307,23 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
 
     #[inline]
     fn iter_ids(&self) -> Self::IdIdxIter {
-        self.0.iter().enumerate().map(#[inline] |(i,(id,_))| (i,id.clone()) )
+        (0..self.len()).map(#[inline] |i| (i,FixedIdx(i)))
     }
 
     #[inline]
     fn len(&self) -> usize {
-        self.0.len()
+        <[T]>::len(&self.0)
     }
 
     #[inline]
-    fn idx_range<'w>(&self, range: Range<usize>, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<'w>(&self, idx_range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        for (i,(id,v)) in self.0.iter().enumerate() {
-            let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                callback.call(i, id.clone(), widget, root, ctx)
-            });
-            v.with_widget(&mut callback,root.fork(),ctx)
-        }
-    }
-
-    #[inline]
-    fn idx_range_filtered<'w>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    where
-        Self: 'w
-    {
-        for (i,(id,v)) in self.0.iter().enumerate() {
-            if (filter)(i,id) {
+        for (i,v) in self.0[idx_range].iter().enumerate() {
+            if (filter)(i,&FixedIdx(i)) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(i, id.clone(), widget, root, ctx)
+                    callback.call(i, FixedIdx(i), widget, root, ctx)
                 });
                 v.with_widget(&mut callback,root.fork(),ctx)
             }
@@ -391,14 +335,12 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
         Self: 'w
     {
         if let Some(v) = path.try_fragment::<Self::ChildID>() {
-            let res = self.0.iter().enumerate()
-                .find(#[inline] |(_,(i,_))| *i == *v);
-
-            if let Some((idx,(id,inner))) = res {
+            let idx = v.0;
+            if let Some(inner) = self.0.get(idx) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(AsWidgetsResolveResult::from_some(idx,id.clone(),path.inner().unwrap(),widget), root, ctx)
+                    callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
                 });
-                return (*inner).with_widget(&mut callback,root,ctx);
+                return inner.with_widget(&mut callback,root,ctx);
             }
         }
 
@@ -462,7 +404,7 @@ macro_rules! impl_tuple {
         //     }
         // }
 
-        impl<E,$t,$($tt),+> AsWidgets<E> for ($t,$($tt),+) where
+        impl<E,$t,$($tt),+> AsWidgets<E> for WidgetsFixedIdx<($t,$($tt),+)> where
             $t: AsWidget<E>,
             $($tt: AsWidget<E>),+ ,
             E: Env
@@ -477,7 +419,7 @@ macro_rules! impl_tuple {
             where
                 Self: 'w
             {
-                let $senf = self;
+                let $senf = &self.0;
                 
                 match idx {
                     $m => 
@@ -507,7 +449,7 @@ macro_rules! impl_tuple {
             where
                 Self: 'w
             {
-                let $senf = self;
+                let $senf = &self.0;
                 
                 match id.0 {
                     $m => 
@@ -547,7 +489,7 @@ macro_rules! impl_tuple {
             where
                 Self: 'w
             {
-                let ($l,$($ll),*) = self;
+                let ($l,$($ll),*) = &self.0;
 
                 let mut i = 0;
 
@@ -592,7 +534,7 @@ macro_rules! impl_tuple {
                 if let Some(v) = path.try_fragment::<Self::ChildID>() {
                     let idx = v.0;
                     
-                    let $senf = self;
+                    let $senf = &self.0;
                 
                     match idx {
                         $m => 

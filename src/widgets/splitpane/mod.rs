@@ -1,6 +1,8 @@
 use crate::error::ResolveResult;
 use crate::view::mut_target::DynAtomStateMutTarget;
 use crate::view::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
+use crate::widget::as_widgets::AsWidgets;
+use crate::widget::as_widgets::fixed_idx::WidgetsFixedIdx;
 
 use super::*;
 use super::util::state::AtomStateMut;
@@ -12,7 +14,7 @@ pub struct SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
     Self: 'w,
 {
-    pub childs: (L,R),
+    pub childs: WidgetsFixedIdx<(L,R)>,
     pub state: V,
     updater: TrMut,
     pub orientation: Orientation,
@@ -27,7 +29,7 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
     #[inline]
     pub fn new(orientation: Orientation, state: V, childs: (L,R)) -> Self {
         Self{
-            childs,
+            childs: WidgetsFixedIdx(childs),
             state,
             updater: (),
             orientation,
