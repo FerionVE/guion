@@ -39,7 +39,7 @@ impl<Args,E> MutorEndBuilder<Args,E> for () where E: Env, Args: Clone + Sized + 
     }
 
     #[inline]
-    fn build_box_mut_event(&self, args: Args) -> Option<BoxMutEvent<E>> {
+    fn build_box_mut_event(&self, _: Args) -> Option<BoxMutEvent<E>> {
         None
     }
 }

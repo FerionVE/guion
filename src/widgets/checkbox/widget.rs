@@ -104,7 +104,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
             );
 
             let rect = Bounds::from_wh(size,size);
-            let mut render_props = render_props.slice(&rect);
+            let render_props = render_props.slice(&rect);
 
             renderer.fill_rect(
                 &render_props

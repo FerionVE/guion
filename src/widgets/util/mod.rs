@@ -30,4 +30,4 @@ pub mod state;
 //     }
 // }
 
-pub type LocalGlyphCache<E: Env> = Option<(Arc<ETextLayout<E>>,Arc<dyn Any>)>;
+pub type LocalGlyphCache<E> = Option<(Arc<ETextLayout<E>>,Arc<dyn Any>)>;

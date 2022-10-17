@@ -13,8 +13,6 @@ use crate::util::bounds::{Bounds, Dims};
 use crate::widget::cache::StdRenderCachors;
 use crate::widget::stack::{QueryCurrentBounds, QueriedCurrentBounds, WithCurrentBounds};
 
-use super::*;
-
 pub mod widgets;
 
 pub trait Render<E>: Sized where E: Env {
@@ -536,7 +534,7 @@ impl<E> Query<E> for QueryTestStyleCurrent where E: Env {
         panic!()
     }
     #[inline]
-    fn end_builder<'b>(&self, b: Self::Builder<'b>) -> Option<Self::Out<'b>> {
+    fn end_builder<'b>(&self, _: Self::Builder<'b>) -> Option<Self::Out<'b>> {
         panic!()
     }
 }

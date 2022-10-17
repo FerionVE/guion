@@ -129,5 +129,3 @@ macro_rules! messaged {
         }
     };
 }
-
-pub(crate) use messaged;

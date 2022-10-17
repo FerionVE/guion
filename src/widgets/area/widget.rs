@@ -235,7 +235,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        self.size.clone()
+        self.size.clone() //TODO add borders?
     }
 
     fn childs(&self) -> usize {

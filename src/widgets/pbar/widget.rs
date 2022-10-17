@@ -27,12 +27,12 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     
     fn _render<P,Ph>(
         &self,
-        path: &Ph,
+        _path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
-        root: E::RootRef<'_>,
+        _root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let mut need_render = force_render;
@@ -82,13 +82,13 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
 
     fn _event_direct<P,Ph,Evt>(
         &self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut Self::Cache,
-        root: E::RootRef<'_>,
-        ctx: &mut E::Context<'_>
+        _: &Ph,
+        _: &P,
+        _: &Evt,
+        _: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        _: &mut Self::Cache,
+        _: E::RootRef<'_>,
+        _: &mut E::Context<'_>
     ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         false
     }

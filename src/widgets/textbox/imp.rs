@@ -118,7 +118,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> ITextBox<E> for TextBox<'w,E,Text,Scroll
             self.update(None,Some(new_cursor),g,root,ctx)
         }
     }
-    fn scroll_to_cursor(&self, b: &Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+    fn scroll_to_cursor(&self, b: &Bounds, g: &ETextLayout<E>, _root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
         let mut cursor = self.cursor.get(ctx);
         g.fix_cursor_boundaries(&mut cursor);
 

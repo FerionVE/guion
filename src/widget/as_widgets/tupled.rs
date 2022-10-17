@@ -63,11 +63,11 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
     }
 
     #[inline]
-    fn idx_range<'w>(&self, range: Range<usize>, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range<'w>(&self, range: Range<usize>, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        for (i,(id,v)) in self.0.iter().enumerate() {
+        for (i,(id,v)) in self.0[range].iter().enumerate() {
             let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                 callback.call(i, id.clone(), widget, root, ctx)
             });
@@ -76,11 +76,11 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
     }
 
     #[inline]
-    fn idx_range_filtered<'w>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<'w>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
-        for (i,(id,v)) in self.0.iter().enumerate() {
+        for (i,(id,v)) in self.0[range].iter().enumerate() {
             if (filter)(i,id) {
                 let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                     callback.call(i, id.clone(), widget, root, ctx)

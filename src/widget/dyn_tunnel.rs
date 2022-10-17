@@ -366,6 +366,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     fn guion_resolve_error_child_info_dyn(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
         self.guion_resolve_error_child_info(child_idx)
     }
+    #[allow(deprecated)]
     #[inline]
     fn _call_tabulate_on_child_idx_dyn(&self, child_idx: usize, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Result<TabulateResponse<E>,<E as Env>::Error> {
         self._call_tabulate_on_child_idx(child_idx, path, stack, op, dir, root, ctx)

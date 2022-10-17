@@ -73,7 +73,7 @@ impl<E,T> AsWidgets<E> for WidgetsFixedIdx<&'_ T> where T: Sized, WidgetsFixedId
     }
 
     #[inline]
-    fn idx_range<'w>(&self, range: Range<usize>, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range<'w>(&self, range: Range<usize>, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
@@ -84,7 +84,7 @@ impl<E,T> AsWidgets<E> for WidgetsFixedIdx<&'_ T> where T: Sized, WidgetsFixedId
     }
 
     #[inline]
-    fn idx_range_filtered<'w>(&self, range: Range<usize>, filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<'w>(&self, range: Range<usize>, filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
@@ -164,7 +164,7 @@ impl<E,T> AsWidgets<E> for WidgetsFixedIdx<[T]> where T: AsWidget<E>, E: Env {
     }
 
     #[inline]
-    fn idx_range_filtered<'w>(&self, idx_range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<'w>(&self, idx_range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
@@ -245,7 +245,7 @@ impl<E,T,const N: usize> AsWidgets<E> for WidgetsFixedIdx<[T;N]> where T: AsWidg
     }
 
     #[inline]
-    fn idx_range_filtered<'w>(&self, idx_range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<'w>(&self, idx_range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
@@ -326,7 +326,7 @@ impl<E,T> AsWidgets<E> for WidgetsFixedIdx<&'_ [T]> where T: AsWidget<E>, E: Env
     }
 
     #[inline]
-    fn idx_range_filtered<'w>(&self, idx_range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<'w>(&self, idx_range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
         Self: 'w
     {
@@ -495,7 +495,7 @@ macro_rules! impl_tuple {
             }
         
             #[inline]
-            fn idx_range_filtered<'w>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            fn idx_range_filtered<'w>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
             where
                 Self: 'w
             {
@@ -535,6 +535,8 @@ macro_rules! impl_tuple {
                         }
                     }
                 })*
+
+                let _ = i;
             }
         
             fn resolve<'w,XR>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: &mut (dyn AsWidgetsResolveDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR

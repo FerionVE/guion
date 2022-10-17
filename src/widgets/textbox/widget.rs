@@ -60,7 +60,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
-        root: E::RootRef<'_>,
+        _root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let mut need_render = force_render;
@@ -78,7 +78,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
 
         let g = cache.text_cache.as_ref().unwrap();
         //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
-        let mut cursor = self.cursor.get(ctx);
+        let cursor = self.cursor.get(ctx);
         //cursor.fix_boundaries(&*g);
         let off: Offset = self.scroll.get(ctx).into();
 
