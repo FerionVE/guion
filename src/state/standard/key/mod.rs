@@ -62,8 +62,8 @@ impl<E> PressedKey<E> for StdPressedKey<E> where E: Env {
         self.key.clone()
     }
     #[inline]
-    fn widget(&self) -> Arc<dyn PathResolvusDyn<E>> {
-        self.down.clone()
+    fn widget(&self) -> &(dyn PathResolvusDyn<E>+'_) {
+        &*self.down
     }
     #[inline]
     fn ts(&self) -> u64 {

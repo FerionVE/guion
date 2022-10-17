@@ -328,7 +328,7 @@ impl<V,E> PathFragment<E> for SimpleId<V> where V: Clone + PartialEq + 'static, 
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 #[repr(transparent)]
 pub struct FixedIdx(pub usize);
 

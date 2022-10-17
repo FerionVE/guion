@@ -23,8 +23,10 @@ pub trait EventDowncastMap<E> where E: Env {
 macro_rules! event_downcast_map_tryion {
     (
         $widget:ident,
+        $path:ident,
         $stack:ident,
         $event:ident,
+        $route_to_widget:ident,
         $cache:ident,
         $root:ident,
         $ctx:ident;
@@ -36,7 +38,7 @@ macro_rules! event_downcast_map_tryion {
         $(
             if let Some($event) = __try_downcast_event.downcast_ref::<$dest_type>() {
                 //eprintln!("EVENT DOWNCAST MAP {}",std::any::type_name::<$dest_type>());
-                return $crate::widget::Widget::event_direct($widget,$stack,$event,$cache,$root,$ctx);
+                return $crate::widget::Widget::event_direct($widget,$path,$stack,$event,$route_to_widget,$cache,$root,$ctx);
             }
         );*
     };

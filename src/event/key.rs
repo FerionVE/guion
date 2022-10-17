@@ -7,7 +7,7 @@ use std::sync::Arc;
 pub trait PressedKey<E> where E: Env {
     fn key(&self) -> EEKey<E>;
     /// the widget at which the keypress started
-    fn widget(&self) -> Arc<dyn PathResolvusDyn<E>>;
+    fn widget(&self) -> &(dyn PathResolvusDyn<E>+'_);
     /// the timestamp at which the keypress started
     fn ts(&self) -> u64;
     fn cursor(&self) -> Option<Offset>;

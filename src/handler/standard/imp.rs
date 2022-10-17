@@ -54,7 +54,10 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
         if event_mode.receive_self && event.query_variant::<MouseMove,_,_>(path,stack).is_some() {
-            (self.access)(ctx).state.mouse.hovered = Some(path.into_resolvus());
+            let hovered = &mut (self.access)(ctx).state.mouse.hovered;
+            if hovered.is_none() || path.fwd_compare(&**hovered.as_ref().unwrap()) != FwdCompareStat::Equal {
+                *hovered = Some(path.into_resolvus());
+            }
         }
 
         self.sup._event_direct(widget, path, stack, event, route_to_widget, cache, root, ctx)
