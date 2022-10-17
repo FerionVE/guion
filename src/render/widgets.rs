@@ -1,6 +1,11 @@
-use crate::text::layout::*;
+use crate::aliases::{ETextLayout, ERenderer, ESCursor};
+use crate::env::Env;
+use crate::queron::Queron;
+use crate::queron::query::Query;
+use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
+use crate::util::bounds::Offset;
 
-use super::*;
+use super::{StdRenderProps, QueryTestStyleCurrent, Render};
 
 //TODO refine standard render functions
 pub trait RenderStdWidgets<E>: Render<E> where E: Env {

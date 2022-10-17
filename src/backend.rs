@@ -1,5 +1,10 @@
 //! part of [`Env`]
-use super::*;
+
+use crate::env::Env;
+use crate::event::Event;
+use crate::layout::Gonstraints;
+use crate::render::Render;
+use crate::style::Style;
 
 /// Type compound
 pub trait Backend<E>: Sized + 'static where E: Env {

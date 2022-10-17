@@ -1,7 +1,6 @@
 use crate::aliases::EStyle;
 use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
-//use crate::widget::resolved::Resolved;
 use crate::util::bounds::Bounds;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
@@ -29,7 +28,7 @@ pub trait RootRef<E> where E: Env {
 }
 
 pub trait RootMut<E> where E: Env {
-    fn fork<'s>(&'s mut self) -> E::RootMut<'s> where Self: 's;
+    fn fork_mut<'s>(&'s mut self) -> E::RootMut<'s> where Self: 's;
 }
 
 // impl<'a,T,E> RootRef<E> for &'a T where for<'z> E: Env<RootRef<'z>=&'z T> {

@@ -1,13 +1,26 @@
+use std::any::Any;
+use std::sync::Arc;
+
+use crate::aliases::{ERenderer, EEvent, ETextLayout, ESize};
+use crate::dispatchor::AsWidgetDispatch;
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::layout::Gonstraints;
+use crate::widget::as_widget::AsWidget;
+use crate::{event_new, impl_traitcast, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
-use crate::text::layout::*;
-use crate::widget::cache::{WidgetCache, StdRenderCachors, ValidationStat};
+use crate::render::{StdRenderProps, TestStyleColorType};
+use crate::render::widgets::RenderStdWidgets;
+use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
+use crate::text::stor::TextStor;
+use crate::util::tabulate::{TabulateOrigin, TabulateDirection, TabulateResponse};
+use crate::validation::Validation;
+use crate::widget::{Widget, WidgetWithResolveChildDyn};
+use crate::widget::cache::{StdRenderCachors, ValidationStat, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
-use super::*;
-use std::sync::Arc;
-use util::state::AtomState;
-use validation::Validation;
+use super::Label;
 
 impl<'w,E,Text> Widget<E> for Label<'w,E,Text> where
     E: Env,
@@ -176,7 +189,7 @@ impl<E,Text> AsWidget<E> for Label<'_,E,Text> where Self: Widget<E>, E: Env {
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {

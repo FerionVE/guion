@@ -1,15 +1,12 @@
 use std::marker::PhantomData;
-use std::sync::Arc;
 
 use crate::ProtectedReturn;
 use crate::env::Env;
-use crate::error::ResolveResult;
-use crate::widget::Widget;
-use crate::widget::cache::{WidgetCache, WidgetCacheDyn, DynWidgetCache};
+use crate::widget::cache::{WidgetCache, DynWidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use self::mut_target::MuTarget;
-use self::mutor_trait::{MutorTo, MutorToBuilder, MutorToBuilderDyn, MutorToBuilderExt};
+use self::mutor_trait::{MutorToBuilderDyn, MutorToBuilder};
 
 pub mod view_widget;
 pub mod apply;

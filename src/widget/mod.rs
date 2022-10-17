@@ -4,17 +4,22 @@
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
 
-use crate::newpath::{PathStack, PathResolvusDyn, PathResolvus};
+use std::any::{type_name, TypeId};
+
+use crate::ctx::Context;
+use crate::env::Env;
+use crate::handler::Handler;
 use crate::queron::Queron;
-use crate::queron::query::Query;
 use crate::root::RootRef;
+use crate::traitcast::TraitObject;
+use crate::util::error::{GuionError, ResolveError, GuionResolveErrorChildInfo};
+use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, TabulateNextChildResponse, TabulateOrigin, TabulateResponse};
+use crate::{EventResp, event_new};
+use crate::aliases::{ERenderer, ESize};
+use crate::newpath::{PathResolvusDyn, PathStack, PathResolvus};
 
 use self::cache::WidgetCache;
 use self::dyn_tunnel::WidgetDyn;
-
-use super::*;
-use std::any::{TypeId, type_name};
-use traitcast::TraitObject;
 
 pub mod dyn_tunnel;
 
@@ -169,7 +174,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     //             i,
     //             #[inline] |wg,ctx| {
     //                 let w = wg.unwrap();
-    //                 dest.push(w.in_parent_path(own_path.refc()));
+    //                 dest.push(w.in_parent_path(own_path.clone()));
     //             }, 
     //             root.fork(), ctx,
     //         );

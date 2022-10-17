@@ -1,5 +1,3 @@
-use super::*;
-
 pub trait Filter<E>: Clone + Default + Sized where E: Env {
     fn _filter(&self, dest: &Link<E>, e: &EventCompound<E>) -> Option<EventCompound<E>>;
     fn attach_path_prefix(self, prefix: E::WidgetPath) -> Self;

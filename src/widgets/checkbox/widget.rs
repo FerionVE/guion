@@ -1,15 +1,34 @@
-use crate::dispatchor::AsWidgetClosure;
-use crate::newpath::{SimpleId, PathStack, PathResolvusDyn, PathResolvus, FwdCompareStat};
-use crate::queron::Queron;
+use std::marker::PhantomData;
+
+use crate::aliases::{ERenderer, EEvent, ESize};
+use crate::dispatchor::{AsWidgetClosure, AsWidgetDispatch};
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::event::key::MatchKeyCode;
+use crate::event::standard::variants::{MouseDown, KbdPress, MouseUp};
+use crate::layout::Gonstraints;
 use crate::queron::query::Query;
 use crate::root::RootRef;
-use crate::style::standard::cursor::StdCursor;
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
-use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::{impl_traitcast, EventResp, event_new};
+use crate::newpath::{PathStack, PathResolvusDyn, FwdCompareStat, SimpleId, PathResolvus, PathFragment};
+use crate::queron::Queron;
+use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, with_inside_spacing_border, widget_size_inside_border_type, widget_size_inside_border};
+use crate::render::widgets::RenderStdWidgets;
+use crate::state::{CtxStdState, StdState};
+use crate::style::standard::cursor::StdCursor;
+use crate::util::border::Border;
+use crate::util::bounds::Bounds;
+use crate::util::tabulate::{TabulateDirection, TabulateOrigin, TabulateResponse};
+use crate::view::mutor_trait::MutorEndBuilder;
 use crate::widget::stack::QueryCurrentBounds;
+use crate::widget::{Widget, WidgetWithResolveChildDyn};
+use crate::widget::as_widget::AsWidget;
+use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widgets::util::state::AtomState;
 
-use super::*;
-use imp::ICheckBox;
+use super::CheckBox;
+use super::imp::ICheckBox;
 
 impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     E: Env,
@@ -302,7 +321,7 @@ impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<'_,E,State,Text,TrMut> where S
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {

@@ -1,4 +1,5 @@
 //! Macros for implementing traitcast for widgets
+
 use std::any::TypeId;
 
 pub mod widget;

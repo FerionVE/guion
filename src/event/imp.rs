@@ -1,4 +1,10 @@
-use super::*;
+use std::any::Any;
+
+use crate::backend::Backend;
+use crate::env::Env;
+
+use super::standard::variants::*;
+use super::variant::{Variant, VariantSupport};
 
 impl<E> Clone for Box<dyn Variant<E>> where E: Env {
     #[inline]

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::*;
+use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
 
 pub struct KbdState<E> where E: Env {

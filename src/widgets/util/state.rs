@@ -1,15 +1,13 @@
 //! Traits for state types
-use super::*;
+
 use std::borrow::Cow;
-use std::cell::Cell;
-use std::cell::Ref;
-use std::cell::RefCell;
-use std::cell::RefMut;
+use std::cell::{RefCell, Cell, Ref, RefMut};
 use std::marker::PhantomData;
 use std::mem::ManuallyDrop;
-use std::sync::MutexGuard;
-use std::sync::RwLockReadGuard;
-use std::sync::RwLockWriteGuard;
+use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
+
+use crate::env::Env;
+use crate::traitcast_for_from_widget;
 
 /// Simple atomic type state
 pub trait AtomState<E,T> where E: Env {

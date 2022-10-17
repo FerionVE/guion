@@ -1,5 +1,6 @@
 //! Clipboard access
-use super::*;
+
+use crate::env::Env;
 
 //TODO move mod
 

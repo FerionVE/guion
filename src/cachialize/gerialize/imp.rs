@@ -1,14 +1,15 @@
 use std::any::TypeId;
 use std::borrow::Cow;
-use std::collections::{VecDeque, HashMap, HashSet};
+use std::collections::VecDeque;
 use std::hash::{Hash, Hasher};
 use std::marker::{PhantomData, PhantomPinned};
 use std::mem::size_of;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use super::{Gerialize, GerializeDyn, try_match_at, try_cut_off_left, try_match_and_cut_off_left, Stor};
 use super::tih::TypeIdHasher;
+use super::{Gerialize, try_match_at, try_match_and_cut_off_left, GerializeDyn, try_cut_off_left};
+use super::stor::Stor;
 
 macro_rules! impl_gerialize_raw {
     ($($t:ty);*) => {$(

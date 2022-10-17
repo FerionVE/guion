@@ -2,12 +2,10 @@ use std::marker::PhantomData;
 
 use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
-use crate::view::View;
 use crate::widget::Widget;
 use crate::widget::as_widget::AsWidget;
 use crate::widget::as_widgets::AsWidgets;
 use crate::widget::dyn_tunnel::WidgetDyn;
-
 
 pub trait AsWidgetDispatch<'z,V,R,E>
 where

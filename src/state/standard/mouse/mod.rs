@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use crate::*;
+use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
-use drag::*;
-use util::bounds::Offset;
+use crate::util::bounds::Offset;
+
+use self::drag::DragItem;
 
 pub mod drag;
 

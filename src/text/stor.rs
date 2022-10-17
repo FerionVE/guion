@@ -1,22 +1,15 @@
 use std::any::Any;
 use std::borrow::Cow;
-use std::cell::Ref;
-use std::cell::RefMut;
+use std::cell::{RefMut, Ref};
 use std::marker::PhantomData;
 use std::mem::ManuallyDrop;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::ops::Range;
-use std::sync::Arc;
-use std::sync::MutexGuard;
-use std::sync::RwLockReadGuard;
-use std::sync::RwLockWriteGuard;
+use std::ops::{Range, Deref, DerefMut};
+use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard, Arc};
 
 use crate::env::Env;
 use crate::traitcast_for_from_widget;
 use crate::util::immu::Immutable;
-use crate::validation::Validation;
-use crate::validation::ValidationMut;
+use crate::validation::{Validation, ValidationMut};
 use crate::validation::validated::Validated;
 
 use super::layout::TxtLayout;
@@ -269,7 +262,7 @@ impl<E,S,F> Validation<E> for OnModification<E,S,F> where S: Validation<E>, F: F
 }
 impl<E,S,F> ValidationMut<E> for OnModification<E,S,F> where S: ValidationMut<E>, F: FnMut(&mut S) {
     #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
+    fn validate(&mut self) -> Arc<dyn Any> {
         (**self).validate()
         //TODO trigger OnModification?
     }

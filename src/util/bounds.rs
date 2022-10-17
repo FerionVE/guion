@@ -1,6 +1,10 @@
 //! Bounds (x,y,w,h) and functionality
-use super::*;
+
 use std::fmt::Debug;
+
+use crate::layout::Orientation;
+
+use super::border::Border;
 
 #[derive(Clone,Copy,Default,PartialEq,Eq)]
 pub struct Offset {

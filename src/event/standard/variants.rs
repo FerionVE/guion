@@ -1,9 +1,14 @@
 //! standard variants
+
+use std::fmt::Debug;
 use std::sync::Arc;
 
+use crate::aliases::{EEKey, EEDest};
+use crate::env::Env;
+use crate::event::Destination;
+use crate::event::variant::Variant;
 use crate::newpath::PathResolvusDyn;
-
-use super::*;
+use crate::util::bounds::{Bounds, Offset, Dims};
 
 #[derive(Clone,Debug)]
 pub struct KbdDown<E> where E: Env {

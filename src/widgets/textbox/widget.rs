@@ -1,29 +1,43 @@
+use std::any::Any;
+use std::borrow::Cow;
+use std::ops::Range;
 use std::sync::Arc;
 
-use crate::newpath::PathResolvus;
-use crate::newpath::PathResolvusDyn;
-use crate::newpath::PathStack;
-use crate::queron::Queron;
+use crate::aliases::{ETCurSel, EEvent, ETextLayout, ERenderer, ETCurSelCachor, ESize};
+use crate::ctx::Context;
+use crate::ctx::clipboard::CtxClipboardAccess;
+use crate::dispatchor::AsWidgetDispatch;
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::event::key::MatchKeyCode;
+use crate::event::standard::variants::{TextInput, KbdPress, MouseScroll, MouseDown};
 use crate::queron::query::Query;
 use crate::root::RootRef;
-use crate::style::standard::cursor::StdCursor;
-use crate::text::cursel::Direction;
-use crate::text::cursel::TxtCurSel;
-use crate::text::cursel::TxtCurSelBytePos;
-use crate::text::layout::TxtLayout;
-use crate::text::layout::TxtLayoutFromStor;
-use crate::text::stor::*;
-use crate::view::mutor_trait::MutorEnd;
-use crate::widget::cache::StdRenderCachors;
-use crate::widget::cache::WidgetCache;
+use crate::text::cursel::{Direction, TxtCurSelBytePos};
+use crate::util::bounds::Offset;
+use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::{event_new, impl_traitcast, EventResp};
+use crate::newpath::{PathStack, PathResolvusDyn, PathResolvus};
+use crate::queron::Queron;
+use crate::render::{TestStyleColorType, StdRenderProps, TestStyleBorderType, QueryTestStyle, with_inside_spacing_border};
+use crate::render::widgets::RenderStdWidgets;
+use crate::state::{CtxStdState, StdState};
+use crate::style::standard::cursor::StdCursor;
+use crate::text::cursel::TxtCurSel;
+use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
+use crate::text::stor::TextStor;
+use crate::util::tabulate::{TabulateOrigin, TabulateDirection, TabulateResponse};
+use crate::validation::Validation;
+use crate::view::mutor_trait::MutorEndBuilder;
+use crate::widget::{Widget, WidgetWithResolveChildDyn};
+use crate::widget::as_widget::AsWidget;
 use crate::widget::stack::QueryCurrentBounds;
+use crate::widgets::util::state::AtomState;
 
-use super::*;
-use state::max_off;
-use util::{state::*, LocalGlyphCache};
-use super::imp::*;
-use validation::*;
+use super::TextBox;
+use super::imp::ITextBox;
+use super::state::max_off;
 
 impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
@@ -358,7 +372,7 @@ impl<E,Text,Scroll,Curs,TBUpd,TBScr> AsWidget<E> for TextBox<'_,E,Text,Scroll,Cu
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,Ret>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,Ret,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
+    fn with_widget<'w,Ret>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,Ret,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
     where
         Self: 'w
     {

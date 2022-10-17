@@ -3,8 +3,6 @@ use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::util::bounds::Bounds;
 
-use super::Widget;
-
 pub struct WithCurrentBounds<S> {
     pub inner: S,
     pub bounds: Bounds,

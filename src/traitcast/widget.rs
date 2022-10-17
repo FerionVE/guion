@@ -4,7 +4,7 @@ use crate::env::Env;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
-use super::{TraitcastImpl, TraitcastImplBase, TraitObject};
+use super::{TraitcastImpl, TraitcastImplBase};
 
 pub trait TraitcastWidget<E>: Widget<E> where E: Env {
     #[inline]
@@ -36,7 +36,7 @@ fn _try_traitcast_ref<'a,'b,T,E>(s: &'a (dyn WidgetDyn<E>+'b)) -> Result<&'a T,(
 
 impl<'a,E> TraitcastImplBase<'a> for dyn WidgetDyn<E>+'a where E: Env {
     #[inline]
-    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
+    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<super::TraitObject> {
         Widget::_as_trait_ref(self, t)
     }
 }

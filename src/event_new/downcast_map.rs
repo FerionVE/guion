@@ -1,6 +1,6 @@
 use crate::EventResp;
 use crate::env::Env;
-use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::newpath::{PathResolvusDyn, PathStack};
 use crate::queron::Queron;
 use crate::widget::Widget;
 

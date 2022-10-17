@@ -1,4 +1,4 @@
-use super::*;
+use self::bounds::Dims;
 
 pub mod bounds;
 pub mod border;

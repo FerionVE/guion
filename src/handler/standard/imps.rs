@@ -1,9 +1,13 @@
+use crate::aliases::EEvent;
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::handler::HandlerBuilder;
 use crate::newpath::PathResolvusDyn;
+use crate::state::StdState;
+use crate::state::standard::key::StdPressedKey;
+use crate::util::bounds::Offset;
 
-use super::*;
-use state::standard::key::StdPressedKey;
-use std::any::TypeId;
-use std::hash::Hash;
+use super::StdHandler;
 
 impl<S,E> StdState<E> for StdHandler<S,E> where
     S: HandlerBuilder<E>,

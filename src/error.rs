@@ -1,5 +1,3 @@
-use std::error::Error;
-
 pub type ResolveResult<T> = Result<T,Box<ResolveError>>;
 
 #[derive(Clone,Debug,Default)]

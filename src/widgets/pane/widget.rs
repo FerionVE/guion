@@ -1,15 +1,26 @@
-use crate::dispatchor::{AsWidgetsClosure, AsWidgetsAllClosure, AsWidgetsResult, AsWidgetsResolveClosure, AsWidgetsResolveResult};
-use crate::newpath::{PathStack, PathResolvusDyn, PathResolvus};
-use crate::queron::Queron;
 use crate::queron::query::Query;
 use crate::root::RootRef;
-use crate::widget::as_widgets::AsWidgets;
+use crate::{EventResp, event_new};
+use crate::aliases::{ERenderer, ESize};
+use crate::dispatchor::{AsWidgetsResolveResult, AsWidgetsResolveClosure, AsWidgetsAllClosure, AsWidgetsClosure, AsWidgetsResult, AsWidgetDispatch};
+use crate::env::Env;
+use crate::layout::{Gonstraints, Orientation};
+use crate::layout::calc::calc_bounds2;
+use crate::layout::size::StdGonstraintAxis;
+use crate::newpath::{PathStack, PathResolvusDyn, PathResolvus, PathFragment};
+use crate::queron::Queron;
+use crate::render::widgets::RenderStdWidgets;
+use crate::render::{with_inside_spacing_border, widget_size_inside_border_type, TestStyleBorderType, TestStyleColorType, StdRenderProps};
+use crate::util::bounds::{Dims, Bounds};
+use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
+use crate::widget::as_widget::AsWidget;
 use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widget::{Widget, WidgetWithResolveChildDyn};
+use crate::widget::as_widgets::AsWidgets;
 use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds};
-use crate::layout::calc::calc_bounds2;
 
-use super::*;
+use super::Pane;
 
 impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     E: Env,
@@ -415,7 +426,7 @@ impl<E,T> AsWidget<E> for Pane<'_,E,T> where Self: Widget<E>, E: Env {
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {

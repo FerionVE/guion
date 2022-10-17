@@ -1,8 +1,8 @@
-use crate::*;
-use key::*;
-use kbd::*;
-use mouse::*;
-use std::{any::TypeId, collections::HashMap};
+use crate::env::Env;
+
+use self::kbd::KbdState;
+use self::key::KeyState;
+use self::mouse::MouseState;
 
 pub mod key;
 pub mod kbd;

@@ -1,10 +1,12 @@
-use super::*;
+use qwutils::OptionExt;
+
+use crate::util::border::Border;
+
+use self::size::{StdGonstraints, StdGonstraintAxis};
 
 pub mod size;
 pub mod calc;
 mod imp;
-
-pub use size::*;
 
 #[derive(Clone,Copy,PartialEq)]
 pub enum Orientation {

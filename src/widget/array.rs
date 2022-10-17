@@ -1,5 +1,4 @@
 //! Trait over types holding an array of AsWidget types
-use super::*;
 
 pub trait WidgetArray<E>: Sized where E: Env {
     fn len(&self) -> usize;

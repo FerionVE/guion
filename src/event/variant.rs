@@ -1,4 +1,11 @@
-use super::*;
+use std::fmt::Debug;
+
+use crate::aliases::EEDest;
+use crate::env::Env;
+use crate::util::bounds::Bounds;
+
+use super::{Event, Destination};
+use super::imp::VariantDerive;
 
 pub trait VariantSupport<V,E>: Event<E> where E: Env, V: Variant<E> {
     fn from_variant(v: V) -> Self;

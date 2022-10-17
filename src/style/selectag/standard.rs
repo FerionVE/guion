@@ -1,9 +1,10 @@
-use std::iter::once;
-use std::iter::Once;
+use std::iter::{once, Once};
 use std::marker::PhantomData;
+
 use crate::env::Env;
 
 use super::StyleSelectag;
+
 /// selectors enable/disable specific parts of styles.  
 /// Style implementations may ignore selectors.  
 #[non_exhaustive]

@@ -1,15 +1,33 @@
-use crate::dispatchor::AsWidgetClosure;
-use crate::newpath::{PathStack, SimpleId, PathFragment, PathResolvusDyn, PathResolvus};
-use crate::queron::Queron;
+use crate::aliases::{ERenderer, EEvent, ESize};
+use crate::ctx::Context;
+use crate::ctx::clipboard::CtxClipboardAccess;
+use crate::dispatchor::{AsWidgetClosure, AsWidgetDispatch};
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::event::key::MatchKeyCode;
+use crate::event::standard::variants::KbdPress;
+use crate::layout::{Gonstraints, GonstraintAxis};
 use crate::queron::query::Query;
 use crate::root::RootRef;
-use crate::view::mutor_trait::MutorEnd;
+use crate::util::bounds::Bounds;
+use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widgets::util::state::AtomState;
+use crate::{event_new, impl_traitcast, EventResp};
+use crate::newpath::{PathStack, SimpleId, PathResolvusDyn, PathResolvus, PathFragment};
+use crate::queron::Queron;
+use crate::render::{StdRenderProps, TestStyleColorType, with_inside_spacing_border, with_inside_border_by_type, TestStyleBorderType};
+use crate::render::widgets::RenderStdWidgets;
+use crate::state::{CtxStdState, StdState};
+use crate::util::{ScrollOff, normalize_scroll_off};
+use crate::view::mutor_trait::MutorEndBuilder;
+use crate::widget::{Widget, WidgetWithResolveChildDyn};
+use crate::widget::as_widget::AsWidget;
 use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds};
+use crate::widgets::soft_single_child_resolve_check;
 
-use super::*;
-use util::{state::*};
+use super::{Area, ScrollUpdate};
 
 impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     E: Env,
@@ -316,7 +334,7 @@ impl<E,W,Scroll,MutFn> AsWidget<E> for Area<'_,E,W,Scroll,MutFn> where Self: Wid
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {

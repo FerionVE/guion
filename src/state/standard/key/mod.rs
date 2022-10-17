@@ -1,7 +1,11 @@
-use crate::*;
-use crate::newpath::PathResolvusDyn;
 use std::mem::size_of;
 use std::sync::Arc;
+
+use crate::aliases::EEKey;
+use crate::env::Env;
+use crate::event::key::PressedKey;
+use crate::newpath::PathResolvusDyn;
+use crate::util::bounds::Offset;
 
 pub struct KeyState<E> where E: Env {
     pub pressed: Vec<StdPressedKey<E>>,

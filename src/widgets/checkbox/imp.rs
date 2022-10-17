@@ -1,4 +1,10 @@
-use super::*;
+use crate::ctx::Context;
+use crate::env::Env;
+use crate::traitcast_for_from_widget;
+use crate::view::mutor_trait::MutorEndBuilder;
+use crate::widgets::util::state::AtomState;
+
+use super::CheckBox;
 
 pub trait ICheckBox<E> where E: Env {
     fn state(&self) -> &dyn AtomState<E,bool>;

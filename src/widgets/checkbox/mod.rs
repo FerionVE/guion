@@ -1,13 +1,14 @@
-use super::*;
-use super::util::LocalGlyphCache;
-use super::label::Label;
-use crate::error::ResolveResult;
+use std::marker::PhantomData;
+
+use crate::aliases::{ESize, EStyle};
+use crate::env::Env;
+use crate::layout::Gonstraints;
 use crate::text::stor::TextStor;
 use crate::validation::Validation;
 use crate::view::mut_target::DynAtomStateMutTarget;
-use crate::view::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
-use std::marker::PhantomData;
-use util::state::*;
+use crate::view::mutor_trait::{MutorToBuilder, MutorEndBuilder, MutorToBuilderExt};
+
+use super::label::Label;
 
 pub mod widget;
 pub mod imp;

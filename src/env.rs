@@ -1,9 +1,13 @@
 //! The Env type defines a compound over any generic types
-use crate::event_new::downcast_map::EventDowncastMap;
-use crate::root::{RootMut, RootRef};
 
-use super::*;
 use std::fmt::Debug;
+
+use crate::backend::Backend;
+use crate::ctx::Context;
+use crate::event_new::downcast_map::EventDowncastMap;
+use crate::handler::Handler;
+use crate::root::{RootRef, RootMut};
+use crate::util::error::GuionError;
 
 /// Type compound
 ///

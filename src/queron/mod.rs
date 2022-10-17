@@ -1,12 +1,9 @@
-use std::any::TypeId;
-use std::marker::PhantomData;
+use self::dyn_tunnel::QueronDyn;
+use self::query::{QueryStack, Query};
 
 pub mod dyn_tunnel;
 pub mod imp;
 pub mod query;
-
-use dyn_tunnel::*;
-use query::*;
 
 /// This is the one trait everyone should use and/or implement
 /// Both _query and _query_dyn should be implemented. query/_query should not call into _query_dyn, unless it's bridging into trait objects, because both stacks should run independently, until going into trait object

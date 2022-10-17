@@ -1,12 +1,9 @@
-use std::borrow::Borrow;
-use std::marker::PhantomData;
-use std::ops::Deref;
-use super::*;
-use super::cache::DynWidgetCache;
-use super::dyn_tunnel::WidgetDyn;
-
 use crate::dispatchor::{AsWidgetDispatch, AsWidgetClosure};
 use crate::env::Env;
+
+use super::Widget;
+use super::cache::{DynWidgetCache, WidgetCache};
+use super::dyn_tunnel::WidgetDyn;
 
 pub trait AsWidget<E> where E: Env {
     type Widget<'v,'z>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v, Self: 'z;
@@ -165,5 +162,3 @@ macro_rules! impl_as_widget_self {
         }
     };
 }
-
-pub(crate) use impl_as_widget_self;

@@ -1,5 +1,4 @@
 //! Entry point of the widget tree
-use super::*;
 
 /// Implemented on the root of the widget tree  
 /// Represents the root of a widget tree and being a starting point for widget resolving
@@ -26,7 +25,7 @@ pub trait Widgets<E>: Sized where E: Env {
 //#[doc(hidden)]
 // Used by [`Widgets::widget`] implementations
 // pub fn resolve_in_root<'l,'s,E>(root: &'s dyn WidgetDyn<E>, sub: E::WidgetPath, abs_path: E::WidgetPath, stor: &'l E::Storage<'_>) -> Result<Resolved<'s,E>,E::Error> where E: Env, 'l: 's {
-//     let r = root.resolve(sub.refc())?;
+//     let r = root.resolve(sub.clone())?;
     
 //     match r {
 //         Resolvable::Widget(w) => 

@@ -1,8 +1,9 @@
-use crate::newpath::PathResolvusDyn;
-
-use super::*;
 use std::fmt::Debug;
-use std::sync::Arc;
+
+use crate::aliases::EEKey;
+use crate::env::Env;
+use crate::newpath::PathResolvusDyn;
+use crate::util::bounds::Offset;
 
 pub trait PressedKey<E> where E: Env {
     fn key(&self) -> EEKey<E>;

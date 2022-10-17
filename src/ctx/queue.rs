@@ -1,10 +1,11 @@
 //! [`Queue`] trait and util fns for implementors
+
 use std::sync::Arc;
 
+use crate::aliases::{EEvent, ESize};
+use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
 use crate::widget::dyn_tunnel::WidgetDyn;
-
-use super::*;
 
 /// The Queue, accessible from [`E::Context`](Context), used to enqueue [events](Event) or actions from any thread
 /// 

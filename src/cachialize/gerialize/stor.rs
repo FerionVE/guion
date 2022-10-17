@@ -1,7 +1,5 @@
 use std::convert::Infallible;
-use std::intrinsics::copy_nonoverlapping;
-use std::io::{Cursor, Write};
-use std::panic;
+use std::ptr::copy_nonoverlapping;
 
 pub trait Stor {
     type Err;

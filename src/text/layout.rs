@@ -1,10 +1,10 @@
 use std::ops::Range;
 
 use crate::env::Env;
-use crate::util::bounds::*;
+use crate::util::bounds::{Bounds, Offset, Dims};
 
 use super::cursel::{TxtCurSel, Direction};
-use super::stor::{TextStor, ToTextLayout};
+use super::stor::{ToTextLayout, TextStor};
 
 pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for<'a> TxtLayoutFromStor<&'a str,E> /*+Send+Sync*/ where E: Env {
     type CurSel: TxtCurSel<E> +Send+Sync;

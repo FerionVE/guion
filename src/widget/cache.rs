@@ -1,7 +1,13 @@
+use std::any::TypeId;
 use std::marker::PhantomData;
 use std::ops::{BitOrAssign, BitAndAssign};
 
-use super::*;
+use crate::aliases::ESColor;
+use crate::env::Env;
+use crate::queron::Queron;
+use crate::render::StdRenderProps;
+use crate::util::border::Border;
+use crate::util::bounds::Dims;
 
 pub trait WidgetCache<E>: Default + Sized + 'static {
     /// Reset current of current and child caches

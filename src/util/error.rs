@@ -1,10 +1,9 @@
 use std::error::Error;
-use std::fmt::{Debug,Display};
+use std::fmt::{Debug, Display};
 use std::sync::Arc;
 
+use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
-
-use super::*;
 
 #[derive(Clone)]
 #[non_exhaustive]

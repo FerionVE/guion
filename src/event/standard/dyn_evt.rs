@@ -1,6 +1,12 @@
+use std::fmt::Debug;
 use std::marker::PhantomData;
-use super::*;
-use std::any::Any;
+
+use crate::backend::Backend;
+use crate::env::Env;
+use crate::event::{Destination, Event};
+use crate::event::key::Key;
+use crate::event::variant::{Variant, VariantSupport};
+use crate::util::bounds::Bounds;
 
 /// Dynamic [`Event`] container. Supports all variants.
 pub struct DynEvent<E,K,D> where E: Env, E::Backend: Backend<E,Event=Self>, D: Destination, K: Key {

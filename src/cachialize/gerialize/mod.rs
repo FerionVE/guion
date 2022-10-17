@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 use std::mem::size_of;
 use std::ops::AddAssign;
 
-use stor::Stor;
-use tih::{ser_type_id, type_id_hashed};
+use self::stor::Stor;
+use self::tih::{ser_type_id, type_id_hashed};
 
 pub mod tih;
 pub mod imp;

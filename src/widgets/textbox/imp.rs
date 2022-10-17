@@ -1,17 +1,28 @@
-use crate::queron::Queron;
-use crate::root::RootRef;
-use crate::text::cursel::{Direction, TxtCurSel};
-use crate::text::layout::TxtLayoutFromStor;
-use crate::text::stor::TextStor;
-use crate::text::layout::TxtLayout;
-use crate::widget::cache::ValidationStat;
-
-use super::*;
-use super::widget::TextBoxCache;
-use util::{state::AtomState, LocalGlyphCache};
 use std::borrow::Cow;
-use std::sync::Arc;
-use validation::*;
+use std::ops::Range;
+
+use crate::aliases::{ETextLayout, ETCurSel, ERenderer, EEvent};
+use crate::ctx::Context;
+use crate::ctx::clipboard::CtxClipboardAccess;
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::event::standard::variants::MouseDown;
+use crate::queron::Queron;
+use crate::render::widgets::RenderStdWidgets;
+use crate::root::RootRef;
+use crate::state::CtxStdState;
+use crate::text::cursel::{Direction, TxtCurSel};
+use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
+use crate::text::stor::TextStor;
+use crate::traitcast_for_from_widget;
+use crate::util::bounds::{Bounds, Offset};
+use crate::validation::Validation;
+use crate::view::mutor_trait::MutorEndBuilder;
+use crate::widget::cache::ValidationStat;
+use crate::widgets::util::state::AtomState;
+
+use super::TextBox;
+use super::widget::TextBoxCache;
 
 pub trait ITextBox<E> where E: Env {
     fn insert_text(&self, t: &str, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);

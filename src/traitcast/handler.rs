@@ -1,10 +1,3 @@
-use std::any::TypeId;
-
-use crate::env::Env;
-use crate::handler::Handler;
-
-use super::{TraitcastImpl, TraitcastImplBase, TraitObject};
-
 /// Traitcast a handler
 /// 
 /// This is a macro to properly handle handler tail

@@ -1,16 +1,15 @@
 use std::fmt::Debug;
 use std::marker::PhantomData;
-use std::sync::Arc;
 
 use crate::env::Env;
 use crate::event::variant::Variant;
-use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::newpath::PathStack;
 use crate::queron::Queron;
 use crate::queron::query::{QueryStack, Query};
 use crate::util::bounds::Offset;
-use crate::widget::stack::{QueryCurrentBounds};
+use crate::widget::stack::QueryCurrentBounds;
 
-use super::filter::{QueryVariant, StdEventMode, QueryStdEventMode};
+use super::filter::{QueryVariant, QueryStdEventMode, StdEventMode};
 
 #[derive(Clone)]
 pub struct StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {

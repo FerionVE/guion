@@ -1,4 +1,8 @@
-use super::*;
+use crate::layout::GonstraintAxis;
+use crate::util::bounds::{Dims, Bounds};
+
+use super::size::StdGonstraintAxis;
+use super::{Orientation, Gonstraints};
 
 pub fn calc_bounds<S,SK>(outer: &Dims, child_constraints: &[SK], mut constraint_key: impl FnMut(&SK) -> S, o: Orientation) -> Vec<Bounds> where S: Gonstraints {
     if child_constraints.is_empty() {return vec![];}

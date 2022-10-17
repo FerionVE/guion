@@ -1,8 +1,10 @@
 use std::borrow::Cow;
 use std::rc::Rc;
-use std::sync::{Arc, MutexGuard, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard, Arc};
 
-use super::*;
+use super::Queron;
+use super::dyn_tunnel::QueronDyn;
+use super::query::{Query, QueryStack};
 
 impl<E> Queron<E> for () {
     #[inline]

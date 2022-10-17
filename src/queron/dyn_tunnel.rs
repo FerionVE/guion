@@ -1,4 +1,5 @@
-use super::*;
+use super::Queron;
+use super::query::{QueryStack, DynQuery};
 
 /// This trait is only for bridging thru trait objects
 pub trait QueronDyn<E> {

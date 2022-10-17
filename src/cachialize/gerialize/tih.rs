@@ -3,7 +3,6 @@ use std::hash::{Hasher, BuildHasher, Hash};
 
 use super::stor::Stor;
 
-
 #[cfg(debug_assertions)]
 type TypeIdHash = Option<u64>;
 #[cfg(not(debug_assertions))]

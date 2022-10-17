@@ -1,17 +1,15 @@
 use std::marker::PhantomData;
 
-use crate::dispatchor::{AsWidgetDispatch, AsWidgetClosure};
+use crate::dispatchor::AsWidgetDispatch;
 use crate::env::Env;
 use crate::error::ResolveResult;
-use crate::root::RootRef;
-use crate::widget::Widget;
 use crate::widget::as_widget::AsWidget;
 use crate::widget::cache::DynWidgetCache;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::{View, box_view_cb};
 use super::mut_target::MuTarget;
-use super::mutor_trait::*;
+use super::mutor_trait::{MutorToBuilder, ForTargetCBIfBuilder, ForTargetCBBuilder, MutorToBuilderExt};
 
 pub struct ViewWidget<ViewTy,ViewFn,MutorFn,E>(ViewFn,MutorFn,PhantomData<(ViewTy,E)>) where
     ViewFn: Fn()->ViewTy,

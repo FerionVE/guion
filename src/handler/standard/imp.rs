@@ -1,8 +1,19 @@
-use crate::*;
-use crate::newpath::{PathStack, PathResolvus, FwdCompareStat};
-use crate::queron::query::Query;
+use crate::aliases::{EEvent, ERenderer, ESize};
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::event::key::MatchKeyCode;
+use crate::event::standard::variants::{MouseMove, RootEvent, KbdDown, KbdPress, MouseDown, MouseUp, MouseLeave, WindowResize, WindowMove, TextInput, MouseScroll, KbdUp, MouseEnter};
 use crate::root::RootRef;
-use super::*;
+use crate::{event_new, EventResp};
+use crate::event_new::variants::StdVariant;
+use crate::handler::{Handler, HandlerBuilder};
+use crate::newpath::{PathStack, PathResolvusDyn, FwdCompareStat, PathResolvus};
+use crate::queron::Queron;
+use crate::state::{CtxStdState, StdState};
+use crate::util::tabulate::{TabulateDirection, tabi};
+use crate::widget::Widget;
+
+use super::StdHandlerLive;
 
 impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
     SB: HandlerBuilder<E>,
@@ -111,7 +122,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                         );
                         /*let event = KbdPress{
                             key: key.clone(),
-                            down_widget: id.refc(),
+                            down_widget: id.clone(),
                             down_ts: e.2,
                         };
                         l._event_root((Event::from(event),&wbounds,e.2));*/
@@ -130,7 +141,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                     if let Some(p) = old {
                         let event = KbdUp{
                             key: p.key,
-                            down_widget: p.down.refc(),
+                            down_widget: p.down.clone(),
                             down_ts: p.ts,
                         };
                         if let Some(id) = (self.access)(ctx).state.kbd.focused.clone() {
@@ -158,7 +169,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                     if let Some(p) = old {
                         let event = KbdPress{
                             key: p.key.clone(),
-                            down_widget: p.down.refc(),
+                            down_widget: p.down.clone(),
                             down_ts: p.ts,
                         };
                         if let Some(id) = (self.access)(ctx).state.kbd.focused.clone() {
@@ -210,7 +221,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                             );
 
 
-                            //passed |= Self::focus(l,hovered.path.refc(),e.1,e.2).unwrap_or(false);
+                            //passed |= Self::focus(l,hovered.path.clone(),e.1,e.2).unwrap_or(false);
 
                             let focus = root.with_widget(
                                 &*hovered,
@@ -233,7 +244,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
                                 key: p.key,
                                 pos,
                                 down_pos: p.cursor.expect("TODO"), //fails if a invalid press was inserted into the state
-                                down_widget: p.down.refc(),
+                                down_widget: p.down.clone(),
                                 down_ts: p.ts
                             };
                             if let Some(hovered) = (self.access)(ctx).state.mouse.hovered.clone() {

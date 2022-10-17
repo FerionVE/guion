@@ -1,16 +1,38 @@
-use super::*;
-use util::state::*;
-use crate::dispatchor::{AsWidgetClosure, AsWidgetsClosure, AsWidgetsResult, AsWidgetsResolveClosure, AsWidgetsAllClosure, AsWidgetsResolveResult};
-use crate::event::key::Key;
-use crate::newpath::{PathStack, FixedIdx, PathResolvusDyn, PathResolvus};
-use crate::queron::Queron;
+use std::marker::PhantomData;
+
+use crate::aliases::{ERenderer, ESize, EEvent};
+use crate::ctx::Context;
+use crate::dispatchor::{AsWidgetClosure, AsWidgetsResolveClosure, AsWidgetDispatch, AsWidgetsClosure};
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::event::key::MatchKeyCode;
+use crate::event::standard::variants::MouseMove;
+use crate::layout::GonstraintAxis;
+use crate::layout::Gonstraints;
+use crate::layout::Orientation;
 use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::style::standard::cursor::StdCursor;
-use crate::widget::as_widgets::AsWidgets;
-use crate::widget::cache::{StdRenderCachors, WidgetCache};
+use crate::{event_new, EventResp, impl_traitcast};
+use crate::newpath::{PathStack, PathResolvusDyn, FixedIdx, PathResolvus, PathFragment};
+use crate::queron::Queron;
+use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, widget_size_inside_border_type, with_inside_spacing_border};
+use crate::render::widgets::RenderStdWidgets;
+use crate::state::{CtxStdState, StdState};
+use crate::util::bounds::Bounds;
+use crate::util::tabulate::{TabulateResponse, TabulateOrigin, TabulateDirection};
+use crate::view::mutor_trait::MutorEndBuilder;
+use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
-use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds}; //TODO fix req of this import
+use crate::widget::{Widget, WidgetWithResolveChildDyn};
+use crate::widget::as_widget::AsWidget;
+use crate::widget::as_widgets::AsWidgets;
+use crate::widget::as_widgets::fixed_idx::WidgetsFixedIdx;
+use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds};
+use crate::widgets::soft_single_child_resolve_check;
+use crate::widgets::util::state::AtomState;
+
+use super::SplitPane;
 
 impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     E: Env,
@@ -395,7 +417,7 @@ impl<E,L,R,V,TrMut> AsWidget<E> for SplitPane<'_,E,L,R,V,TrMut> where Self: Widg
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,Ret>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,Ret,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
+    fn with_widget<'w,Ret>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,Ret,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Ret
     where
         Self: 'w
     {

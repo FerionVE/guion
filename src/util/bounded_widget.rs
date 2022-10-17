@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-use super::*;
+use crate::env::Env;
+
+use super::bounds::Bounds;
 
 //TODO rework
 pub trait IBoundedWidget<E>: Clone where E: Env {

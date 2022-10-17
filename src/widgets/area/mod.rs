@@ -1,10 +1,11 @@
-use crate::error::ResolveResult;
-use crate::view::mut_target::DynAtomStateMutTarget;
-use crate::view::mutor_trait::*;
-
-use super::*;
-use super::util::state::AtomStateMut;
 use std::marker::PhantomData;
+
+use crate::aliases::{ESize, EStyle};
+use crate::env::Env;
+use crate::layout::Gonstraints;
+use crate::util::ScrollOff;
+use crate::view::mut_target::DynAtomStateMutTarget;
+use crate::view::mutor_trait::{MutorToBuilder, MutorEndBuilder, MutorToBuilderExt};
 
 pub mod widget;
 pub mod imp;

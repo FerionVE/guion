@@ -1,10 +1,23 @@
+use std::marker::PhantomData;
+
+use crate::dispatchor::AsWidgetDispatch;
+use crate::layout::Orientation;
+use crate::util::bounds::Bounds;
+use crate::widget::as_widget::AsWidget;
+use crate::widget::cache::{WidgetCache, StdRenderCachors};
+use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widgets::util::state::AtomState;
+use crate::{EventResp, impl_traitcast, event_new};
+use crate::aliases::{ERenderer, ESize};
+use crate::env::Env;
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
-use crate::widget::cache::{StdRenderCachors, WidgetCache};
-use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType};
+use crate::render::widgets::RenderStdWidgets;
+use crate::util::tabulate::{TabulateOrigin, TabulateDirection, TabulateResponse};
+use crate::widget::{Widget, WidgetWithResolveChildDyn};
 
-use super::*;
-use super::super::util::state::*;
+use super::ProgressBar;
 
 impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     E: Env,
@@ -163,7 +176,7 @@ impl<E> AsWidget<E> for ProgressBar<'_,E> where Self: Widget<E>, E: Env {
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: &mut (dyn dispatchor::AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         Self: 'w
     {
@@ -172,7 +185,7 @@ impl<E> AsWidget<E> for ProgressBar<'_,E> where Self: Widget<E>, E: Env {
 }
 
 #[derive(Default)]
-pub struct ProgressBarCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>{
+pub struct ProgressBarCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
     std_render_cachors: Option<StdRenderCachors<E>>,
     intvalue_cachor: Option<u32>,
     _p: PhantomData<E>,

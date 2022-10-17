@@ -1,6 +1,8 @@
+use std::any::TypeId;
+use std::marker::PhantomData;
 use std::ptr::NonNull;
 
-use super::*;
+use super::Queron;
 
 //TODO Builder with lifetime
 pub trait Query<E>: Clone + 'static where E: 'static {

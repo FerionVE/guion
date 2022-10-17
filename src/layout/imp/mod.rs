@@ -1,5 +1,7 @@
 use std::ops::Index;
-use super::*;
+
+use super::Orientation;
+use super::size::{StdGonstraints, StdGonstraintAxis};
 
 mod border;
 mod size_axis;

@@ -1,5 +1,6 @@
 //! Used in layouting
-use super::*;
+
+use super::bounds::{Offset, Dims};
 
 #[derive(Clone,Copy,PartialEq)]
 pub struct Border {

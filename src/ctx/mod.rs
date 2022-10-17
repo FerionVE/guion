@@ -1,5 +1,9 @@
 //! The [`Context`] trait housing handlers, queue and other side stuff
-use super::*;
+
+use crate::env::Env;
+use crate::handler::HandlerBuilder;
+
+use self::queue::{BoxMutEvent, StdEnqueueable, StdOrder, Queue};
 
 pub mod queue;
 pub mod clipboard;

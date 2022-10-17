@@ -1,7 +1,7 @@
 //! some standard widgets. WIP
-use crate::newpath::{PathResolvus, PathResolvusDyn, PathFragment};
 
-use super::*;
+use crate::env::Env;
+use crate::newpath::{PathFragment, PathResolvusDyn, PathResolvus};
 
 #[macro_use]
 macro_rules! try_or_false {

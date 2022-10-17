@@ -1,9 +1,12 @@
 //! [Style handler](Style), [Style specifier and selectors](StyleSelector)
+
+use crate::env::Env;
+use crate::util::border::Border;
+
+use self::color::Color;
 use self::selectag::standard::StdSelectag;
 use self::selector::{StyleSelector, StyleSelectorAppend};
 use self::standard::cursor::StdCursor;
-
-use super::*;
 
 pub mod selector;
 pub mod selectag;

@@ -1,13 +1,11 @@
-use std::ops::{Range, Mul, Div};
+use std::ops::Range;
 
-use crate::dispatchor::*;
+use crate::dispatchor::{AsWidgetsDispatch, AsWidgetsIndexedDispatch, AsWidgetsResolveDispatch, AsWidgetsAllClosure, AsWidgetsResolveClosure, AsWidgetsClosure, AsWidgetsResult, AsWidgetsResolveResult};
 use crate::env::Env;
-use crate::newpath::{PathFragment, PathResolvusDyn, FixedIdx};
-use crate::root::RootRef;
-use crate::widget::cache::DynWidgetCache;
+use crate::newpath::{PathFragment, PathResolvusDyn};
 
-use super::*;
-use super::as_widget::AsWidget;
+use super::Widget;
+use super::cache::WidgetCache;
 
 pub mod fixed_idx;
 pub mod tupled;

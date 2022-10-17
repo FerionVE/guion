@@ -1,15 +1,9 @@
-use std::ops::BitAnd;
-use std::ops::BitOr;
-use std::ops::BitXor;
-use std::ops::Not;
-use std::ops::Range;
-use std::ops::Sub;
+use std::ops::{BitAnd, Not, Sub, BitOr, BitXor, Range};
 
 use crate::aliases::EEKey;
 use crate::env::Env;
 
-use super::key::MatchKeyCode;
-use super::key::MatchScanCode;
+use super::key::{MatchKeyCode, MatchScanCode};
 
 pub trait KeyCombo<E> where E: Env {
     fn match_in(&self, find: impl FnMut(MatchKey<'_,E>) -> (bool,Option<Matches>)) -> (bool,Option<Matches>);

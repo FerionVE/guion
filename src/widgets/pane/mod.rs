@@ -1,7 +1,8 @@
-use super::*;
 use std::marker::PhantomData;
 
-use calc::calc_bounds;
+use crate::aliases::EStyle;
+use crate::env::Env;
+use crate::layout::Orientation;
 
 pub mod widget;
 

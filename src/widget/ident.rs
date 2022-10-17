@@ -1,6 +1,4 @@
 //! WidgetIdent is combined [`WidgetID`] and [`Path`](WidgetPath), and can be found in event to make it comparable by the ID and resolvable by the Path
-use super::*;
-use std::{fmt::Debug, ops::Deref};
 
 // /// WidgetIdent is combined [`WidgetID`] and [`Path`](WidgetPath), and can be found in event to make it comparable by the ID and resolvable by the Path
 // #[derive(Clone)]
@@ -58,7 +56,7 @@ use std::{fmt::Debug, ops::Deref};
 //     fn refc(&self) -> Self {
 //         Self {
 //             id: self.id.clone(),
-//             path: self.path.refc(),
+//             path: self.path.clone(),
 //         }
 //     }
 // }

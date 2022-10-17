@@ -1,5 +1,3 @@
-use super::*;
-
 /// Size +/+= Border
 #[derive(Clone,Copy,PartialEq)]
 pub struct StdGonstraints {

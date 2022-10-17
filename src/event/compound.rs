@@ -1,9 +1,3 @@
-use crate::style::selectag::StyleSelectag;
-use crate::style::selector::StyleSelectorAppend;
-
-use super::*;
-use std::ops::BitAnd;
-
 #[derive(Clone)]
 pub struct EventCompound<E> where E: Env {
     pub event: EEvent<E>,

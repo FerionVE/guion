@@ -1,6 +1,6 @@
 use crate::style::selector::StyleSelectorAppend;
 
-use super::{StyleSelectag, StyleSelectagInto};
+use super::{StyleSelectagInto, StyleSelectag};
 
 impl<S,T,E> StyleSelectagInto<S,E> for T where
     T: StyleSelectag<E>,
