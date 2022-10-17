@@ -110,7 +110,7 @@ impl<'w,E> Widget<E> for ProgressBar<'w,E> where
     fn with_resolve_child<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R

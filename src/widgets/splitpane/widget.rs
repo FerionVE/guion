@@ -124,7 +124,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
         path: &Ph,
         stack: &P,
         event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        mut route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -199,7 +199,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                 self.childs.0.with_widget(
                     &mut AsWidgetClosure::new(|widget: &<L as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                         let stack = WithCurrentBounds {
-                            inner: stack,
+                            inner: &stack,
                             bounds: current.bounds & &bounds[0],
                             viewport: current.viewport.clone(),
                         };
@@ -220,7 +220,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
                 self.childs.1.with_widget(
                     &mut AsWidgetClosure::new(|widget: &<R as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                         let stack = WithCurrentBounds {
-                            inner: stack,
+                            inner: &stack,
                             bounds: current.bounds & &bounds[2],
                             viewport: current.viewport.clone(),
                         };
@@ -309,7 +309,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     fn with_resolve_child<'s,F,Ret>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> Ret
@@ -347,15 +347,17 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     where 
         Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
     {
+        let rootf = root.fork();
+
         self.childs.by_index(
             idx,
             &mut AsWidgetsClosure::new(#[inline] |result: Option<AsWidgetsResult<(L,R),E>>,_,ctx: &mut E::Context<'_>|
                 match result {
-                    Some(v) => v.widget._tabulate(&v.child_id.push_on_stack(path), stack, op, dir, root, ctx),
+                    Some(v) => v.widget._tabulate(&v.child_id.push_on_stack(path), stack, op.clone(), dir, root.fork(), ctx),
                     None => Err(todo!()),
                 }
             ),
-            root,ctx
+            rootf,ctx
         )
     }
 

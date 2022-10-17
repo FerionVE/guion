@@ -113,7 +113,7 @@ impl<'w,E,Text> Widget<E> for Label<'w,E,Text> where
     fn with_resolve_child<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R

@@ -310,7 +310,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
     fn with_resolve_child<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R

@@ -38,7 +38,7 @@ pub struct StdEventMode<E> where E: Env {
     // /// 
     // /// If no child_filters are set, the event will be routed to all childs
     // pub child_filter_absolute_path: Option<Arc<dyn PathResolvusDyn<E>>>,
-    _p: PhantomData<E>,
+    pub _p: PhantomData<E>,
 }
 
 #[derive(Clone)]

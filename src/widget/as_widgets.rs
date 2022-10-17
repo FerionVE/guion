@@ -209,12 +209,17 @@ impl<E,T> AsWidgets<E> for [T] where T: AsWidget<E>, E: Env {
     where
         Self: 'w
     {
-        // if let Some(idx) = path[0].downcast_ref::<usize>() {
-        //     self.by_index(*idx, callback, root, ctx)
-        // } else {
-        //     None
-        // }
-        todo!()
+        if let Some(v) = path.try_fragment::<Self::ChildID>() {
+            let idx = v.0;
+            if let Some(inner) = self.get(idx) {
+                let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+                    callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
+                });
+                return inner.with_widget(&mut callback,root,ctx);
+            }
+        }
+
+        callback.call(None,root,ctx)
     }
 }
 
@@ -285,12 +290,17 @@ impl<E,T,const N: usize> AsWidgets<E> for [T;N] where T: AsWidget<E>, E: Env {
     where
         Self: 'w
     {
-        // if let Some(idx) = path[0].downcast_ref::<usize>() {
-        //     self.by_index(*idx, callback, root, ctx)
-        // } else {
-        //     None
-        // }
-        todo!()
+        if let Some(v) = path.try_fragment::<Self::ChildID>() {
+            let idx = v.0;
+            if let Some(inner) = self.get(idx) {
+                let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+                    callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
+                });
+                return inner.with_widget(&mut callback,root,ctx);
+            }
+        }
+
+        callback.call(None,root,ctx)
     }
 }
 
@@ -380,7 +390,19 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
     where
         Self: 'w
     {
-        todo!()
+        if let Some(v) = path.try_fragment::<Self::ChildID>() {
+            let res = self.0.iter().enumerate()
+                .find(#[inline] |(_,(i,_))| *i == *v);
+
+            if let Some((idx,(id,inner))) = res {
+                let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
+                    callback.call(AsWidgetsResolveResult::from_some(idx,id.clone(),path.inner().unwrap(),widget), root, ctx)
+                });
+                return (*inner).with_widget(&mut callback,root,ctx);
+            }
+        }
+
+        callback.call(None,root,ctx)
     }
 }
 
@@ -567,7 +589,35 @@ macro_rules! impl_tuple {
             where
                 Self: 'w
             {
-                todo!()
+                if let Some(v) = path.try_fragment::<Self::ChildID>() {
+                    let idx = v.0;
+                    
+                    let $senf = self;
+                
+                    match idx {
+                        $m => 
+                            AsWidget::with_widget(
+                                & $x,
+                                &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                    callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
+                                }),
+                                root,ctx,
+                            )
+                        ,
+                        $($mm => 
+                            AsWidget::with_widget(
+                                & $xx,
+                                &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                    callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
+                                }),
+                                root,ctx,
+                            )
+                        ),+ ,
+                        _ => callback.call(None, root, ctx),
+                    }
+                } else {
+                    callback.call(None,root,ctx)
+                }
             }
         }
     };

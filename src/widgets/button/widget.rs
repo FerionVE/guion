@@ -3,6 +3,7 @@ use crate::event_new::filter::QueryStdEventMode;
 use crate::newpath::{PathStack, SimpleId, PathResolvusDyn, PathResolvus, PathStackDyn, FwdCompareStat};
 use crate::queron::Queron;
 use crate::queron::query::Query;
+use crate::root::RootRef;
 use crate::style::standard::cursor::StdCursor;
 use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -204,7 +205,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     fn with_resolve_child<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
@@ -245,11 +246,13 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     {
         if idx != 0 { return Err(todo!()); }
 
+        let rootf = root.fork();
+
         self.text.with_widget(
             &mut AsWidgetClosure::new(move |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
-                widget._tabulate(&SimpleId(ButtonChild).push_on_stack(path), stack, op, dir, root, ctx)
+                widget._tabulate(&SimpleId(ButtonChild).push_on_stack(path), stack, op.clone(), dir, root.fork(), ctx)
             ),
-            root,ctx
+            rootf,ctx
         )
     }
     

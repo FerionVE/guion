@@ -159,7 +159,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
                 self.inner.with_widget(
                     &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                         let stack = WithCurrentBounds {
-                            inner: stack,
+                            inner: &stack,
                             bounds: inner_rect,
                             viewport: *rect,
                         };
@@ -247,7 +247,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     fn with_resolve_child<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
@@ -288,11 +288,13 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     {
         if idx != 0 { return Err(todo!()); }
 
+        let rootf = root.fork();
+
         self.inner.with_widget(
             &mut AsWidgetClosure::new(move |widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
-                widget._tabulate(&SimpleId(AreaChild).push_on_stack(path), stack, op, dir, root, ctx)
+                widget._tabulate(&SimpleId(AreaChild).push_on_stack(path), stack, op.clone(), dir, root.fork(), ctx)
             ),
-            root,ctx
+            rootf,ctx
         )
     }
     

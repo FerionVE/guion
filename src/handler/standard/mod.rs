@@ -47,7 +47,7 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
 
     pub fn focus<W,Ph,S>(&self, root_widget: &W, root_path: &Ph, p: Arc<dyn PathResolvusDyn<E>>, stack: &S, ts: u64, cache: &mut W::Cache, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<EventResp,E::Error> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
         self.unfocus(root_widget,root_path,stack,ts,cache,root.fork(),ctx);
-        (self.access)(ctx).state.kbd.focused = Some(p);
+        (self.access)(ctx).state.kbd.focused = Some(p.clone());
         
         let event = StdVariant {
             variant: Focus{},

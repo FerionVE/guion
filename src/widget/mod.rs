@@ -187,7 +187,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn with_resolve<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
@@ -202,11 +202,11 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             sub_path,
             #[inline] |result,ctx| {
                 match result {
-                    Ok(result) => result.widget.with_resolve(result.sub_path, callback, root, ctx),
+                    Ok(result) => result.widget.with_resolve(result.sub_path, &mut callback, root.fork(), ctx),
                     Err(e) => (callback)(Err(e),ctx),
                 }
             },
-            root,ctx,
+            root.fork(),ctx,
         )
     }
     // {
@@ -333,7 +333,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         let current_path = path;
         // fn to tabulate to the next child away from the previous child (child_id None = self)
         let enter_child_sub = |child_id: usize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
-            self._call_tabulate_on_child_idx(child_id, path, stack, to.clone(), dir, root, ctx)
+            self._call_tabulate_on_child_idx(child_id, path, stack, to.clone(), dir, root.fork(), ctx)
         };
         let next_child = |mut child_id: Option<usize>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
             loop {
@@ -388,7 +388,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                                 Err(e) => Err(e),
                             }
                         },
-                        root,ctx,
+                        root.fork(),ctx,
                     );
                 }else{
                     // pass 2: we are the previous focused widget and should tabulate away

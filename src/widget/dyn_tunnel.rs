@@ -492,7 +492,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn with_resolve<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
@@ -515,7 +515,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn with_resolve_child<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R

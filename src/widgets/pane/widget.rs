@@ -123,7 +123,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
                 &mut AsWidgetsResolveClosure::new(|result: Option<AsWidgetsResolveResult<T,E>>,root,ctx: &mut E::Context<'_>| {
                     if let Some(result) = result {
                         let stack = WithCurrentBounds {
-                            inner: stack,
+                            inner: &stack,
                             bounds: bounds.bounds.slice(cache.childs[result.idx].relative_bounds_cache.as_ref().unwrap()),
                             viewport: bounds.viewport.clone(),
                         };
@@ -144,7 +144,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
                 0..self.childs.len(), //TODO there could be a prefilter which checks whether idx child bounds visible in visible-filter mode
                 &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
-                        inner: stack,
+                        inner: &stack,
                         bounds: bounds.bounds.slice(cache.childs[idx].relative_bounds_cache.as_ref().unwrap()),
                         viewport: bounds.viewport.clone(),
                     };
@@ -231,7 +231,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     fn with_resolve_child<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
+        mut callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
@@ -273,11 +273,11 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
             idx,
             &mut AsWidgetsClosure::new(#[inline] |result: Option<AsWidgetsResult<T,E>>,_,ctx: &mut E::Context<'_>|
                 match result {
-                    Some(v) => v.widget._tabulate(&v.child_id.push_on_stack(path), stack, op, dir, root, ctx),
+                    Some(v) => v.widget._tabulate(&v.child_id.push_on_stack(path), stack, op.clone(), dir, root.fork(), ctx),
                     None => Err(todo!()),
                 }
             ),
-            root,ctx
+            root.fork(),ctx
         )
     }
 
@@ -312,7 +312,7 @@ impl<'w,E,T> Pane<'w,E,T> where
 
                 if child_cache.widget_id != Some(child_id.clone()) {
                     *child_cache = Default::default();
-                    child_cache.widget_id = Some(child_id);
+                    child_cache.widget_id = Some(child_id.clone());
                 }
 
                 let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
@@ -359,7 +359,7 @@ impl<'w,E,T> Pane<'w,E,T> where
 
                 if child_cache.widget_id != Some(child_id.clone()) {
                     *child_cache = Default::default();
-                    child_cache.widget_id = Some(child_id);
+                    child_cache.widget_id = Some(child_id.clone());
                     need_relayout = true;
                 }
 
