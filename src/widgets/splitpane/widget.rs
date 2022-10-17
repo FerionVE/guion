@@ -90,16 +90,16 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 
         let render_props = render_props.inside_spacing_border();
 
+        if ctx.state().is_hovered(path._erase()) {
+            let cursor = match self.orientation {
+                Orientation::Horizontal => StdCursor::SizeWE,
+                Orientation::Vertical => StdCursor::SizeNS,
+            };
+
+            renderer.set_cursor_specific(&cursor.into(),ctx);
+        }
+
         if need_render {
-            if ctx.state().is_hovered(path._erase()) {
-                let cursor = match self.orientation {
-                    Orientation::Horizontal => StdCursor::SizeWE,
-                    Orientation::Vertical => StdCursor::SizeNS,
-                };
-
-                renderer.set_cursor_specific(&cursor.into(),ctx);
-            }
-
             renderer.fill_rect(
                 &render_props
                     .slice_absolute(&bounds[1])
