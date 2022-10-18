@@ -18,6 +18,7 @@ pub trait RootRef<E> where E: Env {
         F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R,
         Self: 'l;
 
+    #[must_use]
     #[inline]
     fn has_widget(&self, i: &(dyn PathResolvusDyn<E>+'_), ctx: &mut E::Context<'_>) -> bool {
         self.with_widget(i, #[inline] |w,_| w.is_ok(), ctx)

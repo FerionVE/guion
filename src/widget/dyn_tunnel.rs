@@ -317,6 +317,11 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse {
         self._tabulate_next_child(path, stack, origin, dir, root, ctx)
     }
+    #[allow(deprecated)]
+    #[inline]
+    fn _call_tabulate_on_child_idx_dyn(&self, child_idx: usize, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Result<TabulateResponse<E>,<E as Env>::Error> {
+        self._call_tabulate_on_child_idx(child_idx, path, stack, op, dir, root, ctx)
+    }
     #[inline]
     fn _tabulate_dyn(&self, path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> {
@@ -366,14 +371,11 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     fn guion_resolve_error_child_info_dyn(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
         self.guion_resolve_error_child_info(child_idx)
     }
-    #[allow(deprecated)]
-    #[inline]
-    fn _call_tabulate_on_child_idx_dyn(&self, child_idx: usize, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: <E as Env>::RootRef<'_>, ctx: &mut <E as Env>::Context<'_>) -> Result<TabulateResponse<E>,<E as Env>::Error> {
-        self._call_tabulate_on_child_idx(child_idx, path, stack, op, dir, root, ctx)
-    }
 }
 
 impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
+    type Cache = DynWidgetCache<E>;
+    
     #[inline]
     fn render<P,Ph>(
         &self,
@@ -489,6 +491,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     {
         self.childs_ref_dyn(&mut callback, root, ctx)
     }
+
     // #[allow(deprecated)]
     // #[inline]
     // fn child_paths(&self, own_path: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
@@ -518,7 +521,6 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         );
         callback_return.unwrap()
     }
-
     fn with_resolve_child<'s,F,R>(
         &'s self,
         sub_path: &(dyn PathResolvusDyn<E>+'_),
@@ -574,6 +576,13 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         self._tabulate_next_child_dyn(path._erase(), stack.erase(), origin, dir, root, ctx)
     }
     #[inline]
+    fn _call_tabulate_on_child_idx<P,Ph>(&self, idx: usize, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        self._call_tabulate_on_child_idx_dyn(idx, path._erase(), stack.erase(), op, dir, root, ctx)
+    }
+    #[inline]
     fn _tabulate<P,Ph>(&self, path: &Ph,
         stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         self._tabulate_dyn(path._erase(), stack.erase(), op, dir, root, ctx)
@@ -610,10 +619,12 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn box_ref<'s>(&'s self) -> Box<dyn WidgetDyn<E>+'s> where Self: 's {
         self.box_ref_dyn() //TODO deprecate box_
     }
+
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w {
         self.box_box_dyn()
     }
+
     #[inline]
     fn boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
         unreachable!()
@@ -627,16 +638,6 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     //TODO cold
     fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
         self.guion_resolve_error_child_info_dyn(child_idx)
-    }
-
-    type Cache = DynWidgetCache<E>;
-
-    #[inline]
-    fn _call_tabulate_on_child_idx<P,Ph>(&self, idx: usize, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
-        self._call_tabulate_on_child_idx_dyn(idx, path._erase(), stack.erase(), op, dir, root, ctx)
     }
 }
 

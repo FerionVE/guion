@@ -19,6 +19,7 @@ pub trait Render<E>: Sized where E: Env {
     //TODO brand new force and caching
 }
 
+#[non_exhaustive]
 pub struct StdRenderProps<'a,S,E,C> where S: ?Sized, E: Env, C: PartialEq + Clone + 'static {
     pub inner: &'a S,
     pub absolute_bounds: Bounds,
@@ -226,6 +227,7 @@ impl<'a,S,E> Deref for WithTestStyle<'a,S,E> where E: Env {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone)]
 pub struct TestStyle<'a,E> where E: Env {
     pub default_variant: &'a TestStyleVariant<E>,
@@ -243,6 +245,7 @@ pub struct TestStyle<'a,E> where E: Env {
     pub border_type: TestStyleBorderType<E>,
 }
 
+#[non_exhaustive]
 #[derive(Clone)]
 pub struct TestStyleCurrent<'a,E> where E: Env {
     pub fg_color: ESColor<E>,
@@ -259,6 +262,7 @@ pub struct TestStyleCurrent<'a,E> where E: Env {
     pub current_border: Border,
 }
 
+#[non_exhaustive]
 #[derive(Clone,Copy)]
 pub enum TestStyleType<'a,E> where E: Env {
     Default,
@@ -301,6 +305,7 @@ impl<'a,E> TestStyleType<'a,E> where E: Env {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone)]
 pub enum TestStyleColorType<E> where E: Env {
     Bg,
@@ -309,12 +314,27 @@ pub enum TestStyleColorType<E> where E: Env {
     Custom(ESColor<E>),
 }
 
+impl<E> From<[u8;4]> for TestStyleColorType<E> where E: Env {
+    #[inline]
+    fn from(v: [u8;4]) -> Self {
+        todo!()
+    }
+}
+
+#[non_exhaustive]
 #[derive(Clone,Copy)]
 pub enum TestStyleBorderType<E> where E: Env {
     Component,
     Spacing,
     Custom(Border),
     PhantomData(E),
+}
+
+impl<E> From<Border> for TestStyleBorderType<E> where E: Env {
+    #[inline]
+    fn from(v: Border) -> Self {
+        Self::Custom(v)
+    }
 }
 
 impl<'a,E,S> Add<S> for TestStyle<'a,E> where S: Queron<E>, E: Env {
@@ -536,5 +556,42 @@ impl<E> Query<E> for QueryTestStyleCurrent where E: Env {
     #[inline]
     fn end_builder<'b>(&self, _: Self::Builder<'b>) -> Option<Self::Out<'b>> {
         panic!()
+    }
+}
+
+pub struct TestStyleV1<'a,E> where E: Env {
+    pub default_variant: &'a TestStyleVariant<E>,
+    pub hovered_variant: &'a TestStyleVariant<E>,
+    pub selected_variant: &'a TestStyleVariant<E>,
+    pub activated_variant: &'a TestStyleVariant<E>,
+    pub disabled_variant: &'a TestStyleVariant<E>,
+    pub variant_type: TestStyleType<'a,E>,
+    pub bg_color: ESColor<E>,
+    pub text_color: ESColor<E>,
+    pub component_border: Border,
+    pub spacing: Border,
+    pub cursor: ESCursor<E>,
+    pub color_type: TestStyleColorType<E>,
+    pub border_type: TestStyleBorderType<E>,
+}
+
+impl<'a,E> From<TestStyleV1<'a,E>> for TestStyle<'a,E> where E: Env {
+    #[inline]
+    fn from(value: TestStyleV1<'a,E>) -> Self {
+        Self {
+            default_variant: value.default_variant,
+            hovered_variant: value.hovered_variant,
+            selected_variant: value.selected_variant,
+            activated_variant: value.activated_variant,
+            disabled_variant: value.disabled_variant,
+            variant_type: value.variant_type,
+            bg_color: value.bg_color,
+            text_color: value.text_color,
+            component_border: value.component_border,
+            spacing: value.spacing,
+            cursor: value.cursor,
+            color_type: value.color_type,
+            border_type: value.border_type,
+        }
     }
 }

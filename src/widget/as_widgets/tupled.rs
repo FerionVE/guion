@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::ops::{Range, Deref, DerefMut};
 
 use crate::dispatchor::{AsWidgetClosure, AsWidgetsResult, AsWidgetsDispatch, AsWidgetsIndexedDispatch, AsWidgetsResolveDispatch, AsWidgetsResolveResult};
 use crate::env::Env;
@@ -10,6 +10,20 @@ use super::AsWidgets;
 
 #[repr(transparent)]
 pub struct Tupled<T>(pub T) where T: ?Sized;
+
+impl<T> Deref for Tupled<T> where T: ?Sized {
+    type Target = T;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl<T> DerefMut for Tupled<T> where T: ?Sized {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E: Env, I: PathFragment<E> + Clone + PartialEq + 'static {
     type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;

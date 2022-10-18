@@ -10,6 +10,7 @@ pub trait PathFragment<E>: PartialEq + 'static { //TODO cachor_eq instead of par
 
     fn _as_any(&self) -> &dyn Any;
 
+    #[must_use]
     fn push_on_stack<I>(&self, target_stack: I) -> Self::Stack<I> where I: PathStack<E> + Sized;
 }
 
@@ -67,6 +68,17 @@ pub enum FwdCompareStat {
     Equal,
     ChildOfSelf,
     ParentOfSelf,
+}
+
+impl FwdCompareStat {
+    /// Returns `true` if both path point to the same widget.
+    ///
+    /// [`Equal`]: FwdCompareStat::Equal
+    #[must_use="rust-analyzer wth"]
+    #[inline]
+    pub fn is_equal(&self) -> bool {
+        *self == Self::Equal
+    }
 }
 
 pub trait PathStackDyn<E> {

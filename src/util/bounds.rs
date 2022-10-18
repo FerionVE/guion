@@ -252,6 +252,7 @@ impl Offset {
 }
 
 impl Dims {
+    /// Parallel axis of orientation e.g. Horizontal=>x Vertical=>y
     #[inline]
     pub fn par(&self, o: Orientation) -> u32 {
         match o {
@@ -259,6 +260,7 @@ impl Dims {
             Orientation::Vertical => self.h,
         }
     }
+    /// Non-parallel axis of orientation e.g. Horizontal=>y Vertical=>x
     #[inline]
     pub fn unpar(&self, o: Orientation) -> u32 {
         match o {
@@ -267,6 +269,7 @@ impl Dims {
         }
     }
 
+    /// Dims from orientation and parallel and non-parallel axis
     #[inline]
     pub fn from_ori(par: u32, unpar: u32, o: Orientation) -> Self {
         match o {

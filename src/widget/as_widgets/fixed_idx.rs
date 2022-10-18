@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::ops::{Range, Deref, DerefMut};
 
 use crate::dispatchor::*;
 use crate::env::Env;
@@ -14,6 +14,20 @@ mod impl_tuple;
 
 #[repr(transparent)]
 pub struct WidgetsFixedIdx<T>(pub T) where T: ?Sized;
+
+impl<T> Deref for WidgetsFixedIdx<T> where T: ?Sized {
+    type Target = T;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl<T> DerefMut for WidgetsFixedIdx<T> where T: ?Sized {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 #[inline]
 fn bender<'a,'b,T>(v: &'a WidgetsFixedIdx<&'b T>) -> &'a WidgetsFixedIdx<T> where 'b: 'a, T: 'b + Sized {
