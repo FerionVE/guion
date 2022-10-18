@@ -11,7 +11,7 @@ use super::{View, box_view_cb};
 use super::mut_target::MuTarget;
 use super::mutor_trait::{MutorToBuilder, ForTargetCBIfBuilder, ForTargetCBBuilder, MutorToBuilderExt};
 
-pub struct ViewWidget<ViewTy,ViewFn,MutorFn,E>(ViewFn,MutorFn,PhantomData<(ViewTy,E)>) where
+pub struct ViewWidget<ViewTy,ViewFn,MutorFn,E>(ViewFn,MutorFn,PhantomData<(fn()->ViewTy,E)>) where
     ViewFn: Fn()->ViewTy,
     ViewTy: View<E>,
     MutorFn: MutorToBuilder<(),ViewTy::Mutarget,E>,

@@ -146,7 +146,7 @@ where
         'ww: 'w, 'z: 'ww, V: 'z;
 }
 
-pub struct AsWidgetClosure<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
+pub struct AsWidgetClosure<'z,C,V,R,E>(C,PhantomData<(*const V,R,E,&'z ())>)
 where
     V: AsWidget<E> + ?Sized,
     E: Env,
@@ -164,7 +164,7 @@ where
     }
 }
 
-pub struct AsWidgetsClosure<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
+pub struct AsWidgetsClosure<'z,C,V,R,E>(C,PhantomData<(*const V,R,E,&'z ())>)
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
@@ -182,7 +182,7 @@ where
     }
 }
 
-pub struct AsWidgetsAllClosure<'z,C,V,E>(C,PhantomData<(Box<V>,E,&'z ())>)
+pub struct AsWidgetsAllClosure<'z,C,V,E>(C,PhantomData<(*const V,E,&'z ())>)
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
@@ -200,7 +200,7 @@ where
     }
 }
 
-pub struct AsWidgetsResolveClosure<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
+pub struct AsWidgetsResolveClosure<'z,C,V,R,E>(C,PhantomData<(*const V,R,E,&'z ())>)
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
@@ -296,7 +296,7 @@ where
 //     }
 // }
 
-// pub struct AsWidgetToSDispatchErase<'z,C,V,W,R,E>(pub usize, pub W::Bound, pub W::ChildID, pub C, pub PhantomData<(Box<V>,Box<R>,Box<E>)>)
+// pub struct AsWidgetToSDispatchErase<'z,C,V,W,R,E>(pub usize, pub W::Bound, pub W::ChildID, pub C, pub PhantomData<(*const V,Box<R>,Box<E>)>)
 // where
 //     C: AsWidgetsDispatch<'z,W,R,E>,
 //     V: AsWidget<E> + ?Sized,
@@ -317,7 +317,7 @@ where
 
 // }
 
-pub struct AsWidgetClosureErased<'z,C,V,R,E>(C,PhantomData<(Box<V>,R,E,&'z ())>)
+pub struct AsWidgetClosureErased<'z,C,V,R,E>(C,PhantomData<(*const V,R,E,&'z ())>)
 where
     V: AsWidget<E> + ?Sized,
     E: Env,

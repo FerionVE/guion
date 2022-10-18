@@ -188,7 +188,7 @@ where
 
 pub struct ForTargetCBBuilder
     <LeftMutor,LeftArgs,LeftTarget,RightArgs,RightTarget,RightFn,E>
-    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static RightTarget,&'static LeftTarget,RightArgs,E)>)
+    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static RightTarget,&'static LeftTarget,fn(RightArgs),E)>)
 where
     E: Env,
     LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
@@ -268,7 +268,7 @@ where
 
 pub struct ForTargetCBIfBuilder
     <LeftMutor,LeftArgs,LeftTarget,RightArgs,RightTarget,RightFn,E>
-    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static RightTarget,&'static LeftTarget,RightArgs,E)>)
+    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static RightTarget,&'static LeftTarget,fn(RightArgs),E)>)
 where
     E: Env,
     LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
@@ -351,7 +351,7 @@ where
 
 pub struct EndorBuilder
     <LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
-    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static LeftTarget,RightArgs,E)>)
+    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static LeftTarget,fn(RightArgs),E)>)
 where
     E: Env,
     LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
@@ -425,7 +425,7 @@ where
 
 pub struct EndorIfBuilder
     <LeftMutor,LeftArgs,LeftTarget,RightArgs,RightFn,E>
-    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static LeftTarget,RightArgs,E)>)
+    (LeftMutor,LeftArgs,RightFn,PhantomData<(&'static LeftTarget,fn(RightArgs),E)>)
 where
     E: Env,
     LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
@@ -500,7 +500,7 @@ where
     }
 }
 
-pub struct MutorForTarget<Targ,Args,MutorFn,E>(MutorFn,PhantomData<(&'static Targ,Args,E)>)
+pub struct MutorForTarget<Targ,Args,MutorFn,E>(MutorFn,PhantomData<(&'static Targ,fn(Args),E)>)
 where
     Self: 'static,
     E: Env,
@@ -580,7 +580,7 @@ where
     }
 }
 
-pub struct MutorEnde<Args,MutorFn,E>(MutorFn,PhantomData<(Args,E)>)
+pub struct MutorEnde<Args,MutorFn,E>(MutorFn,PhantomData<(fn(Args),E)>)
 where
     Self: 'static,
     E: Env,
@@ -709,7 +709,7 @@ impl<Args,Target,T,E> MutorToBuilder<Args,Target,E> for &T where T: MutorToBuild
 }
 
 #[repr(transparent)]
-pub struct ConvertToTargetBuilder<T,Target,NewTarget,Args,E>(PhantomData<(Args,&'static Target,&'static NewTarget,E)>,T)
+pub struct ConvertToTargetBuilder<T,Target,NewTarget,Args,E>(PhantomData<(fn(Args),&'static Target,&'static NewTarget,E)>,T)
 where
     E: Env,
     Args: Clone + Sized + Send + Sync + 'static,
@@ -759,7 +759,7 @@ where
 }
 
 #[repr(transparent)]
-pub struct ConvertToTargetor<T,Target,NewTarget,Args,E>(PhantomData<(Args,&'static Target,&'static NewTarget,E)>,T)
+pub struct ConvertToTargetor<T,Target,NewTarget,Args,E>(PhantomData<(fn(Args),&'static Target,&'static NewTarget,E)>,T)
 where
     E: Env,
     Args: Clone + Sized + Send + Sync + 'static,
