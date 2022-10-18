@@ -40,7 +40,7 @@ pub trait Event<E> where E: Env {
     /// query legacy variant
     #[deprecated="The old \"variants\" will be replaced"]
     #[inline]
-    fn query_variant<'a,V,Ph,S>(&'a self, path: &Ph, stack: &S) -> Option<&'a V> where Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, V: Clone + 'static, Self: 'a {
+    fn query_variant<'a,V>(&'a self, path: &(impl PathStack<E> + ?Sized), stack: &(impl Queron<E> + ?Sized)) -> Option<&'a V> where V: Clone + 'static, Self: 'a {
         self.query(&QueryVariant(PhantomData), path, stack)
     } //TODO can we turn path and stack into impl Trait instead of generics to reduce the '_,'_>ness
 

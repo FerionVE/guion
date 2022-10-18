@@ -167,7 +167,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
 
         if receive_self {
         //if let Some(e) = e.slice_bounds(&bounds[1]).filter(&l) {
-            if let Some(mm) = event.query_variant::<MouseMove,_,_>(path,&stack) {
+            if let Some(mm) = event.query_variant::<MouseMove>(path,&stack) {
                 //if mouse is down and was pressed on us
                 if let Some(_) = ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()) {
                     let cursor = ctx.state().cursor_pos().expect("TODO");

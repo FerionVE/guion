@@ -64,7 +64,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
 
         let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
-        if event_mode.receive_self && event.query_variant::<MouseMove,_,_>(path,stack).is_some() {
+        if event_mode.receive_self && event.query_variant::<MouseMove>(path,stack).is_some() {
             let hovered = &mut (self.access)(ctx).state.mouse.hovered;
             if hovered.is_none() || path.fwd_compare(&**hovered.as_ref().unwrap()) != FwdCompareStat::Equal {
                 *hovered = Some(path.into_resolvus());
@@ -91,7 +91,7 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
     { //TODO BUG handle sudden invalidation of hovered widget
         assert!(path.inner().is_none()); //TODO stupid path.is_empty() check
 
-        if let Some(ee) = event.query_variant::<RootEvent<E>,_,_>(path,stack) {
+        if let Some(ee) = event.query_variant::<RootEvent<E>>(path,stack) {
             let ee = ee.clone();
             let ts = event.ts();
             let mut passed = false;

@@ -182,7 +182,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
 
         let mut passed = false;
 
-        if let Some(ee) = event.query_variant::<TextInput,_,_>(path,&stack)  {
+        if let Some(ee) = event.query_variant::<TextInput>(path,&stack)  {
             if !ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 let s = ee.text.clone();
                 
@@ -191,13 +191,12 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
 
                 passed = true;
             }
-        } else if let Some(ee) = event.query_variant::<KbdPress<E>,_,_>(path,&stack) {
+        } else if let Some(ee) = event.query_variant::<KbdPress<E>>(path,&stack) {
             if
                 ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdBackspace ||
                 ee.key == MatchKeyCode::KbdLeft || ee.key == MatchKeyCode::KbdRight
             {
                 let ctrl = ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some();
-
                 
                 if ee.key == MatchKeyCode::KbdBackspace {
                     self.remove_selection_or_n(1,g,root.fork(),ctx);
@@ -257,7 +256,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
 
                 passed = true;
             }
-        } else if let Some(ee) = event.query_variant::<MouseScroll,_,_>(path,&stack) {
+        } else if let Some(ee) = event.query_variant::<MouseScroll>(path,&stack) {
             //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
             let off = self.scroll.get(ctx);
             let max_off = max_off::<E>(&g,&b);
@@ -279,7 +278,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
         } else {
             if let Some(mouse) = ctx.state().cursor_pos() { //TODO strange event handling
 
-                let mouse_down = event.query_variant::<MouseDown<E>,_,_>(path,&stack).cloned();
+                let mouse_down = event.query_variant::<MouseDown<E>>(path,&stack).cloned();
                 let mouse_pressed = ctx.state().is_hovered(path._erase()) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()).is_some();
                 let b = b.clone();
 

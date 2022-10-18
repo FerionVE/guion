@@ -155,12 +155,12 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
 
         if !receive_self {return false;}
 
-        if let Some(ee) = event.query_variant::<MouseUp<E>,_,_>(path,&stack) {
+        if let Some(ee) = event.query_variant::<MouseUp<E>>(path,&stack) {
             if ee.key == MatchKeyCode::MouseLeft && path.fwd_compare(&*ee.down_widget) == FwdCompareStat::Equal && ctx.state().is_hovered(path._erase()) && !self.locked {
                 self.trigger(root,ctx);
                 return true;
             }
-        } else if let Some(ee) = event.query_variant::<KbdPress<E>,_,_>(path,&stack) {
+        } else if let Some(ee) = event.query_variant::<KbdPress<E>>(path,&stack) {
             if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && path.fwd_compare(&*ee.down_widget) == FwdCompareStat::Equal {
                 self.trigger(root,ctx);
                 return true;

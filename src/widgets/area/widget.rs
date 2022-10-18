@@ -190,7 +190,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
         }
 
         if !passed && event_mode.receive_self { //TODO passed stack doof
-            if let Some(ee) = event.query_variant::<KbdPress<E>,_,_>(path,&stack) {
+            if let Some(ee) = event.query_variant::<KbdPress<E>>(path,&stack) {
                 if
                     ee.key == MatchKeyCode::KbdUp || ee.key == MatchKeyCode::KbdDown ||
                     ee.key == MatchKeyCode::KbdLeft || ee.key == MatchKeyCode::KbdRight
