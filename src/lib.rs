@@ -34,6 +34,7 @@ pub mod dispatchor;
 pub mod cachialize;
 pub mod queron;
 pub mod newpath;
+pub mod cachor;
 
 pub type EventResp = bool;
 
