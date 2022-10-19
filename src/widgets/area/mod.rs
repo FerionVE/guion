@@ -10,9 +10,8 @@ use crate::view::mutor_trait::{MutorToBuilder, MutorEndBuilder, MutorToBuilderEx
 pub mod widget;
 pub mod imp;
 
-pub struct Area<'w,E,W,Scroll,TrMut> where
+pub struct Area<E,W,Scroll,TrMut> where
     E: Env,
-    Self: 'w,
 {
     pub size: ESize<E>,
     pub style: EStyle<E>,
@@ -20,10 +19,10 @@ pub struct Area<'w,E,W,Scroll,TrMut> where
     pub scroll: Scroll,
     pub negative_scroll: bool,
     scroll_updater: TrMut,
-    p: PhantomData<&'w (W,Scroll,TrMut)>,
+    p: PhantomData<()>,
 }
 
-impl<'w,E,W> Area<'w,E,W,ScrollOff,()> where
+impl<E,W> Area<E,W,ScrollOff,()> where
     E: Env,
 {
     #[inline]
@@ -40,12 +39,12 @@ impl<'w,E,W> Area<'w,E,W,ScrollOff,()> where
     }
 }
 
-impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
+impl<E,W,Scroll,TrMut> Area<E,W,Scroll,TrMut> where
     E: Env,
 {
     //TODO use a unified state object
     #[inline]
-    pub fn with_state<PScroll>(self, scroll: PScroll) -> Area<'w,E,W,PScroll,TrMut> where PScroll: 'w {
+    pub fn with_state<PScroll>(self, scroll: PScroll) -> Area<E,W,PScroll,TrMut> {
         Area{
             size: self.size,
             style: self.style,
@@ -58,7 +57,7 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     }
 
     #[inline]
-    pub fn with_scroll_updater<T>(self, mutor: T) -> Area<'w,E,W,Scroll,T> where T: MutorEndBuilder<ScrollUpdate,E> {
+    pub fn with_scroll_updater<T>(self, mutor: T) -> Area<E,W,Scroll,T> where T: MutorEndBuilder<ScrollUpdate,E> {
         Area{
             size: self.size,
             style: self.style,
@@ -71,9 +70,9 @@ impl<'w,E,W,Scroll,TrMut> Area<'w,E,W,Scroll,TrMut> where
     }
 
     #[inline]
-    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<'w,E,W,Scroll,impl MutorEndBuilder<ScrollUpdate,E>>
+    pub fn with_scroll_atomstate<T>(self, mutor: T) -> Area<E,W,Scroll,impl MutorEndBuilder<ScrollUpdate,E>>
     where
-        T: MutorToBuilder<(),DynAtomStateMutTarget<ScrollOff>,E> + 'w,
+        T: MutorToBuilder<(),DynAtomStateMutTarget<ScrollOff>,E>,
     {
         self.with_scroll_updater(
             mutor.mutor_end_if((), |state,_,ScrollUpdate { offset: (ax,ay) },ctx| {

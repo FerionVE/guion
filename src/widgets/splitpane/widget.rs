@@ -34,7 +34,7 @@ use crate::widgets::util::state::AtomState;
 
 use super::SplitPane;
 
-impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
+impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -392,7 +392,7 @@ impl<'w,E,L,R,V,TrMut> Widget<E> for SplitPane<'w,E,L,R,V,TrMut> where
     );
 }
 
-impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
+impl<E,L,R,V,TrMut> SplitPane<E,L,R,V,TrMut> where
     E: Env,
     V: AtomState<E,f32>,
 {
@@ -412,7 +412,7 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     }
 }
 
-impl<E,L,R,V,TrMut> AsWidget<E> for SplitPane<'_,E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
+impl<E,L,R,V,TrMut> AsWidget<E> for SplitPane<E,L,R,V,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

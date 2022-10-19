@@ -30,7 +30,7 @@ use crate::widgets::util::state::AtomState;
 use super::CheckBox;
 use super::imp::ICheckBox;
 
-impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
+impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -316,7 +316,7 @@ impl<'w,E,State,Text,TrMut> Widget<E> for CheckBox<'w,E,State,Text,TrMut> where
     );
 }
 
-impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<'_,E,State,Text,TrMut> where Self: Widget<E>, E: Env {
+impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<E,State,Text,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

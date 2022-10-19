@@ -11,9 +11,8 @@ pub mod widget;
 pub mod state;
 pub mod imp;
 
-pub struct TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
+pub struct TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
-    Self: 'w,
 {
     pub size: ESize<E>,
     pub style: EStyle<E>,
@@ -22,10 +21,10 @@ pub struct TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
     pub cursor: Curs,
     pub update: TBUpd,
     pub scroll_update: TBScr,
-    p: PhantomData<&'w (Text,Scroll,Curs,TBUpd,TBScr)>,
+    p: PhantomData<()>,
 }
 
-impl<'w,E> TextBox<'w,E,String,(u32,u32),ETCurSel<E>,(),()> where
+impl<E> TextBox<E,String,(u32,u32),ETCurSel<E>,(),()> where
     E: Env,
 {
     #[inline]
@@ -61,7 +60,7 @@ impl<'w,E> TextBox<'w,E,String,(u32,u32),ETCurSel<E>,(),()> where
 //     }
 // }
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
+impl<E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
     TBUpd: MutorEndBuilder<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
     TBScr: MutorEndBuilder<(u32,u32),E>,
@@ -81,11 +80,11 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBSc
     }
 }
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
+impl<E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> TextBox<'w,E,T,Scroll,Curs,TBUpd,TBScr> where T: 'w {
+    pub fn with_text<T>(self, text: T) -> TextBox<E,T,Scroll,Curs,TBUpd,TBScr> {
         TextBox{
             size: self.size,
             style: self.style,
@@ -100,7 +99,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBSc
 
     //TODO use a unified state object
     #[inline]
-    pub fn with_states<PScroll,CCurs>(self, scroll: PScroll, cursor: CCurs) -> TextBox<'w,E,Text,PScroll,CCurs,TBUpd,TBScr> where PScroll: 'w, CCurs: 'w {
+    pub fn with_states<PScroll,CCurs>(self, scroll: PScroll, cursor: CCurs) -> TextBox<E,Text,PScroll,CCurs,TBUpd,TBScr> {
         TextBox{
             size: self.size,
             style: self.style,

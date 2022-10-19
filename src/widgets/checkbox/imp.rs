@@ -11,7 +11,7 @@ pub trait ICheckBox<E> where E: Env {
     fn set(&self, v: bool, ctx: &mut E::Context<'_>);
 }
 
-impl<'w,E,State,Text,TrMut> ICheckBox<E> for CheckBox<'w,E,State,Text,TrMut> where
+impl<E,State,Text,TrMut> ICheckBox<E> for CheckBox<E,State,Text,TrMut> where
     E: Env,
     State: AtomState<E,bool>,
     TrMut: MutorEndBuilder<bool,E>,

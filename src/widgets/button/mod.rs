@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::aliases::{ESize, EStyle};
-use crate::view::mutor_trait::MutorEndBuilder;
+use crate::view::mut_target::MuTarget;
+use crate::view::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
 use crate::{constraint, traitcast_for_from_widget};
 use crate::env::Env;
 use crate::text::stor::TextStor;
@@ -12,9 +13,8 @@ use super::label::Label;
 pub mod widget;
 pub mod imp;
 
-pub struct Button<'w,E,Text,Tr,TrMut> where
+pub struct Button<E,Text,Tr,TrMut> where
     E: Env,
-    Self: 'w,
 {
     pub trigger: Tr,
     pub trigger_mut: TrMut,
@@ -23,10 +23,10 @@ pub struct Button<'w,E,Text,Tr,TrMut> where
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub text: Text,
-    p: PhantomData<&'w (Text,Tr,TrMut)>,
+    p: PhantomData<()>,
 }
 
-impl<'w,E> Button<'w,E,Label<'w,E,&'static str>,(),()> where
+impl<E> Button<E,Label<E,&'static str>,(),()> where
     E: Env,
 {
     #[inline]
@@ -43,7 +43,7 @@ impl<'w,E> Button<'w,E,Label<'w,E,&'static str>,(),()> where
     }
 }
 
-impl<'w,E,Text> Button<'w,E,Text,(),()> where
+impl<E,Text> Button<E,Text,(),()> where
     E: Env,
 {
     #[inline]
@@ -60,11 +60,11 @@ impl<'w,E,Text> Button<'w,E,Text,(),()> where
     }
 }
 
-impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
+impl<E,Text,Tr,TrMut> Button<E,Text,Tr,TrMut> where
     E: Env,
 {
     #[inline]
-    pub fn with_trigger<T>(self, mutor: T) -> Button<'w,E,Text,T,TrMut> where T: Fn(E::RootRef<'_>,&mut E::Context<'_>) {
+    pub fn with_trigger<T>(self, mutor: T) -> Button<E,Text,T,TrMut> where T: Fn(E::RootRef<'_>,&mut E::Context<'_>) {
         Button{
             size: self.size,
             style: self.style,
@@ -76,7 +76,7 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, mutor: T) -> Button<'w,E,Text,Tr,T> where T: MutorEndBuilder<(),E> {
+    pub fn with_trigger_mut<T>(self, mutor: T) -> Button<E,Text,Tr,T> where T: MutorEndBuilder<(),E> {
         Button{
             size: self.size,
             style: self.style,
@@ -88,7 +88,7 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
         }
     }
     #[inline]
-    pub fn with_caption<T>(self, text: T) -> Button<'w,E,T,Tr,TrMut> where T: 'w {
+    pub fn with_caption<T>(self, text: T) -> Button<E,T,Tr,TrMut> {
         Button{
             size: self.size,
             style: self.style,
@@ -117,11 +117,11 @@ impl<'w,E,Text,Tr,TrMut> Button<'w,E,Text,Tr,TrMut> where
     }
 }
 
-impl<'w,E,T,Tr,TrMut> Button<'w,E,Label<'w,E,T>,Tr,TrMut> where
+impl<E,T,Tr,TrMut> Button<E,Label<E,T>,Tr,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<'w,E,Label<'w,E,TT>,Tr,TrMut> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> Button<E,Label<E,TT>,Tr,TrMut> where TT: TextStor<E>+Validation<E> {
         Button{
             size: self.size,
             style: self.style,

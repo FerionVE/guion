@@ -6,17 +6,17 @@ use crate::layout::{Orientation, Gonstraints};
 
 pub mod widget;
 
-pub struct ProgressBar<'w,E> where 
+pub struct ProgressBar<E> where 
     E: Env,
 {
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub value: f32,
     pub orientation: Orientation,
-    p: PhantomData<&'w ()>,
+    p: PhantomData<()>,
 }
 
-impl<'w,E> ProgressBar<'w,E> where 
+impl<E> ProgressBar<E> where 
     E: Env,
 {
     #[inline]
@@ -31,7 +31,7 @@ impl<'w,E> ProgressBar<'w,E> where
     }
 }
 
-impl<'w,E> ProgressBar<'w,E> where 
+impl<E> ProgressBar<E> where 
     E: Env,
 {
     #[inline]

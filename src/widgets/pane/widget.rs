@@ -22,7 +22,7 @@ use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds};
 
 use super::Pane;
 
-impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
+impl<E,T> Widget<E> for Pane<E,T> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     T: AsWidgets<E>,
@@ -297,7 +297,7 @@ impl<'w,E,T> Widget<E> for Pane<'w,E,T> where
     }
 }
 
-impl<'w,E,T> Pane<'w,E,T> where
+impl<E,T> Pane<E,T> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     T: AsWidgets<E>,
@@ -421,7 +421,7 @@ impl<'w,E,T> Pane<'w,E,T> where
     }
 }
 
-impl<E,T> AsWidget<E> for Pane<'_,E,T> where Self: Widget<E>, E: Env {
+impl<E,T> AsWidget<E> for Pane<E,T> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

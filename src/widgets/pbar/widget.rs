@@ -19,7 +19,7 @@ use crate::widget::{Widget, WidgetWithResolveChildDyn};
 
 use super::ProgressBar;
 
-impl<'w,E> Widget<E> for ProgressBar<'w,E> where
+impl<E> Widget<E> for ProgressBar<E> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
 {
@@ -171,7 +171,7 @@ pub fn crop(i: &Bounds, v: f32, o: Orientation) -> (u32,Bounds) {
     (w,Bounds::from_ori(x, y, w, h, o))
 }
 
-impl<E> AsWidget<E> for ProgressBar<'_,E> where Self: Widget<E>, E: Env {
+impl<E> AsWidget<E> for ProgressBar<E> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

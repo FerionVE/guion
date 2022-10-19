@@ -39,7 +39,7 @@ use super::TextBox;
 use super::imp::ITextBox;
 use super::state::max_off;
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
+impl<E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -366,7 +366,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<'w,E,Text,Scroll,C
     );
 }
 
-impl<E,Text,Scroll,Curs,TBUpd,TBScr> AsWidget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd,TBScr> where Self: Widget<E>, E: Env {
+impl<E,Text,Scroll,Curs,TBUpd,TBScr> AsWidget<E> for TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

@@ -8,18 +8,17 @@ use crate::validation::Validation;
 
 pub mod widget;
 
-pub struct Label<'w,E,Text> where
+pub struct Label<E,Text> where
     E: Env,
-    Self: 'w,
 {
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub text: Text,
     pub align: (f32,f32),
-    p: PhantomData<&'w Text>,
+    p: PhantomData<()>,
 }
 
-impl<'w,E> Label<'w,E,&'static str> where
+impl<E> Label<E,&'static str> where
     E: Env,
 {
     #[inline]
@@ -34,7 +33,7 @@ impl<'w,E> Label<'w,E,&'static str> where
     }
 }
 
-impl<'w,E,Text> Label<'w,E,Text> where
+impl<E,Text> Label<E,Text> where
     E: Env,
     Text: TextStor<E>+Validation<E>,
 {
@@ -50,11 +49,11 @@ impl<'w,E,Text> Label<'w,E,Text> where
     }
 }
 
-impl<'w,E,Text> Label<'w,E,Text> where
+impl<E,Text> Label<E,Text> where
     E: Env,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T> where T: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<T>(self, text: T) -> Label<E,T> where T: TextStor<E>+Validation<E> {
         Label{
             size: self.size,
             style: self.style,

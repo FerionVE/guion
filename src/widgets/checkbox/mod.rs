@@ -13,9 +13,8 @@ use super::label::Label;
 pub mod widget;
 pub mod imp;
 
-pub struct CheckBox<'w,E,State,Text,TrMut> where
+pub struct CheckBox<E,State,Text,TrMut> where
     E: Env,
-    Self: 'w,
 {
     pub updater: TrMut,
     pub size: ESize<E>,
@@ -24,10 +23,10 @@ pub struct CheckBox<'w,E,State,Text,TrMut> where
     //pressed: Option<EEKey<E>>,
     pub text: Text,
     pub state: State,
-    p: PhantomData<&'w (State,Text,TrMut)>,
+    p: PhantomData<()>,
 }
 
-impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str>,()> where
+impl<State,E> CheckBox<E,State,Label<E,&'static str>,()> where
     E: Env,
 {
     #[inline]
@@ -45,11 +44,11 @@ impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str>,()> where
     }
 }
 
-impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
+impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where
     E: Env,
 {
     #[inline]
-    pub fn with_update<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,T> where T: MutorEndBuilder<bool,E> {
+    pub fn with_update<T>(self, mutor: T) -> CheckBox<E,State,Text,T> where T: MutorEndBuilder<bool,E> {
         CheckBox{
             size: self.size,
             style: self.style,
@@ -61,9 +60,9 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<'w,E,State,Text,impl MutorEndBuilder<bool,E>>
+    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<E,State,Text,impl MutorEndBuilder<bool,E>>
     where
-        T: MutorToBuilder<(),DynAtomStateMutTarget<bool>,E> + 'w
+        T: MutorToBuilder<(),DynAtomStateMutTarget<bool>,E>
     {
         self.with_update(
             mutor.mutor_end_if((), |state,_,value,ctx| {
@@ -74,7 +73,7 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     }
 
     #[inline]
-    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T,TrMut> {
+    pub fn with_caption<T>(self, text: T) -> CheckBox<E,State,T,TrMut> {
         CheckBox{
             size: self.size,
             style: self.style,
@@ -98,11 +97,11 @@ impl<'w,E,State,Text,TrMut> CheckBox<'w,E,State,Text,TrMut> where
     }
 }
 
-impl<'w,E,State,T,TrMut> CheckBox<'w,E,State,Label<'w,E,T>,TrMut> where
+impl<E,State,T,TrMut> CheckBox<E,State,Label<E,T>,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT>,TrMut> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> CheckBox<E,State,Label<E,TT>,TrMut> where TT: TextStor<E>+Validation<E> {
         CheckBox{
             updater: self.updater,
             size: self.size,

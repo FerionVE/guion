@@ -6,17 +6,16 @@ use crate::layout::Orientation;
 
 pub mod widget;
 
-pub struct Pane<'w,E,T> where
+pub struct Pane<E,T> where
     E: Env,
-    Self: 'w,
 {
     pub childs: T,
     pub orientation: Orientation,
     pub style: EStyle<E>,
-    p: PhantomData<&'w T>,
+    p: PhantomData<T>,
 }
 
-impl<'w,E,T> Pane<'w,E,T> where
+impl<E,T> Pane<E,T> where
     E: Env,
 {
     #[inline]

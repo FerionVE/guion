@@ -29,7 +29,7 @@ use crate::widgets::soft_single_child_resolve_check;
 
 use super::{Area, ScrollUpdate};
 
-impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
+impl<E,W,Scroll,MutFn> Widget<E> for Area<E,W,Scroll,MutFn> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -329,7 +329,7 @@ impl<'w,E,W,Scroll,MutFn> Widget<E> for Area<'w,E,W,Scroll,MutFn> where
     );
 }
 
-impl<E,W,Scroll,MutFn> AsWidget<E> for Area<'_,E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
+impl<E,W,Scroll,MutFn> AsWidget<E> for Area<E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

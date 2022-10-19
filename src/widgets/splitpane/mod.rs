@@ -9,9 +9,8 @@ use crate::widget::as_widgets::fixed_idx::WidgetsFixedIdx;
 
 pub mod widget;
 
-pub struct SplitPane<'w,E,L,R,V,TrMut> where
+pub struct SplitPane<E,L,R,V,TrMut> where
     E: Env,
-    Self: 'w,
 {
     pub childs: WidgetsFixedIdx<(L,R)>,
     pub state: V,
@@ -19,10 +18,10 @@ pub struct SplitPane<'w,E,L,R,V,TrMut> where
     pub orientation: Orientation,
     pub width: u32, //TODO with from style
     pub style: EStyle<E>,
-    p: PhantomData<&'w (L,R,V,TrMut)>,
+    p: PhantomData<()>,
 }
 
-impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
+impl<E,L,R,V> SplitPane<E,L,R,V,()> where
     E: Env,
 {
     #[inline]
@@ -39,7 +38,7 @@ impl<'w,E,L,R,V> SplitPane<'w,E,L,R,V,()> where
     }
 }
 
-impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
+impl<E,L,R,V,TrMut> SplitPane<E,L,R,V,TrMut> where
     E: Env,
 {   
     #[inline]
@@ -49,7 +48,7 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
     }
 
     #[inline]
-    pub fn with_update<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,T> where T: MutorEndBuilder<f32,E> {
+    pub fn with_update<T>(self, mutor: T) -> SplitPane<E,L,R,V,T> where T: MutorEndBuilder<f32,E> {
         SplitPane{
             childs: self.childs,
             state: self.state,
@@ -61,9 +60,9 @@ impl<'w,E,L,R,V,TrMut> SplitPane<'w,E,L,R,V,TrMut> where
         }
     }
     #[inline]
-    pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<'w,E,L,R,V,impl MutorEndBuilder<f32,E>>
+    pub fn with_atomstate<T>(self, mutor: T) -> SplitPane<E,L,R,V,impl MutorEndBuilder<f32,E>>
     where
-        T: MutorToBuilder<(),DynAtomStateMutTarget<f32>,E> + 'w,
+        T: MutorToBuilder<(),DynAtomStateMutTarget<f32>,E>,
     {
         self.with_update(
             mutor.mutor_end_if((), |state,_,value,ctx| {

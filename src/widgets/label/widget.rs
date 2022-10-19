@@ -22,7 +22,7 @@ use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::Label;
 
-impl<'w,E,Text> Widget<E> for Label<'w,E,Text> where
+impl<E,Text> Widget<E> for Label<E,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -166,7 +166,7 @@ impl<'w,E,Text> Widget<E> for Label<'w,E,Text> where
     );
 }
 
-impl<'w,E,Text> Label<'w,E,Text> where
+impl<E,Text> Label<E,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -184,7 +184,7 @@ impl<'w,E,Text> Label<'w,E,Text> where
     }
 }
 
-impl<E,Text> AsWidget<E> for Label<'_,E,Text> where Self: Widget<E>, E: Env {
+impl<E,Text> AsWidget<E> for Label<E,Text> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

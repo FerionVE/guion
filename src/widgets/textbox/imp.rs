@@ -35,12 +35,12 @@ pub trait ITextBox<E> where E: Env {
     fn update(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
 }
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
+impl<E,Text,Scroll,Curs,TBUpd,TBScr> ITextBox<E> for TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+Validation<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
@@ -151,12 +151,12 @@ impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> ITextBox<E> for TextBox<'w,E,Text,Scroll
 
 traitcast_for_from_widget!(ITextBox<E>);
 
-impl<'w,E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<'w,E,Text,Scroll,Curs,TBUpd,TBScr> where
+impl<E,Text,Scroll,Curs,TBUpd,TBScr> TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E>+Validation<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
