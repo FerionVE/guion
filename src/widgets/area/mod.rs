@@ -2,10 +2,13 @@ use std::marker::PhantomData;
 
 use crate::aliases::{ESize, EStyle};
 use crate::env::Env;
+use crate::error::ResolveResult;
 use crate::layout::Gonstraints;
 use crate::util::ScrollOff;
-use crate::view::mut_target::DynAtomStateMutTarget;
+use crate::view::mut_target::{DynAtomStateMutTarget, MuTarget};
 use crate::view::mutor_trait::{MutorToBuilder, MutorEndBuilder, MutorToBuilderExt};
+
+use super::util::state::AtomStateMut;
 
 pub mod widget;
 pub mod imp;
@@ -74,12 +77,54 @@ impl<E,W,Scroll,TrMut> Area<E,W,Scroll,TrMut> where
     where
         T: MutorToBuilder<(),DynAtomStateMutTarget<ScrollOff>,E>,
     {
-        self.with_scroll_updater(
-            mutor.mutor_end_if((), |state,_,ScrollUpdate { offset: (ax,ay) },ctx| {
+        self.with_scroll_updater_if(
+            mutor, (),
+            |state,_,ScrollUpdate { offset: (ax,ay) },ctx| {
                 //TODO ResolveResult handling
                 let (ox,oy) = state.get(ctx);
                 state.set((ox+ax,oy+ay),ctx);
-            })
+            }
+        )
+    }
+
+    /// Shortcut for Area::with_scroll_updater(left_mutor.mutor_end_if(left_arg,right_fn))
+    #[inline]
+    pub fn with_scroll_updater_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> Area<E,W,Scroll,impl MutorEndBuilder<ScrollUpdate,E>>
+    where 
+        LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
+        LeftTarget: MuTarget<E> + ?Sized,
+        LeftArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            ScrollUpdate,
+            &'c mut E::Context<'cc>
+        ) + Clone + Send + Sync + 'static
+    {
+        self.with_scroll_updater(
+            left_mutor.mutor_end_if(left_arg, right_fn)
+        )
+    }
+
+
+    #[inline]
+    pub fn with_scroll_atomstate_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> Area<E,W,Scroll,impl MutorEndBuilder<ScrollUpdate,E>>
+    where 
+        LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
+        LeftTarget: MuTarget<E> + ?Sized,
+        LeftArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'c mut E::Context<'cc>
+        ) -> &'s mut (dyn AtomStateMut<E,ScrollOff> + 's) + Clone + Send + Sync + 'static
+    {
+        self.with_scroll_updater_if(
+            left_mutor, left_arg,
+            move |state,_,ScrollUpdate { offset: (ax,ay) },ctx| {
+                let state = (right_fn)(state,&(),ctx);
+                //TODO ResolveResult handling
+                let (ox,oy) = state.get(ctx);
+                state.set((ox+ax,oy+ay),ctx);
+            }
         )
     }
 

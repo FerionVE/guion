@@ -88,6 +88,22 @@ impl<E,Text,Tr,TrMut> Button<E,Text,Tr,TrMut> where
         }
     }
     #[inline]
+    pub fn with_trigger_mut_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> Button<E,Text,Tr,impl MutorEndBuilder<(),E>>
+    where 
+        LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
+        LeftTarget: MuTarget<E> + ?Sized,
+        LeftArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            (),
+            &'c mut E::Context<'cc>
+        ) + Clone + Send + Sync + 'static
+    {
+        self.with_trigger_mut(
+            left_mutor.mutor_end_if(left_arg, right_fn)
+        )
+    }
+    #[inline]
     pub fn with_caption<T>(self, text: T) -> Button<E,T,Tr,TrMut> {
         Button{
             size: self.size,

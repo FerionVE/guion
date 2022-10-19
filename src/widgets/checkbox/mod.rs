@@ -5,10 +5,11 @@ use crate::env::Env;
 use crate::layout::Gonstraints;
 use crate::text::stor::TextStor;
 use crate::validation::Validation;
-use crate::view::mut_target::DynAtomStateMutTarget;
+use crate::view::mut_target::{DynAtomStateMutTarget, MuTarget};
 use crate::view::mutor_trait::{MutorToBuilder, MutorEndBuilder, MutorToBuilderExt};
 
 use super::label::Label;
+use super::util::state::AtomStateMut;
 
 pub mod widget;
 pub mod imp;
@@ -59,16 +60,55 @@ impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where
             p: PhantomData,
         }
     }
+
     #[inline]
     pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<E,State,Text,impl MutorEndBuilder<bool,E>>
     where
         T: MutorToBuilder<(),DynAtomStateMutTarget<bool>,E>
     {
-        self.with_update(
-            mutor.mutor_end_if((), |state,_,value,ctx| {
+        self.with_update_if(
+            mutor, (), |state,_,value,ctx| {
                 //TODO ResolveResult handling
                 state.set(value,ctx);
-            })
+            }
+        )
+    }
+
+    #[inline]
+    pub fn with_update_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> CheckBox<E,State,Text,impl MutorEndBuilder<bool,E>>
+    where 
+        LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
+        LeftTarget: MuTarget<E> + ?Sized,
+        LeftArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            bool,
+            &'c mut E::Context<'cc>
+        ) + Clone + Send + Sync + 'static
+    {
+        self.with_update(
+            left_mutor.mutor_end_if(left_arg, right_fn)
+        )
+    }
+
+    #[inline]
+    pub fn with_atomstate_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> CheckBox<E,State,Text,impl MutorEndBuilder<bool,E>>
+    where 
+        LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
+        LeftTarget: MuTarget<E> + ?Sized,
+        LeftArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'c mut E::Context<'cc>
+        ) -> &'s mut (dyn AtomStateMut<E,bool> + 's) + Clone + Send + Sync + 'static
+    {
+        self.with_update_if(
+            left_mutor, left_arg,
+            move |state,_,value,ctx| {
+                let state = (right_fn)(state,&(),ctx);
+                //TODO ResolveResult handling
+                state.set(value,ctx);
+            }
         )
     }
 
