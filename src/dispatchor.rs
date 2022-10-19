@@ -146,7 +146,7 @@ where
         'ww: 'w, 'z: 'ww, V: 'z;
 }
 
-pub struct AsWidgetClosure<'z,C,V,R,E>(C,PhantomData<(*const V,R,E,&'z ())>)
+pub struct AsWidgetClosure<'z,C,V,R,E>(C,PhantomData<(fn(*const V),R,E,&'z ())>)
 where
     V: AsWidget<E> + ?Sized,
     E: Env,
@@ -164,7 +164,7 @@ where
     }
 }
 
-pub struct AsWidgetsClosure<'z,C,V,R,E>(C,PhantomData<(*const V,R,E,&'z ())>)
+pub struct AsWidgetsClosure<'z,C,V,R,E>(C,PhantomData<(fn(*const V),R,E,&'z ())>)
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
@@ -182,7 +182,7 @@ where
     }
 }
 
-pub struct AsWidgetsAllClosure<'z,C,V,E>(C,PhantomData<(*const V,E,&'z ())>)
+pub struct AsWidgetsAllClosure<'z,C,V,E>(C,PhantomData<(fn(*const V),E,&'z ())>)
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
@@ -200,7 +200,7 @@ where
     }
 }
 
-pub struct AsWidgetsResolveClosure<'z,C,V,R,E>(C,PhantomData<(*const V,R,E,&'z ())>)
+pub struct AsWidgetsResolveClosure<'z,C,V,R,E>(C,PhantomData<(fn(*const V),R,E,&'z ())>)
 where
     V: AsWidgets<E> + ?Sized,
     E: Env,
@@ -317,7 +317,7 @@ where
 
 // }
 
-pub struct AsWidgetClosureErased<'z,C,V,R,E>(C,PhantomData<(*const V,R,E,&'z ())>)
+pub struct AsWidgetClosureErased<'z,C,V,R,E>(C,PhantomData<(fn(*const V),R,E,&'z ())>)
 where
     V: AsWidget<E> + ?Sized,
     E: Env,
