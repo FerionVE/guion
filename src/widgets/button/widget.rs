@@ -25,7 +25,7 @@ use crate::widget::as_widget::AsWidget;
 use super::imp::IButton;
 use super::{Button, Trigger};
 
-impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
+impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -283,7 +283,7 @@ impl<'w,E,Text,Tr,TrMut> Widget<E> for Button<'w,E,Text,Tr,TrMut> where
     );
 }
 
-impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
+impl<E,S,Tr,TrMut> Button<E,S,Tr,TrMut> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -303,7 +303,7 @@ impl<'w,E,S,Tr,TrMut> Button<'w,E,S,Tr,TrMut> where
     }
 }
 
-impl<E,Text,Tr,TrMut> AsWidget<E> for Button<'_,E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
+impl<E,Text,Tr,TrMut> AsWidget<E> for Button<E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
