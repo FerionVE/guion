@@ -1,10 +1,10 @@
 use std::marker::PhantomData;
 
 use crate::aliases::{ESize, EStyle};
+use crate::cachor::AsCachor;
 use crate::env::Env;
 use crate::layout::Gonstraints;
 use crate::text::stor::TextStor;
-use crate::validation::Validation;
 use crate::view::mut_target::{DynAtomStateMutTarget, MuTarget};
 use crate::view::mutor_trait::{MutorToBuilder, MutorEndBuilder, MutorToBuilderExt};
 
@@ -141,7 +141,7 @@ impl<E,State,T,TrMut> CheckBox<E,State,Label<E,T>,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> CheckBox<E,State,Label<E,TT>,TrMut> where TT: TextStor<E>+Validation<E> {
+    pub fn with_text<TT>(self, text: TT) -> CheckBox<E,State,Label<E,TT>,TrMut> where TT: TextStor<E> + AsCachor<E> {
         CheckBox{
             updater: self.updater,
             size: self.size,

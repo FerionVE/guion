@@ -1,12 +1,12 @@
 use std::marker::PhantomData;
 
 use crate::aliases::{ESize, EStyle};
+use crate::cachor::AsCachor;
 use crate::view::mut_target::MuTarget;
 use crate::view::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
 use crate::{constraint, traitcast_for_from_widget};
 use crate::env::Env;
 use crate::text::stor::TextStor;
-use crate::validation::Validation;
 
 use super::label::Label;
 
@@ -137,7 +137,7 @@ impl<E,T,Tr,TrMut> Button<E,Label<E,T>,Tr,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> Button<E,Label<E,TT>,Tr,TrMut> where TT: TextStor<E>+Validation<E> {
+    pub fn with_text<TT>(self, text: TT) -> Button<E,Label<E,TT>,Tr,TrMut> where TT: TextStor<E> + AsCachor<E> {
         Button{
             size: self.size,
             style: self.style,

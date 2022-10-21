@@ -6,11 +6,10 @@ use std::mem::ManuallyDrop;
 use std::ops::{Range, Deref, DerefMut};
 use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard, Arc};
 
+use crate::cachor::MutCell;
 use crate::env::Env;
 use crate::traitcast_for_from_widget;
 use crate::util::immu::Immutable;
-use crate::validation::{Validation, ValidationMut};
-use crate::validation::validated::Validated;
 
 use super::layout::TxtLayout;
 
@@ -220,7 +219,7 @@ impl<E,A> TextStorMut<E> for ManuallyDrop<A> where A: TextStorMut<E> + ?Sized {
     }
 }
 
-impl<E,T> TextStor<E> for Validated<E,T> where T: TextStor<E> {
+impl<E,T> TextStor<E> for MutCell<T> where T: TextStor<E> {
     #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
@@ -234,7 +233,7 @@ impl<E,T> TextStor<E> for Validated<E,T> where T: TextStor<E> {
         (**self).len()
     }
 }
-impl<E,T> TextStorMut<E> for Validated<E,T> where T: TextStorMut<E> {
+impl<E,T> TextStorMut<E> for MutCell<T> where T: TextStorMut<E> {
     fn replace(&mut self, replace_range: Range<usize>, insert: &str) {
         (**self).replace(replace_range,insert)
     }
@@ -256,23 +255,23 @@ impl<E,S,F> DerefMut for OnModification<E,S,F> where F: FnMut(&mut S) {
     }
 }
 
-impl<E,S,F> Validation<E> for OnModification<E,S,F> where S: Validation<E>, F: FnMut(&mut S) {
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
-    }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-impl<E,S,F> ValidationMut<E> for OnModification<E,S,F> where S: ValidationMut<E>, F: FnMut(&mut S) {
-    #[inline]
-    fn validate(&mut self) -> Arc<dyn Any> {
-        (**self).validate()
-        //TODO trigger OnModification?
-    }
-}
+// impl<E,S,F> Validation<E> for OnModification<E,S,F> where S: Validation<E>, F: FnMut(&mut S) {
+//     #[inline]
+//     fn valid(&self, v: &dyn Any) -> bool {
+//         (**self).valid(v)
+//     }
+//     #[inline]
+//     fn validation(&self) -> Arc<dyn Any> {
+//         (**self).validation()
+//     }
+// }
+// impl<E,S,F> ValidationMut<E> for OnModification<E,S,F> where S: ValidationMut<E>, F: FnMut(&mut S) {
+//     #[inline]
+//     fn validate(&mut self) -> Arc<dyn Any> {
+//         (**self).validate()
+//         //TODO trigger OnModification?
+//     }
+// }
 
 impl<E,S,F> TextStor<E> for OnModification<E,S,F> where S: TextStor<E>, F: FnMut(&mut S) {
     #[inline]
@@ -353,7 +352,7 @@ impl<T,S,E,F> ToTextLayout<S,E> for OnModification<E,T,F> where E: Env, T: ToTex
     }
 }
 
-impl<T,S,E> ToTextLayout<S,E> for Validated<E,T> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E> {
+impl<T,S,E> ToTextLayout<S,E> for MutCell<T> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E> {
     fn to_text_layout(&self, c: &mut E::Context<'_>) -> S {
         (**self).to_text_layout(c)
     }

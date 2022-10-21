@@ -1,10 +1,10 @@
 use std::marker::PhantomData;
 
 use crate::aliases::{ESize, EStyle};
+use crate::cachor::AsCachor;
 use crate::env::Env;
 use crate::layout::Gonstraints;
 use crate::text::stor::TextStor;
-use crate::validation::Validation;
 
 pub mod widget;
 
@@ -35,7 +35,7 @@ impl<E> Label<E,&'static str> where
 
 impl<E,Text> Label<E,Text> where
     E: Env,
-    Text: TextStor<E>+Validation<E>,
+    Text: TextStor<E> + AsCachor<E>,
 {
     #[inline]
     pub fn of_text(text: Text) -> Self {
@@ -53,7 +53,7 @@ impl<E,Text> Label<E,Text> where
     E: Env,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<E,T> where T: TextStor<E>+Validation<E> {
+    pub fn with_text<T>(self, text: T) -> Label<E,T> where T: TextStor<E> + AsCachor<E> {
         Label{
             size: self.size,
             style: self.style,

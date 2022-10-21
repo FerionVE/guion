@@ -18,7 +18,6 @@ pub mod ctx;
 pub mod handler;
 pub mod state;
 pub mod util;
-pub mod validation;
 pub mod aliases;
 pub mod text;
 pub mod widgets;

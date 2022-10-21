@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::ops::Range;
 
 use crate::aliases::{ETextLayout, ETCurSel, ERenderer, EEvent};
+use crate::cachor::AsCachor;
 use crate::ctx::Context;
 use crate::ctx::clipboard::CtxClipboardAccess;
 use crate::env::Env;
@@ -16,7 +17,6 @@ use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
 use crate::text::stor::TextStor;
 use crate::traitcast_for_from_widget;
 use crate::util::bounds::{Bounds, Offset};
-use crate::validation::Validation;
 use crate::view::mutor_trait::MutorEndBuilder;
 use crate::widget::cache::ValidationStat;
 use crate::widgets::util::state::AtomState;
@@ -40,7 +40,7 @@ impl<E,Text,Scroll,Curs,TBUpd> ITextBox<E> for TextBox<'_,E,Text,Scroll,Curs,TBU
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: TextStor<E>+Validation<E>,
+    Text: TextStor<E> + AsCachor<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
@@ -155,16 +155,16 @@ impl<E,Text,Scroll,Curs,TBUpd> TextBox<'_,E,Text,Scroll,Curs,TBUpd> where
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: TextStor<E>+Validation<E>,
+    Text: TextStor<E> + AsCachor<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
     TBUpd: MutorEndBuilder<TextBoxUpdate<E>,E>,
 {
-    pub(super) fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut TextBoxCache<E>, ctx: &mut E::Context<'_>) -> ValidationStat {
+    pub(super) fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut TextBoxCache<E,Text::Cachor>, ctx: &mut E::Context<'_>) -> ValidationStat {
         //TODO also cachor e.g. style that affects text
-        if cache.text_cachor.is_none() || cache.text_cache.is_none() || !self.text.valid(&**cache.text_cachor.as_ref().unwrap()) { //TODO old Validation trait bad coercion
-            cache.text_cachor = Some(self.text.validation());
+        if cache.text_cachor.is_none() || cache.text_cache.is_none() || !self.text.valid(cache.text_cachor.as_ref().unwrap()) { //TODO old Validation trait bad coercion
+            cache.text_cachor = Some(self.text.cachor());
             cache.text_cache = Some(TxtLayoutFromStor::from(&self.text,ctx));
             cache.text_rendered = false;
         }

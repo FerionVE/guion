@@ -3,9 +3,9 @@ use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut, Range};
 
+use crate::cachor::AsCachor;
 use crate::env::Env;
 use crate::text::stor::{TextStor, TextStorMut};
-use crate::validation::{Validation, ValidationMut};
 use crate::widgets::util::state::{AtomState, AtomStateMut};
 
 /// Implements TextStorMut/ValidationMut for immutable and discards mutation
@@ -52,26 +52,15 @@ impl<E,A,Z> TextStorMut<E> for &Immutable<E,A,Z> where A: TextStor<E>, E: Env {
     fn replace(&mut self, _: Range<usize>, _: &str) {}
 }
 
-impl<E,A,Z> Validation<E> for Immutable<E,A,Z> where A: Validation<E> {
+impl<E,A,Z> AsCachor<E> for Immutable<E,A,Z> where A: AsCachor<E> {
+    type Cachor = A::Cachor;
     #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
+    fn cachor(&self) -> Self::Cachor {
+        (**self).cachor()
     }
     #[inline]
-    fn validation(&self) -> std::sync::Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-impl<E,A,Z> ValidationMut<E> for Immutable<E,A,Z> where A: Validation<E> {
-    #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
-        self.validation()
-    }
-}
-impl<E,A,Z> ValidationMut<E> for &Immutable<E,A,Z> where A: Validation<E> {
-    #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
-        self.validation()
+    fn valid(&self, cachored: &Self::Cachor) -> bool {
+        (**self).valid(cachored)
     }
 }
 

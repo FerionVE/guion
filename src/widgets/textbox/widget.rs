@@ -4,6 +4,7 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use crate::aliases::{ETCurSel, EEvent, ETextLayout, ERenderer, ETCurSelCachor, ESize};
+use crate::cachor::AsCachor;
 use crate::ctx::Context;
 use crate::ctx::clipboard::CtxClipboardAccess;
 use crate::dispatchor::AsWidgetDispatch;
@@ -28,7 +29,6 @@ use crate::text::cursel::TxtCurSel;
 use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
 use crate::text::stor::TextStor;
 use crate::util::tabulate::{TabulateOrigin, TabulateDirection, TabulateResponse};
-use crate::validation::Validation;
 use crate::view::mutor_trait::MutorEndBuilder;
 use crate::widget::{Widget, WidgetWithResolveChildDyn};
 use crate::widget::as_widget::AsWidget;
@@ -44,13 +44,13 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: TextStor<E>+Validation<E>,
+    Text: TextStor<E> + AsCachor<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
     TBUpd: MutorEndBuilder<TextBoxUpdate<E>,E>,
 {
-    type Cache = TextBoxCache<E>;
+    type Cache = TextBoxCache<E,Text::Cachor>;
     
     fn _render<P,Ph>(
         &self,
@@ -361,7 +361,7 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
         // dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
         // dyn AtomState<E,ETCurSel<E>> => |s| &s.cursor;
         dyn ITextBox<E> => |s| s;
-        dyn Validation<E> => |s| &s.text;
+        //dyn AsCachor<E> => |s| &s.text;
     );
 }
 
@@ -378,16 +378,27 @@ impl<E,Text,Scroll,Curs,TBUpd> AsWidget<E> for TextBox<'_,E,Text,Scroll,Curs,TBU
     }
 }
 
-#[derive(Default)]
-pub struct TextBoxCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
+pub struct TextBoxCache<E,TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
     pub(super) text_cache: Option<ETextLayout<E>>,
-    pub(super) text_cachor: Option<Arc<dyn Any>>,
+    pub(super) text_cachor: Option<TC>,
     pub(super) scroll_curs_cachor: Option<(ETCurSelCachor<E>,Offset,bool)>,
     pub(super) text_rendered: bool,
     pub(super) std_render_cachors: Option<StdRenderCachors<E>>,
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }
 
-impl<E> WidgetCache<E> for TextBoxCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
+impl<E, TC> Default for TextBoxCache<E, TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
+    fn default() -> Self {
+        Self {
+            text_cache: None,
+            text_cachor: None,
+            scroll_curs_cachor: None,
+            text_rendered: false,
+            std_render_cachors: None
+        }
+    }
+}
+
+impl<E,TC> WidgetCache<E> for TextBoxCache<E,TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
     fn reset_current(&mut self) {}
 }

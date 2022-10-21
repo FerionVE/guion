@@ -1,5 +1,4 @@
-use std::convert::Infallible;
-use std::num::NonZeroUsize;
+use std::any::TypeId;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -112,124 +111,155 @@ impl<T,U,E> AsCachorOf<U,E> for CachorPtrEqVRef<'_,T> where Self: AsCachor<E>, T
 }
 
 impl<T,E> AsCachorOf<&'static T,E> for CachorPtrEq where T: 'static + ?Sized {
-    type Cachor = NonZeroUsize;
+    type Cachor = PtrEqCachor<&'static T>;
 
     #[must_use]
     #[inline]
     fn cachor(&self, v: &&'static T) -> Self::Cachor {
-        unsafe { NonZeroUsize::new_unchecked( (*v) as *const T as *const Infallible as usize ) }
+        PtrEqCachor(*v)
     }
 }
 
 impl<T,E> AsCachorOf<Rc<T>,E> for CachorPtrEq where T: PartialEq + ?Sized + 'static {
-    type Cachor = Rc<T>;
+    type Cachor = PtrEqCachor<Rc<T>>;
 
     #[must_use]
     #[inline]
     fn cachor(&self, v: &Rc<T>) -> Self::Cachor {
-        v.clone()
+        PtrEqCachor(v.clone())
     }
 
     #[must_use]
     #[inline]
     fn valid(&self, v: &Rc<T>, cachored: &Self::Cachor) -> bool {
-        Rc::ptr_eq(v, cachored)
+        Rc::ptr_eq(v, &cachored.0)
     }
 }
 
 impl<T,E> AsCachorOf<Arc<T>,E> for CachorPtrEq where T: PartialEq + ?Sized + 'static {
-    type Cachor = Arc<T>;
+    type Cachor = PtrEqCachor<Arc<T>>;
 
     #[must_use]
     #[inline]
     fn cachor(&self, v: &Arc<T>) -> Self::Cachor {
-        v.clone()
+        PtrEqCachor(v.clone())
     }
 
     #[must_use]
     #[inline]
     fn valid(&self, v: &Arc<T>, cachored: &Self::Cachor) -> bool {
-        Arc::ptr_eq(v, cachored)
+        Arc::ptr_eq(v, &cachored.0)
     }
 }
 
 impl<T,E> AsCachor<E> for CachorPtrEqV<&'static T> where T: 'static + ?Sized{
-    type Cachor = NonZeroUsize;
+    type Cachor = PtrEqCachor<&'static T>;
 
     #[must_use]
     #[inline]
     fn cachor(&self) -> Self::Cachor {
-        unsafe { NonZeroUsize::new_unchecked( self.0 as *const T as *const Infallible as usize ) }
+        PtrEqCachor(self.0)
     }
 }
 impl<T,E> AsCachor<E> for CachorPtrEqVRef<'_,&'static T> where T: 'static + ?Sized {
-    type Cachor = NonZeroUsize;
+    type Cachor = PtrEqCachor<&'static T>;
 
     #[must_use]
     #[inline]
     fn cachor(&self) -> Self::Cachor {
-        unsafe { NonZeroUsize::new_unchecked( *self.0 as *const T as *const Infallible as usize ) }
+        PtrEqCachor(*self.0)
     }
 }
 
 impl<T,E> AsCachor<E> for CachorPtrEqV<Rc<T>> where T: PartialEq + ?Sized + 'static {
-    type Cachor = Rc<T>;
+    type Cachor = PtrEqCachor<Rc<T>>;
 
     #[must_use]
     #[inline]
     fn cachor(&self) -> Self::Cachor {
-        self.0.clone()
+        PtrEqCachor(self.0.clone())
     }
 
     #[must_use]
     #[inline]
     fn valid(&self, cachored: &Self::Cachor) -> bool {
-        Rc::ptr_eq(&self.0, cachored)
+        Rc::ptr_eq(&self.0, &cachored.0)
     }
 }
 impl<T,E> AsCachor<E> for CachorPtrEqVRef<'_,Rc<T>> where T: PartialEq + ?Sized + 'static {
-    type Cachor = Rc<T>;
+    type Cachor = PtrEqCachor<Rc<T>>;
 
     #[must_use]
     #[inline]
     fn cachor(&self) -> Self::Cachor {
-        self.0.clone()
+        PtrEqCachor(self.0.clone())
     }
 
     #[must_use]
     #[inline]
     fn valid(&self, cachored: &Self::Cachor) -> bool {
-        Rc::ptr_eq(self.0, cachored)
+        Rc::ptr_eq(&self.0, &cachored.0)
     }
 }
 
 impl<T,E> AsCachor<E> for CachorPtrEqV<Arc<T>> where T: PartialEq + ?Sized + 'static {
-    type Cachor = Arc<T>;
+    type Cachor = PtrEqCachor<Arc<T>>;
 
     #[must_use]
     #[inline]
     fn cachor(&self) -> Self::Cachor {
-        self.0.clone()
+        PtrEqCachor(self.0.clone())
     }
 
     #[must_use]
     #[inline]
     fn valid(&self, cachored: &Self::Cachor) -> bool {
-        Arc::ptr_eq(&self.0, cachored)
+        Arc::ptr_eq(&self.0, &cachored.0)
     }
 }
 impl<T,E> AsCachor<E> for CachorPtrEqVRef<'_,Arc<T>> where T: PartialEq + ?Sized + 'static {
-    type Cachor = Arc<T>;
+    type Cachor = PtrEqCachor<Arc<T>>;
 
     #[must_use]
     #[inline]
     fn cachor(&self) -> Self::Cachor {
-        self.0.clone()
+        PtrEqCachor(self.0.clone())
     }
 
     #[must_use]
     #[inline]
     fn valid(&self, cachored: &Self::Cachor) -> bool {
-        Arc::ptr_eq(self.0, cachored)
+        Arc::ptr_eq(self.0, &cachored.0)
+    }
+}
+
+#[doc(hidden)]
+#[derive(Clone)]
+#[repr(transparent)]
+pub struct PtrEqCachor<T>(T) where T: Clone + 'static;
+
+impl<T> Copy for PtrEqCachor<T> where T: Copy + ?Sized {}
+
+impl<T> PartialEq for PtrEqCachor<&'static T> where T: ?Sized + 'static {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        if TypeId::of::<T>() == TypeId::of::<()>() {
+            return true;
+        }
+        self.0 as *const T == other.0 as *const T
+    }
+}
+
+impl<T> PartialEq for PtrEqCachor<Rc<T>> where T: ?Sized + 'static {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+impl<T> PartialEq for PtrEqCachor<Arc<T>> where T: ?Sized + 'static {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
     }
 }

@@ -2,6 +2,7 @@ use std::any::Any;
 use std::sync::Arc;
 
 use crate::aliases::{ERenderer, EEvent, ETextLayout, ESize};
+use crate::cachor::AsCachor;
 use crate::dispatchor::AsWidgetDispatch;
 use crate::env::Env;
 use crate::event::imp::StdVarSup;
@@ -15,7 +16,6 @@ use crate::render::widgets::RenderStdWidgets;
 use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
 use crate::text::stor::TextStor;
 use crate::util::tabulate::{TabulateOrigin, TabulateDirection, TabulateResponse};
-use crate::validation::Validation;
 use crate::widget::{Widget, WidgetWithResolveChildDyn};
 use crate::widget::cache::{StdRenderCachors, ValidationStat, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -26,10 +26,10 @@ impl<E,Text> Widget<E> for Label<E,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    Text: TextStor<E>+Validation<E>,
+    Text: TextStor<E> + AsCachor<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
 {
-    type Cache = LabelCache<E>;
+    type Cache = LabelCache<E,Text::Cachor>;
     
     fn _render<P,Ph>(
         &self,
@@ -161,7 +161,7 @@ impl<E,Text> Widget<E> for Label<E,Text> where
     }
 
     impl_traitcast!( dyn WidgetDyn<E>:
-        dyn Validation<E> => |s| &s.text;
+        //dyn AsCachor<E> => |s| &s.text;
         dyn TextStor<E> => |s| &s.text;
     );
 }
@@ -170,13 +170,13 @@ impl<E,Text> Label<E,Text> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    Text: TextStor<E>+Validation<E>,
+    Text: TextStor<E> + AsCachor<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
 {
-    fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut LabelCache<E>, ctx: &mut E::Context<'_>) -> ValidationStat {
+    fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut LabelCache<E,Text::Cachor>, ctx: &mut E::Context<'_>) -> ValidationStat {
         //TODO also cachor e.g. style that affects text
-        if cache.text_cachor.is_none() || cache.text_cache.is_none() || !self.text.valid(&**cache.text_cachor.as_ref().unwrap()) { //TODO old Validation trait bad coercion
-            cache.text_cachor = Some(self.text.validation());
+        if cache.text_cachor.is_none() || cache.text_cache.is_none() || !self.text.valid(cache.text_cachor.as_ref().unwrap()) { //TODO old Validation trait bad coercion
+            cache.text_cachor = Some(self.text.cachor());
             cache.text_cache = Some(TxtLayoutFromStor::from(&self.text,ctx));
             cache.text_rendered = false;
         }
@@ -197,16 +197,28 @@ impl<E,Text> AsWidget<E> for Label<E,Text> where Self: Widget<E>, E: Env {
     }
 }
 
-#[derive(Default)]
-pub struct LabelCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, {
+pub struct LabelCache<E,TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
     text_cache: Option<ETextLayout<E>>,
-    text_cachor: Option<Arc<dyn Any>>,
+    text_cachor: Option<TC>,
     text_rendered: bool,
     std_render_cachors: Option<StdRenderCachors<E>>,
     align_cachor: Option<(f32,f32)>,
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }
 
-impl<E> WidgetCache<E> for LabelCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
+impl<E, TC> Default for LabelCache<E, TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            text_cache: None,
+            text_cachor: None,
+            text_rendered: false,
+            std_render_cachors: None,
+            align_cachor: None
+        }
+    }
+}
+
+impl<E,TC> WidgetCache<E> for LabelCache<E,TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
     fn reset_current(&mut self) {}
 }
