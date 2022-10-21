@@ -16,7 +16,7 @@ use crate::state::CtxStdState;
 use crate::state::standard::StdStdState;
 use crate::widget::Widget;
 
-use super::HandlerBuilder;
+use super::{HandlerBuilder, HandlerStateResolve};
 
 pub mod imp;
 pub mod imps;
@@ -75,11 +75,10 @@ impl<SB,E> StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: 
 impl<S,E> HandlerBuilder<E> for StdHandler<S,E> where S: HandlerBuilder<E>, E: Env, for<'a> E::Context<'a>: CtxStdState<'a,E>, EEvent<E>: StdVarSup<E> {
     type Built = StdHandlerLive<S,E>;
 
-    fn build(access: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut Self>, ctx: &mut E::Context<'_>) -> Self::Built {
-        let f2 = access.clone();
+    fn build<Acc>(ctx: &mut E::Context<'_>) -> Self::Built where Acc: HandlerStateResolve<Self,E> {
         StdHandlerLive {
-            sup: S::build(Arc::new(move |c| &mut f2(c).sup ),ctx),
-            access,
+            access: Acc::resolve_handler_state,
+            sup: S::build::<StdHandlerSubAccess<Acc,S>>(ctx),
             _c: PhantomData,
         }
     }
@@ -87,6 +86,22 @@ impl<S,E> HandlerBuilder<E> for StdHandler<S,E> where S: HandlerBuilder<E>, E: E
 
 pub struct StdHandlerLive<SB,E> where SB: HandlerBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
     pub sup: SB::Built,
-    pub access: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut StdHandler<SB,E>>,
+    pub access: for<'c,'cc> fn(&'c mut E::Context<'cc>)->&'c mut StdHandler<SB,E>,
     _c: PhantomData<E>,
+}
+
+pub struct StdHandlerSubAccess<SuperAccess,Dest>(PhantomData<(SuperAccess,Dest)>);
+
+impl<SuperAccess,Dest,E> HandlerStateResolve<Dest,E> for StdHandlerSubAccess<SuperAccess,Dest>
+where
+    E: Env,
+    SuperAccess: HandlerStateResolve<StdHandler<Dest,E>,E>,
+    for<'a> E::Context<'a>: CtxStdState<'a, E>,
+    EEvent<E>: StdVarSup<E>,
+    Dest: HandlerBuilder<E>,
+{
+    #[inline]
+    fn resolve_handler_state<'a>(ctx_root: &'a mut <E as Env>::Context<'_>) -> &'a mut Dest {
+        &mut SuperAccess::resolve_handler_state(ctx_root).sup
+    }
 }

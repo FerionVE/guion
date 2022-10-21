@@ -1,7 +1,6 @@
 //! Handlers can be chained and dispatch events and other stuff
 
 use std::any::TypeId;
-use std::sync::Arc;
 
 use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
@@ -18,7 +17,7 @@ pub trait HandlerBuilder<E>: 'static where E: Env {
     type Built: Handler<E>;
 
     //TODO arc slow
-    fn build(access: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut Self>, ctx: &mut E::Context<'_>) -> Self::Built;
+    fn build<Acc>(ctx: &mut E::Context<'_>) -> Self::Built where Acc: HandlerStateResolve<Self,E>;
 }
 
 /// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
@@ -173,7 +172,17 @@ impl<E> Handler<E> for () where E: Env {
 impl<E> HandlerBuilder<E> for () where E: Env {
     type Built = ();
 
-    fn build(_: Arc<dyn for<'c,'cc> Fn(&'c mut E::Context<'cc>)->&'c mut Self>, _: &mut E::Context<'_>) {
+    fn build<Acc>(_: &mut E::Context<'_>) -> Self::Built where Acc: HandlerStateResolve<Self,E> {
         ()
     }
 }
+
+pub trait HandlerStateResolve<Dest,E> where E: Env, Dest: HandlerBuilder<E> + ?Sized + 'static {
+    fn resolve_handler_state<'a>(ctx_root: &'a mut E::Context<'_>) -> &'a mut Dest;
+}
+
+// impl<E> HandlerStateResolve<<E as Env>::Context<'_>,E> for () where E: Env, Dest: 'static {
+//     fn resolve_handler_state<'a>(ctx_root: &'a mut <E as Env>::Context<'_>) -> &'a mut Dest {
+//         ctx_root
+//     }
+// }
