@@ -204,9 +204,9 @@ impl_tuple!(
     23 => senf.23,22 => senf.22,21 => senf.21,20 => senf.20,
     19 => senf.19,18 => senf.18,17 => senf.17,16 => senf.16,
     15 => senf.15,14 => senf.14,13 => senf.13,12 => senf.12,
-    11 => senf.11,10 => senf.10,09 => senf. 9,08 => senf. 8,
-    07 => senf. 7,06 => senf. 6,05 => senf. 5,04 => senf. 4,
-    03 => senf. 3,02 => senf. 2,01 => senf. 1,00 => senf. 0;
+    11 => senf.11,10 => senf.10, 9 => senf. 9, 8 => senf. 8,
+     7 => senf. 7, 6 => senf. 6, 5 => senf. 5, 4 => senf. 4,
+     3 => senf. 3, 2 => senf. 2, 1 => senf. 1, 0 => senf. 0;
     Widgets32 Widgets31 Widgets30 
     Widgets29 Widgets28 Widgets27 Widgets26 Widgets25 Widgets24 Widgets23 Widgets22 Widgets21 Widgets20 
     Widgets19 Widgets18 Widgets17 Widgets16 Widgets15 Widgets14 Widgets13 Widgets12 Widgets11 Widgets10 

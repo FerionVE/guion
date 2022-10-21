@@ -24,7 +24,7 @@ impl<E> AsWidget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     where
         Self: 'w
     {
-        f.call(&*self, root, ctx)
+        f.call(self, root, ctx)
     }
 }
 
@@ -38,7 +38,7 @@ impl<T,E> AsWidget<E> for &'_ T where T: AsWidget<E> + ?Sized, E: Env {
         Self: 'w
     {
         let mut callback = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
-            callback.call(&widget, root, ctx)
+            callback.call(widget, root, ctx)
         });
         (**self).with_widget(&mut callback,root,ctx)
     }
@@ -53,7 +53,7 @@ impl<T,E> AsWidget<E> for &'_ mut T where T: AsWidget<E> + ?Sized, E: Env {
         Self: 'w
     {
         let mut callback = AsWidgetClosure::new(#[inline] move |widget,root,ctx| {
-            callback.call(&widget, root, ctx)
+            callback.call(widget, root, ctx)
         });
         (**self).with_widget(&mut callback,root,ctx)
     }

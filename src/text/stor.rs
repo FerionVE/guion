@@ -1,10 +1,9 @@
-use std::any::Any;
 use std::borrow::Cow;
 use std::cell::{RefMut, Ref};
 use std::marker::PhantomData;
 use std::mem::ManuallyDrop;
 use std::ops::{Range, Deref, DerefMut};
-use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard, Arc};
+use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::cachor::MutCell;
 use crate::env::Env;
@@ -51,13 +50,13 @@ impl<E> TextStor<E> for () {
 impl<E> TextStor<E> for str {
     #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
-        Cow::Borrowed(&self[..])
+        Cow::Borrowed(self)
     }
 }
 impl<E> TextStor<E> for String {
     #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
-        Cow::Borrowed(&self[..])
+        Cow::Borrowed(self)
     }
 }
 

@@ -9,7 +9,7 @@ pub struct CachorOrRef<'a,T>(pub &'a T) where T: ?Sized;
 impl<'a,T> Clone for CachorOrRef<'a,T> where T: ?Sized {
     #[inline]
     fn clone(&self) -> Self {
-        Self(&*self.0)
+        Self(self.0)
     }
 }
 impl<'a,T> Copy for CachorOrRef<'a,T> where T: ?Sized {}

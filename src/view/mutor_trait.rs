@@ -34,9 +34,7 @@ impl<Args,E> MutorEndBuilder<Args,E> for () where E: Env, Args: Clone + Sized + 
         self
     }
     #[inline]
-    fn build(&self) -> Self::Built {
-        ()
-    }
+    fn build(&self) -> Self::Built {}
 
     #[inline]
     fn build_box_mut_event(&self, _: Args) -> Option<BoxMutEvent<E>> {

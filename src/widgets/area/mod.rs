@@ -2,7 +2,6 @@ use std::marker::PhantomData;
 
 use crate::aliases::{ESize, EStyle};
 use crate::env::Env;
-use crate::error::ResolveResult;
 use crate::layout::Gonstraints;
 use crate::util::ScrollOff;
 use crate::view::mut_target::{DynAtomStateMutTarget, MuTarget};
@@ -52,7 +51,7 @@ impl<E,W,Scroll,TrMut> Area<E,W,Scroll,TrMut> where
             size: self.size,
             style: self.style,
             inner: self.inner,
-            scroll: scroll,
+            scroll,
             negative_scroll: self.negative_scroll,
             scroll_updater: self.scroll_updater,
             p: PhantomData,

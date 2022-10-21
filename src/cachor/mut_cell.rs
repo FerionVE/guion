@@ -118,7 +118,7 @@ impl<T> Hash for MutCell<T> where T: Hash + ?Sized {
 impl<T> From<T> for MutCell<T> {
     #[inline]
     fn from(value: T) -> Self {
-        Self::new(From::from(value))
+        Self::new(value)
     }
 }
 

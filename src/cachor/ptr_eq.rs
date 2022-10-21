@@ -59,7 +59,7 @@ pub struct CachorPtrEqVRef<'a,T>(pub &'a T) where T: ?Sized;
 impl<'a,T> Clone for CachorPtrEqVRef<'a,T> where T: ?Sized {
     #[inline]
     fn clone(&self) -> Self {
-        Self(&*self.0)
+        Self(self.0)
     }
 }
 impl<'a,T> Copy for CachorPtrEqVRef<'a,T> where T: ?Sized {}
@@ -198,7 +198,7 @@ impl<T,E> AsCachor<E> for CachorPtrEqVRef<'_,Rc<T>> where T: PartialEq + ?Sized 
     #[must_use]
     #[inline]
     fn valid(&self, cachored: &Self::Cachor) -> bool {
-        Rc::ptr_eq(&self.0, &cachored.0)
+        Rc::ptr_eq(self.0, &cachored.0)
     }
 }
 
@@ -246,7 +246,7 @@ impl<T> PartialEq for PtrEqCachor<&'static T> where T: ?Sized + 'static {
         if TypeId::of::<T>() == TypeId::of::<()>() {
             return true;
         }
-        self.0 as *const T == other.0 as *const T
+        std::ptr::eq(self.0, other.0)
     }
 }
 

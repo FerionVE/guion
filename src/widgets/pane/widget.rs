@@ -330,7 +330,7 @@ impl<E,T> Pane<E,T> where
                     widget.size(&child_id.push_on_stack(path), &stack, &mut child_cache.widget_cache, root,ctx)
                 );
 
-                all_gonstraints.add(&current_gonstraint, self.orientation);
+                all_gonstraints.add(current_gonstraint, self.orientation);
             }),
             root.fork(),ctx
         );
@@ -380,7 +380,7 @@ impl<E,T> Pane<E,T> where
                     widget.size(&child_id.push_on_stack(path), &stack, &mut child_cache.widget_cache, root,ctx)
                 );
 
-                all_gonstraints.add(&current_gonstraint, self.orientation);
+                all_gonstraints.add(current_gonstraint, self.orientation);
 
                 if child_cache.gonstraint_cachor != child_cache.current_gonstraint {
                     child_cache.gonstraint_cachor = child_cache.current_gonstraint.clone();

@@ -15,7 +15,7 @@ pub struct CachorToOwnedVRef<'a,T>(pub &'a T) where T: ToOwned + PartialEq + ?Si
 impl<'a,T> Clone for CachorToOwnedVRef<'a,T> where T: ToOwned + PartialEq + ?Sized, T::Owned: Clone + PartialEq + 'static {
     #[inline]
     fn clone(&self) -> Self {
-        Self(&*self.0)
+        Self(self.0)
     }
 }
 impl<'a,T> Copy for CachorToOwnedVRef<'a,T> where T: ToOwned + PartialEq + ?Sized, T::Owned: Clone + PartialEq + 'static {}

@@ -60,7 +60,7 @@ pub trait StdState<E> where E: Env {
     #[inline]
     fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: &(dyn PathStackDyn<E>+'_)) -> Option<&Self::K> {
         if let Some(v) = self.is_pressed(c) {
-            if id.fwd_compare(&*v.widget()) == FwdCompareStat::Equal {
+            if id.fwd_compare(v.widget()) == FwdCompareStat::Equal {
                 return Some(v);
             }
         }

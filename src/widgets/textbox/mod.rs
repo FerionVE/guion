@@ -5,7 +5,6 @@ use std::ops::Range;
 use crate::aliases::{ESize, EStyle, ETCurSel};
 use crate::env::Env;
 use crate::layout::Gonstraints;
-use crate::style::Style;
 use crate::text::stor::TextStorMut;
 use crate::view::mut_target::MuTarget;
 use crate::view::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};

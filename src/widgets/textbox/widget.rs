@@ -1,8 +1,3 @@
-use std::any::Any;
-use std::borrow::Cow;
-use std::ops::Range;
-use std::sync::Arc;
-
 use crate::aliases::{ETCurSel, EEvent, ETextLayout, ERenderer, ETCurSelCachor, ESize};
 use crate::cachor::AsCachor;
 use crate::ctx::Context;
@@ -138,7 +133,7 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
         );
 
         renderer.render_preprocessed_text(
-            &g,
+            g,
             off,
             &render_props
                 .with_style_color_type(TestStyleColorType::Fg),
@@ -242,8 +237,6 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdUp || ee.key == MatchKeyCode::KbdDown {
                 let ctrl = ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some();
-
-                let b = b.clone();
                 
                 if ee.key == MatchKeyCode::KbdUp {
                     self.move_cursor_y(Direction::Up,ctrl,&b,g,root.fork(),ctx);
@@ -258,7 +251,7 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
         } else if let Some(ee) = event.query_variant::<MouseScroll>(path,&stack) {
             //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
             let off = self.get_scroll(ctx);
-            let max_off = max_off::<E>(&g,&b);
+            let max_off = max_off::<E>(g,&b);
 
             let off = (
                 off.0 as i32 + ee.x,
@@ -266,8 +259,8 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
             );
             //let off = s.bound_off((off.0.max(0) as u32, off.1.max(0) as u32));
             let off = (
-                off.0.max(0).min(max_off.x) as u32,
-                off.1.max(0).min(max_off.y) as u32,
+                off.0.clamp(0, max_off.x) as u32,
+                off.1.clamp(0, max_off.y) as u32,
             );
 
             if let Some(t) = self.update.build_box_mut_event(TextBoxUpdate { update_text: None, update_cursor: None, update_scroll_pos: Some(off) }) {
@@ -279,7 +272,6 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
 
                 let mouse_down = event.query_variant::<MouseDown<E>>(path,&stack).cloned();
                 let mouse_pressed = ctx.state().is_hovered(path._erase()) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()).is_some();
-                let b = b.clone();
 
                 self._m(mouse_down,mouse_pressed,mouse,b,g,root.fork(),ctx);
                 if mouse_pressed {

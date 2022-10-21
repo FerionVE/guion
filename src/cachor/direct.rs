@@ -11,7 +11,7 @@ pub struct CachorDirectVRef<'a,T>(pub &'a T) where T: Clone + PartialEq + 'stati
 impl<'a,T> Clone for CachorDirectVRef<'a,T> where T: Clone + PartialEq + 'static + ?Sized {
     #[inline]
     fn clone(&self) -> Self {
-        Self(&*self.0)
+        Self(self.0)
     }
 }
 impl<'a,T> Copy for CachorDirectVRef<'a,T> where T: Clone + PartialEq + 'static + ?Sized {}

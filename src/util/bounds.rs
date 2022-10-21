@@ -311,10 +311,9 @@ impl From<(u32,u32)> for Offset {
         Self{x: s.0 as i32, y: s.1 as i32}
     }
 }
-impl Into<(i32,i32)> for Offset {
-    #[inline]
-    fn into(self) -> (i32,i32) {
-        (self.x,self.y)
+impl From<Offset> for (i32,i32) {
+    fn from(value: Offset) -> Self {
+        (value.x,value.y)
     }
 }
 impl AsRef<Offset> for Offset {

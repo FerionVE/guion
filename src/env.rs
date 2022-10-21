@@ -111,6 +111,26 @@ macro_rules! impl_as_widget_for_path {
 }
 
 /// A type that can never the instantiatad. Implemented on [`std::convert::Infallible`]
+/// 
+/// # Safety
+/// 
+/// This is only ever implemented on types that can't be instantiated
+/// 
+/// # Example
+/// 
+/// ```rust
+/// enum Foo<E> where E: Env {
+///     Value,
+///     PhantomData(E::Phantom) //E::Phantom implements Infallible
+/// }
+/// 
+/// fn bar<E>(value: Foo<E>) where E: Env {
+///     match value {
+///         Value => {},
+///         PhantomData(_) => unsafe { unreachable_unchecked!() },
+///     }
+/// }
+/// ```
 pub unsafe trait InfallibleType: Sized + Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Debug + Send + Sync + 'static {}
 pub enum EnvPhantom {}
 unsafe impl InfallibleType for std::convert::Infallible {}

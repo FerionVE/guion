@@ -338,7 +338,7 @@ impl<E,T> AsWidgets<E> for WidgetsFixedIdx<&'_ [T]> where T: AsWidget<E>, E: Env
 
     #[inline]
     fn len(&self) -> usize {
-        <[T]>::len(&self.0)
+        <[T]>::len(self.0)
     }
 
     #[inline]

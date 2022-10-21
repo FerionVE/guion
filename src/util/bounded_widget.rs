@@ -8,7 +8,7 @@ use super::bounds::Bounds;
 pub trait IBoundedWidget<E>: Clone where E: Env {
     fn bounds(&self) -> &Bounds;
     #[inline]
-    fn into_a(&self) -> BoundedWidget<E> {
+    fn to_a(&self) -> BoundedWidget<E> {
         BoundedWidget{
             bounds: self.bounds().clone(),
             _p: PhantomData,

@@ -112,7 +112,7 @@ impl<E,W,Scroll,MutFn> Widget<E> for Area<E,W,Scroll,MutFn> where
 
         let (sx,sy) = normalize_scroll_off((sx,sy), (iw,ih).into(), rect.size,true);
 
-        let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
+        let inner_rect = Bounds::from_xywh(rect.x() - sx, rect.y() - sy, iw, ih);
 
         self.inner.with_widget(
             &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
@@ -168,25 +168,23 @@ impl<E,W,Scroll,MutFn> Widget<E> for Area<E,W,Scroll,MutFn> where
 
         let (sx,sy) = normalize_scroll_off((osx,osy), (iw,ih).into(), rect.size,true);
 
-        let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
+        let inner_rect = Bounds::from_xywh(rect.x() - sx, rect.y() - sy, iw, ih);
 
         let mut passed = false;
 
-        if event_mode.route_to_childs {
-            if soft_single_child_resolve_check(route_to_widget.clone(),SimpleId(AreaChild)) {
-                self.inner.with_widget(
-                    &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                        let stack = WithCurrentBounds {
-                            inner: &stack,
-                            bounds: inner_rect,
-                            viewport: *rect,
-                        };
-            
-                        passed |= widget.event_direct(&SimpleId(AreaChild).push_on_stack(path), &stack, event, route_to_widget.and_then(PathResolvus::inner), &mut cache.inner_cache, root,ctx);
-                    }),
-                    root.fork(),ctx
-                )
-            }
+        if event_mode.route_to_childs && soft_single_child_resolve_check(route_to_widget, SimpleId(AreaChild)) {
+            self.inner.with_widget(
+                &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                    let stack = WithCurrentBounds {
+                        inner: &stack,
+                        bounds: inner_rect,
+                        viewport: *rect,
+                    };
+        
+                    passed |= widget.event_direct(&SimpleId(AreaChild).push_on_stack(path), &stack, event, route_to_widget.and_then(PathResolvus::inner), &mut cache.inner_cache, root,ctx);
+                }),
+                root.fork(),ctx
+            )
         }
 
         if !passed && event_mode.receive_self { //TODO passed stack doof

@@ -17,7 +17,7 @@ pub fn calc_bounds<S,SK>(outer: &Dims, child_constraints: &[SK], mut constraint_
 pub fn calc_bounds2(outer: &Dims, parallel_child_axis: &[StdGonstraintAxis], o: Orientation) -> Vec<Bounds> {
     if parallel_child_axis.is_empty() {return vec![];}
 
-    let width = outer.par(o) as u32;
+    let width = outer.par(o);
 
     let snap = {
         let axis_sum: StdGonstraintAxis = parallel_child_axis.iter().fold(StdGonstraintAxis::empty(), |acc,v| acc+v );

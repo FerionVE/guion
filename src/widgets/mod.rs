@@ -27,5 +27,5 @@ pub mod textbox;
 pub mod area;
 
 pub fn soft_single_child_resolve_check<V,E>(a: Option<&(dyn PathResolvusDyn<E>+'_)>, b: V) -> bool where E: Env, V: PathFragment<E> + PartialEq {
-    a.is_none() || a.clone().unwrap().inner().is_none() || a.clone().unwrap().try_fragment::<V>() == Some(&b)
+    a.map_or(true, |a| a.inner().is_none() || a.try_fragment::<V>() == Some(&b) )
 }

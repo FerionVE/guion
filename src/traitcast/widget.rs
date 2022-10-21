@@ -11,12 +11,10 @@ pub trait TraitcastWidget<E>: Widget<E> where E: Env {
     fn try_traitcast_ref<'a,'b,T>(&'a self) -> Result<&'a T,()> where T: ?Sized + 'b, dyn WidgetDyn<E>+'b: TraitcastImpl<'b,T> + 'b, Self: 'b, 'b: 'a {
         if let Ok(e) = _try_traitcast_ref(self.erase()) {
             Ok(e)
+        } else if let Some(s) = self.inner() {
+            s.try_traitcast_ref()
         } else {
-            if let Some(s) = self.inner() {
-                s.try_traitcast_ref()
-            } else {
-                Err(())
-            }
+            Err(())
         }
     }
     #[inline]

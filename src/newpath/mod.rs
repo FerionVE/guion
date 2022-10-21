@@ -31,7 +31,7 @@ pub trait PathStack<E> { // reverse: inner = parent widget
     }
 
     #[inline]
-    fn into_resolvus(&self) -> Arc<dyn PathResolvusDyn<E>> {
+    fn to_resolvus(&self) -> Arc<dyn PathResolvusDyn<E>> {
         self._build_resolvus(())
     }
 
@@ -39,7 +39,7 @@ pub trait PathStack<E> { // reverse: inner = parent widget
     //     self.inner._build_resolvus(SelfResolvus{inner: i, fragment: self.fragment})
     // }
 
-    fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
+    fn fwd_compare(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         self._build_resolvus_for_fwd_compare((),other)
     }
 
@@ -57,7 +57,7 @@ pub trait PathResolvus<E> { // non-reverse: inner = child widget
         (self._fragment() as &dyn Any).downcast_ref::<F>()
     }
 
-    fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat;
+    fn fwd_compare(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat;
 
     //fn _clone_into_box(&self) -> Arc<dyn PathResolvusDyn<E>>;
 }
@@ -92,7 +92,7 @@ pub trait PathResolvusDyn<E> { // non-reverse: inner = child widget
     fn inner_dyn(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)>;
     //fn _clone_into_box_dyn(&self) -> Arc<dyn PathResolvusDyn<E>>;
     fn _fragment_dyn(&self) -> &dyn Any;
-    fn fwd_compare_dyn<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat;
+    fn fwd_compare_dyn(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat;
 }
 
 impl<T,E> PathStackDyn<E> for T where T: PathStack<E>, E: 'static {
@@ -124,7 +124,7 @@ impl<T,E> PathResolvusDyn<E> for T where T: PathResolvus<E> {
         (*self)._fragment()
     }
     #[inline]
-    fn fwd_compare_dyn<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
+    fn fwd_compare_dyn(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         (*self).fwd_compare(other)
     }
     // #[inline]
@@ -170,7 +170,7 @@ impl<E> PathResolvus<E> for dyn PathResolvusDyn<E> + '_ {
         (*self)._fragment_dyn()
     }
     #[inline]
-    fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
+    fn fwd_compare(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         (*self).fwd_compare_dyn(other)
     }
     // #[inline]
@@ -216,8 +216,8 @@ impl<E> PathResolvus<E> for () {
         self
     }
     #[inline]
-    fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
-        if let Some(_) = other.inner() {
+    fn fwd_compare(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
+        if other.inner().is_some() {
             FwdCompareStat::ChildOfSelf
         } else {
             FwdCompareStat::Equal
@@ -289,7 +289,7 @@ impl<E,T> PathResolvus<E> for Box<T> where T: PathResolvus<E> + ?Sized {
         (**self)._fragment()
     }
     #[inline]
-    fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
+    fn fwd_compare(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         (**self).fwd_compare(other)
     }
     // #[inline]
@@ -312,7 +312,7 @@ impl<E,T> PathResolvus<E> for &T where T: PathResolvus<E> + ?Sized {
         (**self)._fragment()
     }
     #[inline]
-    fn fwd_compare<'a,'b>(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
+    fn fwd_compare(&self, other: &(dyn PathResolvusDyn<E>+'_)) -> FwdCompareStat {
         (**self).fwd_compare(other)
     }
     // #[inline]

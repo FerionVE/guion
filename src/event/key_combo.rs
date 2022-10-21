@@ -219,7 +219,7 @@ fn range_range(a: &Option<Matches>, b: &Option<Matches>) -> Option<Matches> {
         a.as_ref().map(|v| v.0.len() ).unwrap_or(0)
         + b.as_ref().map(|v| v.0.len() ).unwrap_or(0)
     );
-    if dest.len() == 0 {
+    if dest.is_empty() {
         return None;
     }
     if let Some(v) = a {

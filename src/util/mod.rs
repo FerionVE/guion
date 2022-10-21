@@ -47,11 +47,11 @@ pub fn normalize_scroll_off(viewport_off: ScrollOff, inner_size: Dims, viewport_
 fn normalize_scroll_off_axis(inner_size: u32, viewport_size: u32, viewport_off: i32, negative_scroll: bool) -> i32 {
     if viewport_size > inner_size {
         if negative_scroll {
-            viewport_off.min(0).max(inner_size as i32 - viewport_size as i32)
+            viewport_off.clamp(inner_size as i32 - viewport_size as i32, 0)
         } else {
             0
         }
     }else{
-        viewport_off.max(0).min(inner_size as i32 - viewport_size as i32)
+        viewport_off.clamp(0, inner_size as i32 - viewport_size as i32)
     }
 }

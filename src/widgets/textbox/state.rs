@@ -1,11 +1,7 @@
 use crate::aliases::{ETextLayout, ETCurSel};
 use crate::env::Env;
 use crate::text::layout::TxtLayout;
-use crate::text::stor::{TextStorMut, TextStor};
 use crate::util::bounds::{Offset, Bounds};
-use crate::widgets::util::state::{AtomStateMut, AtomState};
-
-use super::TextBoxUpdate;
 
 pub fn max_off<E>(g: &ETextLayout<E>, b: &Bounds) -> Offset where E: Env {
     let size = g.display_size();

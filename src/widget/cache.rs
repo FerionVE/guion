@@ -81,7 +81,7 @@ impl<E> DynWidgetCache<E> where E: 'static {
             return unsafe { &mut *(self as *mut Self as *mut T) }
         }
         if self.inner_type_id != TypeId::of::<T>() {
-            self.inner = Box::new(T::default());
+            self.inner = Box::<T>::default() as Box<dyn WidgetCacheDyn<E>>;
             self.inner_type_id = TypeId::of::<T>();
         }
         let inner = &mut *self.inner;

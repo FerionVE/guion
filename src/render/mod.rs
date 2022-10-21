@@ -32,8 +32,8 @@ pub struct StdRenderProps<'a,S,E,C> where S: ?Sized, E: Env, C: PartialEq + Clon
 
 impl<'a,S,E> StdRenderProps<'a,S,E,()> where E: Env, S: ?Sized {
     pub fn new(inner: &'a S) -> Self where S: Queron<E> {
-        let current_bounds = QueryCurrentBounds.query_in(&*inner).unwrap();
-        let style = QueryTestStyle.query_in(&*inner).unwrap();
+        let current_bounds = QueryCurrentBounds.query_in(inner).unwrap();
+        let style = QueryTestStyle.query_in(inner).unwrap();
         Self {
             inner,
             absolute_bounds: current_bounds.bounds.clone(),
@@ -452,8 +452,8 @@ impl<E> TestStyle<E> where E: Env {
     pub fn color_of_type(&self, color_type: TestStyleColorType<E>) -> ESColor<E> {
         match color_type {
             TestStyleColorType::Bg => self.bg_color.clone(),
-            TestStyleColorType::Fg => self.current_variant().0.clone(),
-            TestStyleColorType::Border => self.current_variant().1.clone(),
+            TestStyleColorType::Fg => self.current_variant().0,
+            TestStyleColorType::Border => self.current_variant().1,
             TestStyleColorType::Custom(color) => color,
         }
     }

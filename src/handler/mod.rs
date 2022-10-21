@@ -172,9 +172,7 @@ impl<E> Handler<E> for () where E: Env {
 impl<E> HandlerBuilder<E> for () where E: Env {
     type Built = ();
 
-    fn build<Acc>(_: &mut E::Context<'_>) -> Self::Built where Acc: HandlerStateResolve<Self,E> {
-        ()
-    }
+    fn build<Acc>(_: &mut E::Context<'_>) -> Self::Built where Acc: HandlerStateResolve<Self,E> {}
 }
 
 pub trait HandlerStateResolve<Dest,E> where E: Env, Dest: HandlerBuilder<E> + ?Sized + 'static {

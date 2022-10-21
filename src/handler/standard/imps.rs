@@ -17,11 +17,11 @@ impl<S,E> StdState<E> for StdHandler<S,E> where
     type K = StdPressedKey<E>;
     #[inline]
     fn hovered(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)> { //TODO eventually WidgetIdent return in trait
-        self.state.mouse.hovered.as_ref().map(#[inline] |p| &**p )
+        self.state.mouse.hovered.as_deref()
     }
     #[inline]
     fn selected(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)> {
-        self.state.kbd.focused.as_ref().map(#[inline] |p| &**p )
+        self.state.kbd.focused.as_deref()
     }
     #[inline]
     fn pressed(&self) -> &[Self::K] {

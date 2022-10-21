@@ -161,7 +161,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         if !event_mode.route_to_childs && !receive_self {return false;}
 
         let o = self.orientation;
-        let mut bounds = self.calc_bounds(&current.bounds,self.state.get(ctx)); 
+        let mut bounds = self.calc_bounds(current.bounds,self.state.get(ctx)); 
 
         let mut passed = false;
 
@@ -194,7 +194,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
                     let ewx0 = wx0 + l_min as i32;
                     let ewx1 = wx1 - r_min as i32;
 
-                    cx = cx.min(ewx1-1).max(ewx0);
+                    cx = cx.clamp(ewx0, ewx1-1);
                     
                     if ewx1 > ewx0 {
                         let ww = wx1 - wx0;
@@ -205,7 +205,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
                             ctx.mutate_closure(t)
                         }
 
-                        bounds = self.calc_bounds(&current.bounds,fcx);
+                        bounds = self.calc_bounds(current.bounds,fcx);
                     }
                 }
             }
@@ -217,7 +217,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
                 route_to_widget = None;
             }
 
-            if soft_single_child_resolve_check(route_to_widget.clone(),FixedIdx(0)) {
+            if soft_single_child_resolve_check(route_to_widget, FixedIdx(0)) {
                 self.childs.0.0.with_widget(
                     &mut AsWidgetClosure::<'_,_,L,_,E>::new(|widget,root,ctx: &mut E::Context<'_>| {
                         let stack = WithCurrentBounds {
@@ -238,7 +238,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
                     root.fork(),ctx
                 );
             }
-            if soft_single_child_resolve_check(route_to_widget.clone(),FixedIdx(1)) {
+            if soft_single_child_resolve_check(route_to_widget, FixedIdx(1)) {
                 self.childs.0.1.with_widget(
                     &mut AsWidgetClosure::<'_,_,R,_,E>::new(|widget,root,ctx: &mut E::Context<'_>| {
                         let stack = WithCurrentBounds {
