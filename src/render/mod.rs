@@ -8,6 +8,7 @@ use crate::layout::Gonstraints;
 use crate::queron::Queron;
 use crate::queron::dyn_tunnel::QueronDyn;
 use crate::queron::query::{QueryStack, Query};
+use crate::style::color::Color;
 use crate::util::border::Border;
 use crate::util::bounds::{Bounds, Dims};
 use crate::widget::cache::StdRenderCachors;
@@ -24,7 +25,7 @@ pub struct StdRenderProps<'a,S,E,C> where S: ?Sized, E: Env, C: PartialEq + Clon
     pub inner: &'a S,
     pub absolute_bounds: Bounds,
     pub absolute_viewport: Bounds,
-    pub style: TestStyle<'a,E>,
+    pub style: TestStyle<E>,
     just_cachors: C,
     _p: PhantomData<E>,
 }
@@ -141,7 +142,7 @@ impl<'a,S,E,C> StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + 
         s
     }
 
-    pub fn with_style_type(&self, variant_type: TestStyleType<'a,E>) -> Self {
+    pub fn with_style_type(&self, variant_type: TestStyleVariant<E>) -> Self {
         let mut s = self.clone();
         s.style.variant_type = variant_type;
         s
@@ -162,17 +163,19 @@ impl<'a,S,E,C> StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + 
     //TODO the temporary test style is flawed. e.g. can be selected and hovered, e.g. current stupid style would directly regress as e.g. differenc for border and fg color
     pub fn with_vartype(&self, hovered: bool, selected: bool, activated: bool, disabled: bool) -> Self {
         let mut s = self.clone();
-        s.style.variant_type = TestStyleType::Default;
-        s.style.variant_type.toggle_id(1, hovered);
-        s.style.variant_type.toggle_id(2, selected);
-        s.style.variant_type.toggle_id(3, activated);
-        s.style.variant_type.toggle_id(4, disabled);
+        s.style.variant_type = TestStyleVariant {
+            disabled,
+            hovered,
+            selected,
+            activated,
+            ..Default::default()
+        };
         s
     }
 }
 
 impl<'a,S,E,C> Deref for StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + Clone + 'static {
-    type Target = TestStyle<'a,E>;
+    type Target = TestStyle<E>;
 
     fn deref(&self) -> &Self::Target {
         &self.style
@@ -217,10 +220,10 @@ impl<'a,S,E,C> Clone for StdRenderProps<'a,S,E,C> where S: ?Sized, E: Env, C: Pa
     }
 }
 
-pub struct WithTestStyle<'a,S,E>(pub S,pub TestStyle<'a,E>) where E: Env;
+pub struct WithTestStyle<S,E>(pub S,pub TestStyle<E>) where E: Env;
 
-impl<'a,S,E> Deref for WithTestStyle<'a,S,E> where E: Env {
-    type Target = TestStyle<'a,E>;
+impl<'a,S,E> Deref for WithTestStyle<S,E> where E: Env {
+    type Target = TestStyle<E>;
 
     fn deref(&self) -> &Self::Target {
         &self.1
@@ -229,13 +232,18 @@ impl<'a,S,E> Deref for WithTestStyle<'a,S,E> where E: Env {
 
 #[non_exhaustive]
 #[derive(Clone)]
-pub struct TestStyle<'a,E> where E: Env {
-    pub default_variant: &'a TestStyleVariant<E>,
-    pub hovered_variant: &'a TestStyleVariant<E>,
-    pub selected_variant: &'a TestStyleVariant<E>,
-    pub activated_variant: &'a TestStyleVariant<E>,
-    pub disabled_variant: &'a TestStyleVariant<E>,
-    pub variant_type: TestStyleType<'a,E>,
+pub struct TestStyle<E> where E: Env {
+    pub default_border_color: ESColor<E>,
+    pub default_fg_color: ESColor<E>,
+    pub disabled_border_color: ESColor<E>,
+    pub disabled_fg_color: ESColor<E>,
+    pub hovered_border_color: Option<ESColor<E>>,
+    pub hovered_fg_color: Option<ESColor<E>>,
+    pub selected_border_color: Option<ESColor<E>>,
+    pub selected_fg_color: Option<ESColor<E>>,
+    pub activated_border_color: Option<ESColor<E>>,
+    pub activated_fg_color: Option<ESColor<E>>,
+    pub variant_type: TestStyleVariant<E>,
     pub bg_color: ESColor<E>,
     pub text_color: ESColor<E>,
     pub component_border: Border,
@@ -247,12 +255,12 @@ pub struct TestStyle<'a,E> where E: Env {
 
 #[non_exhaustive]
 #[derive(Clone)]
-pub struct TestStyleCurrent<'a,E> where E: Env {
+pub struct TestStyleCurrent<E> where E: Env {
     pub fg_color: ESColor<E>,
     pub border_color: ESColor<E>,
-    pub variant: TestStyleType<'a,E>,
     pub bg_color: ESColor<E>,
     pub text_color: ESColor<E>,
+    pub current_variant: TestStyleVariant<E>,
     pub component_border: Border,
     pub spacing: Border,
     pub cursor: ESCursor<E>,
@@ -263,46 +271,13 @@ pub struct TestStyleCurrent<'a,E> where E: Env {
 }
 
 #[non_exhaustive]
-#[derive(Clone,Copy)]
-pub enum TestStyleType<'a,E> where E: Env {
-    Default,
-    Hovered,
-    Selected,
-    Activated,
-    Disabled,
-    Custom(&'a TestStyleVariant<E>),
-}
-
-impl<'a,E> TestStyleType<'a,E> where E: Env {
-    fn toggle_id(&mut self, idx: u8, v: bool) {
-        assert!(idx <= 4);
-
-        let mut current = match self {
-            TestStyleType::Default => 0,
-            TestStyleType::Hovered => 1,
-            TestStyleType::Selected => 2,
-            TestStyleType::Activated => 3,
-            TestStyleType::Disabled => 4,
-            TestStyleType::Custom(_) => 5,
-        };
-
-        if v {
-            current = current.max(idx);
-        } else {
-            if current == idx {
-                current -= 1;
-            }
-        }
-
-        match current {
-            0 => *self = TestStyleType::Default,
-            1 => *self = TestStyleType::Hovered,
-            2 => *self = TestStyleType::Selected,
-            3 => *self = TestStyleType::Activated,
-            4 => *self = TestStyleType::Disabled,
-            _ => unreachable!(),
-        }
-    }
+#[derive(Clone,Copy,Default)]
+pub struct TestStyleVariant<E> {
+    pub disabled: bool,
+    pub hovered: bool,
+    pub selected: bool,
+    pub activated: bool,
+    _p: PhantomData<E>,
 }
 
 #[non_exhaustive]
@@ -317,7 +292,7 @@ pub enum TestStyleColorType<E> where E: Env {
 impl<E> From<[u8;4]> for TestStyleColorType<E> where E: Env {
     #[inline]
     fn from(v: [u8;4]) -> Self {
-        todo!()
+        Self::Custom(Color::from_rgba8(v))
     }
 }
 
@@ -337,39 +312,39 @@ impl<E> From<Border> for TestStyleBorderType<E> where E: Env {
     }
 }
 
-impl<'a,E,S> Add<S> for TestStyle<'a,E> where S: Queron<E>, E: Env {
-    type Output = WithTestStyle<'a,S,E>;
+impl<E,S> Add<S> for TestStyle<E> where S: Queron<E>, E: Env {
+    type Output = WithTestStyle<S,E>;
 
     fn add(self, rhs: S) -> Self::Output {
         WithTestStyle(rhs,self)
     }
 }
 
-impl<'a,E,S> Add<&'a S> for TestStyleColorType<E> where S: Queron<E> + 'a, E: Env {
-    type Output = WithTestStyle<'a,&'a S,E>;
+impl<E,S> Add<S> for TestStyleColorType<E> where S: Queron<E>, E: Env {
+    type Output = WithTestStyle<S,E>;
 
-    fn add(self, rhs: &'a S) -> Self::Output {
-        let mut test_style = QueryTestStyle.query_in(rhs).unwrap().clone();
+    fn add(self, rhs: S) -> Self::Output {
+        let mut test_style = QueryTestStyle.query_in(&rhs).unwrap().clone();
         test_style.color_type = self;
         WithTestStyle(rhs,test_style)
     }
 }
 
-impl<'a,E,S> Add<&'a S> for TestStyleBorderType<E> where S: Queron<E> + 'a, E: Env {
-    type Output = WithTestStyle<'a,&'a S,E>;
+impl<E,S> Add<S> for TestStyleBorderType<E> where S: Queron<E>, E: Env {
+    type Output = WithTestStyle<S,E>;
 
-    fn add(self, rhs: &'a S) -> Self::Output {
-        let mut test_style = QueryTestStyle.query_in(rhs).unwrap().clone();
+    fn add(self, rhs: S) -> Self::Output {
+        let mut test_style = QueryTestStyle.query_in(&rhs).unwrap().clone();
         test_style.border_type = self;
         WithTestStyle(rhs,test_style)
     }
 }
 
-impl<'a,E,S> Add<&'a S> for TestStyleType<'a,E> where S: Queron<E> + 'a, E: Env {
-    type Output = WithTestStyle<'a,&'a S,E>;
+impl<E,S> Add<S> for TestStyleVariant<E> where S: Queron<E>, E: Env {
+    type Output = WithTestStyle<S,E>;
 
-    fn add(self, rhs: &'a S) -> Self::Output {
-        let mut test_style = QueryTestStyle.query_in(rhs).unwrap().clone();
+    fn add(self, rhs: S) -> Self::Output {
+        let mut test_style = QueryTestStyle.query_in(&rhs).unwrap().clone();
         test_style.variant_type = self;
         WithTestStyle(rhs,test_style)
     }
@@ -442,24 +417,33 @@ where
 //     }
 // }
 
-pub struct TestStyleVariant<E> where E: Env {
-    pub fg_color: ESColor<E>,
-    pub border_color: ESColor<E>,
-}
-
-impl<'a,E> TestStyle<'a,E> where E: Env {
-    pub fn current_variant(&self) -> &TestStyleVariant<E> {
-        self.variant_of_type(self.variant_type)
+impl<E> TestStyle<E> where E: Env {
+    pub fn current_variant(&self) -> (ESColor<E>,ESColor<E>) {
+        self.variant_of_type(&self.variant_type)
     }
-    pub fn variant_of_type(&self, variant: TestStyleType<'a,E>) -> &'a TestStyleVariant<E> {
-        match variant {
-            TestStyleType::Default => self.default_variant,
-            TestStyleType::Hovered => self.hovered_variant,
-            TestStyleType::Selected => self.selected_variant,
-            TestStyleType::Activated => self.activated_variant,
-            TestStyleType::Disabled => self.disabled_variant,
-            TestStyleType::Custom(variant) => variant,
+    pub fn variant_of_type(&self, variant: &TestStyleVariant<E>) -> (ESColor<E>,ESColor<E>) {
+        let (mut fg,mut border) = (self.default_fg_color.clone(),self.default_border_color.clone());
+        if variant.disabled {
+            return (self.disabled_fg_color.clone(),self.disabled_border_color.clone())
         }
+        let mut set = |fg_ref: &Option<ESColor<E>>,border_ref: &Option<ESColor<E>>| {
+            if let Some(v) = fg_ref.clone() {
+                fg = v;
+            }
+            if let Some(v) = border_ref.clone() {
+                border = v;
+            }
+        };
+        if variant.hovered {
+            set(&self.hovered_fg_color,&self.hovered_border_color);
+        }
+        if variant.selected {
+            set(&self.selected_fg_color,&self.selected_border_color);
+        }
+        if variant.activated {
+            set(&self.activated_fg_color,&self.activated_border_color);
+        }
+        (fg,border)
     }
 
     pub fn current_color(&self) -> ESColor<E> {
@@ -468,8 +452,8 @@ impl<'a,E> TestStyle<'a,E> where E: Env {
     pub fn color_of_type(&self, color_type: TestStyleColorType<E>) -> ESColor<E> {
         match color_type {
             TestStyleColorType::Bg => self.bg_color.clone(),
-            TestStyleColorType::Fg => self.current_variant().fg_color.clone(),
-            TestStyleColorType::Border => self.current_variant().border_color.clone(),
+            TestStyleColorType::Fg => self.current_variant().0.clone(),
+            TestStyleColorType::Border => self.current_variant().1.clone(),
             TestStyleColorType::Custom(color) => color,
         }
     }
@@ -486,13 +470,13 @@ impl<'a,E> TestStyle<'a,E> where E: Env {
         }
     }
 
-    pub fn current(&self) -> TestStyleCurrent<'a,E> {
-        let variant = self.current_variant();
+    pub fn current(&self) -> TestStyleCurrent<E> {
+        let (fg_color,border_color) = self.current_variant();
 
         TestStyleCurrent {
-            fg_color: variant.fg_color.clone(),
-            border_color: variant.border_color.clone(),
-            variant: self.variant_type.clone(),
+            fg_color,
+            border_color,
+            current_variant: self.variant_type.clone(),
             bg_color: self.bg_color.clone(),
             text_color: self.text_color.clone(),
             component_border: self.component_border,
@@ -506,7 +490,7 @@ impl<'a,E> TestStyle<'a,E> where E: Env {
     }
 }
 
-impl<'x,S,E> Queron<E> for WithTestStyle<'x,S,E> where S: Queron<E>, E: Env {
+impl<S,E> Queron<E> for WithTestStyle<S,E> where S: Queron<E>, E: Env {
     #[inline]
     fn _query<'a,Q>(&'a self, mut builder: QueryStack<'_,'a,Q,E>) where Self: 'a {
         if let Some((_,builder)) = builder.downcast::<'_,QueryTestStyle>() {
@@ -525,8 +509,8 @@ impl<'x,S,E> Queron<E> for WithTestStyle<'x,S,E> where S: Queron<E>, E: Env {
 pub struct QueryTestStyle;
 
 impl<E> Query<E> for QueryTestStyle where E: Env {
-    type Out<'b> = &'b TestStyle<'b,E>;
-    type Builder<'b> = Option<&'b TestStyle<'b,E>>;
+    type Out<'b> = &'b TestStyle<E>;
+    type Builder<'b> = Option<&'b TestStyle<E>>;
 
     #[inline]
     fn new_builder<'b>(&self) -> Self::Builder<'b> {
@@ -542,8 +526,8 @@ impl<E> Query<E> for QueryTestStyle where E: Env {
 pub struct QueryTestStyleCurrent;
 
 impl<E> Query<E> for QueryTestStyleCurrent where E: Env {
-    type Out<'b> = TestStyleCurrent<'b,E>;
-    type Builder<'b> = Option<TestStyleCurrent<'b,E>>;
+    type Out<'b> = TestStyleCurrent<E>;
+    type Builder<'b> = Option<TestStyleCurrent<E>>;
 
     fn query_in<'b,S>(&self, stack: &'b S) -> Option<Self::Out<'b>> where S: Queron<E> + ?Sized + 'b {
         QueryTestStyle.query_in(stack).map(|test_style| test_style.current() )
@@ -559,13 +543,18 @@ impl<E> Query<E> for QueryTestStyleCurrent where E: Env {
     }
 }
 
-pub struct TestStyleV1<'a,E> where E: Env {
-    pub default_variant: &'a TestStyleVariant<E>,
-    pub hovered_variant: &'a TestStyleVariant<E>,
-    pub selected_variant: &'a TestStyleVariant<E>,
-    pub activated_variant: &'a TestStyleVariant<E>,
-    pub disabled_variant: &'a TestStyleVariant<E>,
-    pub variant_type: TestStyleType<'a,E>,
+pub struct TestStyleV1<E> where E: Env {
+    pub default_border_color: ESColor<E>,
+    pub default_fg_color: ESColor<E>,
+    pub disabled_border_color: ESColor<E>,
+    pub disabled_fg_color: ESColor<E>,
+    pub hovered_border_color: Option<ESColor<E>>,
+    pub hovered_fg_color: Option<ESColor<E>>,
+    pub selected_border_color: Option<ESColor<E>>,
+    pub selected_fg_color: Option<ESColor<E>>,
+    pub activated_border_color: Option<ESColor<E>>,
+    pub activated_fg_color: Option<ESColor<E>>,
+    pub current_variant: TestStyleVariant<E>,
     pub bg_color: ESColor<E>,
     pub text_color: ESColor<E>,
     pub component_border: Border,
@@ -575,16 +564,10 @@ pub struct TestStyleV1<'a,E> where E: Env {
     pub border_type: TestStyleBorderType<E>,
 }
 
-impl<'a,E> From<TestStyleV1<'a,E>> for TestStyle<'a,E> where E: Env {
+impl<E> From<TestStyleV1<E>> for TestStyle<E> where E: Env {
     #[inline]
-    fn from(value: TestStyleV1<'a,E>) -> Self {
+    fn from(value: TestStyleV1<E>) -> Self {
         Self {
-            default_variant: value.default_variant,
-            hovered_variant: value.hovered_variant,
-            selected_variant: value.selected_variant,
-            activated_variant: value.activated_variant,
-            disabled_variant: value.disabled_variant,
-            variant_type: value.variant_type,
             bg_color: value.bg_color,
             text_color: value.text_color,
             component_border: value.component_border,
@@ -592,6 +575,17 @@ impl<'a,E> From<TestStyleV1<'a,E>> for TestStyle<'a,E> where E: Env {
             cursor: value.cursor,
             color_type: value.color_type,
             border_type: value.border_type,
+            default_border_color: value.default_border_color,
+            default_fg_color: value.default_fg_color,
+            disabled_border_color: value.disabled_border_color,
+            disabled_fg_color: value.disabled_fg_color,
+            hovered_border_color: value.hovered_border_color,
+            hovered_fg_color: value.hovered_fg_color,
+            selected_border_color: value.selected_border_color,
+            selected_fg_color: value.selected_fg_color,
+            activated_border_color: value.activated_border_color,
+            activated_fg_color: value.activated_fg_color,
+            variant_type: value.current_variant,
         }
     }
 }
