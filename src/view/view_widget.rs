@@ -121,7 +121,7 @@ where
 //     )
 // }
 
-pub fn view_widget_cb_if<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(v: RightViewFn, a: LeftArgs, m: LeftMutor, f: MutorFn) -> ViewWidget<
+pub fn view_widget_cb_if<RightView,LeftArgs,LeftMutor,LeftTarget,MutorFn,RightViewFn,E>(view_fn: RightViewFn, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: MutorFn) -> ViewWidget<
     RightView,
     RightViewFn,
     ForTargetCBIfBuilder<LeftMutor,LeftArgs,LeftTarget,(),RightView::Mutarget,MutorFn,E>,
@@ -142,8 +142,8 @@ where
     ) + Clone + Send + Sync + 'static
 {
     ViewWidget(
-        v,
-        m.for_view_cb_if::<RightView::Mutarget,(),MutorFn>(a, f),
+        view_fn,
+        left_mutor.for_view_cb_if::<RightView::Mutarget,(),MutorFn>(left_arg, right_fn),
         PhantomData
     )
 }
