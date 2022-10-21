@@ -14,7 +14,7 @@ use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::{event_new, impl_traitcast, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn, SimpleId, PathStackDyn, FwdCompareStat, PathFragment, PathResolvus};
 use crate::queron::Queron;
-use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, with_inside_spacing_border, widget_size_inside_border_type};
+use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, with_inside_spacing_border, widget_size_inside_border_type, TestStyleCurrent, TestStyleVariant};
 use crate::render::widgets::RenderStdWidgets;
 use crate::state::{CtxStdState, StdState};
 use crate::style::standard::cursor::StdCursor;
@@ -71,32 +71,26 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
 
         let render_props = render_props.inside_spacing_border();
 
-        let vartypes = (
-            ctx.state().is_hovered(path._erase()),
-            ctx.state().is_focused(path._erase()),
-            self.pressed(path._erase(),ctx).is_some(),
-            self.locked,
-        );
-
-        let (hovered,selected,activated,disabled) = vartypes;
+        let vartypes = TestStyleVariant {
+            hovered: ctx.state().is_hovered(path._erase()),
+            selected: ctx.state().is_focused(path._erase()),
+            pressed: self.pressed(path._erase(),ctx).is_some(),
+            disabled: self.locked,
+            ..Default::default()
+        };
 
         if cache.vartype_cachors != Some(vartypes) {
             need_render = true;
             cache.vartype_cachors = Some(vartypes);
         }
 
-        if hovered {
+        if vartypes.hovered {
             renderer.set_cursor_specific(&StdCursor::Hand.into(),ctx);
         }
 
         let fill_inner_color = &render_props
             .with_style_color_type(TestStyleColorType::Fg)
-            .with_vartype(
-                hovered,
-                selected,
-                activated,
-                disabled,
-            );
+            .with_style_type(vartypes);
 
         if need_render {
             // renderer.fill_rect(
@@ -107,12 +101,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
                 &render_props
                     .with_style_border_type(TestStyleBorderType::Component)
                     .with_style_color_type(TestStyleColorType::Border)
-                    .with_vartype(
-                        hovered,
-                        selected,
-                        activated,
-                        disabled,
-                    ),
+                    .with_style_type(vartypes),
                 ctx
             );
         }
@@ -122,9 +111,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
                 let render_props = render_props
                     .inside_border_of_type(TestStyleBorderType::Component)
                     .fork_with(|p| p.style.bg_color = fill_inner_color.style.current_color() )
-                    .with_vartype(
-                        hovered, selected, activated, disabled
-                    );
+                    .with_style_type(vartypes);
 
                 widget.render(
                     &SimpleId(ButtonChild).push_on_stack(path), &render_props,
@@ -320,7 +307,7 @@ impl<E,Text,Tr,TrMut> AsWidget<E> for Button<E,Text,Tr,TrMut> where Self: Widget
 pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
     label_cache: LabelCache,
     std_render_cachors: Option<StdRenderCachors<E>>,
-    vartype_cachors: Option<(bool,bool,bool,bool)>,
+    vartype_cachors: Option<TestStyleVariant<E>>,
     _p: PhantomData<E>,
     //TODO cachor borders and colors
 }

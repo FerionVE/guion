@@ -161,17 +161,6 @@ impl<'a,S,E,C> StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + 
     }
 
     //TODO the temporary test style is flawed. e.g. can be selected and hovered, e.g. current stupid style would directly regress as e.g. differenc for border and fg color
-    pub fn with_vartype(&self, hovered: bool, selected: bool, activated: bool, disabled: bool) -> Self {
-        let mut s = self.clone();
-        s.style.variant_type = TestStyleVariant {
-            disabled,
-            hovered,
-            selected,
-            activated,
-            ..Default::default()
-        };
-        s
-    }
 }
 
 impl<'a,S,E,C> Deref for StdRenderProps<'a,S,E,C> where E: Env, S: ?Sized, C: PartialEq + Clone + 'static {
@@ -243,6 +232,8 @@ pub struct TestStyle<E> where E: Env {
     pub selected_fg_color: Option<ESColor<E>>,
     pub activated_border_color: Option<ESColor<E>>,
     pub activated_fg_color: Option<ESColor<E>>,
+    pub pressed_border_color: Option<ESColor<E>>,
+    pub pressed_fg_color: Option<ESColor<E>>,
     pub variant_type: TestStyleVariant<E>,
     pub bg_color: ESColor<E>,
     pub text_color: ESColor<E>,
@@ -270,14 +261,16 @@ pub struct TestStyleCurrent<E> where E: Env {
     pub current_border: Border,
 }
 
+//TODO rename to StdStyleFlags?
 #[non_exhaustive]
-#[derive(Clone,Copy,Default)]
+#[derive(Clone,Copy,Default,PartialEq)]
 pub struct TestStyleVariant<E> {
     pub disabled: bool,
     pub hovered: bool,
     pub selected: bool,
     pub activated: bool,
-    _p: PhantomData<E>,
+    pub pressed: bool,
+    pub _p: PhantomData<E>,
 }
 
 #[non_exhaustive]
@@ -443,6 +436,9 @@ impl<E> TestStyle<E> where E: Env {
         if variant.activated {
             set(&self.activated_fg_color,&self.activated_border_color);
         }
+        if variant.pressed {
+            set(&self.pressed_fg_color,&self.pressed_border_color);
+        }
         (fg,border)
     }
 
@@ -554,6 +550,8 @@ pub struct TestStyleV1<E> where E: Env {
     pub selected_fg_color: Option<ESColor<E>>,
     pub activated_border_color: Option<ESColor<E>>,
     pub activated_fg_color: Option<ESColor<E>>,
+    pub pressed_border_color: Option<ESColor<E>>,
+    pub pressed_fg_color: Option<ESColor<E>>,
     pub current_variant: TestStyleVariant<E>,
     pub bg_color: ESColor<E>,
     pub text_color: ESColor<E>,
@@ -585,6 +583,8 @@ impl<E> From<TestStyleV1<E>> for TestStyle<E> where E: Env {
             selected_fg_color: value.selected_fg_color,
             activated_border_color: value.activated_border_color,
             activated_fg_color: value.activated_fg_color,
+            pressed_border_color: value.pressed_border_color,
+            pressed_fg_color: value.pressed_fg_color,
             variant_type: value.current_variant,
         }
     }

@@ -17,7 +17,7 @@ use crate::widgets::util::state::AtomState;
 use crate::{event_new, impl_traitcast, EventResp};
 use crate::newpath::{PathStack, SimpleId, PathResolvusDyn, PathResolvus, PathFragment};
 use crate::queron::Queron;
-use crate::render::{StdRenderProps, TestStyleColorType, with_inside_spacing_border, with_inside_border_by_type, TestStyleBorderType};
+use crate::render::{StdRenderProps, TestStyleColorType, with_inside_spacing_border, with_inside_border_by_type, TestStyleBorderType, TestStyleVariant};
 use crate::render::widgets::RenderStdWidgets;
 use crate::state::{CtxStdState, StdState};
 use crate::util::{ScrollOff, normalize_scroll_off};
@@ -87,11 +87,11 @@ impl<E,W,Scroll,MutFn> Widget<E> for Area<E,W,Scroll,MutFn> where
                 &render_props
                     .with_style_border_type(TestStyleBorderType::Component)
                     .with_style_color_type(TestStyleColorType::Border)
-                    .with_vartype(
-                        false, //ctx.state().is_hovered(&self.id),
-                        ctx.state().is_focused(path._erase()),
-                        false, //self.pressed(ctx).is_some(),
-                        false, //self.locked,
+                    .with_style_type(
+                        TestStyleVariant {
+                            selected: ctx.state().is_focused(path._erase()),
+                            ..Default::default()
+                        }
                     ),
                 ctx
             );

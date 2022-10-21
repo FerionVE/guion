@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::aliases::{ERenderer, EEvent, ESize};
+use crate::aliases::{ERenderer, EEvent, ESize, EPressedKey};
 use crate::dispatchor::{AsWidgetClosure, AsWidgetDispatch};
 use crate::env::Env;
 use crate::event::imp::StdVarSup;
@@ -11,9 +11,9 @@ use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::{impl_traitcast, EventResp, event_new};
-use crate::newpath::{PathStack, PathResolvusDyn, FwdCompareStat, SimpleId, PathResolvus, PathFragment};
+use crate::newpath::{PathStack, PathResolvusDyn, FwdCompareStat, SimpleId, PathResolvus, PathFragment, PathStackDyn};
 use crate::queron::Queron;
-use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, with_inside_spacing_border, widget_size_inside_border_type, widget_size_inside_border};
+use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, with_inside_spacing_border, widget_size_inside_border_type, widget_size_inside_border, TestStyleVariant};
 use crate::render::widgets::RenderStdWidgets;
 use crate::state::{CtxStdState, StdState};
 use crate::style::standard::cursor::StdCursor;
@@ -75,14 +75,14 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
 
         let render_props = render_props.inside_spacing_border();
 
-        let vartypes = (
-            ctx.state().is_hovered(path._erase()),
-            ctx.state().is_focused(path._erase()),
-            self.state.get(ctx),
-            false, //TODO
-        );
-
-        let (hovered,selected,activated,disabled) = vartypes;
+        let vartypes = TestStyleVariant {
+            hovered: ctx.state().is_hovered(path._erase()),
+            selected: ctx.state().is_focused(path._erase()),
+            activated: self.state.get(ctx),
+            pressed: self.pressed(path._erase(), ctx).is_some(),
+            disabled: false, //TODO
+            ..Default::default()
+        };
 
         if cache.vartype_cachors != Some(vartypes) {
             need_render = true;
@@ -116,12 +116,7 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
                 &render_props
                     .inside_border_of_type_mul(TestStyleBorderType::Component,3)
                     .with_style_color_type(TestStyleColorType::Fg)
-                    .with_vartype(
-                        hovered,
-                        selected,
-                        activated,
-                        disabled,
-                    ),
+                    .with_style_type(vartypes),
                 ctx
             );
 
@@ -129,12 +124,7 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
                 &render_props
                     .with_style_border_type(TestStyleBorderType::Component)
                     .with_style_color_type(TestStyleColorType::Border)
-                    .with_vartype(
-                        hovered,
-                        selected,
-                        activated,
-                        disabled,
-                    ),
+                    .with_style_type(vartypes),
                 ctx
             );
         }
@@ -147,11 +137,14 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
                         &SimpleId(CheckBoxChild).push_on_stack(path),
                         &render_props
                             .inside_border(text_border)
-                            .with_vartype(
-                                hovered,
-                                selected,
-                                false, //self.pressed(ctx).is_some(), TODO this wasn't set previously
-                                disabled,
+                            .with_style_type(
+                                TestStyleVariant {
+                                    hovered: vartypes.hovered,
+                                    selected: vartypes.selected,
+                                    activated: false, //self.pressed(ctx).is_some(), TODO this wasn't set previously
+                                    disabled: vartypes.disabled,
+                                    ..Default::default()
+                                }
                             ),
                         renderer,
                         force_render,
@@ -316,6 +309,26 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
     );
 }
 
+impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where
+    E: Env,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
+    EEvent<E>: StdVarSup<E>,
+    for<'a> E::Context<'a>: CtxStdState<'a,E>,
+    State: AtomState<E,bool>,
+    Text: AsWidget<E>,
+    TrMut: MutorEndBuilder<bool,E>,
+{
+    pub fn pressed<'l:'s,'cc: 'l,'s>(&self, path: &(dyn PathStackDyn<E>+'_), ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
+        ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path)
+            .or_else(||
+                ctx.state().is_pressed_and_id(MatchKeyCode::KbdReturn,path)
+            )
+            .or_else(||
+                ctx.state().is_pressed_and_id(MatchKeyCode::KbdSpace,path)
+            )
+    }
+}
+
 impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<E,State,Text,TrMut> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
@@ -333,7 +346,7 @@ impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<E,State,Text,TrMut> where Self
 pub struct CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
     label_cache: LabelCache,
     std_render_cachors: Option<StdRenderCachors<E>>,
-    vartype_cachors: Option<(bool,bool,bool,bool)>,
+    vartype_cachors: Option<TestStyleVariant<E>>,
     _p: PhantomData<E>,
     //TODO cachor borders and colors
 }

@@ -12,7 +12,7 @@ use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
-use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType};
+use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, TestStyleVariant};
 use crate::render::widgets::RenderStdWidgets;
 use crate::util::tabulate::{TabulateOrigin, TabulateDirection, TabulateResponse};
 use crate::widget::{Widget, WidgetWithResolveChildDyn};
@@ -62,11 +62,11 @@ impl<E> Widget<E> for ProgressBar<E> where
                 .inside_spacing_border()
                 .slice_absolute(progress_bounds)
                 .with_style_color_type(TestStyleColorType::Fg) //TODO yes, stupid test style doesn't have ObjActive
-                .with_vartype(
-                    true,
-                    true,
-                    true,
-                    false,
+                .with_style_type(
+                    TestStyleVariant {
+                        activated: true,
+                        ..Default::default()
+                    }
                 ),
             ctx
         );

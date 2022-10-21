@@ -6,7 +6,7 @@ use crate::dispatchor::AsWidgetDispatch;
 use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::event::key::MatchKeyCode;
-use crate::event::standard::variants::{TextInput, KbdPress, MouseScroll, MouseDown};
+use crate::event::standard::variants::{TextInput, KbdPress, MouseScroll, MouseDown, MouseMove};
 use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::text::cursel::{Direction, TxtCurSelBytePos};
@@ -16,7 +16,7 @@ use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::{event_new, impl_traitcast, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn, PathResolvus};
 use crate::queron::Queron;
-use crate::render::{TestStyleColorType, StdRenderProps, TestStyleBorderType, QueryTestStyle, with_inside_spacing_border};
+use crate::render::{TestStyleColorType, StdRenderProps, TestStyleBorderType, QueryTestStyle, with_inside_spacing_border, TestStyleVariant};
 use crate::render::widgets::RenderStdWidgets;
 use crate::state::{CtxStdState, StdState};
 use crate::style::standard::cursor::StdCursor;
@@ -101,11 +101,14 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
             &render_props
                 .with_style_border_type(TestStyleBorderType::Component)
                 .with_style_color_type(TestStyleColorType::Border)
-                .with_vartype(
-                    false, //ctx.state().is_hovered(&self.id),
-                    selected,
-                    false, //self.pressed(ctx).is_some(),
-                    false, //self.locked,
+                .with_style_type(
+                    TestStyleVariant {
+                        hovered: false, //ctx.state().is_hovered(&self.id),
+                        selected: selected,
+                        activated: false, //self.pressed(ctx).is_some(),
+                        disabled: false, //self.locked,
+                        ..Default::default()
+                    }
                 ),
             ctx
         );
@@ -267,11 +270,16 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
                 ctx.mutate_closure(t);
             }
             passed = true;
-        } else {
+        } else if event.query_variant::<MouseDown<E>>(path,&stack).is_some() || event.query_variant::<MouseMove>(path,&stack).is_some() {
             if let Some(mouse) = ctx.state().cursor_pos() { //TODO strange event handling
 
                 let mouse_down = event.query_variant::<MouseDown<E>>(path,&stack).cloned();
                 let mouse_pressed = ctx.state().is_hovered(path._erase()) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()).is_some();
+
+                if mouse_down.is_some() || mouse_pressed {
+                    dbg!(event._debug());
+                    dbg!(&mouse_down,mouse_pressed);
+                }
 
                 self._m(mouse_down,mouse_pressed,mouse,b,g,root.fork(),ctx);
                 if mouse_pressed {

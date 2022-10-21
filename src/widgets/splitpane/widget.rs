@@ -16,7 +16,7 @@ use crate::style::standard::cursor::StdCursor;
 use crate::{event_new, EventResp, impl_traitcast};
 use crate::newpath::{PathStack, PathResolvusDyn, FixedIdx, PathResolvus, PathFragment};
 use crate::queron::Queron;
-use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, widget_size_inside_border_type, with_inside_spacing_border};
+use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, widget_size_inside_border_type, with_inside_spacing_border, TestStyleVariant};
 use crate::render::widgets::RenderStdWidgets;
 use crate::state::{CtxStdState, StdState};
 use crate::util::bounds::Bounds;
@@ -104,12 +104,16 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
                 &render_props
                     .slice_absolute(&bounds[1])
                     .with_style_color_type(TestStyleColorType::Fg)
-                    .with_vartype(
-                        ctx.state().is_hovered(path._erase()),
-                        ctx.state().is_focused(path._erase()),
-                        false, //self.pressed(ctx).is_some(),
-                        false, //self.locked, //TODO add locked
-                    ),
+                    .with_style_type(
+                        TestStyleVariant {
+                            hovered: ctx.state().is_hovered(path._erase()),
+                            selected: ctx.state().is_focused(path._erase()),
+                            activated: false, //self.pressed(ctx).is_some(),
+                            disabled: false, //self.locked, //TODO add locked
+                            ..Default::default()
+                        }
+                    )
+                    ,
                 ctx
             );
         }
