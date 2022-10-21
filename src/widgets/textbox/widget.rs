@@ -35,11 +35,11 @@ use crate::widget::as_widget::AsWidget;
 use crate::widget::stack::QueryCurrentBounds;
 use crate::widgets::util::state::AtomState;
 
-use super::TextBox;
+use super::{TextBox, TextBoxUpdate};
 use super::imp::ITextBox;
 use super::state::max_off;
 
-impl<E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where
+impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
@@ -48,8 +48,7 @@ impl<E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<E,Text,Scroll,Curs,TB
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
     Curs: AtomState<E,ETCurSel<E>>,
-    TBUpd: MutorEndBuilder<(Option<(Range<usize>,Cow<'static,str>)>,Option<ETCurSel<E>>),E>,
-    TBScr: MutorEndBuilder<(u32,u32),E>,
+    TBUpd: MutorEndBuilder<TextBoxUpdate<E>,E>,
 {
     type Cache = TextBoxCache<E>;
     
@@ -78,9 +77,9 @@ impl<E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<E,Text,Scroll,Curs,TB
 
         let g = cache.text_cache.as_ref().unwrap();
         //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,r.bounds());
-        let cursor = self.cursor.get(ctx);
+        let cursor = self.get_cursor(ctx);
         //cursor.fix_boundaries(&*g);
-        let off: Offset = self.scroll.get(ctx).into();
+        let off: Offset = self.get_scroll(ctx).into();
 
         let selected = ctx.state().is_focused(path._erase());
 
@@ -174,7 +173,7 @@ impl<E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<E,Text,Scroll,Curs,TB
         //e.0._debug_type_name();
         let g = cache.text_cache.as_ref().unwrap();
 
-        let mut cursor = self.cursor.get(ctx);
+        let mut cursor = self.get_cursor(ctx);
         g.fix_cursor_boundaries(&mut cursor);
 
         let border = style.border_of_type(TestStyleBorderType::Component)*2;
@@ -258,7 +257,7 @@ impl<E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<E,Text,Scroll,Curs,TB
             }
         } else if let Some(ee) = event.query_variant::<MouseScroll>(path,&stack) {
             //let s = TBState::<E>::retrieve(&self.text,self.glyphs(l.reference()),&self.scroll,&self.cursor,&mut l.ctx,&b);
-            let off = self.scroll.get(ctx);
+            let off = self.get_scroll(ctx);
             let max_off = max_off::<E>(&g,&b);
 
             let off = (
@@ -271,7 +270,7 @@ impl<E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<E,Text,Scroll,Curs,TB
                 off.1.max(0).min(max_off.y) as u32,
             );
 
-            if let Some(t) = self.scroll_update.build_box_mut_event(off) {
+            if let Some(t) = self.update.build_box_mut_event(TextBoxUpdate { update_text: None, update_cursor: None, update_scroll_pos: Some(off) }) {
                 ctx.mutate_closure(t);
             }
             passed = true;
@@ -359,14 +358,14 @@ impl<E,Text,Scroll,Curs,TBUpd,TBScr> Widget<E> for TextBox<E,Text,Scroll,Curs,TB
 
     impl_traitcast!( dyn WidgetDyn<E>:
         dyn TextStor<E> => |s| &s.text;
-        dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
-        dyn AtomState<E,ETCurSel<E>> => |s| &s.cursor;
+        // dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
+        // dyn AtomState<E,ETCurSel<E>> => |s| &s.cursor;
         dyn ITextBox<E> => |s| s;
         dyn Validation<E> => |s| &s.text;
     );
 }
 
-impl<E,Text,Scroll,Curs,TBUpd,TBScr> AsWidget<E> for TextBox<E,Text,Scroll,Curs,TBUpd,TBScr> where Self: Widget<E>, E: Env {
+impl<E,Text,Scroll,Curs,TBUpd> AsWidget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd> where Self: Widget<E>, E: Env {
     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
     type WidgetCache = <Self as Widget<E>>::Cache;
 

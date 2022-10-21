@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 // TODO impl holds bytepos and cursor_stick_y
-pub trait TxtCurSel<E>: Clone + Default /*+Send+Sync*/ {
+pub trait TxtCurSel<E>: Default + Clone + Default /*+Send+Sync*/ {
     type Cachor: Clone + PartialEq + 'static;
 
     fn cachor(&self) -> Self::Cachor;

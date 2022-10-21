@@ -43,6 +43,12 @@ pub trait TextStorMut<E>: TextStor<E> {
     }
 }
 
+impl<E> TextStor<E> for () {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        Cow::Borrowed("")
+    }
+}
 impl<E> TextStor<E> for str {
     #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {

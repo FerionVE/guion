@@ -27,10 +27,10 @@ impl<E,L,R,V> SplitPane<E,L,R,V,()> where
     E: Env,
 {
     #[inline]
-    pub fn new(orientation: Orientation, state: V, childs: (L,R)) -> Self {
+    pub fn new(orientation: Orientation, position: V, childs: (L,R)) -> Self {
         Self{
             childs: WidgetsFixedIdx(childs),
-            state,
+            state: position,
             updater: (),
             orientation,
             width: 8,
