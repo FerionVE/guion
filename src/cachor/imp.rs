@@ -1,6 +1,8 @@
 use std::borrow::Borrow;
+use std::cell::{Ref, RefMut};
+use std::mem::ManuallyDrop;
 use std::rc::Rc;
-use std::sync::Arc;
+use std::sync::{Arc, MutexGuard, RwLockReadGuard, RwLockWriteGuard};
 
 use super::{AsCachorOf, AsCachor};
 
@@ -100,6 +102,28 @@ macro_rules! impl_cachor_transparent1 {
     };
 }
 
+macro_rules! impl_cachor_transparent2 {
+    ($(($($t:tt)*))*) => {
+        $(
+            impl<'a,T,E> AsCachor<E> for $($t)* <'a,T> where T: AsCachor<E> + ?Sized + 'a {
+                type Cachor = <T as AsCachor<E>>::Cachor;
+            
+                #[must_use]
+                #[inline]
+                fn cachor(&self) -> Self::Cachor {
+                    <T as AsCachor<E>>::cachor(&**self)
+                }
+            
+                #[must_use]
+                #[inline]
+                fn valid(&self, cachored: &Self::Cachor) -> bool {
+                    <T as AsCachor<E>>::valid(&**self,cachored)
+                }
+            }
+        )*
+    };
+}
+
 impl_cachor_via_toowned!(
     u8 u16 u32 u64 u128 usize 
     i8 i16 i32 i64 i128 isize
@@ -111,4 +135,10 @@ impl_cachor_via_toowned!(
 
 impl_cachor_transparent1!(
     (Box) (Rc) (Arc)
+    (ManuallyDrop)
+);
+
+impl_cachor_transparent2!(
+    (MutexGuard) (RwLockReadGuard) (RwLockWriteGuard)
+    (Ref) (RefMut)
 );

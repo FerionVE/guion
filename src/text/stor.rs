@@ -1,11 +1,12 @@
 use std::borrow::Cow;
 use std::cell::{RefMut, Ref};
+use std::fmt::Display;
 use std::marker::PhantomData;
 use std::mem::ManuallyDrop;
 use std::ops::{Range, Deref, DerefMut};
 use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
 
-use crate::cachor::MutCell;
+use crate::cachor::{MutCell, AsCachor};
 use crate::env::Env;
 use crate::traitcast_for_from_widget;
 use crate::util::immu::Immutable;
@@ -370,3 +371,39 @@ impl<T,S,E,Z> ToTextLayout<S,E> for Immutable<E,T,Z> where E: Env, T: ToTextLayo
         (**self).update_text_layout(s,c)
     }
 }
+
+pub struct TextDisplay<T>(pub T) where T: Display;
+
+impl<T,E> TextStor<E> for TextDisplay<T> where T: Display, E: Env {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        Cow::Owned(format!("{}",self.0))
+    }
+}
+
+impl<T,E> AsCachor<E> for TextDisplay<T> where T: AsCachor<E> + Display, E: Env {
+    type Cachor = T::Cachor;
+
+    #[inline]
+    fn cachor(&self) -> Self::Cachor {
+        self.0.cachor()
+    }
+
+    #[inline]
+    fn valid(&self, cachored: &Self::Cachor) -> bool {
+        self.0.valid(cachored)
+    }
+}
+
+// macro_rules! macor2 {
+//     ( $fmt:expr, $( $($iden:ident =)? $vala:expr ),* ) => {
+        
+//     };
+// }
+
+// fn akw() -> usize {
+//     let mut sk = 1;
+//     sk = 2
+// }
+
+// macor2!("ad",a,4,2);

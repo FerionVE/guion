@@ -83,5 +83,37 @@ macro_rules! compat_for_crossbeam_utils_0_8 {
                 (**self).replace(replace_range,insert)
             }
         }
+
+        impl<A> $crate::cachor::AsCachor<$e> for ::crossbeam_utils::sync::ShardedLockReadGuard<'_,A> where A: $crate::cachor::AsCachor<$e> + ?Sized {
+            type Cachor = <A as $crate::cachor::AsCachor<E>>::Cachor;
+            
+            #[must_use]
+            #[inline]
+            fn cachor(&self) -> Self::Cachor {
+                <A as $crate::cachor::AsCachor<E>>::cachor(&**self)
+            }
+        
+            #[must_use]
+            #[inline]
+            fn valid(&self, cachored: &Self::Cachor) -> bool {
+                <A as $crate::cachor::AsCachor<E>>::valid(&**self,cachored)
+            }
+        }
+        
+        impl<A> $crate::cachor::AsCachor<$e> for ::crossbeam_utils::sync::ShardedLockWriteGuard<'_,A> where A: $crate::cachor::AsCachor<$e> + ?Sized {
+            type Cachor = <A as $crate::cachor::AsCachor<E>>::Cachor;
+            
+            #[must_use]
+            #[inline]
+            fn cachor(&self) -> Self::Cachor {
+                <A as $crate::cachor::AsCachor<E>>::cachor(&**self)
+            }
+        
+            #[must_use]
+            #[inline]
+            fn valid(&self, cachored: &Self::Cachor) -> bool {
+                <A as $crate::cachor::AsCachor<E>>::valid(&**self,cachored)
+            }
+        }
     }
 }
