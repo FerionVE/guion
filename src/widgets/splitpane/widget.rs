@@ -279,7 +279,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         let size = widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
             |stack| {
-                let mut s = ESize::<E>::empty();
+                let mut s = ESize::<E>::add_base(self.orientation);
 
                 self.childs.0.0.with_widget(
                     &mut AsWidgetClosure::<'_,_,L,_,E>::new(|widget,root,ctx: &mut E::Context<'_>| {

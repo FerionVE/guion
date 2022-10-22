@@ -22,7 +22,7 @@ impl<E> ProgressBar<E> where
     #[inline]
     pub fn new(o: Orientation) -> Self {
         Self {
-            size: Gonstraints::empty(),
+            size: Gonstraints::empty_fill(),
             style: Default::default(),
             value: 0.0,
             orientation: o,

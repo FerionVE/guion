@@ -36,7 +36,7 @@ impl<E> TextBox<'_,E,(),(u32,u32),ETCurSel<E>,()> where
     #[inline]
     pub fn new() -> Self {
         Self{
-            size: Gonstraints::empty(),
+            size: Gonstraints::empty_fill(),
             style: Default::default(),
             text: (),
             scroll: None,
@@ -54,7 +54,7 @@ impl<E,Text> TextBox<'_,E,Text,(u32,u32),ETCurSel<E>,()> where
     #[inline]
     pub fn of_text(text: Text) -> Self {
         Self{
-            size: Gonstraints::empty(),
+            size: Gonstraints::empty_fill(),
             style: Default::default(),
             text,
             scroll: None,

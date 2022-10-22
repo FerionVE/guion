@@ -1,5 +1,5 @@
 /// Size +/+= Border
-#[derive(Clone,Copy,PartialEq)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 pub struct StdGonstraints {
     pub x: StdGonstraintAxis,
     pub y: StdGonstraintAxis,
@@ -7,7 +7,7 @@ pub struct StdGonstraints {
 
 /// The SizeAxis holds layouting constraints for one axis
 /// Supported Operators: Add, BitAnd
-#[derive(Clone,Copy,PartialEq)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 pub struct StdGonstraintAxis {
     pub min: u32,
     pub preferred: u32,
@@ -19,25 +19,39 @@ impl StdGonstraints {
     #[inline]
     pub const fn fixed_const(w: u32, h: u32) -> Self {
         Self{
-            x: StdGonstraintAxis{
-                min: w,
-                preferred: w,
-                max: Some(w),
-                pressure: 1.0,
-            },
-            y: StdGonstraintAxis{
-                min: h,
-                preferred: h,
-                max: Some(h),
-                pressure: 1.0,
-            }
+            x: StdGonstraintAxis::fixed_const(w),
+            y: StdGonstraintAxis::fixed_const(h),
+        }
+    }
+    #[inline]
+    pub const fn zero_const() -> Self {
+        Self{
+            x: StdGonstraintAxis::zero_const(),
+            y: StdGonstraintAxis::zero_const(),
+        }
+    }
+    #[inline]
+    pub const fn empty_fill_const() -> Self {
+        Self{
+            x: StdGonstraintAxis::empty_fill_const(),
+            y: StdGonstraintAxis::empty_fill_const(),
         }
     }
 }
 
 impl StdGonstraintAxis {
     #[inline]
-    pub const fn empty_const() -> Self {
+    pub const fn zero_const() -> Self {
+        StdGonstraintAxis {
+            min: 0,
+            preferred: 0,
+            max: Some(0),
+            pressure: 0.0,
+        }
+    }
+
+    #[inline]
+    pub const fn empty_fill_const() -> Self {
         StdGonstraintAxis {
             min: 0,
             preferred: 0,
@@ -52,7 +66,7 @@ impl StdGonstraintAxis {
             min: s,
             preferred: s,
             max: Some(s),
-            pressure: 0.0,
+            pressure: 1.0,
         }
     }
 }

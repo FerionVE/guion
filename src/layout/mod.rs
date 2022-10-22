@@ -1,6 +1,9 @@
+use std::fmt::Debug;
+
 use qwutils::OptionExt;
 
 use crate::util::border::Border;
+use crate::util::bounds::Dims;
 
 use self::size::{StdGonstraints, StdGonstraintAxis};
 
@@ -25,7 +28,7 @@ impl Orientation {
 }
 
 //TODO move to trait submodule
-pub trait Gonstraints: From<StdGonstraints> + Into<StdGonstraints> + Clone + PartialEq {
+pub trait Gonstraints: From<StdGonstraints> + Into<StdGonstraints> + Clone + PartialEq + Debug {
     type Axis: GonstraintAxis;
 
     fn x(&self) -> Self::Axis;
@@ -58,8 +61,11 @@ pub trait Gonstraints: From<StdGonstraints> + Into<StdGonstraints> + Clone + Par
         self.set_par(dir.flip(), v)
     }
     
-    fn empty() -> Self;
+    fn zero() -> Self;
+    fn empty_fill() -> Self;
     fn fixed(w: u32, h: u32) -> Self;
+    
+    fn add_base(o: Orientation) -> Self;
 
     fn from_axis(x: &Self::Axis, y: &Self::Axis) -> Self;
 
@@ -101,10 +107,14 @@ pub trait Gonstraints: From<StdGonstraints> + Into<StdGonstraints> + Clone + Par
 
     //TODO Constraints<E>
     fn add_border(&mut self, b: &Border);
+
+    fn min_dims(&self) -> Dims;
+    fn preferred_dims(&self) -> Dims;
 }
 
 pub trait GonstraintAxis: Clone {
-    fn empty() -> Self;
+    fn zero() -> Self;
+    fn empty_fill() -> Self;
     fn fixed(v: u32) -> Self;
     fn op_add_u32(&mut self, v: u32);
     fn op_add(&mut self, v: &Self);
@@ -142,15 +152,26 @@ impl Gonstraints for StdGonstraints {
         self.y = *y
     }
     #[inline]
-    fn empty() -> Self {
+    fn zero() -> Self {
         Self{
-            x: StdGonstraintAxis::empty(),
-            y: StdGonstraintAxis::empty(),
+            x: StdGonstraintAxis::zero(),
+            y: StdGonstraintAxis::zero(),
+        }
+    }
+    #[inline]
+    fn empty_fill() -> Self {
+        Self{
+            x: StdGonstraintAxis::empty_fill(),
+            y: StdGonstraintAxis::empty_fill(),
         }
     }
     #[inline]
     fn fixed(w: u32, h: u32) -> Self {
         StdGonstraints::fixed_const(w,h)
+    }
+    #[inline]
+    fn add_base(o: Orientation) -> Self {
+        Self::from_par(o, &StdGonstraintAxis::zero(), &StdGonstraintAxis::empty_fill())
     }
     #[inline]
     fn from_axis(x: &Self::Axis, y: &Self::Axis) -> Self {
@@ -188,21 +209,32 @@ impl Gonstraints for StdGonstraints {
     }
     #[inline]
     fn add_border(&mut self, b: &Border) {
-        let mut senf = *self;
-        senf += b
+        *self += b
+    }
+    #[inline]
+    fn min_dims(&self) -> Dims {
+        Dims {
+            w: self.x.min(),
+            h: self.y.min(),
+        }
+    }
+    #[inline]
+    fn preferred_dims(&self) -> Dims {
+        Dims {
+            w: self.x.preferred(),
+            h: self.y.preferred(),
+        }
     }
 }
 
 impl GonstraintAxis for StdGonstraintAxis {
     #[inline]
     fn op_add_u32(&mut self, v: u32) {
-        let mut senf = *self;
-        senf += v;
+        *self += v;
     }
     #[inline]
     fn op_add(&mut self, v: &Self) {
-        let mut senf = *self;
-        senf += v;
+        *self += v;
     }
     #[inline]
     fn op_and(&self, v: &Self) -> Self {
@@ -216,16 +248,20 @@ impl GonstraintAxis for StdGonstraintAxis {
         s.preferred = s.preferred.max(o.preferred);
         s.max = s.max.with_if( &o.max, #[inline] |s,r| (*s).max(*r) );
 
-        s.max.map(#[inline] |m| s.preferred = s.preferred.min(m) );
         s.preferred = s.preferred.max(s.min);
+        s.max.map(#[inline] |m| s.preferred = s.preferred.min(m) );
         
         s.pressure = s.pressure.max(o.pressure);
 
         s
     }
     #[inline]
-    fn empty() -> Self {
-        StdGonstraintAxis::empty_const()
+    fn zero() -> Self {
+        StdGonstraintAxis::zero_const()
+    }
+    #[inline]
+    fn empty_fill() -> Self {
+        StdGonstraintAxis::empty_fill_const()
     }
     #[inline]
     fn fixed(v: u32) -> Self {

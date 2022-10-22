@@ -20,7 +20,7 @@ pub fn calc_bounds2(outer: &Dims, parallel_child_axis: &[StdGonstraintAxis], o: 
     let width = outer.par(o);
 
     let snap = {
-        let axis_sum: StdGonstraintAxis = parallel_child_axis.iter().fold(StdGonstraintAxis::empty(), |acc,v| acc+v );
+        let axis_sum: StdGonstraintAxis = parallel_child_axis.iter().fold(StdGonstraintAxis::zero(), |acc,v| acc+v );
 
         if axis_sum.min > width {
             0

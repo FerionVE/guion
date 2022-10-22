@@ -2,7 +2,7 @@
 
 use super::bounds::{Offset, Dims};
 
-#[derive(Clone,Copy,PartialEq)]
+#[derive(Clone,Copy,PartialEq,Debug)]
 pub struct Border {
     pub left: u32,
     pub right: u32,

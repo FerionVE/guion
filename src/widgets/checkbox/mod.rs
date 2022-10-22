@@ -33,7 +33,7 @@ impl<State,E> CheckBox<E,State,Label<E,&'static str>,()> where
     #[inline]
     pub fn new(state: State) -> Self {
         Self{
-            size: ESize::<E>::empty(),
+            size: ESize::<E>::zero(),
             style: Default::default(),
             updater: (),
             locked: false,

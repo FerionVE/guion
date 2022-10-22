@@ -379,7 +379,7 @@ where
 {
     let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
 
-    let stack = WithCurrentBounds {
+    let stack = WithCurrentBounds { //TODO bounds aren't available in Widget::size
         bounds: bounds.bounds.inside_border(&border),
         viewport: *bounds.viewport,
         inner: stack,

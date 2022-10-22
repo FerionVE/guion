@@ -314,7 +314,7 @@ impl<E,T> Pane<E,T> where
 
         cache.childs.resize_with(self.childs(), Default::default);
 
-        let mut all_gonstraints = ESize::<E>::empty();
+        let mut all_gonstraints = ESize::<E>::add_base(self.orientation);
 
         self.childs.idx_range(
             0..self.childs.len(),
@@ -361,7 +361,7 @@ impl<E,T> Pane<E,T> where
 
         cache.childs.resize_with(self.childs(), Default::default);
 
-        let mut all_gonstraints = ESize::<E>::empty();
+        let mut all_gonstraints = ESize::<E>::add_base(self.orientation);
 
         self.childs.idx_range(
             0..self.childs.len(),

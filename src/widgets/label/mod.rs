@@ -24,7 +24,7 @@ impl<E> Label<E,&'static str> where
     #[inline]
     pub fn new() -> Self {
         Self{
-            size: ESize::<E>::empty(),
+            size: ESize::<E>::zero(),
             style: Default::default(),
             text: "",
             align: (0.5,0.5),
@@ -40,7 +40,7 @@ impl<E,Text> Label<E,Text> where
     #[inline]
     pub fn of_text(text: Text) -> Self {
         Self{
-            size: ESize::<E>::empty(),
+            size: ESize::<E>::zero(),
             style: Default::default(),
             text,
             align: (0.5,0.5),

@@ -30,7 +30,7 @@ impl<E,W> Area<E,W,ScrollOff,()> where
     #[inline]
     pub fn new(inner: W) -> Self {
         Self{
-            size: Gonstraints::empty(),
+            size: Gonstraints::empty_fill(),
             style: Default::default(),
             inner,
             scroll: (0,0),
