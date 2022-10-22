@@ -30,6 +30,7 @@ pub trait ITextBox<E> where E: Env {
     fn remove_selection(&self, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> bool;
     fn move_cursor_x(&self, o: Direction, skip_unselect: bool, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
     fn move_cursor_y(&self, o: Direction, skip_unselect: bool, widget_bounds: &Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn select_all(&self, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
     fn _m(&self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
     fn scroll_to_cursor(&self, b: &Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
     fn update(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
@@ -95,6 +96,13 @@ impl<E,Text,Scroll,Curs,TBUpd> ITextBox<E> for TextBox<'_,E,Text,Scroll,Curs,TBU
         let cursor = self.get_cursor(ctx);
 
         let new_cursor = g.move_cursor_direction(cursor,o,skip_unselect);
+
+        self.update(None,Some(new_cursor),g,root,ctx)
+    }
+    fn select_all(&self, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        let cursor = self.get_cursor(ctx);
+
+        let new_cursor = g.select_range(0..g.len_bytes() as u32,cursor);
 
         self.update(None,Some(new_cursor),g,root,ctx)
     }

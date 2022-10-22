@@ -19,6 +19,9 @@ pub trait TxtLayout<E>: TxtLayoutFromStor<str,E>+TxtLayoutFromStor<String,E>+for
     fn cursor_bounds(&self, s: Self::CurSel) -> Bounds;
     fn selection_bounds(&self, s: Self::CurSel) -> Vec<Bounds>;
 
+    #[deprecated]
+    fn select_range(&self, range: Range<u32>, s: Self::CurSel) -> Self::CurSel;
+
     // fn coord_of(&self, i: u32) -> Option<(u32,u32)>;
     // fn at_coord(&self, xy: (u32,u32)) -> Option<u32>;
     // fn cursor_pos_reverse_line_centric(&self, line: u32, x: i32) -> Option<u32>;

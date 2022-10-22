@@ -211,13 +211,7 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
 
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdA && ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
-                // l.mutate_closure(Box::new(move |mut w,ctx,_| { TODO
-                //     let wc = w.traitcast_mut::<dyn TextStorMut<E>>().unwrap();
-                //     cursor.select = 0;
-                //     cursor.caret = wc.len() as u32;
-                //     w.traitcast_mut::<dyn AtomStateMut<E,Cursor>>().unwrap().set(cursor,ctx);
-                //     w.traitcast_mut::<dyn AtomStateMut<E,Option<u32>>>().unwrap().set(None,ctx);
-                // }));
+                self.select_all(g, root, ctx);
                 passed = true;
             }else if ee.key == MatchKeyCode::KbdV && ctx.state().is_pressed(MatchKeyCode::KbdCtrl).is_some() {
                 if let Some(text) = ctx.clipboard_get_text() {
@@ -276,10 +270,10 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
                 let mouse_down = event.query_variant::<MouseDown<E>>(path,&stack).cloned();
                 let mouse_pressed = ctx.state().is_hovered(path._erase()) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()).is_some();
 
-                if mouse_down.is_some() || mouse_pressed {
-                    dbg!(event._debug());
-                    dbg!(&mouse_down,mouse_pressed);
-                }
+                // if mouse_down.is_some() || mouse_pressed {
+                //     dbg!(event._debug());
+                //     dbg!(&mouse_down,mouse_pressed);
+                // }
 
                 self._m(mouse_down,mouse_pressed,mouse,b,g,root.fork(),ctx);
                 if mouse_pressed {
