@@ -177,57 +177,80 @@ pub struct TextBoxUpdate<E> where E: Env {
 
 impl<E> TextBoxUpdate<E> where E: Env {
     #[inline]
-    pub fn apply_to_text<Text>(&self, mut text: Text) where E: Env, Text: TextStorMut<E> {
+    pub fn apply_to_text<Text>(&self, mut text: Text) -> bool where E: Env, Text: TextStorMut<E> {
+        let mut mutated = false;
         if let Some(tbupd) = self.update_text.as_ref() {
             text.replace(tbupd.0.clone(),tbupd.1.as_ref());
+            mutated = true;
         }
+        mutated
     }
 
     #[inline]
-    pub fn apply_to_meta(&self, meta: &mut TextBoxMeta<E>) {
+    pub fn apply_to_meta(&self, meta: &mut TextBoxMeta<E>) -> bool {
+        let mut mutated = false;
         if let Some(curs) = self.update_cursor.as_ref() {
             meta.selection = curs.clone();
+            mutated = true;
         }
         if let Some(scroll) = self.update_scroll_pos.as_ref() {
             meta.scroll = *scroll;
+            mutated = true;
         }
+        mutated 
     }
     
     #[inline]
-    pub fn apply_to_cursor(&self, selection: &mut ETCurSel<E>) where E: Env {
+    pub fn apply_to_cursor(&self, selection: &mut ETCurSel<E>) -> bool where E: Env {
+        let mut mutated = false;
         if let Some(curs) = self.update_cursor.as_ref() {
             *selection = curs.clone();
+            mutated = true;
         }
+        mutated 
     }
 
     #[inline]
-    pub fn apply_to_scroll(&self, scroll: &mut (u32,u32)) where E: Env {
+    pub fn apply_to_scroll(&self, scroll: &mut (u32,u32)) -> bool where E: Env {
+        let mut mutated = false;
         if let Some(s) = self.update_scroll_pos.as_ref() {
             *scroll = *s;
+            mutated = true;
         }
+        mutated 
     }
 
     #[inline]
-    pub fn apply_to_selection_state<S>(&self, mut selection: S, ctx: &mut E::Context<'_>) where E: Env, S: AtomStateMut<E,ETCurSel<E>> {
+    pub fn apply_to_selection_state<S>(&self, mut selection: S, ctx: &mut E::Context<'_>) -> bool where E: Env, S: AtomStateMut<E,ETCurSel<E>> {
+        let mut mutated = false;
         if let Some(curs) = self.update_cursor.as_ref() {
             selection.set(curs.clone(),ctx);
+            mutated = true;
         }
+        mutated 
     }
 
     #[inline]
-    pub fn apply_to_scroll_state<S>(&self, mut scroll: S, ctx: &mut E::Context<'_>) where E: Env, S: AtomStateMut<E,(u32,u32)> {
+    pub fn apply_to_scroll_state<S>(&self, mut scroll: S, ctx: &mut E::Context<'_>) -> bool where E: Env, S: AtomStateMut<E,(u32,u32)> {
+        let mut mutated = false;
         if let Some(s) = self.update_scroll_pos.as_ref() {
             scroll.set(*s,ctx);
+            mutated = true;
         }
+        mutated 
     }
 
     #[inline]
-    pub fn apply_to_state<S>(&self, mut meta: S, ctx: &mut E::Context<'_>) where E: Env, S: AtomStateMut<E,ETCurSel<E>> + AtomStateMut<E,(u32,u32)> {
+    pub fn apply_to_state<S>(&self, mut meta: S, ctx: &mut E::Context<'_>) -> bool where E: Env, S: AtomStateMut<E,ETCurSel<E>> + AtomStateMut<E,(u32,u32)> {
+        let mut mutated = false;
         if let Some(curs) = self.update_cursor.as_ref() {
             meta.set(curs.clone(),ctx);
+            mutated = true;
         }
         if let Some(s) = self.update_scroll_pos.as_ref() {
             meta.set(*s,ctx);
+            mutated = true;
         }
+        mutated 
     }
 }
