@@ -60,6 +60,16 @@ impl<E,Text> Button<E,Text,(),()> where
     }
 }
 
+impl<E,T> Button<E,Label<E,T>,(),()> where
+    E: Env, //TODO WidgetWithCaption with_text replace
+    T: TextStor<E> + AsCachor<E>,
+{
+    #[inline]
+    pub fn of_label_text(text: T) -> Self {
+        Button::of_text(Label::of_text(text))
+    }
+}
+
 impl<E,Text,Tr,TrMut> Button<E,Text,Tr,TrMut> where
     E: Env,
 {
