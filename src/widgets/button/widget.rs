@@ -107,7 +107,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
         }
 
         self.text.with_widget(
-            &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                 let render_props = render_props
                     .inside_border_of_type(TestStyleBorderType::Component)
                     .fork_with(|p| p.style.bg_color = fill_inner_color.style.current_color() )
@@ -170,7 +170,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
                 stack, TestStyleBorderType::Component,
                 |stack|
                     self.text.with_widget(&mut AsWidgetClosure::new(
-                        |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
+                        |widget: &<Text as AsWidget<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
                             widget.size(&SimpleId(ButtonChild).push_on_stack(path), &stack, &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
@@ -196,7 +196,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
         if i != 0 { return (callback)(Err(()),ctx); }
         
         self.text.with_widget(
-            &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+            &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
                 (callback)(Ok(widget.erase()),ctx)
             ),
             root,ctx
@@ -215,7 +215,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
     {
         if sub_path.try_fragment::<SimpleId<ButtonChild>>().is_some() {
             self.text.with_widget(
-                &mut AsWidgetClosure::new(move |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+                &mut AsWidgetClosure::new(move |widget: &<Text as AsWidget<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
                     (callback)(
                         Ok(WidgetWithResolveChildDyn {
                             idx: 0,
@@ -250,7 +250,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
         let rootf = root.fork();
 
         self.text.with_widget(
-            &mut AsWidgetClosure::new(move |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+            &mut AsWidgetClosure::new(move |widget: &<Text as AsWidget<E>>::Widget<'_>,_,ctx: &mut E::Context<'_>|
                 widget._tabulate(&SimpleId(ButtonChild).push_on_stack(path), stack, op.clone(), dir, root.fork(), ctx)
             ),
             rootf,ctx
@@ -291,15 +291,17 @@ impl<E,S,Tr,TrMut> Button<E,S,Tr,TrMut> where
 }
 
 impl<E,Text,Tr,TrMut> AsWidget<E> for Button<E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
-    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
+    type Widget<'v> = Self where Self: 'v;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        Self: 'w
-    {
+    fn with_widget<R>(&self, f: &mut (dyn AsWidgetDispatch<Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R {
         f.call(self, root, ctx)
+    }
+
+    #[inline]
+    fn covar_ref<'s,'ll,'ss>(w: &'s Self::Widget<'ll>) -> &'s Self::Widget<'ss> where 'll: 'ss, 'ss: 's, Self: 'll {
+        w
     }
 }
 

@@ -43,7 +43,7 @@ impl<'z,E> View<'z,E> for TestRoot where
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutFn,R,E>,
+        DispatchFn: ViewDispatch<Self,MutFn,R,E>,
     {
         let w = DummyWidget(view_widget!(
             || &self.a,
@@ -91,7 +91,7 @@ impl<'z,E> View<'z,E> for A where
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutFn,R,E>,
+        DispatchFn: ViewDispatch<Self,MutFn,R,E>,
     {
         let w = DummyWidget(view_widget!(
             || &self.b,
@@ -137,7 +137,7 @@ impl<'z,E> View<'z,E> for B where
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutFn,R,E>,
+        DispatchFn: ViewDispatch<Self,MutFn,R,E>,
         Self: 'z,
     {
         let c = ViewC(&self.c);
@@ -176,7 +176,7 @@ impl<'z,E> View<'z,E> for ViewC<'z> where
             &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
-        DispatchFn: ViewDispatch<'z,Self,MutFn,R,E>,
+        DispatchFn: ViewDispatch<Self,MutFn,R,E>,
     {
         ctx.enqueue(
             mutor!(remut =>| |root,_ctx| root.0.d = 42; )

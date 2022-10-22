@@ -27,16 +27,13 @@ macro_rules! impl_tuple {
             $($tt: AsWidget<E>),+ ,
             E: Env
         {
-            type Widget<'v,'z> = dyn WidgetDyn<E> + 'v where 'z: 'v, Self: 'z;
+            type Widget<'v> = dyn WidgetDyn<E> + 'v where Self: 'v;
             type WidgetCache = DynWidgetCache<E>;
             type ChildID = FixedIdx;
             type IdIdxIter = impl Iterator<Item=(usize,Self::ChildID)>;
         
             #[inline]
-            fn by_index<'w,XR>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
-            where
-                Self: 'w
-            {
+            fn by_index<XR>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR {
                 let $senf = &self.0;
                 
                 match idx {
@@ -63,10 +60,7 @@ macro_rules! impl_tuple {
             }
         
             #[inline]
-            fn by_id<'w,XR>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
-            where
-                Self: 'w
-            {
+            fn by_id<XR>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR {
                 let $senf = &self.0;
                 
                 match id.0 {
@@ -103,10 +97,7 @@ macro_rules! impl_tuple {
             }
         
             #[inline]
-            fn idx_range_filtered<'w>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-            where
-                Self: 'w
-            {
+            fn idx_range_filtered(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
                 let ($l,$($ll),*) = &self.0;
 
                 let mut i = 0;
@@ -147,10 +138,7 @@ macro_rules! impl_tuple {
                 let _ = i;
             }
         
-            fn resolve<'w,XR>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: &mut (dyn AsWidgetsResolveDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
-            where
-                Self: 'w
-            {
+            fn resolve<XR>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: &mut (dyn AsWidgetsResolveDispatch<Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR {
                 if let Some(v) = path.try_fragment::<Self::ChildID>() {
                     let idx = v.0;
                     
@@ -180,6 +168,11 @@ macro_rules! impl_tuple {
                 } else {
                     callback.call(None,root,ctx)
                 }
+            }
+
+            #[inline]
+            fn covar_ref<'s,'ll,'ss>(w: &'s Self::Widget<'ll>) -> &'s Self::Widget<'ss> where 'll: 'ss, 'ss: 's, Self: 'll {
+                w
             }
         }
     };

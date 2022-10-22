@@ -23,14 +23,11 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
     MutorFn: MutorToBuilder<(),ViewTy::Mutarget,E>,
     E: Env,
 {
-    type Widget<'v,'z2> = dyn WidgetDyn<E> + 'v where 'z2: 'v, Self: 'z2;
+    type Widget<'v> = dyn WidgetDyn<E> + 'v where Self: 'v;
     type WidgetCache = DynWidgetCache<E>;
 
     #[inline]
-    fn with_widget<'w,R>(&self, dispatch: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        Self: 'w
-    {
+    fn with_widget<R>(&self, dispatch: &mut (dyn AsWidgetDispatch<Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R {
         let s = (self.0)();
         let mut dis = box_view_cb(move |widget,root,ctx| {
             dispatch.call(widget, root, ctx)
@@ -38,6 +35,11 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
         });
         s.view(&mut dis,self.1.erase(),root,ctx)
         //todo!()
+    }
+
+    #[inline]
+    fn covar_ref<'s,'ll,'ss>(w: &'s Self::Widget<'ll>) -> &'s Self::Widget<'ss> where 'll: 'ss, 'ss: 's, Self: 'll {
+        w
     }
 }
 

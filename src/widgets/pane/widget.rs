@@ -76,7 +76,7 @@ impl<E,T> Widget<E> for Pane<E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                 widget.render(
                     &child_id.push_on_stack(path),
                     &render_props
@@ -153,7 +153,7 @@ impl<E,T> Widget<E> for Pane<E,T> where
         } else {
             self.childs.idx_range(
                 0..self.childs.len(), //TODO there could be a prefilter which checks whether idx child bounds visible in visible-filter mode
-                &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                     let stack = WithCurrentBounds {
                         inner: &stack,
                         bounds: bounds.bounds.slice(cache.childs[idx].relative_bounds_cache.as_ref().unwrap()),
@@ -201,7 +201,7 @@ impl<E,T> Widget<E> for Pane<E,T> where
     //     // let mut child_sizes = Vec::with_capacity(self.childs());
 
     //     // self.childs.all(
-    //     //     AsWidgetsAllClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
+    //     //     AsWidgetsAllClosure::new(|_,_,_,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>|
     //     //         //TODO bounds could never be used in constraints calc, else we would already need to have the child bounds calculates, which also requires the constraints
     //     //         child_sizes.push( widget.size(SimpleId(_) + path, &stack,root,ctx) )
     //     //     ),
@@ -318,7 +318,7 @@ impl<E,T> Pane<E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                 let child_cache = &mut cache.childs[idx];
 
                 if child_cache.widget_id != Some(child_id.clone()) {
@@ -365,7 +365,7 @@ impl<E,T> Pane<E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_>,root,ctx: &mut E::Context<'_>| {
                 let child_cache = &mut cache.childs[idx];
 
                 if child_cache.widget_id != Some(child_id.clone()) {
@@ -422,15 +422,17 @@ impl<E,T> Pane<E,T> where
 }
 
 impl<E,T> AsWidget<E> for Pane<E,T> where Self: Widget<E>, E: Env {
-    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
+    type Widget<'v> = Self where Self: 'v;
     type WidgetCache = <Self as Widget<E>>::Cache;
 
     #[inline]
-    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        Self: 'w
-    {
+    fn with_widget<R>(&self, f: &mut (dyn AsWidgetDispatch<Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R {
         f.call(self, root, ctx)
+    }
+
+    #[inline]
+    fn covar_ref<'s,'ll,'ss>(w: &'s Self::Widget<'ll>) -> &'s Self::Widget<'ss> where 'll: 'ss, 'ss: 's, Self: 'll {
+        w
     }
 }
 
