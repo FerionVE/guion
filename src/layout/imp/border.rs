@@ -1,5 +1,7 @@
-use qwutils::imp::option::OptionExt;
-use super::*;
+use qwutils::OptionExt;
+
+use crate::layout::size::{StdGonstraintAxis, StdGonstraints};
+use crate::util::border::Border;
 
 //TODO rework border to trait or fn for constrait trait to directly add from style
 qwutils::opion!(add(StdGonstraints,Border) |s,r| {

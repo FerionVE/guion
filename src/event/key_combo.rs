@@ -1,17 +1,9 @@
-use std::hash::Hash;
-use std::marker::PhantomData;
-use std::ops::BitAnd;
-use std::ops::BitOr;
-use std::ops::BitXor;
-use std::ops::Not;
-use std::ops::Range;
-use std::ops::Sub;
+use std::ops::{BitAnd, Not, Sub, BitOr, BitXor, Range};
 
 use crate::aliases::EEKey;
 use crate::env::Env;
 
-use super::key::MatchKeyCode;
-use super::key::MatchScanCode;
+use super::key::{MatchKeyCode, MatchScanCode};
 
 pub trait KeyCombo<E> where E: Env {
     fn match_in(&self, find: impl FnMut(MatchKey<'_,E>) -> (bool,Option<Matches>)) -> (bool,Option<Matches>);
@@ -227,7 +219,7 @@ fn range_range(a: &Option<Matches>, b: &Option<Matches>) -> Option<Matches> {
         a.as_ref().map(|v| v.0.len() ).unwrap_or(0)
         + b.as_ref().map(|v| v.0.len() ).unwrap_or(0)
     );
-    if dest.len() == 0 {
+    if dest.is_empty() {
         return None;
     }
     if let Some(v) = a {

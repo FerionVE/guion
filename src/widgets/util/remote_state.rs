@@ -3,12 +3,12 @@ use std::marker::PhantomData;
 use state::*;
 
 #[derive(Clone)]
-pub struct RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: DynState<E> {
+pub struct RemoteState<E,T> where E: Env, T: Clone + Default + 'static {
     id: E::WidgetID,
     _p: PhantomData<T>,
 }
 
-impl<E,T> RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: DynState<E> {
+impl<E,T> RemoteState<E,T> where E: Env, T: Clone + Default + 'static {
     #[inline]
     pub fn for_widget(id: E::WidgetID) -> Self {
         Self{
@@ -18,9 +18,9 @@ impl<E,T> RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Contex
     }
 }
 
-impl<E,T> AtomState<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: DynState<E> {
+impl<E,T> AtomState<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, for<'a> E::Context<'a>: DynState<E> {
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         c.remote_state_or_default(
             self.id.clone()
         )
@@ -31,9 +31,9 @@ impl<E,T> AtomState<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default +
     }
 }
 
-impl<E,T> AtomStateMut<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, E::Context: DynState<E> {
+impl<E,T> AtomStateMut<E,T> for RemoteState<E,T> where E: Env, T: Clone + Default + 'static, for<'a> E::Context<'a>: DynState<E> {
     #[inline]
-    fn set(&mut self, v: T, c: &mut E::Context) {
+    fn set(&mut self, v: T, c: &mut E::Context<'_>) {
         c.push_remote_state(
             self.id.clone(), v
         )

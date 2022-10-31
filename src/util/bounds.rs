@@ -1,18 +1,22 @@
 //! Bounds (x,y,w,h) and functionality
-use super::*;
+
 use std::fmt::Debug;
 
-#[derive(Clone,Copy,Default)]
+use crate::layout::Orientation;
+
+use super::border::Border;
+
+#[derive(Clone,Copy,Default,PartialEq,Eq)]
 pub struct Offset {
     pub x: i32,
     pub y: i32,
 }
-#[derive(Clone,Copy,Default)]
+#[derive(Clone,Copy,Default,PartialEq,Eq)]
 pub struct Dims {
     pub w: u32,
     pub h: u32,
 }
-#[derive(Clone,Copy,Default)]
+#[derive(Clone,Copy,Default,PartialEq,Eq)]
 pub struct Bounds {
     pub off: Offset,
     pub size: Dims,
@@ -189,7 +193,7 @@ impl Bounds {
     #[inline]
     pub fn shift_to_fit(&mut self, inner_abs: &Bounds) {
         #[inline]
-    fn shift_to_fit_axis(axis: &mut (i32,i32), inner_abs: (i32,i32)) {
+        fn shift_to_fit_axis(axis: &mut (i32,i32), inner_abs: (i32,i32)) {
             if axis.1 < inner_abs.1 {
                 axis.0 += inner_abs.1 - axis.1;
                 axis.1 += inner_abs.1 - axis.1;
@@ -205,6 +209,13 @@ impl Bounds {
         shift_to_fit_axis(&mut yy, (inner_abs.off.y,inner_abs.y1()) );
         self.off.x = xx.0; self.size.w = (xx.1-xx.0) as u32;
         self.off.y = yy.0; self.size.h = (yy.1-yy.0) as u32;
+    }
+
+    pub fn overlap(&self, o: &Bounds) -> bool {
+        (o.x() < self.x1() || o.x() == self.x()) &&
+        (o.x1() > self.x() || o.x1() == self.x1()) &&
+        (o.y() < self.y1() || o.y() == self.y()) &&
+        (o.y1() > self.y() || o.y1() == self.y1())
     }
 }
 
@@ -241,6 +252,7 @@ impl Offset {
 }
 
 impl Dims {
+    /// Parallel axis of orientation e.g. Horizontal=>x Vertical=>y
     #[inline]
     pub fn par(&self, o: Orientation) -> u32 {
         match o {
@@ -248,6 +260,7 @@ impl Dims {
             Orientation::Vertical => self.h,
         }
     }
+    /// Non-parallel axis of orientation e.g. Horizontal=>y Vertical=>x
     #[inline]
     pub fn unpar(&self, o: Orientation) -> u32 {
         match o {
@@ -256,6 +269,7 @@ impl Dims {
         }
     }
 
+    /// Dims from orientation and parallel and non-parallel axis
     #[inline]
     pub fn from_ori(par: u32, unpar: u32, o: Orientation) -> Self {
         match o {
@@ -297,10 +311,9 @@ impl From<(u32,u32)> for Offset {
         Self{x: s.0 as i32, y: s.1 as i32}
     }
 }
-impl Into<(i32,i32)> for Offset {
-    #[inline]
-    fn into(self) -> (i32,i32) {
-        (self.x,self.y)
+impl From<Offset> for (i32,i32) {
+    fn from(value: Offset) -> Self {
+        (value.x,value.y)
     }
 }
 impl AsRef<Offset> for Offset {

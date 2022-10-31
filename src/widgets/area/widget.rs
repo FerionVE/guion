@@ -1,173 +1,358 @@
-use super::*;
-use util::{state::*};
+use crate::aliases::{ERenderer, EEvent, ESize};
+use crate::ctx::Context;
+use crate::ctx::clipboard::CtxClipboardAccess;
+use crate::dispatchor::{AsWidgetClosure, AsWidgetDispatch};
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::event::key::MatchKeyCode;
+use crate::event::standard::variants::KbdPress;
+use crate::layout::{Gonstraints, GonstraintAxis};
+use crate::queron::query::Query;
+use crate::root::RootRef;
+use crate::util::bounds::Bounds;
+use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
+use crate::widget::cache::{StdRenderCachors, WidgetCache};
+use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widgets::util::state::AtomState;
+use crate::{event_new, impl_traitcast, EventResp};
+use crate::newpath::{PathStack, SimpleId, PathResolvusDyn, PathResolvus, PathFragment};
+use crate::queron::Queron;
+use crate::render::{StdRenderProps, TestStyleColorType, with_inside_spacing_border, with_inside_border_by_type, TestStyleBorderType, TestStyleVariant};
+use crate::render::widgets::RenderStdWidgets;
+use crate::state::{CtxStdState, StdState};
+use crate::util::{ScrollOff, normalize_scroll_off};
+use crate::view::mutor_trait::MutorEndBuilder;
+use crate::widget::{Widget, WidgetWithResolveChildDyn};
+use crate::widget::as_widget::AsWidget;
+use crate::widget::stack::{QueryCurrentBounds, WithCurrentBounds};
+use crate::widgets::soft_single_child_resolve_check;
 
-impl<'w,E,W,Scroll> Widget<E> for Area<'w,E,W,Scroll> where
+use super::{Area, ScrollUpdate};
+
+impl<E,W,Scroll,MutFn> Widget<E> for Area<E,W,Scroll,MutFn> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    W: AsWidget<E>+'w,
-    Scroll: AtomState<E,(i32,i32)>,
+    for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    W: AsWidget<E>,
+    Scroll: AtomState<E,ScrollOff>,
+    MutFn: MutorEndBuilder<ScrollUpdate,E>,
 {
-    fn id(&self) -> E::WidgetID {
-        self.id.clone()
-    }
-    fn _render(&self, mut l: Link<E>, r: &mut RenderLink<E>) {
-        let mut r = r.with_style(&self.style);
-        let mut r = r.inside_border_by(StdSelectag::BorderOuter,l.ctx);
-        r.with(&[
-            StdSelectag::ObjBorder,
-            StdSelectag::Focused(l.is_focused()),
-            StdSelectag::BorderVisual,
-        ][..])
-            .fill_border_inner(l.ctx);
-        let mut r = r.inside_border_by(StdSelectag::BorderVisual,l.ctx);
+    type Cache = AreaCache<W::WidgetCache,E>;
 
-        let rect = *r.bounds();
+    fn _render<P,Ph>(
+        &self,
+        path: &Ph,
+        stack: &P,
+        renderer: &mut ERenderer<'_,E>,
+        mut force_render: bool,
+        cache: &mut Self::Cache,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+        let mut need_render = force_render;
 
-        let (sx,sy) = self.scroll.get(l.ctx);
+        let render_props = StdRenderProps::new(stack);
 
-        let inner_size: ESize<E> = l.for_child(0).unwrap().size(r.style());
+        render_props.current_std_render_cachors()
+            .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
+
+        let (sx,sy) = self.scroll.get(ctx);
+
+        if cache.scroll_cachor != Some(((sx,sy),self.negative_scroll)) {
+            need_render = true;
+            force_render = true;
+            cache.scroll_cachor = Some(((sx,sy),self.negative_scroll));
+        }
+
+        if force_render {
+            renderer.fill_rect(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg),
+                ctx
+            );
+        } else if need_render {
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_color_type(TestStyleColorType::Bg)
+                    .with_style_border_type(TestStyleBorderType::Spacing),
+                ctx
+            );
+        }
+
+        let render_props = render_props.inside_spacing_border();
+
+        if need_render {
+            renderer.fill_border_inner(
+                &render_props
+                    .with_style_border_type(TestStyleBorderType::Component)
+                    .with_style_color_type(TestStyleColorType::Border)
+                    .with_style_type(
+                        TestStyleVariant {
+                            selected: ctx.state().is_focused(path._erase()),
+                            ..Default::default()
+                        }
+                    ),
+                ctx
+            );
+        }
+
+        let render_props = render_props.inside_border_of_type(TestStyleBorderType::Component);
+
+        let rect = render_props.absolute_bounds;
+
+        let inner_size = self.inner.with_widget(
+            &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                widget.size(&SimpleId(AreaChild).push_on_stack(path), &render_props, &mut cache.inner_cache, root,ctx)
+            }),
+            root.fork(),ctx
+        );
+
         let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
 
-        let (sx,sy) = fix_pox((sx,sy), (iw,ih).into(), rect.size);
+        let (sx,sy) = normalize_scroll_off((sx,sy), (iw,ih).into(), rect.size,true);
 
-        let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
+        let inner_rect = Bounds::from_xywh(rect.x() - sx, rect.y() - sy, iw, ih);
 
-        r.fork_with(Some(inner_rect), Some(rect), None, None)
-            .render_widget(l.for_child(0).unwrap());
+        self.inner.with_widget(
+            &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                let render_props = render_props
+                    .fork_with(|r| {
+                        r.absolute_bounds = inner_rect;
+                        r.absolute_viewport = rect;
+                    });
+
+                widget.render(
+                    &SimpleId(AreaChild).push_on_stack(path), &render_props,
+                    renderer,
+                    force_render, &mut cache.inner_cache,
+                    root,ctx
+                )
+            }),
+            root,ctx
+        );
     }
-    fn _event_direct(&self, mut l: Link<E>, e: &EventCompound<E>) -> EventResp {
-        let e = e.with_style(&self.style);
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderOuter,l.ctx));
-        let e = try_or_false!(e.filter_inside_bounds_by_style(StdSelectag::BorderVisual,l.ctx));
+
+    fn _event_direct<P,Ph,Evt>(
+        &self,
+        path: &Ph,
+        stack: &P,
+        event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        cache: &mut Self::Cache,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        let stack = with_inside_spacing_border(stack);
+        let stack = with_inside_border_by_type(stack,TestStyleBorderType::Component);
         
-        let rect = e.bounds;
+        let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
+        let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
-        let (sx,sy) = self.scroll.get(l.ctx);
+        let receive_self = event_mode.receive_self && route_to_widget.map_or(true, |i| i.inner().is_none() );
 
-        let inner_size: ESize<E> = l.for_child(0).unwrap().size(&e.style);
+        if !event_mode.route_to_childs && !receive_self {return false;}
+        
+        let rect = bounds.bounds;
+
+        let (osx,osy) = self.scroll.get(ctx);
+
+        let inner_size = self.inner.with_widget(
+            &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                widget.size(&SimpleId(AreaChild).push_on_stack(path), &stack, &mut cache.inner_cache, root,ctx)
+            }),
+            root.fork(),ctx
+        );
+
         let (iw,ih) = (inner_size.x().preferred(),inner_size.y().preferred());
 
-        let (sx,sy) = fix_pox((sx,sy), (iw,ih).into(), rect.size);
+        let (sx,sy) = normalize_scroll_off((osx,osy), (iw,ih).into(), rect.size,true);
 
-        let inner_rect = Bounds::from_xywh(rect.x()-sx as i32, rect.y()-sy as i32, iw, ih);
+        let inner_rect = Bounds::from_xywh(rect.x() - sx, rect.y() - sy, iw, ih);
 
         let mut passed = false;
 
-        {
-            let mut l = l.for_child(0).unwrap();
-            let e = e.with_bounds(inner_rect);
-            if let Some(ee) = e.filter(&l) { //TODO API OOF not filtering breaks for_child mechanism
-                passed |= l.event_direct(&ee);
-            }
+        if event_mode.route_to_childs && soft_single_child_resolve_check(route_to_widget, SimpleId(AreaChild)) {
+            self.inner.with_widget(
+                &mut AsWidgetClosure::new(|widget: &<W as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                    let stack = WithCurrentBounds {
+                        inner: &stack,
+                        bounds: inner_rect,
+                        viewport: *rect,
+                    };
+        
+                    passed |= widget.event_direct(&SimpleId(AreaChild).push_on_stack(path), &stack, event, route_to_widget.and_then(PathResolvus::inner), &mut cache.inner_cache, root,ctx);
+                }),
+                root.fork(),ctx
+            )
         }
 
-        if !passed {
-            if let Some(ee) = e.event.is_kbd_press() {
+        if !passed && event_mode.receive_self { //TODO passed stack doof
+            if let Some(ee) = event.query_variant::<KbdPress<E>>(path,&stack) {
                 if
                     ee.key == MatchKeyCode::KbdUp || ee.key == MatchKeyCode::KbdDown ||
                     ee.key == MatchKeyCode::KbdLeft || ee.key == MatchKeyCode::KbdRight
                 {
-                    l.mutate_closure(Box::new(move |mut w,ctx,_| {
-                        let w = w.traitcast_mut::<dyn AtomStateMut<E,(i32,i32)>>().unwrap();
-                        let mut v = w.get(ctx);
-                        if ee.key == MatchKeyCode::KbdUp {
-                            v.1 = v.1.saturating_sub(4);
+                    let (mut nx,mut ny) = (sx,sy);
+
+                    if ee.key == MatchKeyCode::KbdUp {
+                        ny = ny.saturating_sub(4);
+                    }
+                    if ee.key == MatchKeyCode::KbdDown {
+                        ny += 4;
+                    }
+                    if ee.key == MatchKeyCode::KbdLeft {
+                        nx = nx.saturating_sub(4);
+                    }
+                    if ee.key == MatchKeyCode::KbdRight {
+                        nx += 4;
+                    }
+
+                    let (nx,ny) = normalize_scroll_off((nx,ny), (iw,ih).into(), rect.size,true);
+
+                    let su = ScrollUpdate{offset:(nx-osx,ny-osy)};
+
+                    if su.offset != (0,0) {
+                        if let Some(t) = self.scroll_updater.build_box_mut_event(su) {
+                            ctx.mutate_closure(t);
+                            passed = true;
                         }
-                        if ee.key == MatchKeyCode::KbdDown {
-                            v.1 += 4;
-                        }
-                        if ee.key == MatchKeyCode::KbdLeft {
-                            v.0 = v.0.saturating_sub(4);
-                        }
-                        if ee.key == MatchKeyCode::KbdRight {
-                            v.0 += 4;
-                        }
-                        let v = fix_pox(v, (iw,ih).into(), rect.size);
-                        w.set(v,ctx);
-                    }));
-                    passed = true;
+                    }
                 }
             }
         }
 
         passed
     }
-    fn _size(&self, _: Link<E>, e: &EStyle<E>) -> ESize<E> {
-        let e = e.and(&self.style);
-        self.size.clone()
+
+    fn _size<P,Ph>(
+        &self,
+        path: &Ph,
+        stack: &P,
+        cache: &mut Self::Cache,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+        self.size.clone() //TODO add borders?
     }
+
     fn childs(&self) -> usize {
         1
     }
-    fn childs_ref(&self) -> Vec<Resolvable<E>> {
-        vec![self.inner.as_ref()]
+
+    fn with_child<'s,F,R>(
+        &'s self,
+        i: usize,
+        mut callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'www,'ww,'c,'cc> FnMut(Result<&'www (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
+    {
+        if i != 0 { return (callback)(Err(()),ctx); }
+        
+        self.inner.with_widget(
+            &mut AsWidgetClosure::new(move |widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+                (callback)(Ok(widget.erase()),ctx)
+            ),
+            root,ctx
+        )
     }
-    fn into_childs<'a>(self: Box<Self>) -> Vec<Resolvable<'a,E>> where Self: 'a {
-        vec![self.inner.into_ref()]
+
+    fn with_resolve_child<'s,F,R>(
+        &'s self,
+        sub_path: &(dyn PathResolvusDyn<E>+'_),
+        mut callback: F,
+        root: E::RootRef<'s>,
+        ctx: &mut E::Context<'_>
+    ) -> R
+    where
+        F: for<'a,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'a,E>,E::Error>,&'c mut E::Context<'cc>) -> R
+    {
+        if sub_path.try_fragment::<SimpleId<AreaChild>>().is_some() {
+            self.inner.with_widget(
+                &mut AsWidgetClosure::new(move |widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+                    (callback)(
+                        Ok(WidgetWithResolveChildDyn {
+                            idx: 0,
+                            sub_path: sub_path.inner().unwrap(),
+                            widget: widget.erase(),
+                        }),
+                        ctx,
+                    )
+                ),
+                root,ctx
+            )
+        } else {
+            (callback)(Err(todo!()),ctx)
+        }
+    }
+
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        idx: usize,
+        path: &Ph,
+        stack: &P,
+        op: TabulateOrigin<E>,
+        dir: TabulateDirection,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        if idx != 0 { return Err(todo!()); }
+
+        let rootf = root.fork();
+
+        self.inner.with_widget(
+            &mut AsWidgetClosure::new(move |widget: &<W as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
+                widget._tabulate(&SimpleId(AreaChild).push_on_stack(path), stack, op.clone(), dir, root.fork(), ctx)
+            ),
+            rootf,ctx
+        )
     }
     
-    fn child_bounds(&self, _: Link<E>, _: &Bounds, e: &EStyle<E>, _: bool) -> Result<Vec<Bounds>,()> {
-        todo!() // TODO complete inner bounds or just view
-    }
+    // fn child_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    //     todo!() // TODO complete inner bounds or just view
+    // }
     fn focusable(&self) -> bool {
         false //TODO
     }
-    fn child(&self, i: usize) -> Result<Resolvable<E>,()> {
-        if i != 0 {return Err(());}
-        Ok(self.inner.as_ref())
-    }
-    fn into_child<'a>(self: Box<Self>, i: usize) -> Result<Resolvable<'w,E>,()> where Self: 'a {
-        if i != 0 {return Err(());}
-        Ok(self.inner.into_ref())
-    }
 
-    impl_traitcast!(
-        dyn AtomState<E,(i32,i32)> => |s| &s.scroll;
+    impl_traitcast!( dyn WidgetDyn<E>:
+        dyn AtomState<E,ScrollOff> => |s| &s.scroll;
     );
 }
 
-impl<'w,E,W,Scroll> WidgetMut<E> for Area<'w,E,W,Scroll> where
-    E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    W: AsWidgetMut<E>+'w,
-    Scroll: AtomStateMut<E,(i32,i32)>,
-{
-    fn childs_mut(&mut self) -> Vec<ResolvableMut<E>> {
-        vec![self.inner.as_mut()]
-    }
-    fn into_childs_mut<'a>(self: Box<Self>) -> Vec<ResolvableMut<'a,E>> where Self: 'a {
-        vec![self.inner.into_mut()]
-    }
-    fn child_mut(&mut self, i: usize) -> Result<ResolvableMut<E>,()> {
-        if i != 0 {return Err(());}
-        Ok(self.inner.as_mut())
-    }
-    fn into_child_mut<'a>(self: Box<Self>, i: usize) -> Result<ResolvableMut<'a,E>,()> where Self: 'a {
-        if i != 0 {return Err(());}
-        Ok(self.inner.into_mut())
-    }
+impl<E,W,Scroll,MutFn> AsWidget<E> for Area<E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {
+    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
+    type WidgetCache = <Self as Widget<E>>::Cache;
 
-    impl_traitcast_mut!(
-        dyn AtomState<E,(i32,i32)> => |s| &mut s.scroll;
-        dyn AtomStateMut<E,(i32,i32)> => |s| &mut s.scroll;
-    );
+    #[inline]
+    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    where
+        Self: 'w
+    {
+        f.call(self, root, ctx)
+    }
 }
 
-fn fix_pox(viewport_off: (i32,i32), inner_size: Dims, viewport_size: Dims) -> (i32,i32) {
-    (
-        fix_pos(inner_size.w, viewport_size.w, viewport_off.0),
-        fix_pos(inner_size.h, viewport_size.h, viewport_off.1),
-    )
+#[derive(Default)]
+pub struct AreaCache<InnerCache,E> where E: Env, InnerCache: WidgetCache<E> {
+    inner_cache: InnerCache,
+    scroll_cachor: Option<(ScrollOff,bool)>,
+    std_render_cachors: Option<StdRenderCachors<E>>,
+    //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }
 
-fn fix_pos(inner_size: u32, viewport_size: u32, viewport_off: i32) -> i32 {
-    if viewport_size > inner_size {
-        viewport_off.min(0).max(inner_size as i32 - viewport_size as i32)
-    }else{
-        viewport_off.max(0).min(inner_size as i32 - viewport_size as i32)
+impl<InnerCache,E> WidgetCache<E> for AreaCache<InnerCache,E> where E: Env, InnerCache: WidgetCache<E> {
+    fn reset_current(&mut self) {
+        self.inner_cache.reset_current()
     }
 }
+
+#[derive(Copy,Clone,PartialEq,Eq)]
+pub struct AreaChild;

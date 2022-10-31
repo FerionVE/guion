@@ -1,9 +1,3 @@
-use crate::style::selectag::StyleSelectag;
-use crate::style::selector::StyleSelectorAppend;
-
-use super::*;
-use std::ops::BitAnd;
-
 #[derive(Clone)]
 pub struct EventCompound<E> where E: Env {
     pub event: EEvent<E>,
@@ -79,7 +73,7 @@ impl<E> EventCompound<E> where E: Env {
     }
 
     #[inline]
-    pub fn filter_inside_bounds_by_style<S>(&self, selectags: S, c: &mut E::Context) -> Option<Self> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> {
+    pub fn filter_inside_bounds_by_style<S>(&self, selectags: S, c: &mut E::Context<'_>) -> Option<Self> where ESSelector<E>: StyleSelectorAppend<S,E>, S: StyleSelectag<E> {
         self.inside_border(
             &self.style.border(&selectags.into_selector(),c)
         ).filter_bounds()

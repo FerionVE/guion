@@ -1,7 +1,9 @@
 use std::error::Error;
-use std::fmt::{Debug,Display};
+use std::fmt::{Debug, Display};
+use std::sync::Arc;
 
-use super::*;
+use crate::env::Env;
+use crate::newpath::PathResolvusDyn;
 
 #[derive(Clone)]
 #[non_exhaustive]
@@ -14,7 +16,7 @@ pub enum GuionError<E> where E: Env {
 #[derive(Clone)]
 pub struct ResolveError<E> where E: Env {
     pub op: &'static str,
-    pub sub_path: E::WidgetPath,
+    pub sub_path: Arc<dyn PathResolvusDyn<E>>,
     pub widget_type: Vec<&'static str>,
     pub child_info: Vec<GuionResolveErrorChildInfo<E>>,
 }
@@ -29,8 +31,9 @@ pub struct TraitcastError {
 pub struct GuionResolveErrorChildInfo<E> where E: Env {
     pub child_idx: usize,
     pub widget_type: Vec<&'static str>,
-    pub widget_path_if_path: Option<E::WidgetPath>,
-    pub widget_id: Option<E::WidgetID>,
+    pub path: Arc<dyn PathResolvusDyn<E>>,
+    //pub widget_path_if_path: Option<E::WidgetPath>,
+    //pub widget_id: Option<E::WidgetID>,
 }
 
 impl<E> Error for GuionError<E> where E: Env {
@@ -54,24 +57,25 @@ impl<E> Display for GuionError<E> where E: Env {
                 write!(f,"\n\tdest = {}\n\n",e.dest_trait_type)?;
             }
             Self::ResolveError(e) => {
-                write!(f,"\n\nFailed to {} child in Widget\n\n",e.op)?;
-                write!(f,"\tsub_path = {:?}\n",e.sub_path)?;
-                for v in &e.widget_type {
-                    write!(f,"\ttype     = {}\n",v)?;
-                }
-                write!(f,"\n")?;
-                for c in &e.child_info {
-                    if let Some(v) = &c.widget_id {
-                        write!(f,"\tChild #{} id   = {:?}\n",c.child_idx,v)?;
-                    }
-                    if let Some(v) = &c.widget_path_if_path {
-                        write!(f,"\tChild #{} path = {:?}\n",c.child_idx,v)?;
-                    }
-                    for v in &c.widget_type {
-                        write!(f,"\tChild #{} type = {}\n",c.child_idx,v)?;
-                    }
-                    write!(f,"\n")?;
-                }
+                // write!(f,"\n\nFailed to {} child in Widget\n\n",e.op)?;
+                // write!(f,"\tsub_path = {:?}\n",e.sub_path)?;
+                // for v in &e.widget_type {
+                //     write!(f,"\ttype     = {}\n",v)?;
+                // }
+                // write!(f,"\n")?;
+                // for c in &e.child_info {
+                //     if let Some(v) = &c.widget_id {
+                //         write!(f,"\tChild #{} id   = {:?}\n",c.child_idx,v)?;
+                //     }
+                //     if let Some(v) = &c.widget_path_if_path {
+                //         write!(f,"\tChild #{} path = {:?}\n",c.child_idx,v)?;
+                //     }
+                //     for v in &c.widget_type {
+                //         write!(f,"\tChild #{} type = {}\n",c.child_idx,v)?;
+                //     }
+                //     write!(f,"\n")?;
+                // }
+                // TODO fix
                 
             }
             Self::Empty => {}, //TODO

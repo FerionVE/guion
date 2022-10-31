@@ -1,163 +1,137 @@
-use crate::text::layout::{Direction, TxtLayoutFromStor};
-use crate::text::stor::{TextStor, TextStorMut};
-use crate::text::layout::TxtLayout;
+use std::borrow::Cow;
+use std::ops::Range;
 
-use super::*;
-use util::{state::{AtomState, AtomStateMut}, LocalGlyphCache};
-use std::sync::Arc;
-use validation::*;
+use crate::aliases::{ETextLayout, ETCurSel, ERenderer, EEvent};
+use crate::cachor::AsCachor;
+use crate::ctx::Context;
+use crate::ctx::clipboard::CtxClipboardAccess;
+use crate::env::Env;
+use crate::event::imp::StdVarSup;
+use crate::event::standard::variants::MouseDown;
+use crate::queron::Queron;
+use crate::render::widgets::RenderStdWidgets;
+use crate::root::RootRef;
+use crate::state::CtxStdState;
+use crate::text::cursel::{Direction, TxtCurSel};
+use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
+use crate::text::stor::TextStor;
+use crate::traitcast_for_from_widget;
+use crate::util::bounds::{Bounds, Offset};
+use crate::view::mutor_trait::MutorEndBuilder;
+use crate::widget::cache::ValidationStat;
+use crate::widgets::util::state::AtomState;
+
+use super::{TextBox, TextBoxUpdate};
+use super::widget::TextBoxCache;
 
 pub trait ITextBox<E> where E: Env {
-
+    fn insert_text(&self, t: &str, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn remove_selection_or_n(&self, n: u32, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn remove_selection(&self, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> bool;
+    fn move_cursor_x(&self, o: Direction, skip_unselect: bool, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn move_cursor_y(&self, o: Direction, skip_unselect: bool, widget_bounds: &Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn select_all(&self, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn _m(&self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn scroll_to_cursor(&self, b: &Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn update(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
 }
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBox<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<E,Text,Scroll,Curs,TBUpd> ITextBox<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd> where
     E: Env,
-    Text: 'w,
-    Scroll: 'w,
-    Curs: 'w,
-    CursorStickX: 'w,
-    GlyphCache: 'w,
-{
-
-}
-
-pub trait ITextBoxMut<E>: ITextBox<E> where E: Env {
-    fn insert_text(&mut self, t: &str, ctx: &mut E::Context);
-    fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context);
-    fn remove_selection(&mut self, ctx: &mut E::Context) -> bool;
-    fn move_cursor_x(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context);
-    fn move_cursor_y(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context, widget_bounds: &Bounds);
-    fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context);
-    fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds);
-}
-
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
-    E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: TextStorMut<E>+ValidationMut<E>+'w,
+    for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    Text: TextStor<E> + AsCachor<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
-    Scroll: AtomStateMut<E,(u32,u32)>,
-    Curs: AtomStateMut<E,Cursor>,
-    CursorStickX: AtomStateMut<E,Option<u32>>,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
+    Scroll: AtomState<E,(u32,u32)>,
+    Curs: AtomState<E,ETCurSel<E>>,
+    TBUpd: MutorEndBuilder<TextBoxUpdate<E>,E>,
 {
-    fn insert_text(&mut self, s: &str, ctx: &mut E::Context) {
-        let g = self.glyphs2(ctx);
-        let mut cursor = self.cursor.get(ctx);
-        cursor.fix_boundaries(&*g);
+    fn insert_text(&self, s: &str, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        let mut cursor = self.get_cursor(ctx);
+        g.fix_cursor_boundaries(&mut cursor);
         if cursor.is_selection() {
-            cursor.del_selection(&mut self.text);
+            let (del_range,new_cursor) = 
+                cursor.attempt_replace_text(s.len(), self.text.len());
+            self.update(Some((del_range,Cow::Owned(s.to_owned()))),Some(new_cursor),g,root,ctx);
+        } else {
+            let (ins_off,new_cursor) = 
+                cursor.attempt_insert_text(s.len(), self.text.len());
+            self.update(Some((ins_off..ins_off,Cow::Owned(s.to_owned()))),Some(new_cursor),g,root,ctx);
         }
-        self.text.push_chars(cursor.caret as usize,&s);
-        cursor.unselect_add(s.len() as u32,false);
-        cursor.limit(self.text.len() as u32);
-        self.cursor.set(cursor,ctx);
-        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn remove_selection_or_n(&mut self, n: u32, ctx: &mut E::Context) {
-        let g = self.glyphs2(ctx);
-        if self.remove_selection(ctx) {return;}
-        let mut cursor = self.cursor.get(ctx);
-        cursor.fix_boundaries(&*g);
-        let to_remove = g.char_len_l(cursor.caret as usize, n as usize);
-        self.text.remove_chars_old(cursor.caret as usize,to_remove);
-        cursor.unselect_sub(to_remove as u32,false);
-        self.cursor.set(cursor,ctx);
-        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
+    fn remove_selection_or_n(&self, n: u32, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        if self.remove_selection(g,root.fork(),ctx) {return;}
+
+        let mut cursor = self.get_cursor(ctx);
+        g.fix_cursor_boundaries(&mut cursor);
+
+        let to_remove = g.char_len_l(cursor.caret(), n as usize);
+
+        let (del_range,new_cursor) = 
+            cursor.attempt_backspace(to_remove, self.text.len());
+        self.update(Some((del_range,Default::default())),Some(new_cursor),g,root,ctx);
     }
-    fn remove_selection(&mut self, ctx: &mut E::Context) -> bool {
-        let g = self.glyphs2(ctx);
-        let mut cursor = self.cursor.get(ctx);
-        cursor.fix_boundaries(&*g);
+    fn remove_selection(&self, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> bool {
+        let mut cursor = self.get_cursor(ctx);
+        g.fix_cursor_boundaries(&mut cursor);
+
         if cursor.is_selection() {
-            cursor.del_selection(&mut self.text);
-            self.cursor.set(cursor,ctx);
-            self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
+            let (del_range,new_cursor) = 
+                cursor.attempt_replace_text(0, self.text.len());
+            self.update(Some((del_range,Default::default())),Some(new_cursor),g,root,ctx);
             true
         }else{
             false
         }
     }
-    fn move_cursor_x(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context) {
-        let g = self.glyphs2(ctx);
-        let mut cursor = self.cursor.get(ctx);
-        cursor.fix_boundaries(&*g);
-        cursor.caret = g.move_cursor(o,cursor.caret as usize) as u32;
-        if !skip_unselect {cursor.unselect();}
-        cursor.limit(self.text.len() as u32);
-        self.cursor.set(cursor,ctx);
-        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
+    fn move_cursor_x(&self, o: Direction, skip_unselect: bool, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        let cursor = self.get_cursor(ctx);
+
+        let new_cursor = g.move_cursor_direction(cursor,o,skip_unselect);
+
+        self.update(None,Some(new_cursor),g,root,ctx)
     }
-    fn move_cursor_y(&mut self, o: Direction, skip_unselect: bool, ctx: &mut E::Context, b: &Bounds) {
-        /*let g = self.glyphs2(ctx);
-        let mut cursor = self.cursor.get(ctx);
+    fn move_cursor_y(&self, o: Direction, skip_unselect: bool, b: &Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        let cursor = self.get_cursor(ctx);
 
-        if g.line_count() != 0 {
-            let (_,mut line) = g.coord_of(cursor.caret).unwrap();
-            let mut dx = g.display_of_char(cursor.caret as usize).x() as u32;
+        let new_cursor = g.move_cursor_direction(cursor,o,skip_unselect);
 
-            let mut new_stick_x = self.cursor_stick_x.get(ctx);
-            if new_stick_x.is_none() {
-                new_stick_x = Some(dx);
-            }
-            dx = dx.max(new_stick_x.unwrap());
-
-            line = (line as i32 +o).max(0).min(g.line_count() as i32 -1) as u32;
-
-            let x = g.cursor_pos_reverse_line_centric(line,dx as i32).unwrap();
-
-            let i = g.at_coord((x,line)).unwrap();
-
-            cursor.caret = i;
-            if !ctx.state().is_pressed(&[MatchKeyCode::KbdCtrl]).is_some() {
-                cursor.select = cursor.caret;
-            }
-
-            //cursor = cursor.min(self.text.len() as u32);
-
-            self.cursor.set(cursor,ctx);
-            self.cursor_stick_x.set(new_stick_x,ctx);
-        }*/
-        let g = self.glyphs2(ctx);
-        let mut cursor = self.cursor.get(ctx);
-        cursor.fix_boundaries(&*g);
-        cursor.caret = g.move_cursor(o,cursor.caret as usize) as u32;
-        if !skip_unselect {cursor.unselect();}
-        cursor.limit(self.text.len() as u32);
-        self.cursor.set(cursor,ctx);
-        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
+        self.update(None,Some(new_cursor),g,root,ctx)
     }
-    fn _m(&mut self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, ctx: &mut E::Context) {
-        let g = self.glyphs2(ctx);
-        let mut cursor = self.cursor.get(ctx);
-        cursor.fix_boundaries(&*g);
-        let off = self.scroll.get(ctx);
+    fn select_all(&self, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        let cursor = self.get_cursor(ctx);
 
-        let mut tpos = mouse - b.off + Offset::from(off);
+        let new_cursor = g.select_range(0..g.len_bytes() as u32,cursor);
+
+        self.update(None,Some(new_cursor),g,root,ctx)
+    }
+    fn _m(&self, mouse_down: Option<MouseDown<E>>, mouse_pressed: bool, mouse: Offset, b: Bounds, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        let mut cursor = self.get_cursor(ctx);
+        g.fix_cursor_boundaries(&mut cursor);
+
+        let off = self.get_scroll(ctx);
+
+        let tpos = mouse - b.off + Offset::from(off);
         //tpos.y += g.line_ascent() as i32; //TODO FIX boundary precision all over the place
                     
         if let Some(ee) = mouse_down {
-            cursor.select = g.char_at_display(tpos) as u32;
-            cursor.caret = cursor.select;
-            //cursor.unselect();
+            let new_cursor = 
+                g.move_cursor_display(cursor, tpos, false);
+            self.update(None,Some(new_cursor),g,root,ctx)
         } else if mouse_pressed {
-            cursor.caret = g.char_at_display(tpos) as u32;
-            //cursor.unselect();
+            let new_cursor = 
+                g.move_cursor_display(cursor, tpos, true);
+            self.update(None,Some(new_cursor),g,root,ctx)
         }
-        assert!(cursor.caret <= g.len() as u32); //TODO FIXME äöü crash. the whole unicode char handling is borked.
-        self.cursor.set(cursor,ctx);
-        self.cursor_stick_x.set(None,ctx); //TODO this constant unsetting is garbage and breaks is string is mutated externally, rather we should update by cursor move
     }
-    fn scroll_to_cursor(&mut self, ctx: &mut E::Context, b: &Bounds) {
-        let g = self.glyphs2(ctx);
-        let mut cursor = self.cursor.get(ctx);
-        cursor.fix_boundaries(&*g);
-        let off = self.scroll.get(ctx);
+    fn scroll_to_cursor(&self, b: &Bounds, g: &ETextLayout<E>, _root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        let mut cursor = self.get_cursor(ctx);
+        g.fix_cursor_boundaries(&mut cursor);
+
+        let off = self.get_scroll(ctx);
         
-        let cb = g.display_of_char(cursor.caret as usize); //TODO fix as it should work if cursor is at end
+        let cb = g.cursor_bounds(cursor); //TODO fix as it should work if cursor is at end
             
         let mut vb = Bounds{
             off: off.into(),
@@ -167,73 +141,63 @@ impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> ITextBoxMut<E> for TextBox<'
         vb.shift_to_fit(&cb);
 
         let off = (vb.off.x as u32, vb.off.y as u32);
-        self.scroll.set(off,ctx);
+        
+        if let Some(t) = self.update.build_box_mut_event(TextBoxUpdate { update_text: None, update_cursor: None, update_scroll_pos: Some(off) }) {
+            ctx.mutate_closure(t);
+        }
+    }
+
+    fn update(&self, tu: Option<(Range<usize>,Cow<'static,str>)>, nc: Option<ETCurSel<E>>, g: &ETextLayout<E>, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+        if tu.is_some() || nc.is_some() {
+            if let Some(t) = self.update.build_box_mut_event(TextBoxUpdate { update_text: tu, update_cursor: nc, update_scroll_pos: None }) {
+                ctx.mutate_closure(t);
+            }
+        }
     }
 }
 
-traitcast_for!(ITextBox<E>;ITextBoxMut<E>);
+traitcast_for_from_widget!(ITextBox<E>);
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
+impl<E,Text,Scroll,Curs,TBUpd> TextBox<'_,E,Text,Scroll,Curs,TBUpd> where
     E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
+    for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
-    Text: TextStor<E>+Validation<E>+'w,
+    for<'a> E::Context<'a>: CtxStdState<'a,E> + CtxClipboardAccess<E>, //TODO make clipboard support optional; e.g. generic type ClipboardAccessProxy
+    Text: TextStor<E> + AsCachor<E>,
     ETextLayout<E>: TxtLayoutFromStor<Text,E>,
     Scroll: AtomState<E,(u32,u32)>,
-    Curs: AtomState<E,Cursor>,
-    CursorStickX: AtomState<E,Option<u32>>,
-    GlyphCache: AtomState<E,LocalGlyphCache<E>>+Clone,
+    Curs: AtomState<E,ETCurSel<E>>,
+    TBUpd: MutorEndBuilder<TextBoxUpdate<E>,E>,
 {
-    pub(crate) fn glyphs(&self, mut l: Link<E>) -> Arc<ETextLayout<E>> { //TODO FIX style mutation invalidating glyphs
-        if let Some((v,c)) = self.glyph_cache.get(l.ctx) {
-            if self.text.valid(&c) {
-                return v;
-            }
+    pub(super) fn glyphs(&self, stack: &(impl Queron<E> + ?Sized), cache: &mut TextBoxCache<E,Text::Cachor>, ctx: &mut E::Context<'_>) -> ValidationStat {
+        //TODO also cachor e.g. style that affects text
+        if cache.text_cachor.is_none() || cache.text_cache.is_none() || !self.text.valid(cache.text_cachor.as_ref().unwrap()) { //TODO old Validation trait bad coercion
+            cache.text_cachor = Some(self.text.cachor());
+            cache.text_cache = Some(TxtLayoutFromStor::from(&self.text,ctx));
+            cache.text_rendered = false;
         }
-
-        let glyphs: Arc<ETextLayout<E>> = Arc::new(
-            TxtLayoutFromStor::<Text,E>::from(&self.text,l.ctx)
-        );
-
-        let g = glyphs.refc();
-        l.mutate_closure(Box::new(move |mut w,ctx,_| {
-            let vali = w.traitcast_mut::<dyn ValidationMut<E>>().unwrap();
-            let key = vali.validate();
-            let cache = w.traitcast_mut::<dyn AtomStateMut<E,LocalGlyphCache<E>>>().unwrap();
-            cache.set( Some((g,key)) ,ctx);
-        }));
-
-        glyphs
+        ValidationStat::from_valid(cache.text_rendered)
     }
-}
 
-impl<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> TextBox<'w,E,Text,Scroll,Curs,CursorStickX,GlyphCache> where
-    E: Env,
-    ERenderer<E>: RenderStdWidgets<E>,
-    EEvent<E>: StdVarSup<E>,
-    E::Context: CtxStdState<E> + CtxClipboardAccess<E>,
-    Text: TextStorMut<E>+ValidationMut<E>+'w,
-    ETextLayout<E>: TxtLayoutFromStor<Text,E>,
-    Scroll: AtomStateMut<E,(u32,u32)>,
-    Curs: AtomStateMut<E,Cursor>,
-    CursorStickX: AtomStateMut<E,Option<u32>>,
-    GlyphCache: AtomStateMut<E,LocalGlyphCache<E>>+Clone,
-{
-    pub(crate) fn glyphs2(&mut self, ctx: &mut E::Context) -> Arc<ETextLayout<E>> {
-        if let Some((v,c)) = self.glyph_cache.get(ctx) {
-            if self.text.valid(&c) {
-                return v;
-            }
+    #[inline]
+    pub(super) fn get_scroll(&self, ctx: &mut E::Context<'_>) -> (u32,u32) {
+        if let Some(s) = self.scroll.as_ref() {
+            s.get(ctx)
+        } else if let Some(s) = self.tbmeta.as_ref() {
+            s.scroll
+        } else {
+            (0,0)
         }
+    }
 
-        let glyphs: Arc<ETextLayout<E>> = Arc::new(
-            TxtLayoutFromStor::<Text,E>::from(&self.text,ctx)
-        );
-
-        let key = self.text.validate();
-        self.glyph_cache.set( Some((glyphs.refc(),key)),ctx);
-
-        glyphs
+    #[inline]
+    pub(super) fn get_cursor(&self, ctx: &mut E::Context<'_>) -> ETCurSel<E> {
+        if let Some(s) = self.cursor.as_ref() {
+            s.get(ctx)
+        } else if let Some(s) = self.tbmeta.as_ref() {
+            s.selection.clone()
+        } else {
+            Default::default()
+        }
     }
 }

@@ -1,17 +1,15 @@
-use std::any::Any;
 use std::borrow::Cow;
+use std::cell::{RefMut, Ref};
+use std::fmt::Display;
 use std::marker::PhantomData;
-use std::ops::Deref;
-use std::ops::DerefMut;
-use std::ops::Range;
-use std::sync::Arc;
+use std::mem::ManuallyDrop;
+use std::ops::{Range, Deref, DerefMut};
+use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
 
+use crate::cachor::{MutCell, AsCachor};
 use crate::env::Env;
-use crate::traitcast_for;
-use crate::util::translate::immu::Immutable;
-use crate::validation::Validation;
-use crate::validation::ValidationMut;
-use crate::validation::validated::Validated;
+use crate::traitcast_for_from_widget;
+use crate::util::immu::Immutable;
 
 use super::layout::TxtLayout;
 
@@ -33,28 +31,10 @@ pub trait TextStor<E> {
     }
 }
 
+traitcast_for_from_widget!(TextStor<E>); //TODO mutable Traitcast
+
 pub trait TextStorMut<E>: TextStor<E> {
-    fn remove_chars(&mut self, range: Range<usize>);
-
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        let len = TextStor::<E>::chars(self);
-        let popable = n.min(off).min(len);
-        let pop_start = off - popable;
-        let pop_end = off;
-
-        assert!(pop_end >= pop_start);
-
-
-
-        self.remove_chars(pop_start..pop_end)
-    }
-    /// off in char units
-    fn push_chars(&mut self, off: usize, chars: &str);
-
-    fn replace(&mut self, s: &str) {
-        self.remove_chars(0..self.len());
-        self.push_chars(0,s);
-    }
+    fn replace(&mut self, replace_range: Range<usize>, insert: &str);
 
     #[inline]
     fn on_modification<F>(self, f: F) -> OnModification<E,Self,F> where Self: Sized, F: FnMut(&mut Self) {
@@ -62,112 +42,200 @@ pub trait TextStorMut<E>: TextStor<E> {
     }
 }
 
-impl<E> TextStor<E> for str {
+impl<E> TextStor<E> for () {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
-        Cow::Borrowed(&self[..])
+        Cow::Borrowed("")
+    }
+}
+impl<E> TextStor<E> for str {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        Cow::Borrowed(self)
     }
 }
 impl<E> TextStor<E> for String {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
-        Cow::Borrowed(&self[..])
+        Cow::Borrowed(self)
     }
 }
 
 impl<E> TextStorMut<E> for String {
-    fn remove_chars(&mut self, range: Range<usize>) {
+    fn replace(&mut self, range: Range<usize>, insert: &str) {
         let range = fix_boundary(self, range.start) .. fix_boundary(self, range.end);
-        self.drain(range);
-    }
-
-    fn push_chars(&mut self, off: usize, chars: &str) {
-        let off = fix_boundary(self, off);
-        self.insert_str(off, chars);
+        self.drain(range.clone());
+        self.insert_str(range.start, insert);
     }
 }
 
 impl<E,A> TextStor<E> for &A where A: TextStor<E> + ?Sized {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
     }
-
+    #[inline]
     fn chars(&self) -> usize {
         (**self).chars()
     }
-
+    #[inline]
     fn len(&self) -> usize {
         (**self).len()
     }
 }
 
 impl<E,A> TextStor<E> for &mut A where A: TextStor<E> + ?Sized {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
     }
-
+    #[inline]
     fn chars(&self) -> usize {
         (**self).chars()
     }
-
+    #[inline]
     fn len(&self) -> usize {
         (**self).len()
     }
 }
 impl<E,A> TextStorMut<E> for &mut A where A: TextStorMut<E> + ?Sized {
-    fn remove_chars(&mut self, range: Range<usize>) {
-        (**self).remove_chars(range)
-    }
-
-    fn push_chars(&mut self, off: usize, chars: &str) {
-        (**self).push_chars(off,chars)
-    }
-
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        (**self).remove_chars_old(off,n)
-    }
-
-    fn replace(&mut self, s: &str) {
-        (**self).replace(s)
+    #[inline]
+    fn replace(&mut self, replace_range: Range<usize>, insert: &str){
+        (**self).replace(replace_range,insert)
     }
 }
 
-traitcast_for!(TextStor<E>;TextStorMut<E>);
-
-fn char_off(s: impl AsRef<str>, o: usize) -> usize {
-    let s = s.as_ref();
-    match s.char_indices().skip(o).next() {
-        Some((i,_)) => i,
-        None => s.len(),
-    }
-}
-
-impl<E,T> TextStor<E> for Validated<E,T> where T: TextStor<E> {
+impl<E,A> TextStor<E> for MutexGuard<'_,A> where A: TextStor<E> + ?Sized {
+    #[inline]
     fn caption<'s>(&'s self) -> Cow<'s,str> {
         (**self).caption()
     }
-
+    #[inline]
     fn chars(&self) -> usize {
         (**self).chars()
     }
-
+    #[inline]
     fn len(&self) -> usize {
         (**self).len()
     }
 }
-impl<E,T> TextStorMut<E> for Validated<E,T> where T: TextStorMut<E> {
-    fn remove_chars(&mut self, range: Range<usize>) {
-        (**self).remove_chars(range)
+impl<E,A> TextStorMut<E> for MutexGuard<'_,A> where A: TextStorMut<E> + ?Sized {
+    #[inline]
+    fn replace(&mut self, replace_range: Range<usize>, insert: &str){
+        (**self).replace(replace_range,insert)
     }
+}
 
-    fn push_chars(&mut self, off: usize, chars: &str) {
-        (**self).push_chars(off,chars)
+impl<E,A> TextStor<E> for RwLockReadGuard<'_,A> where A: TextStor<E> + ?Sized {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        (**self).caption()
     }
-
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        (**self).remove_chars_old(off,n)
+    #[inline]
+    fn chars(&self) -> usize {
+        (**self).chars()
     }
+    #[inline]
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+}
 
-    fn replace(&mut self, s: &str) {
-        (**self).replace(s)
+impl<E,A> TextStor<E> for RwLockWriteGuard<'_,A> where A: TextStor<E> + ?Sized {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        (**self).caption()
+    }
+    #[inline]
+    fn chars(&self) -> usize {
+        (**self).chars()
+    }
+    #[inline]
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+}
+impl<E,A> TextStorMut<E> for RwLockWriteGuard<'_,A> where A: TextStorMut<E> + ?Sized {
+    #[inline]
+    fn replace(&mut self, replace_range: Range<usize>, insert: &str){
+        (**self).replace(replace_range,insert)
+    }
+}
+
+impl<E,A> TextStor<E> for Ref<'_,A> where A: TextStor<E> + ?Sized {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        (**self).caption()
+    }
+    #[inline]
+    fn chars(&self) -> usize {
+        (**self).chars()
+    }
+    #[inline]
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+}
+
+impl<E,A> TextStor<E> for RefMut<'_,A> where A: TextStor<E> + ?Sized {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        (**self).caption()
+    }
+    #[inline]
+    fn chars(&self) -> usize {
+        (**self).chars()
+    }
+    #[inline]
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+}
+impl<E,A> TextStorMut<E> for RefMut<'_,A> where A: TextStorMut<E> + ?Sized {
+    #[inline]
+    fn replace(&mut self, replace_range: Range<usize>, insert: &str){
+        (**self).replace(replace_range,insert)
+    }
+}
+
+impl<E,A> TextStor<E> for ManuallyDrop<A> where A: TextStor<E> + ?Sized {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        (**self).caption()
+    }
+    #[inline]
+    fn chars(&self) -> usize {
+        (**self).chars()
+    }
+    #[inline]
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+}
+impl<E,A> TextStorMut<E> for ManuallyDrop<A> where A: TextStorMut<E> + ?Sized {
+    #[inline]
+    fn replace(&mut self, replace_range: Range<usize>, insert: &str){
+        (**self).replace(replace_range,insert)
+    }
+}
+
+impl<E,T> TextStor<E> for MutCell<T> where T: TextStor<E> {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        (**self).caption()
+    }
+    #[inline]
+    fn chars(&self) -> usize {
+        (**self).chars()
+    }
+    #[inline]
+    fn len(&self) -> usize {
+        (**self).len()
+    }
+}
+impl<E,T> TextStorMut<E> for MutCell<T> where T: TextStorMut<E> {
+    fn replace(&mut self, replace_range: Range<usize>, insert: &str) {
+        (**self).replace(replace_range,insert)
     }
 }
 pub struct OnModification<E,S: ?Sized,F>(F,PhantomData<E>,S) where F: FnMut(&mut S);
@@ -187,23 +255,23 @@ impl<E,S,F> DerefMut for OnModification<E,S,F> where F: FnMut(&mut S) {
     }
 }
 
-impl<E,S,F> Validation<E> for OnModification<E,S,F> where S: Validation<E>, F: FnMut(&mut S) {
-    #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
-    }
-    #[inline]
-    fn validation(&self) -> Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-impl<E,S,F> ValidationMut<E> for OnModification<E,S,F> where S: ValidationMut<E>, F: FnMut(&mut S) {
-    #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
-        (**self).validate()
-        //TODO trigger OnModification?
-    }
-}
+// impl<E,S,F> Validation<E> for OnModification<E,S,F> where S: Validation<E>, F: FnMut(&mut S) {
+//     #[inline]
+//     fn valid(&self, v: &dyn Any) -> bool {
+//         (**self).valid(v)
+//     }
+//     #[inline]
+//     fn validation(&self) -> Arc<dyn Any> {
+//         (**self).validation()
+//     }
+// }
+// impl<E,S,F> ValidationMut<E> for OnModification<E,S,F> where S: ValidationMut<E>, F: FnMut(&mut S) {
+//     #[inline]
+//     fn validate(&mut self) -> Arc<dyn Any> {
+//         (**self).validate()
+//         //TODO trigger OnModification?
+//     }
+// }
 
 impl<E,S,F> TextStor<E> for OnModification<E,S,F> where S: TextStor<E>, F: FnMut(&mut S) {
     #[inline]
@@ -223,26 +291,8 @@ impl<E,S,F> TextStor<E> for OnModification<E,S,F> where S: TextStor<E>, F: FnMut
 }
 impl<E,S,F> TextStorMut<E> for OnModification<E,S,F> where S: TextStorMut<E>, F: FnMut(&mut S) {
     #[inline]
-    fn remove_chars(&mut self, range: Range<usize>) {
-        (**self).remove_chars(range);
-        (self.0)(&mut self.2);
-    }
-
-    #[inline]
-    fn push_chars(&mut self, off: usize, chars: &str) {
-        (**self).push_chars(off,chars);
-        (self.0)(&mut self.2);
-    }
-
-    #[inline]
-    fn remove_chars_old(&mut self, off: usize, n: usize) {
-        (**self).remove_chars_old(off,n);
-        (self.0)(&mut self.2);
-    }
-
-    #[inline]
-    fn replace(&mut self, s: &str) {
-        (**self).replace(s);
+    fn replace(&mut self, replace_range: Range<usize>, insert: &str) {
+        (**self).replace(replace_range,insert);
         (self.0)(&mut self.2);
     }
 }
@@ -269,6 +319,7 @@ impl_caption_gen!(
     u8;u16;u32;u64;u128;usize
 );
 
+#[inline]
 pub fn fix_boundary(s: &str, mut off: usize) -> usize {
     while !s.is_char_boundary(off) && off!=0 {
         off = off.saturating_sub(1); //TODO efficient algorithm
@@ -277,46 +328,82 @@ pub fn fix_boundary(s: &str, mut off: usize) -> usize {
 }
 
 pub trait ToTextLayout<S,E>: TextStor<E> where E: Env, S: TxtLayout<E> {
-    fn to_text_layout(&self, c: &mut E::Context) -> S;
-    fn update_text_layout(&self, s: &mut S, c: &mut E::Context);
+    fn to_text_layout(&self, c: &mut E::Context<'_>) -> S;
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context<'_>);
 }
 
 impl<T,S,E> ToTextLayout<S,E> for &T where E: Env, T: ToTextLayout<S,E> + ?Sized, S: TxtLayout<E> {
-    fn to_text_layout(&self, c: &mut E::Context) -> S {
+    fn to_text_layout(&self, c: &mut E::Context<'_>) -> S {
         (**self).to_text_layout(c)
     }
 
-    fn update_text_layout(&self, s: &mut S, c: &mut E::Context) {
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context<'_>) {
         (**self).update_text_layout(s,c)
     }
 }
 
 impl<T,S,E,F> ToTextLayout<S,E> for OnModification<E,T,F> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E>, F: FnMut(&mut T) {
-    fn to_text_layout(&self, c: &mut E::Context) -> S {
+    fn to_text_layout(&self, c: &mut E::Context<'_>) -> S {
         (**self).to_text_layout(c)
     }
 
-    fn update_text_layout(&self, s: &mut S, c: &mut E::Context) {
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context<'_>) {
         (**self).update_text_layout(s,c)
     }
 }
 
-impl<T,S,E> ToTextLayout<S,E> for Validated<E,T> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E> {
-    fn to_text_layout(&self, c: &mut E::Context) -> S {
+impl<T,S,E> ToTextLayout<S,E> for MutCell<T> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E> {
+    fn to_text_layout(&self, c: &mut E::Context<'_>) -> S {
         (**self).to_text_layout(c)
     }
 
-    fn update_text_layout(&self, s: &mut S, c: &mut E::Context) {
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context<'_>) {
         (**self).update_text_layout(s,c)
     }
 }
 
 impl<T,S,E,Z> ToTextLayout<S,E> for Immutable<E,T,Z> where E: Env, T: ToTextLayout<S,E>, S: TxtLayout<E> {
-    fn to_text_layout(&self, c: &mut E::Context) -> S {
+    fn to_text_layout(&self, c: &mut E::Context<'_>) -> S {
         (**self).to_text_layout(c)
     }
 
-    fn update_text_layout(&self, s: &mut S, c: &mut E::Context) {
+    fn update_text_layout(&self, s: &mut S, c: &mut E::Context<'_>) {
         (**self).update_text_layout(s,c)
     }
 }
+
+pub struct TextDisplay<T>(pub T) where T: Display;
+
+impl<T,E> TextStor<E> for TextDisplay<T> where T: Display, E: Env {
+    #[inline]
+    fn caption<'s>(&'s self) -> Cow<'s,str> {
+        Cow::Owned(format!("{}",self.0))
+    }
+}
+
+impl<T,E> AsCachor<E> for TextDisplay<T> where T: AsCachor<E> + Display, E: Env {
+    type Cachor = T::Cachor;
+
+    #[inline]
+    fn cachor(&self) -> Self::Cachor {
+        self.0.cachor()
+    }
+
+    #[inline]
+    fn valid(&self, cachored: &Self::Cachor) -> bool {
+        self.0.valid(cachored)
+    }
+}
+
+// macro_rules! macor2 {
+//     ( $fmt:expr, $( $($iden:ident =)? $vala:expr ),* ) => {
+        
+//     };
+// }
+
+// fn akw() -> usize {
+//     let mut sk = 1;
+//     sk = 2
+// }
+
+// macor2!("ad",a,4,2);

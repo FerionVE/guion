@@ -1,22 +1,43 @@
 //! standard variants
-use super::*;
+
+use std::fmt::Debug;
+use std::sync::Arc;
+
+use crate::aliases::{EEKey, EEDest};
+use crate::env::Env;
+use crate::event::Destination;
+use crate::event::variant::Variant;
+use crate::newpath::PathResolvusDyn;
+use crate::util::bounds::{Bounds, Offset, Dims};
 
 #[derive(Clone,Debug)]
 pub struct KbdDown<E> where E: Env {
     pub key: EEKey<E>,
 }
-#[derive(Clone,Debug)]
+#[derive(Clone)]
 pub struct KbdUp<E> where E: Env {
     pub key: EEKey<E>,
-    pub down_widget: WidgetIdent<E>,
+    pub down_widget: Arc<dyn PathResolvusDyn<E>>,
     pub down_ts: u64,
 }
-#[derive(Clone,Debug)]
+impl<E> Debug for KbdUp<E> where E: Env {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("KbdUp").field("key", &self.key).field("down_ts", &self.down_ts).finish()
+    }
+}
+
+#[derive(Clone)]
 pub struct KbdPress<E> where E: Env {
     pub key: EEKey<E>,
-    pub down_widget: WidgetIdent<E>,
+    pub down_widget: Arc<dyn PathResolvusDyn<E>>,
     pub down_ts: u64,
 }
+impl<E> Debug for KbdPress<E> where E: Env {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { //TODO Debug for PathResolvus
+        f.debug_struct("KbdPress").field("key", &self.key).field("down_ts", &self.down_ts).finish()
+    }
+}
+
 #[derive(Clone,Debug)]
 pub struct TextInput {
     pub text: String, //TODO Arc<str> for less clonery
@@ -27,13 +48,18 @@ pub struct MouseDown<E> where E: Env {
     pub key: EEKey<E>,
     pub pos: Offset,
 }
-#[derive(Clone,Debug)]
+#[derive(Clone)]
 pub struct MouseUp<E> where E: Env {
     pub key: EEKey<E>,
     pub pos: Offset,
     pub down_pos: Offset,
-    pub down_widget: WidgetIdent<E>,
+    pub down_widget: Arc<dyn PathResolvusDyn<E>>,
     pub down_ts: u64,
+}
+impl<E> Debug for MouseUp<E> where E: Env {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MouseUp").field("key", &self.key).field("pos", &self.pos).field("down_pos", &self.down_pos).field("down_ts", &self.down_ts).finish()
+    }
 }
 
 #[derive(Clone,Debug)]
@@ -68,6 +94,10 @@ pub struct Focus;
 
 #[derive(Clone,Debug)]
 pub struct Unfocus;
+
+/// If hover update, e.g. [`MouseEnter`] or [`MouseLeave`]
+#[derive(Clone,Debug)]
+pub struct HoverUpdate;
 
 macro_rules! pos {
     ($field:ident) => {

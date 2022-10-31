@@ -1,7 +1,11 @@
 //! query some StdState from any Handler/Context tracking some StdState
-use super::*;
 
+use crate::ctx::Context;
+use crate::env::Env;
+use crate::event::key::PressedKey;
 use crate::event::key_combo::{KeyCombo, MatchKey, Matches};
+use crate::newpath::{PathResolvusDyn, FwdCompareStat, PathStackDyn, PathStack};
+use crate::util::bounds::Offset;
 
 pub mod handler;
 pub mod dyn_state;
@@ -11,25 +15,25 @@ pub mod standard;
 
 //move StdState trait to standard StdState trait. StdState is not a core feature!
 
-pub trait CtxStdState<E>: Context<E> + Sized where E: Env<Context=Self> {
-    type T: StdState<E>;
+pub trait CtxStdState<'cc,E>: Context<'cc,E> + Sized + 'cc where E: Env {
+    type T: StdState<E> + 'cc;
     
     fn state_mut(&mut self) -> &mut Self::T;
     fn state(&self) -> &Self::T;
 } 
-pub trait StdState<E>: 'static where E: Env {
-    type K: PressedKey<E>;
+pub trait StdState<E> where E: Env {
+    type K: PressedKey<E> + 'static;
     
-    fn hovered(&self) -> Option<E::WidgetID>;
-    fn selected(&self) -> Option<E::WidgetID>;
+    fn hovered(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)>;
+    fn selected(&self) -> Option<&(dyn PathResolvusDyn<E>+'_)>;
 
     #[inline]
-    fn is_hovered(&self, i: &E::WidgetID) -> bool {
-        self.hovered().map_or(false, #[inline] |w| w == *i )
+    fn is_hovered(&self, i: &(dyn PathStackDyn<E>+'_)) -> bool {
+        self.hovered().map_or(false, #[inline] |w| i.fwd_compare(w) == FwdCompareStat::Equal )
     }
     #[inline]
-    fn is_focused(&self, i: &E::WidgetID) -> bool {
-        self.selected().map_or(false, #[inline] |w| w == *i )
+    fn is_focused(&self, i: &(dyn PathStackDyn<E>+'_)) -> bool {
+        self.selected().map_or(false, #[inline] |w| i.fwd_compare(w) == FwdCompareStat::Equal )
     }
 
     /*fn pressed(&self) -> &[Self::K];
@@ -54,9 +58,9 @@ pub trait StdState<E>: 'static where E: Env {
         }
     }
     #[inline]
-    fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: E::WidgetID) -> Option<&Self::K> {
+    fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: &(dyn PathStackDyn<E>+'_)) -> Option<&Self::K> {
         if let Some(v) = self.is_pressed(c) {
-            if v.widget().is(id.clone()) {
+            if id.fwd_compare(v.widget()) == FwdCompareStat::Equal {
                 return Some(v);
             }
         }

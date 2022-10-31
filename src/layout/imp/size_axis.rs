@@ -1,5 +1,6 @@
-use qwutils::imp::option::OptionExt;
-use super::*;
+use qwutils::OptionExt;
+
+use crate::layout::size::StdGonstraintAxis;
 
 qwutils::opion!(add(StdGonstraintAxis,StdGonstraintAxis) |s,r| {
     s.min += r.min;

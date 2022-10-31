@@ -1,9 +1,9 @@
 [package]
 name = "guion"
-version = "0.4.0"
+version = "0.6.0-dev0"
 
 authors = ["qwertz19281 <dellen903@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 description = "flexible GUI framework"
 categories = ["gui"]

@@ -1,21 +1,24 @@
 //! [`Event`] container and variants
-use crate::event::key::Key;
-use super::*;
-use std::{fmt::Debug, any::Any};
 
-pub mod compound;
-pub mod filter;
-pub mod variant;
+use std::fmt::Debug;
+
+use crate::env::Env;
+use crate::util::bounds::Bounds;
+
+use self::key::Key;
+use self::variant::{Variant, VariantSupport};
+
+pub mod imp;
 pub mod key;
 pub mod key_combo;
 pub mod standard;
-pub mod imp;
+pub mod variant;
 
 /// an Event holds one of the support [`Variant`] and can be downcasted to a specific Variant
-pub trait Event<E>: Sized + Clone + Debug where E: Env, E::Backend: Backend<E,Event=Self> {
+pub trait Event<E>: Sized + Clone + Debug where E: Env {
     type Dest: Destination;
     type Key: Key;
-
+    
     /// True if container widgets should sent this to only one widget  
     fn consuming(&self) -> bool;
     /// Where there Event should be initially injected into the context

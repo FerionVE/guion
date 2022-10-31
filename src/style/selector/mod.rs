@@ -1,6 +1,4 @@
-use selectag::StyleSelectag;
-
-use super::*;
+use super::selectag::StyleSelectag;
 
 pub mod imp;
 

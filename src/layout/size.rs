@@ -1,7 +1,5 @@
-use super::*;
-
 /// Size +/+= Border
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 pub struct StdGonstraints {
     pub x: StdGonstraintAxis,
     pub y: StdGonstraintAxis,
@@ -9,7 +7,7 @@ pub struct StdGonstraints {
 
 /// The SizeAxis holds layouting constraints for one axis
 /// Supported Operators: Add, BitAnd
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 pub struct StdGonstraintAxis {
     pub min: u32,
     pub preferred: u32,
@@ -21,25 +19,39 @@ impl StdGonstraints {
     #[inline]
     pub const fn fixed_const(w: u32, h: u32) -> Self {
         Self{
-            x: StdGonstraintAxis{
-                min: w,
-                preferred: w,
-                max: Some(w),
-                pressure: 1.0,
-            },
-            y: StdGonstraintAxis{
-                min: h,
-                preferred: h,
-                max: Some(h),
-                pressure: 1.0,
-            }
+            x: StdGonstraintAxis::fixed_const(w),
+            y: StdGonstraintAxis::fixed_const(h),
+        }
+    }
+    #[inline]
+    pub const fn zero_const() -> Self {
+        Self{
+            x: StdGonstraintAxis::zero_const(),
+            y: StdGonstraintAxis::zero_const(),
+        }
+    }
+    #[inline]
+    pub const fn empty_fill_const() -> Self {
+        Self{
+            x: StdGonstraintAxis::empty_fill_const(),
+            y: StdGonstraintAxis::empty_fill_const(),
         }
     }
 }
 
 impl StdGonstraintAxis {
     #[inline]
-    pub const fn empty_const() -> Self {
+    pub const fn zero_const() -> Self {
+        StdGonstraintAxis {
+            min: 0,
+            preferred: 0,
+            max: Some(0),
+            pressure: 0.0,
+        }
+    }
+
+    #[inline]
+    pub const fn empty_fill_const() -> Self {
         StdGonstraintAxis {
             min: 0,
             preferred: 0,
@@ -54,7 +66,7 @@ impl StdGonstraintAxis {
             min: s,
             preferred: s,
             max: Some(s),
-            pressure: 0.0,
+            pressure: 1.0,
         }
     }
 }
@@ -86,34 +98,34 @@ impl StdGonstraintAxis {
 /// `5-8`: Preferred 5, can be bigger, but not bigger than 8  
 #[macro_export]
 macro_rules! constraint {
-    (# $min:literal ~ $pref:literal - $max:tt @ $p:literal | $($m:tt)*) => {
+    ($min:tt ~ $pref:tt - $max:tt @ $p:tt | $($m:tt)*) => {
         $crate::layout::size::StdGonstraints{
-            x: $crate::constraint!(#$min ~ $pref - $max @ $p),
+            x: $crate::constraint!($min ~ $pref - $max @ $p),
             y: $crate::constraint!($($m)*),
         }
     };
-    (# $min:literal ~ $pref:literal - None @ $p:literal) => {
+
+    ($min:tt ~ $pref:tt - None @ $p:tt) => {
         $crate::layout::size::StdGonstraintAxis{min:$min,preferred:$pref,max:None,pressure:$p}
     };
-    (# $min:literal ~ $pref:literal - $max:literal @ $p:literal) => {
+    ($min:tt ~ $pref:tt - $max:tt @ $p:tt) => {
         $crate::layout::size::StdGonstraintAxis{min:$min,preferred:$pref,max:Some($max),pressure:$p}
     };
-    (# $min:literal ~ $pref:literal - $max:tt $($m:tt)*) => {
-        $crate::constraint!(#$min ~ $pref - $max @ 1.0 $($m)*)
+
+    ($min:tt ~ $pref:tt - $max:tt $(| $($m:tt)*)?) => {
+        $crate::constraint!($min ~ $pref - $max @ 1.0 $(| $($m)*)?)
     };
-    ($min:literal ~ $pref:literal - $max:literal $($m:tt)*) => {
-        $crate::constraint!(#$min ~ $pref - $max $($m)*)
+    ($min:tt ~ $pref:tt - $(@ $p:tt)? $(| $($m:tt)*)?) => {
+        $crate::constraint!($min ~ $pref - None $(@ $p)? $(| $($m)*)?)
     };
-    ($min:literal ~ $pref:literal - $($m:tt)*) => {
-        $crate::constraint!(#$min ~ $pref - None $($m)*)
+    ($min:tt ~ $pref:tt $(@ $p:tt)? $(| $($m:tt)*)?) => {
+        $crate::constraint!($min ~ $pref - $pref $(@ $p)? $(| $($m)*)?)
     };
-    ($min:literal ~ $pref:literal $($m:tt)*) => {
-        $crate::constraint!(#$min ~ $pref - $pref $($m)*)
-    };
-    (~ $pref:literal $($m:tt)*) => {
+
+    (~ $pref:tt $($m:tt)*) => {
         $crate::constraint!(0 ~ $pref $($m)*)
     };
-    ($pref:literal $($m:tt)*) => {
+    ($pref:tt $($m:tt)*) => {
         $crate::constraint!($pref ~ $pref $($m)*)
     };
 }

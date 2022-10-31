@@ -1,4 +1,6 @@
-pub use super::*;
+use qwutils::DivOrNop;
+
+use super::bounds::{Offset, Bounds};
 
 /// Helper for translating points between bound spaces offset and scaling
 pub struct Translate<'a>(&'a Bounds,&'a Bounds);

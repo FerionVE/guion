@@ -1,6 +1,13 @@
-use super::*;
+use std::fmt::Debug;
 
-pub trait VariantSupport<V,E>: Event<E> where E: Env, E::Backend: Backend<E,Event=Self>, V: Variant<E> {
+use crate::aliases::EEDest;
+use crate::env::Env;
+use crate::util::bounds::Bounds;
+
+use super::{Event, Destination};
+use super::imp::VariantDerive;
+
+pub trait VariantSupport<V,E>: Event<E> where E: Env, V: Variant<E> {
     fn from_variant(v: V) -> Self;
     fn to_variant(&self) -> Option<V>;
 }

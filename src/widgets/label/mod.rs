@@ -1,76 +1,64 @@
-use crate::text::stor::TextStor;
-use crate::validation::Validation;
-
-use super::*;
 use std::marker::PhantomData;
-use util::{LocalGlyphCache, remote_state::RemoteState};
+
+use crate::aliases::{ESize, EStyle};
+use crate::cachor::AsCachor;
+use crate::env::Env;
+use crate::layout::Gonstraints;
+use crate::text::stor::TextStor;
 
 pub mod widget;
 
-pub struct Label<'w,E,Text,GlyphCache> where
+pub struct Label<E,Text> where
     E: Env,
-    Text: 'w,
-    GlyphCache: 'w,
 {
-    id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub text: Text,
     pub align: (f32,f32),
-    pub glyph_cache: GlyphCache,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<()>,
 }
 
-impl<'w,E> Label<'w,E,&'static str,LocalGlyphCache<E>> where
+impl<E> Label<E,&'static str> where
     E: Env,
 {
     #[inline]
-    pub fn new(id: E::WidgetID) -> Self {
+    pub fn new() -> Self {
         Self{
-            id,
-            size: ESize::<E>::empty(),
+            size: ESize::<E>::zero(),
             style: Default::default(),
             text: "",
             align: (0.5,0.5),
-            glyph_cache: None,
             p: PhantomData,
         }
     }
 }
 
-impl<'w,E,Text> Label<'w,E,Text,RemoteState<E,LocalGlyphCache<E>>> where
+impl<E,Text> Label<E,Text> where
     E: Env,
-    E::Context: DynState<E>,
-    Text: TextStor<E>+Validation<E>+'w,
+    Text: TextStor<E> + AsCachor<E>,
 {
     #[inline]
-    pub fn immediate(id: E::WidgetID, text: Text) -> Self {
+    pub fn of_text(text: Text) -> Self {
         Self{
-            id: id.clone(),
-            size: ESize::<E>::empty(),
+            size: ESize::<E>::zero(),
             style: Default::default(),
             text,
             align: (0.5,0.5),
-            glyph_cache: RemoteState::for_widget(id),
             p: PhantomData,
         }
     }
 }
 
-impl<'w,E,Text,GlyphCache> Label<'w,E,Text,GlyphCache> where
+impl<E,Text> Label<E,Text> where
     E: Env,
-    Text: 'w,
-    GlyphCache: 'w,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<'w,E,T,GlyphCache> where T: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<T>(self, text: T) -> Label<E,T> where T: TextStor<E> + AsCachor<E> {
         Label{
-            id: self.id,
             size: self.size,
             style: self.style,
             text,
             align: self.align,
-            glyph_cache: self.glyph_cache,
             p: PhantomData,
         }
     }

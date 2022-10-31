@@ -2,15 +2,14 @@ use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut, Range};
 
+use crate::cachor::AsCachor;
+use crate::env::Env;
 use crate::text::stor::{TextStor, TextStorMut};
-use crate::validation::{Validation, ValidationMut};
-use crate::widgets::util::state::AtomState;
-use crate::*;
-use crate::widgets::util::state::AtomStateMut;
+use crate::widgets::util::state::{AtomState, AtomStateMut};
 
 /// Implements TextStorMut/ValidationMut for immutable and discards mutation
 #[repr(transparent)]
-pub struct Immutable<E,T: ?Sized,Z: ?Sized>(pub PhantomData<(E,Z)>,pub T);
+pub struct Immutable<E,T: ?Sized,Z: ?Sized>(pub PhantomData<(E,fn()->Z)>,pub T);
 
 impl<E,T,Z> Deref for Immutable<E,T,Z> {
     type Target = T;
@@ -45,45 +44,22 @@ impl<E,A,Z> TextStor<E> for Immutable<E,A,Z> where A: TextStor<E> {
 }
 impl<E,A,Z> TextStorMut<E> for Immutable<E,A,Z> where A: TextStor<E> {
     #[inline]
-    fn remove_chars(&mut self, range: Range<usize>) {}
-    #[inline]
-    fn push_chars(&mut self, off: usize, chars: &str) {}
-    #[inline]
-    fn remove_chars_old(&mut self, off: usize, n: usize) {}
-    #[inline]
-    fn replace(&mut self, s: &str) {}
+    fn replace(&mut self, _: Range<usize>, _: &str) {}
 }
 impl<E,A,Z> TextStorMut<E> for &Immutable<E,A,Z> where A: TextStor<E>, E: Env {
     #[inline]
-    fn remove_chars(&mut self, range: Range<usize>) {}
-    #[inline]
-    fn push_chars(&mut self, off: usize, chars: &str) {}
-    #[inline]
-    fn remove_chars_old(&mut self, off: usize, n: usize) {}
-    #[inline]
-    fn replace(&mut self, s: &str) {}
+    fn replace(&mut self, _: Range<usize>, _: &str) {}
 }
 
-impl<E,A,Z> Validation<E> for Immutable<E,A,Z> where A: Validation<E> {
+impl<E,A,Z> AsCachor<E> for Immutable<E,A,Z> where A: AsCachor<E> {
+    type Cachor = A::Cachor;
     #[inline]
-    fn valid(&self, v: &dyn Any) -> bool {
-        (**self).valid(v)
+    fn cachor(&self) -> Self::Cachor {
+        (**self).cachor()
     }
     #[inline]
-    fn validation(&self) -> std::sync::Arc<dyn Any> {
-        (**self).validation()
-    }
-}
-impl<E,A,Z> ValidationMut<E> for Immutable<E,A,Z> where A: Validation<E> {
-    #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
-        self.validation()
-    }
-}
-impl<E,A,Z> ValidationMut<E> for &Immutable<E,A,Z> where A: Validation<E> {
-    #[inline]
-    fn validate(&mut self) -> std::sync::Arc<dyn Any> {
-        self.validation()
+    fn valid(&self, cachored: &Self::Cachor) -> bool {
+        (**self).valid(cachored)
     }
 }
 
@@ -93,7 +69,7 @@ impl<E,A,T> AtomState<E,T> for Immutable<E,A,T> where E: Env, A: AtomState<E,T> 
         (**self).get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         (**self).get(c)
     }
 }
@@ -110,7 +86,7 @@ impl<E,A,T> AtomState<E,T> for &mut Immutable<E,A,T> where E: Env, A: AtomState<
         (**self).get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         (**self).get(c)
     }
 }
@@ -127,7 +103,7 @@ impl<E,A,T> AtomState<E,T> for &Immutable<E,A,T> where E: Env, A: AtomState<E,T>
         (**self).get_direct()
     }
     #[inline]
-    fn get(&self, c: &mut E::Context) -> T {
+    fn get(&self, c: &mut E::Context<'_>) -> T {
         (**self).get(c)
     }
 }

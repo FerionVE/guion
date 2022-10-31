@@ -1,27 +1,28 @@
-use super::*;
 use std::marker::PhantomData;
+
+use crate::aliases::{ESize, EStyle};
+use crate::env::Env;
+use crate::layout::{Orientation, Gonstraints};
 
 pub mod widget;
 
-pub struct ProgressBar<'w,E> where 
+pub struct ProgressBar<E> where 
     E: Env,
 {
-    id: E::WidgetID,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub value: f32,
     pub orientation: Orientation,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<()>,
 }
 
-impl<'w,E> ProgressBar<'w,E> where 
+impl<E> ProgressBar<E> where 
     E: Env,
 {
     #[inline]
-    pub fn new(id: E::WidgetID, o: Orientation) -> Self {
+    pub fn new(o: Orientation) -> Self {
         Self {
-            id,
-            size: Gonstraints::empty(),
+            size: Gonstraints::empty_fill(),
             style: Default::default(),
             value: 0.0,
             orientation: o,
@@ -30,18 +31,18 @@ impl<'w,E> ProgressBar<'w,E> where
     }
 }
 
-impl<'w,E> ProgressBar<'w,E> where 
+impl<E> ProgressBar<E> where 
     E: Env,
 {
     #[inline]
-    pub fn with_value(mut self, v: f32) -> Self {
-        self.value = v;
+    pub fn with_value(mut self, value: f32) -> Self {
+        self.value = value;
         self
     }
 
     #[inline]
-    pub fn with_size(mut self, s: ESize<E>) -> Self {
-        self.size = s;
+    pub fn with_size(mut self, size: ESize<E>) -> Self {
+        self.size = size;
         self
     }
     #[inline]

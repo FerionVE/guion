@@ -1,44 +1,40 @@
 //! The [`Context`] trait housing handlers, queue and other side stuff
-use super::*;
+
+use crate::env::Env;
+use crate::handler::HandlerBuilder;
+
+use self::queue::{BoxMutEvent, StdEnqueueable, StdOrder, Queue};
 
 pub mod queue;
 pub mod clipboard;
 
 /// The Context contains the [`Handlers`](Handler), the [`Queue`] and other side data and is also the entry point for most actions.  
 /// A Context is regularly referenced in parallel with the [widget tree](Env::Storage)
-pub trait Context<E>: Sized + 'static where E: Env<Context=Self> {
-    type Handler: Handler<E>;
+pub trait Context<'cc,E>: Sized + 'cc where E: Env {
+    type Handler: HandlerBuilder<E>;
     type Queue: Queue<StdEnqueueable<E>,StdOrder>;
 
     fn queue_mut(&mut self) -> &mut Self::Queue;
     fn queue(&self) -> &Self::Queue;
 
-    #[inline] 
-    fn render(&mut self, w: Resolved<E>, r: &mut RenderLink<E>) {
-        Self::Handler::_render(self.link(w),r)
-    }
-    #[inline] 
-    fn event_direct(&mut self, w: Resolved<E>, e: &EventCompound<E>) -> EventResp {
-        Self::Handler::_event_direct(self.link(w),e)
-    }
-    #[inline]
-    fn send_event(&mut self, w: Resolved<E>, e: &EventCompound<E>, child: E::WidgetPath) -> Result<EventResp,E::Error> {
-        Self::Handler::_send_event(self.link(w),e,child)
-    }
-    #[inline] 
-    fn size(&mut self, w: Resolved<E>, e: &EStyle<E>) -> ESize<E> {
-        Self::Handler::_size(self.link(w),e)
-    }
-    #[inline] 
-    fn _event_root(&mut self, w: Resolved<E>, e: &EventCompound<E>) -> EventResp {
-        Self::Handler::_event_root(self.link(w),e)
-    }
+    fn lt_mut(&mut self) -> &mut E::Context<'cc> where Self: 'cc;
 
-    #[inline]
-    fn link<'l: 's,'s>(&'s mut self, w: Resolved<'l,E>) -> Link<'s,E> {
-        Link{
-            ctx: self,
-            widget: w,
-        }
+    fn build_handler(&mut self) -> <Self::Handler as HandlerBuilder<E>>::Built where Self: Sized;
+
+    // #[inline]
+    // fn link<'o,'s:'o,'t:'o>(&'s mut self, w: Resolved<'t,E>) -> Link<'o,'cc,E> where 'cc: 'o, Self: 'cc {
+    //     Link{
+    //         ctx: self.lt_mut(),
+    //         widget: w.lt(),
+    //     }
+    // }
+
+    #[deprecated="TODO better queue shorthands"]
+    fn mutate_closure(&mut self, closure: BoxMutEvent<E>) {
+        self.queue_mut().push(
+            StdEnqueueable::MutateRootClosure { f: closure },
+            StdOrder::PostCurrent,
+            0,
+        );
     }
 }

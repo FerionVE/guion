@@ -1,43 +1,43 @@
-use super::*;
-use super::util::LocalGlyphCache;
-use super::label::Label;
-use crate::text::stor::TextStor;
-use crate::{event::key::Key, validation::Validation};
 use std::marker::PhantomData;
-use util::state::*;
+
+use crate::aliases::{ESize, EStyle};
+use crate::cachor::AsCachor;
+use crate::env::Env;
+use crate::layout::Gonstraints;
+use crate::text::stor::TextStor;
+use crate::view::mut_target::{DynAtomStateMutTarget, MuTarget};
+use crate::view::mutor_trait::{MutorToBuilder, MutorEndBuilder, MutorToBuilderExt};
+
+use super::label::Label;
+use super::util::state::AtomStateMut;
 
 pub mod widget;
 pub mod imp;
 
-pub struct CheckBox<'w,E,State,Text> where
+pub struct CheckBox<E,State,Text,TrMut> where
     E: Env,
-    State: 'w,
-    Text: 'w,
 {
-    pub trigger: for<'a> fn(Link<'a,E>,bool),
-    id: E::WidgetID,
+    pub updater: TrMut,
     pub size: ESize<E>,
     pub style: EStyle<E>,
     pub locked: bool,
     //pressed: Option<EEKey<E>>,
     pub text: Text,
     pub state: State,
-    p: PhantomData<&'w mut &'w ()>,
+    p: PhantomData<()>,
 }
 
-impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>> where
+impl<State,E> CheckBox<E,State,Label<E,&'static str>,()> where
     E: Env,
-    E::WidgetID: WidgetIDAlloc,
 {
     #[inline]
-    pub fn new(id: E::WidgetID, state: State) -> Self {
+    pub fn new(state: State) -> Self {
         Self{
-            id,
-            size: ESize::<E>::empty(),
+            size: ESize::<E>::zero(),
             style: Default::default(),
-            trigger: |_,_|{},
+            updater: (),
             locked: false,
-            text: Label::new(E::WidgetID::new_id())
+            text: Label::new()
                 .with_align((0.,0.5)),
             state,
             p: PhantomData,
@@ -45,24 +45,79 @@ impl<'w,State,E> CheckBox<'w,E,State,Label<'w,E,&'static str,LocalGlyphCache<E>>
     }
 }
 
-impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
+impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where
     E: Env,
-    Text: 'w,
 {
-    
-
     #[inline]
-    pub fn with_trigger(mut self, fun: for<'a> fn(Link<E>,bool)) -> Self {
-        self.trigger = fun;
-        self
-    }
-    #[inline]
-    pub fn with_caption<T>(self, text: T) -> CheckBox<'w,E,State,T> where T: AsWidget<E> {
+    pub fn with_update<T>(self, mutor: T) -> CheckBox<E,State,Text,T> where T: MutorEndBuilder<bool,E> {
         CheckBox{
-            id: self.id,
             size: self.size,
             style: self.style,
-            trigger: self.trigger,
+            updater: mutor,
+            locked: self.locked,
+            text: self.text,
+            state: self.state,
+            p: PhantomData,
+        }
+    }
+
+    #[inline]
+    pub fn with_atomstate<T>(self, mutor: T) -> CheckBox<E,State,Text,impl MutorEndBuilder<bool,E>>
+    where
+        T: MutorToBuilder<(),DynAtomStateMutTarget<bool>,E>
+    {
+        self.with_update_if(
+            mutor, (), |state,_,value,ctx| {
+                //TODO ResolveResult handling
+                state.set(value,ctx);
+            }
+        )
+    }
+
+    #[inline]
+    pub fn with_update_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> CheckBox<E,State,Text,impl MutorEndBuilder<bool,E>>
+    where 
+        LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
+        LeftTarget: MuTarget<E> + ?Sized,
+        LeftArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            bool,
+            &'c mut E::Context<'cc>
+        ) + Clone + Send + Sync + 'static
+    {
+        self.with_update(
+            left_mutor.mutor_end_if(left_arg, right_fn)
+        )
+    }
+
+    #[inline]
+    pub fn with_atomstate_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> CheckBox<E,State,Text,impl MutorEndBuilder<bool,E>>
+    where 
+        LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
+        LeftTarget: MuTarget<E> + ?Sized,
+        LeftArgs: Clone + Sized + Send + Sync + 'static,
+        RightFn: for<'s,'ss,'c,'cc> Fn(
+            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'c mut E::Context<'cc>
+        ) -> &'s mut (dyn AtomStateMut<E,bool> + 's) + Clone + Send + Sync + 'static
+    {
+        self.with_update_if(
+            left_mutor, left_arg,
+            move |state,_,value,ctx| {
+                let state = (right_fn)(state,&(),ctx);
+                //TODO ResolveResult handling
+                state.set(value,ctx);
+            }
+        )
+    }
+
+    #[inline]
+    pub fn with_caption<T>(self, text: T) -> CheckBox<E,State,T,TrMut> {
+        CheckBox{
+            size: self.size,
+            style: self.style,
+            updater: self.updater,
             locked: self.locked,
             text,
             state: self.state,
@@ -71,8 +126,8 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     }
 
     #[inline]
-    pub fn with_size(mut self, s: ESize<E>) -> Self {
-        self.size = s;
+    pub fn with_size(mut self, size: ESize<E>) -> Self {
+        self.size = size;
         self
     }
     #[inline]
@@ -82,14 +137,13 @@ impl<'w,E,State,Text> CheckBox<'w,E,State,Text> where
     }
 }
 
-impl<'w,E,State,T,LC> CheckBox<'w,E,State,Label<'w,E,T,LC>> where
+impl<E,State,T,TrMut> CheckBox<E,State,Label<E,T>,TrMut> where
     E: Env, //TODO WidgetWithCaption with_text replace
 {
     #[inline]
-    pub fn with_text<TT>(self, text: TT) -> CheckBox<'w,E,State,Label<'w,E,TT,LC>> where TT: TextStor<E>+Validation<E>+'w {
+    pub fn with_text<TT>(self, text: TT) -> CheckBox<E,State,Label<E,TT>,TrMut> where TT: TextStor<E> + AsCachor<E> {
         CheckBox{
-            trigger: self.trigger,
-            id: self.id,
+            updater: self.updater,
             size: self.size,
             style: self.style,
             locked: self.locked,
@@ -99,3 +153,5 @@ impl<'w,E,State,T,LC> CheckBox<'w,E,State,Label<'w,E,T,LC>> where
         }
     }
 }
+
+//TODO bring the immutable trigger like in Button

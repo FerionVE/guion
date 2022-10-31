@@ -1,6 +1,3 @@
-use super::*;
-use std::marker::PhantomData;
-
 /// Wrapper type for stateless mapping
 #[repr(transparent)]
 pub struct Mapped<E,T,U,FRef,FMut,FInto> where FRef: for<'a> MapFun<&'a T,&'a U> {
