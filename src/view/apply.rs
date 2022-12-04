@@ -28,7 +28,7 @@ macro_rules! mutor_apply {
             $(let $mutor = $mutor.clone();)?
             #[inline] move |$root,_,$ctx,__recieved_apply $(,$($extra_in),*)?| {
                 ($mutor)(
-                    $root,&(),
+                    $root,
                     &mut move |$root,_,$ctx| {
                         $crate::view::applion::ApplyTo::<_,$e>::apply(__recieved_apply,$mutexpr);
                     },

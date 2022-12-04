@@ -104,7 +104,7 @@ impl<E,Text,Tr,TrMut> Button<E,Text,Tr,TrMut> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             (),
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static

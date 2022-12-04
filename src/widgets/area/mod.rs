@@ -78,7 +78,7 @@ impl<E,W,Scroll,TrMut> Area<E,W,Scroll,TrMut> where
     {
         self.with_scroll_updater_if(
             mutor, (),
-            |state,_,ScrollUpdate { offset: (ax,ay) },ctx| {
+            |state,ScrollUpdate { offset: (ax,ay) },ctx| {
                 //TODO ResolveResult handling
                 let (ox,oy) = state.get(ctx);
                 state.set((ox+ax,oy+ay),ctx);
@@ -94,7 +94,7 @@ impl<E,W,Scroll,TrMut> Area<E,W,Scroll,TrMut> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             ScrollUpdate,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
@@ -112,14 +112,14 @@ impl<E,W,Scroll,TrMut> Area<E,W,Scroll,TrMut> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             &'c mut E::Context<'cc>
         ) -> &'s mut (dyn AtomStateMut<E,ScrollOff> + 's) + Clone + Send + Sync + 'static
     {
         self.with_scroll_updater_if(
             left_mutor, left_arg,
-            move |state,_,ScrollUpdate { offset: (ax,ay) },ctx| {
-                let state = (right_fn)(state,&(),ctx);
+            move |state,ScrollUpdate { offset: (ax,ay) },ctx| {
+                let state = (right_fn)(state,ctx);
                 //TODO ResolveResult handling
                 let (ox,oy) = state.get(ctx);
                 state.set((ox+ax,oy+ay),ctx);

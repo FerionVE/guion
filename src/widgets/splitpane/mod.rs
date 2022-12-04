@@ -68,7 +68,7 @@ impl<E,L,R,V,TrMut> SplitPane<E,L,R,V,TrMut> where
         T: MutorToBuilder<(),DynAtomStateMutTarget<f32>,E>,
     {
         self.with_update(
-            mutor.mutor_end_if((), |state,_,value,ctx| {
+            mutor.mutor_end_if((), |state,value,ctx| {
                 //TODO ResolveResult handling
                 state.set(value,ctx);
             })
@@ -82,7 +82,7 @@ impl<E,L,R,V,TrMut> SplitPane<E,L,R,V,TrMut> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             f32,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
@@ -99,14 +99,14 @@ impl<E,L,R,V,TrMut> SplitPane<E,L,R,V,TrMut> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             &'c mut E::Context<'cc>
         ) -> &'s mut (dyn AtomStateMut<E,f32> + 's) + Clone + Send + Sync + 'static
     {
         self.with_update_if(
             left_mutor, left_arg,
-            move |state,_,value,ctx| {
-                let state = (right_fn)(state,&(),ctx);
+            move |state,value,ctx| {
+                let state = (right_fn)(state,ctx);
                 //TODO ResolveResult handling
                 state.set(value,ctx);
             }
