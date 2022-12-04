@@ -151,34 +151,32 @@ macro_rules! impl_tuple {
             where
                 Self: 'w
             {
-                if let Some(v) = path.try_fragment::<Self::ChildID>() {
-                    let idx = v.0;
-                    
-                    let $senf = &self.0;
+                let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call(None,root,ctx) };
+
+                let idx = v.0;
                 
-                    match idx {
-                        $m => 
-                            AsWidget::with_widget(
-                                & $x,
-                                &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
-                                    callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
-                                }),
-                                root,ctx,
-                            )
-                        ,
-                        $($mm => 
-                            AsWidget::with_widget(
-                                & $xx,
-                                &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
-                                    callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
-                                }),
-                                root,ctx,
-                            )
-                        ),+ ,
-                        _ => callback.call(None, root, ctx),
-                    }
-                } else {
-                    callback.call(None,root,ctx)
+                let $senf = &self.0;
+            
+                match idx {
+                    $m => 
+                        AsWidget::with_widget(
+                            & $x,
+                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
+                            }),
+                            root,ctx,
+                        )
+                    ,
+                    $($mm => 
+                        AsWidget::with_widget(
+                            & $xx,
+                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
+                            }),
+                            root,ctx,
+                        )
+                    ),+ ,
+                    _ => callback.call(None, root, ctx),
                 }
             }
         }
