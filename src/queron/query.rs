@@ -32,7 +32,7 @@ pub struct QueryStack<'a,'b,Q,E> where Q: ?Sized + 'static, E: 'static, 'b: 'a {
     type_id: TypeId,
     query: NonNull<()>,
     builder: NonNull<()>,
-    _p: PhantomData<(&'a mut &'b Q,E)>,
+    _p: PhantomData<(&'a mut &'b mut Q,E)>,
 }
 
 impl<'a,'b,Q,E> QueryStack<'a,'b,Q,E> where Q: ?Sized + 'static, E: 'static, 'b: 'a {
@@ -47,19 +47,20 @@ impl<'a,'b,Q,E> QueryStack<'a,'b,Q,E> where Q: ?Sized + 'static, E: 'static, 'b:
     }
 
     #[inline(always)]
-    pub fn is_dyn(&self) -> bool {
-        TypeId::of::<Q>() == TypeId::of::<DynQuery>()
+    pub fn current_type_id(&self) -> TypeId {
+        if TypeId::of::<Q>() == TypeId::of::<DynQuery>() {
+            self.type_id
+        } else {
+            // if TypeId::of::<Q>() != self.type_id {
+            //     unsafe { std::hint::unreachable_unchecked() }
+            // }
+            TypeId::of::<Q>()
+        }
     }
 
     #[inline(always)]
     pub fn downcast<'s,T>(&'s mut self) -> Option<(&'s T,&'s mut T::Builder<'b>)> where T: Query<E>, 'b: 's {
-        let matches = if TypeId::of::<Q>() == TypeId::of::<DynQuery>() {
-            TypeId::of::<T>() == self.type_id
-        } else {
-            TypeId::of::<T>() == TypeId::of::<Q>()
-        };
-
-        if matches {
+        if TypeId::of::<T>() == self.current_type_id() {
             Some(unsafe{
                 (
                     self.query.cast::<T>().as_ref(),
@@ -73,8 +74,9 @@ impl<'a,'b,Q,E> QueryStack<'a,'b,Q,E> where Q: ?Sized + 'static, E: 'static, 'b:
 
     #[inline(always)]
     pub fn fork<'s>(&'s mut self) -> QueryStack<'s,'b,Q,E> where 'b: 's {
+        debug_assert!(self.type_id == self.current_type_id());
         QueryStack {
-            type_id: self.type_id,
+            type_id: self.current_type_id(),
             query: self.query,
             builder: self.builder,
             _p: PhantomData,
@@ -83,8 +85,9 @@ impl<'a,'b,Q,E> QueryStack<'a,'b,Q,E> where Q: ?Sized + 'static, E: 'static, 'b:
 
     #[inline(always)]
     pub fn fork_dyn<'s>(&'s mut self) -> QueryStack<'s,'b,DynQuery,E> where 'b: 's {
+        debug_assert!(self.type_id == self.current_type_id());
         QueryStack {
-            type_id: self.type_id,
+            type_id: self.current_type_id(),
             query: self.query,
             builder: self.builder,
             _p: PhantomData,
