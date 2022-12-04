@@ -19,9 +19,9 @@ pub struct WQueryResponder<'s,'a,E> where 'a: 's {
     _p: PhantomData<(&'s mut &'a mut (),E)>, // invariant 'a
 }
 
-impl<'a,E> WQueryResponder<'_,'a,E> where E: Env {
+impl<'s,'a,E> WQueryResponder<'s,'a,E> where E: Env {
     #[inline]
-    pub fn new<T>(respond_into: &mut Option<T::Result<'a>>) -> Self where T: WQuery<E> + ?Sized {
+    pub fn new<T>(respond_into: &'s mut Option<T::Result<'a>>) -> Self where T: WQuery<E> + ?Sized {
         Self {
             type_id: TypeId::of::<T>(),
             response: NonNull::<Option<T::Result<'a>>>::from(respond_into).cast::<()>(),
@@ -41,10 +41,11 @@ impl<'a,E> WQueryResponder<'_,'a,E> where E: Env {
 
     /// non zero cost respond ops should be extracted into a fn/closure or use try_respond, so that this part can be inlined.
     #[inline]
-    pub fn try_downcast<'s,T>(&'s mut self) -> Option<&'s mut Option<T::Result<'a>>> where 'a: 's, T: WQuery<E> + ?Sized {
+    pub fn try_downcast<'ss,T>(&'ss mut self) -> Option<&'ss mut Option<T::Result<'a>>> where 's: 'ss, T: WQuery<E> + ?Sized {
         if TypeId::of::<T>() == self.type_id {
             Some(unsafe {
-                self.response.cast::<Option<T::Result<'a>>>().as_mut()
+                let resp: &'s mut Option<T::Result<'a>> = self.response.cast::<Option<T::Result<'a>>>().as_mut();
+                resp
             })
         } else {
             None
@@ -66,9 +67,9 @@ pub struct WQueryResponderGeneric<'s,'a,Q,G,E> where 'a: 's, Q: WQueryGeneric<E>
     _p: PhantomData<(&'s mut &'a mut G,&'s mut Q,E)>, // invariant 'a
 }
 
-impl<'a,'sa,Q,G,E> WQueryResponderGeneric<'sa,'a,Q,G,E> where E: Env, Q: WQueryGeneric<E> + ?Sized, G: ?Sized {
+impl<'a,'s,Q,G,E> WQueryResponderGeneric<'s,'a,Q,G,E> where E: Env, Q: WQueryGeneric<E> + ?Sized, G: ?Sized {
     #[inline]
-    pub fn new(respond_into: &'sa mut Option<Q::Result<'a,G>>) -> Self {
+    pub fn new(respond_into: &'s mut Option<Q::Result<'a,G>>) -> Self {
         Self {
             response: respond_into,
             _p: PhantomData,
@@ -86,10 +87,10 @@ impl<'a,'sa,Q,G,E> WQueryResponderGeneric<'sa,'a,Q,G,E> where E: Env, Q: WQueryG
     }
 
     #[inline]
-    pub fn try_downcast<'s,T>(&'s mut self) -> Option<&'s mut Option<T::Result<'a,G>>> where 'a: 's, T: WQueryGeneric<E> + ?Sized {
+    pub fn try_downcast<'ss,T>(&'ss mut self) -> Option<&'ss mut Option<T::Result<'a,G>>> where 's: 'ss, T: WQueryGeneric<E> + ?Sized {
         if TypeId::of::<T>() == TypeId::of::<Q>() {
             Some(unsafe {
-                let resp: &'s mut Option<Q::Result<'a,G>> = self.response;
+                let resp: &'ss mut Option<Q::Result<'a,G>> = self.response;
                 &mut *(resp as *mut _ as *mut Option<T::Result<'a,G>>)
             })
         } else {
