@@ -379,6 +379,11 @@ impl<SB,E> Handler<E> for StdHandlerLive<SB,E> where
         //todo!();
         self.sup._size(w, path, stack, cache, root, ctx)
     }
+
+    #[inline]
+    fn respond_query<'a>(&'a self, _: crate::traitcast::WQueryResponder<'_,'a,E>) {}
+    #[inline]
+    fn respond_query_generic<'a,Q,G>(&'a self, _: crate::traitcast::WQueryResponderGeneric<'_,'a,Q,G,E>) where Q: crate::traitcast::WQueryGeneric<E> + ?Sized, G: ?Sized {}
 }
 
 /*impl<S,E> AsHandler<Self,E> for StdHandler<S,E> where S: Handler<E>, E: Env, E::Context<'_>: Context<E,Handler=Self> {

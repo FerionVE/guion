@@ -10,7 +10,7 @@ use crate::layout::Gonstraints;
 use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
-use crate::{impl_traitcast, EventResp, event_new};
+use crate::{EventResp, event_new};
 use crate::newpath::{PathStack, PathResolvusDyn, FwdCompareStat, SimpleId, PathResolvus, PathFragment, PathStackDyn};
 use crate::queron::Queron;
 use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, with_inside_spacing_border, widget_size_inside_border_type, widget_size_inside_border, TestStyleVariant};
@@ -303,10 +303,11 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
     
     fn focusable(&self) -> bool { true }
 
-    impl_traitcast!( dyn WidgetDyn<E>:
-        dyn ICheckBox<E> => |s| s;
-        dyn AtomState<E,bool> => |s| &s.state;
-    );
+    #[inline]
+    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
+        r.try_respond::<dyn ICheckBox<E>>(#[inline] || self) ||
+        r.try_respond::<dyn AtomState<E,bool>>(#[inline] || &self.state);
+    }
 }
 
 impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where

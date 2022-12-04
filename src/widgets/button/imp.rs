@@ -1,6 +1,6 @@
 use crate::ctx::Context;
 use crate::env::Env;
-use crate::traitcast_for_from_widget;
+use crate::traitcast::WQuery;
 use crate::view::mutor_trait::MutorEndBuilder;
 
 use super::{Button, Trigger};
@@ -23,4 +23,6 @@ impl<E,Text,Tr,TrMut> IButton<E> for Button<E,Text,Tr,TrMut> where
     }
 }
 
-traitcast_for_from_widget!(IButton<E>);
+impl<E> WQuery<E> for dyn IButton<E> where E: Env {
+    type Result<'a> = &'a (dyn IButton<E> + 'a);
+}

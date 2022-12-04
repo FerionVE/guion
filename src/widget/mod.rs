@@ -11,7 +11,7 @@ use crate::env::Env;
 use crate::handler::Handler;
 use crate::queron::Queron;
 use crate::root::RootRef;
-use crate::traitcast::TraitObject;
+use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, WQuery};
 use crate::util::error::{GuionError, ResolveError, GuionResolveErrorChildInfo};
 use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, TabulateNextChildResponse, TabulateOrigin, TabulateResponse};
 use crate::{EventResp, event_new};
@@ -459,14 +459,24 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         self
     }
 
-    /// ![TRAITCAST](https://img.shields.io/badge/-traitcast-000?style=flat-square)  
-    /// The [`impl_traitcast`] macro should be used to implement this function
-    #[allow(unused)]
-    #[doc(hidden)]
     #[inline]
-    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
-        None
+    fn query<'a,T>(&'a self) -> Option<T::Result<'a>> where T: WQuery<E> + ?Sized, Self: 'a {
+        let mut response: Option<T::Result<'a>> = None;
+        self.respond_query(WQueryResponder::new::<T>(&mut response));
+        response
     }
+
+    #[inline]
+    fn query_generic<'a,T,G>(&'a self) -> Option<T::Result<'a,G>> where T: WQueryGeneric<E> + ?Sized, G: ?Sized, Self: 'a {
+        let mut response: Option<T::Result<'a,G>> = None;
+        self.respond_query_generic::<T,G>(WQueryResponderGeneric::new(&mut response));
+        response
+    }
+
+    fn respond_query<'a>(&'a self, responder: WQueryResponder<'_,'a,E>);
+
+    #[inline]
+    fn respond_query_generic<'a,Q,G>(&'a self, responder: WQueryResponderGeneric<'_,'a,Q,G,E>) where Q: WQueryGeneric<E> + ?Sized, G: ?Sized {}
 
     /// Use this to turn to dyn Widget
     #[inline]

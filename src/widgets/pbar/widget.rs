@@ -7,7 +7,7 @@ use crate::widget::as_widget::AsWidget;
 use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widgets::util::state::AtomState;
-use crate::{EventResp, impl_traitcast, event_new};
+use crate::{EventResp, event_new};
 use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
 use crate::newpath::{PathStack, PathResolvusDyn};
@@ -157,9 +157,10 @@ impl<E> Widget<E> for ProgressBar<E> where
         false
     }
 
-    impl_traitcast!( dyn WidgetDyn<E>:
-        dyn AtomState<E,f32> => |s| &s.value;
-    );
+    #[inline]
+    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
+        r.try_respond::<dyn AtomState<E,f32>>(#[inline] || &self.value);
+    }
 }
 
 pub fn crop(i: &Bounds, v: f32, o: Orientation) -> (u32,Bounds) {

@@ -8,7 +8,7 @@ use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::cachor::{MutCell, AsCachor};
 use crate::env::Env;
-use crate::traitcast_for_from_widget;
+use crate::traitcast::WQuery;
 use crate::util::immu::Immutable;
 
 use super::layout::TxtLayout;
@@ -31,7 +31,10 @@ pub trait TextStor<E> {
     }
 }
 
-traitcast_for_from_widget!(TextStor<E>); //TODO mutable Traitcast
+//TODO mutable Traitcast
+impl<E> WQuery<E> for dyn TextStor<E> where E: Env {
+    type Result<'a> = &'a (dyn TextStor<E> + 'a);
+}
 
 pub trait TextStorMut<E>: TextStor<E> {
     fn replace(&mut self, replace_range: Range<usize>, insert: &str);

@@ -14,7 +14,7 @@ use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin}
 use crate::widget::cache::{StdRenderCachors, WidgetCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widgets::util::state::AtomState;
-use crate::{event_new, impl_traitcast, EventResp};
+use crate::{event_new, EventResp};
 use crate::newpath::{PathStack, SimpleId, PathResolvusDyn, PathResolvus, PathFragment};
 use crate::queron::Queron;
 use crate::render::{StdRenderProps, TestStyleColorType, with_inside_spacing_border, with_inside_border_by_type, TestStyleBorderType, TestStyleVariant};
@@ -322,9 +322,10 @@ impl<E,W,Scroll,MutFn> Widget<E> for Area<E,W,Scroll,MutFn> where
         false //TODO
     }
 
-    impl_traitcast!( dyn WidgetDyn<E>:
-        dyn AtomState<E,ScrollOff> => |s| &s.scroll;
-    );
+    #[inline]
+    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
+        r.try_respond::<dyn AtomState<E,ScrollOff>>(#[inline] || &self.scroll);
+    }
 }
 
 impl<E,W,Scroll,MutFn> AsWidget<E> for Area<E,W,Scroll,MutFn> where Self: Widget<E>, E: Env {

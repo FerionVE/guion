@@ -11,7 +11,7 @@ use crate::root::RootRef;
 use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
 use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
-use crate::{event_new, impl_traitcast, EventResp};
+use crate::{event_new, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn, SimpleId, PathStackDyn, FwdCompareStat, PathFragment, PathResolvus};
 use crate::queron::Queron;
 use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, with_inside_spacing_border, widget_size_inside_border_type, TestStyleCurrent, TestStyleVariant};
@@ -264,10 +264,11 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
     // }
     fn focusable(&self) -> bool { true }
 
-    impl_traitcast!( dyn WidgetDyn<E>:
-        dyn IButton<E> => |s| s;
-        dyn Trigger<E> => |s| &s.trigger;
-    );
+    #[inline]
+    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
+        r.try_respond::<dyn IButton<E>>(#[inline] || self) ||
+        r.try_respond::<dyn Trigger<E>>(#[inline] || &self.trigger);
+    }
 }
 
 impl<E,S,Tr,TrMut> Button<E,S,Tr,TrMut> where

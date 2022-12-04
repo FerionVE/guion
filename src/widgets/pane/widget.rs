@@ -295,6 +295,9 @@ impl<E,T> Widget<E> for Pane<E,T> where
     fn focusable(&self) -> bool {
         false
     }
+
+    #[inline]
+    fn respond_query<'a>(&'a self, _: crate::traitcast::WQueryResponder<'_,'a,E>) {}
 }
 
 impl<E,T> Pane<E,T> where
