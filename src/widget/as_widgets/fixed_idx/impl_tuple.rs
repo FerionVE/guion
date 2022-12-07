@@ -27,15 +27,14 @@ macro_rules! impl_tuple {
             $($tt: AsWidget<E>),+ ,
             E: Env
         {
-            type Widget<'v,'z> = dyn WidgetDyn<E> + 'v where 'z: 'v, Self: 'z;
             type WidgetCache = DynWidgetCache<E>;
             type ChildID = FixedIdx;
             type IdIdxIter = impl Iterator<Item=(usize,Self::ChildID)>;
         
             #[inline]
-            fn by_index<'w,XR>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
+            fn by_index<XF,XR>(&self, idx: usize, mut callback: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
             where
-                Self: 'w
+                XF: AsWidgetsDispatch<Self::ChildID,XR,E>
             {
                 let $senf = &self.0;
                 
@@ -43,7 +42,7 @@ macro_rules! impl_tuple {
                     $m => 
                         AsWidget::with_widget(
                             & $x,
-                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                                 callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
                             }),
                             root,ctx,
@@ -52,44 +51,22 @@ macro_rules! impl_tuple {
                     $($mm => 
                         AsWidget::with_widget(
                             & $xx,
-                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                                 callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),widget), root, ctx)
                             }),
                             root,ctx,
                         )
                     ),+ ,
-                    _ => callback.call(None, root, ctx),
+                    _ => callback.call_none(root, ctx),
                 }
             }
         
             #[inline]
-            fn by_id<'w,XR>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
+            fn by_id<XF,XR>(&self, id: &Self::ChildID, callback: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
             where
-                Self: 'w
+                XF: AsWidgetsDispatch<Self::ChildID,XR,E>
             {
-                let $senf = &self.0;
-                
-                match id.0 {
-                    $m => 
-                        AsWidget::with_widget(
-                            & $x,
-                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
-                                callback.call(AsWidgetsResult::from_some(id.0,id.clone(),widget), root, ctx)
-                            }),
-                            root,ctx,
-                        )
-                    ,
-                    $($mm => 
-                        AsWidget::with_widget(
-                            & $xx,
-                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
-                                callback.call(AsWidgetsResult::from_some(id.0,id.clone(),widget), root, ctx)
-                            }),
-                            root,ctx,
-                        )
-                    ),+ ,
-                    _ => callback.call(None, root, ctx),
-                }
+                self.by_index(id.0, callback, root, ctx)
             }
         
             #[inline]
@@ -103,9 +80,9 @@ macro_rules! impl_tuple {
             }
         
             #[inline]
-            fn idx_range_filtered<'w>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            fn idx_range_filtered<XF>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
             where
-                Self: 'w
+                XF: AsWidgetsIndexedDispatch<Self::ChildID,E>
             {
                 let ($l,$($ll),*) = &self.0;
 
@@ -119,7 +96,7 @@ macro_rules! impl_tuple {
                         if (filter)(idx,&FixedIdx(idx)) {
                             AsWidget::with_widget(
                                 $l,
-                                &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                &mut AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                                     callback.call(idx, FixedIdx(idx), widget, root, ctx)
                                 }),
                                 root.fork(),ctx,
@@ -135,7 +112,7 @@ macro_rules! impl_tuple {
                         if (filter)(idx,&FixedIdx(idx)) {
                             AsWidget::with_widget(
                                 $ll,
-                                &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                                &mut AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                                     callback.call(idx, FixedIdx(idx), widget, root, ctx)
                                 }),
                                 root.fork(),ctx,
@@ -147,11 +124,11 @@ macro_rules! impl_tuple {
                 let _ = i;
             }
         
-            fn resolve<'w,XR>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: &mut (dyn AsWidgetsResolveDispatch<'w,Self,XR,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
+            fn resolve<XF,XR>(&self, path: &(dyn PathResolvusDyn<E>+'_), mut callback: XF, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> XR
             where
-                Self: 'w
+                XF: AsWidgetsResolveDispatch<Self::ChildID,XR,E>
             {
-                let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call(None,root,ctx) };
+                let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
 
                 let idx = v.0;
                 
@@ -161,7 +138,7 @@ macro_rules! impl_tuple {
                     $m => 
                         AsWidget::with_widget(
                             & $x,
-                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                                 callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
                             }),
                             root,ctx,
@@ -170,13 +147,13 @@ macro_rules! impl_tuple {
                     $($mm => 
                         AsWidget::with_widget(
                             & $xx,
-                            &mut AsWidgetClosureErased::new(#[inline] |widget,root,ctx| {
+                            &mut AsWidgetClosure::new(#[inline] |widget,root,ctx| {
                                 callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),widget), root, ctx)
                             }),
                             root,ctx,
                         )
                     ),+ ,
-                    _ => callback.call(None, root, ctx),
+                    _ => callback.call_none(root, ctx),
                 }
             }
         }

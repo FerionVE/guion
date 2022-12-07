@@ -26,15 +26,14 @@ impl<T> DerefMut for Tupled<T> where T: ?Sized {
 }
 
 impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E: Env, I: PathFragment<E> + Clone + PartialEq + 'static {
-    type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
     type ChildID = I;
     type IdIdxIter = impl Iterator<Item=(usize,Self::ChildID)>;
 
     #[inline]
-    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn by_index<F,R>(&self, idx: usize, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w
+        F: AsWidgetsDispatch<Self::ChildID,R,E>
     {
         match self.0.get(idx) {
             Some((id,inner)) => {
@@ -43,26 +42,23 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
                 });
                 (*inner).with_widget(&mut callback,root,ctx)
             },
-            None => callback.call(None,root,ctx),
+            None => callback.call_none(root,ctx),
         }
     }
 
     #[inline]
-    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn by_id<F,R>(&self, id: &Self::ChildID, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w
+        F: AsWidgetsDispatch<Self::ChildID,R,E>
     {
         let res = self.0.iter().enumerate()
             .find(#[inline] |(_,(i,_))| *i == *id);
         
         match res {
-            Some((idx,(id,inner))) => {
-                let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                    callback.call(AsWidgetsResult::from_some(idx,id.clone(),widget), root, ctx)
-                });
-                (*inner).with_widget(&mut callback,root,ctx)
+            Some((idx,_)) => {
+                self.by_index(idx, callback, root, ctx)
             },
-            None => callback.call(None,root,ctx),
+            None => callback.call_none(root,ctx),
         }
     }
 
@@ -77,22 +73,9 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
     }
 
     #[inline]
-    fn idx_range<'w>(&self, range: Range<usize>, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<F>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
-        Self: 'w
-    {
-        for (i,(id,v)) in self.0[range].iter().enumerate() {
-            let mut callback = AsWidgetClosure::new(#[inline] |widget,root,ctx| {
-                callback.call(i, id.clone(), widget, root, ctx)
-            });
-            v.with_widget(&mut callback,root.fork(),ctx)
-        }
-    }
-
-    #[inline]
-    fn idx_range_filtered<'w>(&self, range: Range<usize>, mut filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    where
-        Self: 'w
+        F: AsWidgetsIndexedDispatch<Self::ChildID,E>
     {
         for (i,(id,v)) in self.0[range].iter().enumerate() {
             if (filter)(i,id) {
@@ -104,9 +87,9 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
         }
     }
 
-    fn resolve<'w,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: &mut (dyn AsWidgetsResolveDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn resolve<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w
+        F: AsWidgetsResolveDispatch<Self::ChildID,R,E>
     {
         if let Some(v) = path.try_fragment::<Self::ChildID>() {
             let res = self.0.iter().enumerate()
@@ -120,6 +103,6 @@ impl<'s,E,I,T> AsWidgets<E> for Tupled<&'s [(I,T)]> where T: AsWidget<E> + 's, E
             }
         }
 
-        callback.call(None,root,ctx)
+        callback.call_none(root,ctx)
     }
 }

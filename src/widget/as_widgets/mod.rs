@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use crate::dispatchor::{AsWidgetsDispatch, AsWidgetsIndexedDispatch, AsWidgetsResolveDispatch, AsWidgetsAllClosure, AsWidgetsResolveClosure, AsWidgetsClosure, AsWidgetsResult, AsWidgetsResolveResult};
+use crate::dispatchor::{AsWidgetsDispatch, AsWidgetsIndexedDispatch, AsWidgetsResolveDispatch, AsWidgetsResult, AsWidgetsResolveResult};
 use crate::env::Env;
 use crate::newpath::{PathFragment, PathResolvusDyn};
 
@@ -11,18 +11,17 @@ pub mod fixed_idx;
 pub mod tupled;
 
 pub trait AsWidgets<E> where E: Env {
-    type Widget<'v,'z>: Widget<E,Cache=Self::WidgetCache> + ?Sized + 'v where 'z: 'v, Self: 'z;
     type WidgetCache: WidgetCache<E>;
     type ChildID: PathFragment<E> + Clone + 'static; // + AppendToPathResolvor
     type IdIdxIter: Iterator<Item=(usize,Self::ChildID)>;
 
-    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn by_index<F,R>(&self, idx: usize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w;
+        F: AsWidgetsDispatch<Self::ChildID,R,E>;
 
-    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn by_id<F,R>(&self, id: &Self::ChildID, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w;
+        F: AsWidgetsDispatch<Self::ChildID,R,E>;
 
     fn iter_ids(&self) -> Self::IdIdxIter;
 
@@ -30,64 +29,41 @@ pub trait AsWidgets<E> where E: Env {
 
     fn len(&self) -> usize;
 
-    fn idx_range<'w>(&self, range: Range<usize>, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range<F>(&self, range: Range<usize>, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
-        Self: 'w
+        F: AsWidgetsIndexedDispatch<Self::ChildID,E>
     {
         self.idx_range_filtered(range, #[inline] |_, _| true, callback, root, ctx)
     }
 
-    fn idx_range_filtered<'w>(&self, range: Range<usize>, filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<F>(&self, range: Range<usize>, filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
-        Self: 'w;
+        F: AsWidgetsIndexedDispatch<Self::ChildID,E>;
 
-    fn resolve<'w,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: &mut (dyn AsWidgetsResolveDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn resolve<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w;
+        F: AsWidgetsResolveDispatch<Self::ChildID,R,E>;
 }
 
 impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
-    type Widget<'v,'z> = T::Widget<'v,'z> where 'z: 'v, Self: 'z;
     type WidgetCache = T::WidgetCache;
     type ChildID = T::ChildID;
     type IdIdxIter = T::IdIdxIter;
 
     #[inline]
-    fn by_index<'w,R>(&self, idx: usize, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn by_index<F,R>(&self, idx: usize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w
+        F: AsWidgetsDispatch<Self::ChildID,R,E>
     {
-        let mut callback = AsWidgetsClosure::<'_,_,T,R,E>::new(#[inline] |result,root,ctx| {
-            let result = match result {
-                Some(r) => Some(AsWidgetsResult {
-                    idx: r.idx,
-                    child_id: r.child_id,
-                    widget: r.widget,
-                }),
-                None => None,
-            };
-            callback.call(result, root, ctx)
-        });
-        (**self).by_index(idx, &mut callback, root, ctx)
+        (**self).by_index(idx, callback, root, ctx)
     }
 
     #[inline]
-    fn by_id<'w,R>(&self, id: &Self::ChildID, callback: &mut (dyn AsWidgetsDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn by_id<F,R>(&self, id: &Self::ChildID, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w
+        F: AsWidgetsDispatch<Self::ChildID,R,E>
     {
-        let mut callback = AsWidgetsClosure::new(#[inline] |result,root,ctx| {
-            let result = match result {
-                Some(r) => Some(AsWidgetsResult {
-                    idx: r.idx,
-                    child_id: r.child_id,
-                    widget: r.widget,
-                }),
-                None => None,
-            };
-            callback.call(result, root, ctx)
-        });
-        (**self).by_id(id, &mut callback, root, ctx)
+        (**self).by_id(id, callback, root, ctx)
     }
 
     #[inline]
@@ -101,44 +77,26 @@ impl<E,T> AsWidgets<E> for &'_ T where T: AsWidgets<E> + ?Sized, E: Env {
     }
 
     #[inline]
-    fn idx_range<'w>(&self, range: Range<usize>, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range<F>(&self, range: Range<usize>, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
-        Self: 'w
+        F: AsWidgetsIndexedDispatch<Self::ChildID,E>
     {
-        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,child_id,widget,root,ctx| {
-            callback.call(idx, child_id, widget, root, ctx)
-        });
-        (**self).idx_range(range, &mut callback, root, ctx)
+        (**self).idx_range(range, callback, root, ctx)
     }
 
     #[inline]
-    fn idx_range_filtered<'w>(&self, range: Range<usize>, filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: &mut (dyn AsWidgetsIndexedDispatch<'w,Self,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+    fn idx_range_filtered<F>(&self, range: Range<usize>, filter: impl for<'a> FnMut(usize,&'a Self::ChildID) -> bool, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
     where
-        Self: 'w
+        F: AsWidgetsIndexedDispatch<Self::ChildID,E>
     {
-        let mut callback = AsWidgetsAllClosure::new(#[inline] |idx,child_id,widget,root,ctx| {
-            callback.call(idx, child_id, widget, root, ctx)
-        });
-        (**self).idx_range_filtered(range, filter, &mut callback, root, ctx)
+        (**self).idx_range_filtered(range, filter, callback, root, ctx)
     }
 
     #[inline]
-    fn resolve<'w,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: &mut (dyn AsWidgetsResolveDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+    fn resolve<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
-        Self: 'w
+        F: AsWidgetsResolveDispatch<Self::ChildID,R,E>
     {
-        let mut callback = AsWidgetsResolveClosure::new(#[inline] |result,root,ctx| {
-            let result = match result {
-                Some(r) => Some(AsWidgetsResolveResult {
-                    idx: r.idx,
-                    child_id: r.child_id,
-                    resolvus: r.resolvus,
-                    widget: r.widget,
-                }),
-                None => None,
-            };
-            callback.call(result, root, ctx)
-        });
-        (**self).resolve(path, &mut callback, root, ctx)
+        (**self).resolve(path, callback, root, ctx)
     }
 }

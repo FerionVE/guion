@@ -1,8 +1,10 @@
+use std::marker::PhantomData;
+
 use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::{EventResp, event_new};
 use crate::aliases::{ERenderer, ESize};
-use crate::dispatchor::{AsWidgetsResolveResult, AsWidgetsResolveClosure, AsWidgetsAllClosure, AsWidgetsClosure, AsWidgetsResult, AsWidgetDispatch};
+use crate::dispatchor::{AsWidgetDispatch, AsWidgetsOnWithChild, AsWidgetsOnWithResolveChild, AsWidgetsOnTabulate, AsWidgetsAllSize, AsWidgetsAllRender, AsWidgetsResolveEvent, AsWidgetsAllEvent};
 use crate::env::Env;
 use crate::layout::{Gonstraints, Orientation};
 use crate::layout::calc::calc_bounds2;
@@ -76,8 +78,8 @@ impl<E,T> Widget<E> for Pane<E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
-                widget.render(
+            AsWidgetsAllRender::<_,_,_,T,E>(|idx,child_id,widget_render,root,ctx| {
+                widget_render(
                     &child_id.push_on_stack(path),
                     &render_props
                         .slice(cache.childs[idx].relative_bounds_cache.unwrap()),
@@ -85,7 +87,7 @@ impl<E,T> Widget<E> for Pane<E,T> where
                     new_layout | force_render,&mut cache.childs[idx].widget_cache,
                     root,ctx
                 )
-            }),
+            },PhantomData),
             root,ctx
         );
 
@@ -131,7 +133,7 @@ impl<E,T> Widget<E> for Pane<E,T> where
         if let Some(route_to_widget) = route_to_widget {
             self.childs.resolve(
                 route_to_widget,
-                &mut AsWidgetsResolveClosure::new(|result: Option<AsWidgetsResolveResult<T,E>>,root,ctx: &mut E::Context<'_>| {
+                AsWidgetsResolveEvent::<_,_,_,_,T,_,E>(|result,root,ctx| {
                     if let Some(result) = result {
                         let stack = WithCurrentBounds {
                             inner: &stack,
@@ -139,7 +141,7 @@ impl<E,T> Widget<E> for Pane<E,T> where
                             viewport: bounds.viewport.clone(),
                         };
             
-                        passed |= result.widget.event_direct(
+                        passed |= (result.invoke)(
                             &result.child_id.push_on_stack(path),
                             &stack,
                             event,
@@ -147,27 +149,27 @@ impl<E,T> Widget<E> for Pane<E,T> where
                             &mut cache.childs[result.idx].widget_cache,
                             root,ctx);
                     }
-                }),
+                },PhantomData),
                 root,ctx
             )
         } else {
             self.childs.idx_range(
                 0..self.childs.len(), //TODO there could be a prefilter which checks whether idx child bounds visible in visible-filter mode
-                &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+                AsWidgetsAllEvent::<_,_,_,_,T,E>(|idx,child_id,widget_event,root,ctx| {
                     let stack = WithCurrentBounds {
                         inner: &stack,
                         bounds: bounds.bounds.slice(cache.childs[idx].relative_bounds_cache.as_ref().unwrap()),
                         viewport: bounds.viewport.clone(),
                     };
         
-                    passed |= widget.event_direct(
+                    passed |= widget_event(
                         &child_id.push_on_stack(path),
                         &stack,
                         event,
                         None, //TODO this should be done by the AsWidgets
                         &mut cache.childs[idx].widget_cache,
                         root,ctx);
-                }),
+                },PhantomData),
                 root,ctx
             );
         }
@@ -220,7 +222,7 @@ impl<E,T> Widget<E> for Pane<E,T> where
     fn with_child<'s,F,R>(
         &'s self,
         i: usize,
-        mut callback: F,
+        callback: F,
         root: E::RootRef<'s>,
         ctx: &mut E::Context<'_>
     ) -> R
@@ -229,11 +231,9 @@ impl<E,T> Widget<E> for Pane<E,T> where
     {
         self.childs.by_index(
             i,
-            &mut AsWidgetsClosure::new(#[inline] |result: Option<AsWidgetsResult<T,E>>,_,ctx: &mut E::Context<'_>|
-                match result {
-                    Some(v) => (callback)(Ok(v.widget.erase()),ctx),
-                    None => (callback)(Err(()),ctx)
-                }
+            AsWidgetsOnWithChild(
+                Some(callback),
+                PhantomData
             ),
             root,ctx
         )
@@ -253,16 +253,10 @@ impl<E,T> Widget<E> for Pane<E,T> where
 
         self.childs.resolve(
             sub_path,
-            &mut AsWidgetsResolveClosure::new(|result: Option<AsWidgetsResolveResult<T,E>>,root,ctx: &mut E::Context<'_>| {
-                match result {
-                    Some(result) => (callback)(Ok(WidgetWithResolveChildDyn {
-                        idx: result.idx,
-                        sub_path: result.resolvus,
-                        widget: result.widget.erase(),
-                    }),ctx),
-                    None => (callback)(Err(todo!()),ctx),
-                }
-            }),
+            AsWidgetsOnWithResolveChild(
+                Some(callback),
+                PhantomData
+            ),
             root,ctx,
         )
     }
@@ -282,14 +276,11 @@ impl<E,T> Widget<E> for Pane<E,T> where
     {
         self.childs.by_index(
             idx,
-            &mut AsWidgetsClosure::new(#[inline] |result: Option<AsWidgetsResult<T,E>>,_,ctx: &mut E::Context<'_>|
-                match result {
-                    Some(v) => v.widget._tabulate(&v.child_id.push_on_stack(path), stack, op.clone(), dir, root.fork(), ctx),
-                    None => Err(todo!()),
-                }
+            AsWidgetsOnTabulate(
+                path, stack, op, dir, PhantomData
             ),
             root.fork(),ctx
-        )
+        ).expect("TODO")
     }
 
     fn focusable(&self) -> bool {
@@ -321,7 +312,7 @@ impl<E,T> Pane<E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            AsWidgetsAllSize::<_,_,_,T,E>(|idx,child_id,call_size,root,ctx| {
                 let child_cache = &mut cache.childs[idx];
 
                 if child_cache.widget_id != Some(child_id.clone()) {
@@ -330,11 +321,11 @@ impl<E,T> Pane<E,T> where
                 }
 
                 let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
-                    widget.size(&child_id.push_on_stack(path), &stack, &mut child_cache.widget_cache, root,ctx)
+                    call_size(&child_id.push_on_stack(path), &stack, &mut child_cache.widget_cache, root,ctx)
                 );
 
                 all_gonstraints.add(current_gonstraint, self.orientation);
-            }),
+            },PhantomData),
             root.fork(),ctx
         );
 
@@ -368,7 +359,7 @@ impl<E,T> Pane<E,T> where
 
         self.childs.idx_range(
             0..self.childs.len(),
-            &mut AsWidgetsAllClosure::new(|idx,child_id: <T as AsWidgets<E>>::ChildID,widget:&<T as AsWidgets<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
+            AsWidgetsAllSize::<_,_,_,T,E>(|idx,child_id,call_size,root,ctx| {
                 let child_cache = &mut cache.childs[idx];
 
                 if child_cache.widget_id != Some(child_id.clone()) {
@@ -380,7 +371,7 @@ impl<E,T> Pane<E,T> where
                 need_relayout |= child_cache.relative_bounds_cache.is_none();
 
                 let current_gonstraint = child_cache.current_gonstraint.get_or_insert_with(||
-                    widget.size(&child_id.push_on_stack(path), &stack, &mut child_cache.widget_cache, root,ctx)
+                    call_size(&child_id.push_on_stack(path), &stack, &mut child_cache.widget_cache, root,ctx)
                 );
 
                 all_gonstraints.add(current_gonstraint, self.orientation);
@@ -389,7 +380,7 @@ impl<E,T> Pane<E,T> where
                     child_cache.gonstraint_cachor = child_cache.current_gonstraint.clone();
                     need_relayout = true;
                 }
-            }),
+            },PhantomData),
             root.fork(),ctx
         );
 
