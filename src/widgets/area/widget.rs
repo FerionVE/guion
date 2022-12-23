@@ -11,7 +11,7 @@ use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::util::bounds::Bounds;
 use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
-use crate::widget::cache::{StdRenderCachors, WidgetCache};
+use crate::widget::cache::{StdRenderCachors, RenderCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widgets::util::state::AtomState;
 use crate::{event_new, EventResp};
@@ -342,14 +342,14 @@ impl<E,W,Scroll,MutFn> AsWidget<E> for Area<E,W,Scroll,MutFn> where Self: Widget
 }
 
 #[derive(Default)]
-pub struct AreaCache<InnerCache,E> where E: Env, InnerCache: WidgetCache<E> {
+pub struct AreaCache<InnerCache,E> where E: Env, InnerCache: RenderCache<E> {
     inner_cache: InnerCache,
     scroll_cachor: Option<(ScrollOff,bool)>,
     std_render_cachors: Option<StdRenderCachors<E>>,
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }
 
-impl<InnerCache,E> WidgetCache<E> for AreaCache<InnerCache,E> where E: Env, InnerCache: WidgetCache<E> {
+impl<InnerCache,E> RenderCache<E> for AreaCache<InnerCache,E> where E: Env, InnerCache: RenderCache<E> {
     fn reset_current(&mut self) {
         self.inner_cache.reset_current()
     }

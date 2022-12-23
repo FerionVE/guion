@@ -9,7 +9,7 @@ use crate::event::standard::variants::{MouseDown, KbdPress, MouseUp};
 use crate::layout::Gonstraints;
 use crate::queron::query::Query;
 use crate::root::RootRef;
-use crate::widget::cache::{StdRenderCachors, WidgetCache};
+use crate::widget::cache::{StdRenderCachors, RenderCache};
 use crate::{EventResp, event_new};
 use crate::newpath::{PathStack, PathResolvusDyn, FwdCompareStat, SimpleId, PathResolvus, PathFragment, PathStackDyn};
 use crate::queron::Queron;
@@ -344,7 +344,7 @@ impl<E,State,Text,TrMut> AsWidget<E> for CheckBox<E,State,Text,TrMut> where Self
 }
 
 #[derive(Default)]
-pub struct CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
+pub struct CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
     label_cache: LabelCache,
     std_render_cachors: Option<StdRenderCachors<E>>,
     vartype_cachors: Option<TestStyleVariant<E>>,
@@ -352,7 +352,7 @@ pub struct CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: Re
     //TODO cachor borders and colors
 }
 
-impl<LabelCache,E> WidgetCache<E> for CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
+impl<LabelCache,E> RenderCache<E> for CheckBoxCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
     fn reset_current(&mut self) {
         self.label_cache.reset_current()
     }

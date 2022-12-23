@@ -9,7 +9,7 @@ use crate::event::standard::variants::{MouseUp, KbdPress};
 use crate::layout::Gonstraints;
 use crate::root::RootRef;
 use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
-use crate::widget::cache::{WidgetCache, StdRenderCachors};
+use crate::widget::cache::{RenderCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::{event_new, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn, SimpleId, PathStackDyn, FwdCompareStat, PathFragment, PathResolvus};
@@ -305,7 +305,7 @@ impl<E,Text,Tr,TrMut> AsWidget<E> for Button<E,Text,Tr,TrMut> where Self: Widget
 }
 
 #[derive(Default)]
-pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
+pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
     label_cache: LabelCache,
     std_render_cachors: Option<StdRenderCachors<E>>,
     vartype_cachors: Option<TestStyleVariant<E>>,
@@ -313,7 +313,7 @@ pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: Rend
     //TODO cachor borders and colors
 }
 
-impl<LabelCache,E> WidgetCache<E> for ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: WidgetCache<E> {
+impl<LabelCache,E> RenderCache<E> for ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
     fn reset_current(&mut self) {
         self.label_cache.reset_current()
     }

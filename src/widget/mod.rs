@@ -4,11 +4,12 @@
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
 
-use std::any::{type_name, TypeId};
+use std::any::type_name;
+use std::ops::Range;
 
 use crate::ctx::Context;
 use crate::env::Env;
-use crate::handler::Handler;
+use crate::intercept::WidgetIntercept;
 use crate::queron::Queron;
 use crate::root::RootRef;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, WQuery};
@@ -20,6 +21,7 @@ use crate::newpath::{PathResolvusDyn, PathStack, PathResolvus};
 
 use self::cache::WidgetCache;
 use self::dyn_tunnel::WidgetDyn;
+use self::id::WidgetID;
 
 pub mod dyn_tunnel;
 
@@ -37,15 +39,48 @@ pub mod stack;
 
 pub mod cache;
 
-pub struct WidgetWithResolveChildDyn<'a,E> {
-    pub idx: usize,
-    pub sub_path: &'a (dyn PathResolvusDyn<E>+'a),
+pub mod id;
+
+pub mod declared;
+
+pub struct WidgetResolveDynResult<'a,E> {
     pub widget: &'a (dyn WidgetDyn<E>+'a),
+    pub widget_id: WidgetID,
+}
+pub struct WidgetResolveDynResultMut<'a,E> {
+    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
+    pub widget_id: WidgetID,
+}
+
+pub struct WidgetChildDynResult<'a,E> {
+    pub idx: isize,
+    pub widget: &'a (dyn WidgetDyn<E>+'a),
+    pub widget_id: WidgetID,
+}
+pub struct WidgetChildDynResultMut<'a,E> {
+    pub idx: isize,
+    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
+    pub widget_id: WidgetID,
+}
+
+pub struct WidgetChildResolveDynResult<'a,'b,E> {
+    pub idx: isize,
+    pub widget: &'a (dyn WidgetDyn<E>+'a),
+    pub sub_path: &'b (dyn PathResolvusDyn<E>+'b),
+    pub widget_id: WidgetID,
+}
+pub struct WidgetChildResolveDynResultMut<'a,'b,E> {
+    pub idx: isize,
+    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
+    pub sub_path: &'b (dyn PathResolvusDyn<E>+'b),
+    pub widget_id: WidgetID,
 }
 
 /// Core Trait of guion ™️
 pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E: Env + 'static {
     type Cache: WidgetCache<E> + 'static;
+
+    fn id(&self) -> WidgetID;
 
     #[inline]
     fn render<P,Ph>(
@@ -58,7 +93,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        ctx.build_handler()._render(self, path, stack, renderer, force_render, cache, root, ctx)
+        ctx.build_intercept()._render(self, path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
     fn event_direct<P,Ph,Evt>(
@@ -67,22 +102,20 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         stack: &P,
         event: &Evt,
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        ctx.build_handler()._event_direct(self, path, stack, event, route_to_widget, cache, root, ctx)
+        ctx.build_intercept()._event_direct(self, path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
     fn size<P,Ph>(
         &self,
         path: &Ph,
         stack: &P,
-        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        ctx.build_handler()._size(self, path, stack, cache, root, ctx)
+        ctx.build_intercept()._size(self, path, stack, root, ctx)
     }
 
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
@@ -111,7 +144,6 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         stack: &P,
         event: &Evt, // what if e.g. bounds change, if it's validated by parents then it's not signaled here
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
@@ -124,64 +156,52 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         &self,
         path: &Ph,
         stack: &P,
-        cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
 
-    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    fn childs(&self) -> usize;
-    /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    #[deprecated]
-    fn with_child<'s,F,R>(
-        &'s self,
-        i: usize,
-        callback: F,
-        root: E::RootRef<'s>,
+    fn update<Ph>(
+        &mut self,
+        path: &Ph,
+        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> R
-    where
-        F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),()>,&'c mut E::Context<'cc>) -> R
-   ;
+    ) where Ph: PathStack<E> + ?Sized;
+
+    #[inline]
+    fn end<Ph>(
+        &mut self,
+        path: &Ph,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where Ph: PathStack<E> + ?Sized {}
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    #[deprecated]
-    fn childs_ref<'s,F>(
-        &'s self,
-        mut callback: F,
-        root: E::RootRef<'s>,
-        ctx: &mut E::Context<'_>
-    )
-    where
-        F: for<'w,'ww,'c,'cc> FnMut(usize,&'w (dyn WidgetDyn<E>+'ww),&'c mut E::Context<'cc>)
-    {
-        for i in 0..self.childs() {
-            self.with_child(
-                i,
-                #[inline] |wg,ctx| (callback)(i,wg.unwrap(),ctx), 
-                root.fork(), ctx,
-            );
-        }
+    fn childs(&self) -> Range<isize>;
+
+    fn child_dyn(&self, idx: isize) -> Option<WidgetChildDynResult<'_,E>>;
+
+    fn child_dyn_mut(&mut self, idx: isize) -> Option<WidgetChildDynResultMut<'_,E>>;
+
+    fn childs_dyn<'a,F>(&'a self, range: Range<isize>, callback: F) where F: FnMut(WidgetChildDynResult<'a,E>);
+
+    fn childs_dyn_mut<'a,F>(&'a mut self, range: Range<isize>, callback: F) where F: FnMut(WidgetChildDynResultMut<'a,E>);
+
+    fn resolve_child_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResult<'a,'b,E>>;
+
+    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>>;
+
+    fn collect_childs_dyn_range(&self, range: Range<isize>) -> Vec<WidgetChildDynResult<'_,E>> {
+        let mut dest = Vec::with_capacity(range.len());
+        self.childs_dyn(range, &mut |result| dest.push(result) );
+        dest
     }
-    
-    // /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
-    // #[deprecated]
-    // fn child_paths(&self, own_path: E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Vec<E::WidgetPath> {
-    //     let mut dest = Vec::with_capacity(self.childs());
 
-    //     for i in 0..self.childs() {
-    //         self.with_child(
-    //             i,
-    //             #[inline] |wg,ctx| {
-    //                 let w = wg.unwrap();
-    //                 dest.push(w.in_parent_path(own_path.clone()));
-    //             }, 
-    //             root.fork(), ctx,
-    //         );
-    //     }
-
-    //     dest
-    // }
+    fn collect_childs_dyn_range_mut(&mut self, range: Range<isize>) -> Vec<WidgetChildDynResultMut<'_,E>> {
+        let mut dest = Vec::with_capacity(range.len());
+        self.childs_dyn_mut(range, &mut |result| dest.push(result) );
+        dest
+    }
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Resolve a deep child item by the given relative path
@@ -189,77 +209,26 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// An empty path will resolve to this widget
     /// 
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
-    fn with_resolve<'s,F,R>(
-        &'s self,
-        sub_path: &(dyn PathResolvusDyn<E>+'_),
-        mut callback: F,
-        root: E::RootRef<'s>,
+    fn resolve<'a>(
+        &'a self,
+        sub_path: &(dyn PathResolvusDyn<E>),
+        root: E::RootRef<'a>,
         ctx: &mut E::Context<'_>
-    ) -> R
-    where
-        F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R
-    {
+    ) -> Result<WidgetResolveDynResult<'a,E>,E::Error> {
         if sub_path.inner().is_none() {
-            return (callback)(Ok(self.erase()),ctx);
+            return Ok(WidgetResolveDynResult {
+                widget_id: self.id(),
+                widget: self.erase(),
+            });
         }
 
-        self.with_resolve_child(
-            sub_path,
-            #[inline] |result,ctx| {
-                match result {
-                    Ok(result) => result.widget.with_resolve(result.sub_path, &mut callback, root.fork(), ctx),
-                    Err(e) => (callback)(Err(e),ctx),
-                }
-            },
-            root.fork(),ctx,
-        )
+        if let Some(child) = self.resolve_child_dyn(sub_path) {
+            child.widget.resolve(child.sub_path, root, ctx)
+        } else {
+            Err(todo!())
+        }
     }
-    // {
-    //     if sub_path.is_empty() {
-    //         return (callback)(Ok(self.erase()),ctx);
-    //     }
-    //     //TODO resolve_child could also return it's ref resolve
-    //     match self.resolve_child(&sub_path,root.fork(),ctx) {
-    //         Ok((c,sub)) => {
-    //             self.with_child(
-    //                 c,
-    //                 #[inline] |child,ctx| child.unwrap().with_resolve(sub.clone(), &mut callback, root.fork(), ctx),
-    //                 root.fork(), ctx,
-    //             )
-    //         },
-    //         Err(e) => {
-    //             (callback)(Err(e),ctx)
-    //         },
-    //     }
-    // }
-    /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
-    /// To (or through) which child path would the given sub_path resolve?
-    /// 
-    /// Returns the child index and the subpath inside the child widget to resolve further
-    /// 
-    /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
-    //#[inline]
-    /// This should fail if sub_path is empty
-    fn with_resolve_child<'s,F,R>(
-        &'s self,
-        sub_path: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
-        root: E::RootRef<'s>,
-        ctx: &mut E::Context<'_>
-    ) -> R
-    where
-        F: for<'w,'c,'cc> FnMut(Result<WidgetWithResolveChildDyn<'w,E>,E::Error>,&'c mut E::Context<'cc>) -> R;// { //TODO descriptive struct like ResolvesThruResult instead confusing tuple
-    //     for c in 0..self.childs() {
-    //         if let Some(r) = self.with_child(
-    //             c, 
-    //             #[inline] |w,_| w.unwrap().resolved_by_path(sub_path),
-    //             root.fork(), ctx,
-    //         ) {
-    //             return Ok((c,r.sub_path));
-    //         }
-    //     }
-    //     Err(self.gen_diag_error_resolve_fail(sub_path, "resolve",root.fork(),ctx))
-    // }
+
     // /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     // #[inline]
     // fn trace_bounds<P,Ph>(&self, path: &Ph,
@@ -296,15 +265,17 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// Determines the next child in this widget in the tabulation step
     #[inline]
     fn _tabulate_next_child<P,Ph>(&self, path: &Ph, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+        let childs = self.childs();
+        
         match origin {
             // This widget is entered
             TabulateNextChildOrigin::Enter => match dir {
                 // This widget is entered forwards, if focusable tabulate into this
                 TabulateDirection::Forward if self.focusable() => TabulateNextChildResponse::This,
                 // Entered forwards, not focusable but has childs, try tabulate into first child
-                TabulateDirection::Forward if self.childs() != 0 => TabulateNextChildResponse::Child(0),
+                TabulateDirection::Forward if !childs.is_empty() => TabulateNextChildResponse::Child(childs.start),
                 // Entered backwards and has childs, try tabulate into last child
-                TabulateDirection::Backward if self.childs() != 0 => TabulateNextChildResponse::Child(self.childs()-1),
+                TabulateDirection::Backward if !childs.is_empty()=> TabulateNextChildResponse::Child(childs.end - 1),
                 // Entered backwards, doesn't have childs but is focusable, try tabulate into this
                 TabulateDirection::Backward if self.focusable() => TabulateNextChildResponse::This,
                 // No childs and not focusable, leave this widget (resumes traverse in parent widget)
@@ -313,16 +284,16 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             // This widget was focused, tabulate away from this widget
             TabulateNextChildOrigin::This => match dir {
                 // If forward and has childs, tabulate into first child
-                TabulateDirection::Forward if self.childs() != 0 => TabulateNextChildResponse::Child(0),
+                TabulateDirection::Forward if !childs.is_empty() => TabulateNextChildResponse::Child(childs.start),
                 // Else, leave this widget (resumes traverse in parent widget)
                 _ => TabulateNextChildResponse::Leave,
             }
             // Tabulate from previous child of this widget
             TabulateNextChildOrigin::Child(child_id) => match dir { //assert!(child_id < self.childs());
                 // If forward and child after origin child, tabulate into next child
-                TabulateDirection::Forward if child_id < self.childs().saturating_sub(1) => TabulateNextChildResponse::Child(child_id+1),
+                TabulateDirection::Forward if child_id < childs.end.saturating_sub(1) => TabulateNextChildResponse::Child(child_id+1),
                 // If backwards, and child before origin child, tabulate into previous child
-                TabulateDirection::Backward if self.childs() != 0 && child_id != 0 => TabulateNextChildResponse::Child(child_id-1),
+                TabulateDirection::Backward if !childs.is_empty() && child_id > childs.start => TabulateNextChildResponse::Child(child_id-1),
                 // If backwards, and no childs before origin child, but this widget is focusable, tabulate into this widget
                 TabulateDirection::Backward if self.focusable() => TabulateNextChildResponse::This,
                 // Else, leave this widget (resumes traverse in parent widget)
@@ -332,15 +303,15 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
 
     #[deprecated]
-    fn _call_tabulate_on_child_idx<P,Ph>(&self, idx: usize, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+    fn _call_tabulate_on_child_idx<P,Ph>(&self, idx: isize, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
 
     fn _tabulate<P,Ph>(&self, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         let current_path = path;
         // fn to tabulate to the next child away from the previous child (child_id None = self)
-        let enter_child_sub = |child_id: usize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
+        let enter_child_sub = |child_id: isize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
             self._call_tabulate_on_child_idx(child_id, path, stack, to.clone(), dir, root.fork(), ctx)
         };
-        let next_child = |mut child_id: Option<usize>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
+        let next_child = |mut child_id: Option<isize>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
             loop {
                 // determine the targeted next child
                 let targeted_child = self._tabulate_next_child(
@@ -375,29 +346,23 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             Ok(TabulateResponse::Leave)
         };
         // tabulate into specific child, either in resolve phase or enter
-        let enter_child = |child_id: usize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
+        let enter_child = |child_id: isize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
             match enter_child_sub(child_id,to,ctx)? {
-                TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
-                TabulateResponse::Leave => return next_child(Some(child_id),ctx),
+                TabulateResponse::Done(v) => Ok(TabulateResponse::Done(v)),
+                TabulateResponse::Leave => next_child(Some(child_id),ctx),
             }
         };
         match op {
             TabulateOrigin::Resolve(p) => {
                 if p.inner().is_some() {
                     // pass 1: resolve to previous focused widget
-                    return self.with_resolve_child(
-                        p,
-                        #[inline] |result,ctx| {
-                            match result {
-                                Ok(result) => enter_child(result.idx, TabulateOrigin::Resolve(result.sub_path),ctx),
-                                Err(e) => Err(e),
-                            }
-                        },
-                        root.fork(),ctx,
-                    );
+                    match self.resolve_child_dyn(p) {
+                        Some(result) => enter_child(result.idx, TabulateOrigin::Resolve(result.sub_path),ctx),
+                        None => Err(todo!()),
+                    }
                 }else{
                     // pass 2: we are the previous focused widget and should tabulate away
-                    return next_child(None,ctx);
+                    next_child(None,ctx)
                 }
             },
             TabulateOrigin::Enter => {
@@ -413,10 +378,10 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
                 match enter_dir {
                     // tabulate into enter the targeted child
-                    TabulateNextChildResponse::Child(t) => return enter_child(t, TabulateOrigin::Enter,ctx),
+                    TabulateNextChildResponse::Child(t) => enter_child(t, TabulateOrigin::Enter,ctx),
                     // tabulate to self
-                    TabulateNextChildResponse::This => return Ok(TabulateResponse::Done(current_path.to_resolvus())),
-                    TabulateNextChildResponse::Leave => return Ok(TabulateResponse::Leave),
+                    TabulateNextChildResponse::This => Ok(TabulateResponse::Done(current_path.to_resolvus())),
+                    TabulateNextChildResponse::Leave => Ok(TabulateResponse::Leave),
                 }
             },
         }
@@ -427,7 +392,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         None
     }
     #[inline]
-    fn innest(&self) -> Option<&dyn WidgetDyn<E>> { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn WidgetDyn<E>+'w)> where Self: 'w
+    fn innest<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn WidgetDyn<E>+'w)> where Self: 'w
         let mut i = self.erase();
         loop {
             let v = i.inner();
@@ -439,13 +404,32 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         }
     }
 
+    /// Get a dyn Any of the widget for downcast.
+    /// 
+    /// This will flatten through `dyn Widget` and direct `Box<dyn Widget>`, but not through other `Box<T>`.
+    /// 
+    /// If you want the `dyn Any` behind `dyn Widget` and any kind and nesting of `Box`, use `widget.erase2().as_any()`.
+    /// 
+    /// This also means that downcast to `Box<dyn Widget>` isn't possible
     #[inline]
     fn as_any(&self) -> &dyn std::any::Any where Self: 'static {
-        WBase::as_any(self)
+        WBase::_wbase_as_any(self)
+    }
+
+    /// Get a dyn Any of the widget for downcast.
+    /// 
+    /// This will flatten through `dyn Widget` and direct `Box<dyn Widget>`, but not through other `Box<T>`.
+    /// 
+    /// If you want the `dyn Any` behind `dyn Widget` and any kind and nesting of `Box`, use `widget.erase2_mut().as_any_mut()`.
+    /// 
+    /// This also means that downcast to `Box<dyn Widget>` isn't possible
+    #[inline]
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any where Self: 'static {
+        WBase::_wbase_as_any_mut(self)
     }
 
     fn debug_type_name(&self, dest: &mut Vec<&'static str>) {
-        dest.push(self.type_name());
+        dest.push(self._wbase_type_name());
     }
     fn debugged_type_name(&self) -> Vec<&'static str> {
         let mut v = Vec::new();
@@ -467,6 +451,13 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
 
     #[inline]
+    fn query_mut<'a,T>(&'a mut self) -> Option<T::Result<'a>> where T: WQuery<E> + ?Sized, Self: 'a {
+        let mut response: Option<T::Result<'a>> = None;
+        self.respond_query_mut(WQueryResponder::new::<T>(&mut response));
+        response
+    }
+
+    #[inline]
     fn query_generic<'a,T,G>(&'a self) -> Option<T::Result<'a,G>> where T: WQueryGeneric<E> + ?Sized, G: ?Sized, Self: 'a {
         let mut response: Option<T::Result<'a,G>> = None;
         self.respond_query_generic::<T,G>(WQueryResponderGeneric::new(&mut response));
@@ -475,32 +466,54 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
     fn respond_query<'a>(&'a self, responder: WQueryResponder<'_,'a,E>);
 
+    fn respond_query_mut<'a>(&'a mut self, responder: WQueryResponder<'_,'a,E>);
+
     #[inline]
     fn respond_query_generic<'a,Q,G>(&'a self, responder: WQueryResponderGeneric<'_,'a,Q,G,E>) where Q: WQueryGeneric<E> + ?Sized, G: ?Sized {}
 
     /// Use this to turn to dyn Widget
+    /// 
+    /// This avoids flattening through dyn to be zero-cost
     #[inline]
     fn erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {
-        WBase::_erase(self)
+        WBase::_wbase_erase(self)
     }
 
-    /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
-    /// Box reference of this widget immutable. Use [`WidgetMut::box_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
+    /// Use this to turn to dyn Widget
+    /// 
+    /// This avoids flattening through dyn to be zero-cost
     #[inline]
-    fn box_ref<'s>(&'s self) -> Box<dyn WidgetDyn<E>+'s> where Self: 's {
-        WBase::_box_ref(self)
+    fn erase_mut<'s>(&mut self) -> &mut (dyn WidgetDyn<E>+'s) where Self: 's {
+        WBase::_wbase_erase_mut(self)
     }
+
+    /// Use this to turn to dyn Widget
+    /// 
+    /// This also flattens direct layers of Box and dyn
+    #[inline]
+    fn erase2<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {
+        WBase::_wbase_erase(self)
+    }
+
+    /// Use this to turn to dyn Widget
+    /// 
+    /// This also flattens direct layers of Box and dyn
+    #[inline]
+    fn erase2_mut<'s>(&mut self) -> &mut (dyn WidgetDyn<E>+'s) where Self: 's {
+        WBase::_wbase_erase_mut(self)
+    }
+
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// Move widget into box immutable. Use [`WidgetMut::box_box_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
     fn box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w {
-        WBase::_box_box(self)
+        WBase::_wbase_box_box(self)
     }
     /// ![BOXING](https://img.shields.io/badge/-boxing-000?style=flat-square)  
     /// Move widget into box immutable. Use [`WidgetMut::boxed_mut`] to box into mutable [`WidgetRef`](WidgetRefMut).
     #[inline]
     fn boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
-        WBase::_boxed(self)
+        WBase::_wbase_boxed(self)
     }
 
     #[inline(never)]
@@ -515,14 +528,19 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         Traitcast(_mut) from Label<E,&str> to ICheckBox<E> not implemented (strip "dyn " prefix)
         */
         let widget_type = self.debugged_type_name();
-        let child_info = (0..self.childs())
-            .map(#[inline] |i| self.with_child(
-                i,
-                |w,ctx| w.unwrap().guion_resolve_error_child_info(i) ,
-                root.fork(),
-                ctx,
-            )  )
-            .collect::<Vec<_>>();
+
+        let child_info = {
+            let childs = self.childs();
+
+            let mut dest = Vec::with_capacity(childs.len());
+
+            self.childs_dyn(childs, #[inline] |w| 
+                dest.push( w.widget.guion_resolve_error_child_info(w.idx) )
+            );
+
+            dest
+        };
+
         GuionError::ResolveError(Box::new(ResolveError{
             op,
             sub_path: todo!(),
@@ -532,7 +550,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
 
     #[inline(never)]
-    fn guion_resolve_error_child_info(&self, child_idx: usize) -> GuionResolveErrorChildInfo<E> {
+    fn guion_resolve_error_child_info(&self, child_idx: isize) -> GuionResolveErrorChildInfo<E> {
         GuionResolveErrorChildInfo {
             child_idx,
             widget_type: self.debugged_type_name(),
@@ -546,53 +564,41 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 /// This trait is blanket implemented for all widget and provides functions which require compile-time knowledge of types
 #[doc(hidden)]
 pub trait WBase<E> where E: Env {
-    fn type_name(&self) -> &'static str;
-    fn _erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's;
-    // fn _as_wcow<'s>(&'s self) -> WidgetRef<'s,E>;
-    // fn _box_into_wcow<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w;
-    // fn _into_wcow<'w>(self) -> WidgetRef<'w,E> where Self: Sized+'w;
-    fn _box_ref<'s>(&'s self) -> Box<dyn WidgetDyn<E>+'s> where Self: 's;
-    fn _box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w;
-    fn _boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w;
-    fn as_any(&self) -> &dyn std::any::Any where Self: 'static;
+    fn _wbase_type_name(&self) -> &'static str;
+    fn _wbase_erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's;
+    fn _wbase_erase_mut<'s>(&mut self) -> &mut (dyn WidgetDyn<E>+'s) where Self: 's;
+    fn _wbase_box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w;
+    fn _wbase_boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w;
+    fn _wbase_as_any(&self) -> &dyn std::any::Any where Self: 'static;
+    fn _wbase_as_any_mut(&mut self) -> &mut dyn std::any::Any where Self: 'static;
 }
 impl<T,E> WBase<E> for T where T: Widget<E>, E: Env {
     #[inline]
-    fn type_name(&self) -> &'static str {
+    fn _wbase_type_name(&self) -> &'static str {
         type_name::<Self>()
     }
     #[inline]
-    fn _erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {
-        self
-    }
-    // #[inline]
-    // fn _as_wcow<'s>(&'s self) -> WidgetRef<'s,E> {
-    //     WCow::Borrowed(self)
-    // }
-    // #[inline]
-    // fn _box_into_wcow<'w>(self: Box<Self>) -> WidgetRef<'w,E> where Self: 'w {
-    //     WCow::Owned(self)
-    // }
-    // #[inline]
-    // fn _into_wcow<'w>(self) -> WidgetRef<'w,E> where Self: Sized + 'w {
-    //     let b = Box::new(self);
-    //     WCow::Owned(b)
-    // }
-    #[inline]
-    fn _box_ref<'s>(&'s self) -> Box<dyn WidgetDyn<E>+'s> where Self: 's {
-        //Box::new(self)
-        todo!()
-    }
-    #[inline]
-    fn _box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w {
+    fn _wbase_erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {
         self
     }
     #[inline]
-    fn _boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
+    fn _wbase_erase_mut<'s>(&mut self) -> &mut (dyn WidgetDyn<E>+'s) where Self: 's {
+        self
+    }
+    #[inline]
+    fn _wbase_box_box<'w>(self: Box<Self>) -> Box<dyn WidgetDyn<E>+'w> where Self: 'w {
+        self
+    }
+    #[inline]
+    fn _wbase_boxed<'w>(self) -> Box<dyn WidgetDyn<E>+'w> where Self: Sized + 'w {
         Box::new(self)
     }
     #[inline]
-    fn as_any(&self) -> &dyn std::any::Any where Self: 'static {
+    fn _wbase_as_any(&self) -> &dyn std::any::Any where Self: 'static {
+        self
+    }
+    #[inline]
+    fn _wbase_as_any_mut(&mut self) -> &mut dyn std::any::Any where Self: 'static {
         self
     }
 }

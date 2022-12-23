@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::ProtectedReturn;
 use crate::env::Env;
-use crate::widget::cache::{WidgetCache, DynWidgetCache};
+use crate::widget::cache::{RenderCache, DynRenderCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use self::mut_target::MuTarget;
@@ -18,7 +18,7 @@ pub mod mut_target;
 pub type DynViewDispatch<'a,R,E> = &'a mut (dyn for<'w,'ww,'r,'c,'cc> FnMut(&'w (dyn WidgetDyn<E>+'ww),<E as Env>::RootRef<'r>,&'c mut <E as Env>::Context<'cc>) -> R + 'a);
 
 pub trait View<E> where E: Env {
-    type WidgetCache: WidgetCache<E>;
+    type WidgetCache: RenderCache<E>;
     type Mutarget: MuTarget<E>;
 
     fn view<R>(&self, dispatch: DynViewDispatch<'_,R,E>, mutor: &(dyn MutorToBuilderDyn<(),Self::Mutarget,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R;
@@ -71,7 +71,7 @@ impl<T,M,E> ViewDyn2<E,M> for T where T: View<E>, for<'k> M: MuTarget<E,Mutable<
 }
 
 impl<M,E> View<E> for dyn ViewDyn2<E,M> + '_ where M: MuTarget<E>, E: Env {
-    type WidgetCache = DynWidgetCache<E>;
+    type WidgetCache = DynRenderCache<E>;
     type Mutarget = M;
 
     #[inline]

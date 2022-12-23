@@ -4,7 +4,7 @@ use crate::dispatchor::AsWidgetDispatch;
 use crate::layout::Orientation;
 use crate::util::bounds::Bounds;
 use crate::widget::as_widget::AsWidget;
-use crate::widget::cache::{WidgetCache, StdRenderCachors};
+use crate::widget::cache::{RenderCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widgets::util::state::AtomState;
 use crate::{EventResp, event_new};
@@ -193,6 +193,6 @@ pub struct ProgressBarCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdW
     //TODO cachor borders and colors
 }
 
-impl<E> WidgetCache<E> for ProgressBarCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
+impl<E> RenderCache<E> for ProgressBarCache<E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E> {
     fn reset_current(&mut self) {}
 }

@@ -14,7 +14,7 @@ use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
 use crate::text::stor::TextStor;
 use crate::util::tabulate::{TabulateOrigin, TabulateDirection, TabulateResponse};
 use crate::widget::{Widget, WidgetWithResolveChildDyn};
-use crate::widget::cache::{StdRenderCachors, ValidationStat, WidgetCache};
+use crate::widget::cache::{StdRenderCachors, ValidationStat, RenderCache};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::Label;
@@ -217,6 +217,6 @@ impl<E, TC> Default for LabelCache<E, TC> where E: Env, for<'r> ERenderer<'r,E>:
     }
 }
 
-impl<E,TC> WidgetCache<E> for LabelCache<E,TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
+impl<E,TC> RenderCache<E> for LabelCache<E,TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
     fn reset_current(&mut self) {}
 }

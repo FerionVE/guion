@@ -16,7 +16,7 @@ use crate::render::{with_inside_spacing_border, widget_size_inside_border_type, 
 use crate::util::bounds::{Dims, Bounds};
 use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
 use crate::widget::as_widget::AsWidget;
-use crate::widget::cache::{WidgetCache, StdRenderCachors};
+use crate::widget::cache::{RenderCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::{Widget, WidgetWithResolveChildDyn};
 use crate::widget::as_widgets::AsWidgets;
@@ -428,7 +428,7 @@ impl<E,T> AsWidget<E> for Pane<E,T> where Self: Widget<E>, E: Env {
     }
 }
 
-pub struct PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Clone + 'static {
+pub struct PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: RenderCache<E>, ChildIDCachor: Clone + 'static {
     std_render_cachors: Option<StdRenderCachors<E>>,
     orientation_cachor: Option<(Dims,Orientation)>,
     childs: Vec<PaneCacheChild<E,ChildCache,ChildIDCachor>>,
@@ -439,7 +439,7 @@ pub struct PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: Widge
     //render_style_cachor: Option<<ERenderer<'_,E> as RenderStdWidgets<E>>::RenderPreprocessedTextStyleCachors>,
 }
 
-pub struct PaneCacheChild<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Clone + 'static {
+pub struct PaneCacheChild<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: RenderCache<E>, ChildIDCachor: Clone + 'static {
     current_gonstraint: Option<ESize<E>>,
     relative_bounds_cache: Option<Bounds>,
     gonstraint_cachor: Option<ESize<E>>,
@@ -447,7 +447,7 @@ pub struct PaneCacheChild<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: 
     widget_cache: ChildCache,
 }
 
-impl<E,ChildCache,ChildIDCachor> Default for PaneCacheChild<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Clone + 'static {
+impl<E,ChildCache,ChildIDCachor> Default for PaneCacheChild<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: RenderCache<E>, ChildIDCachor: Clone + 'static {
     #[inline]
     fn default() -> Self {
         Self {
@@ -460,7 +460,7 @@ impl<E,ChildCache,ChildIDCachor> Default for PaneCacheChild<E,ChildCache,ChildID
     }
 }
 
-impl<E,ChildCache,ChildIDCachor> Default for PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Clone + 'static {
+impl<E,ChildCache,ChildIDCachor> Default for PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: RenderCache<E>, ChildIDCachor: Clone + 'static {
     #[inline]
     fn default() -> Self {
         Self {
@@ -474,7 +474,7 @@ impl<E,ChildCache,ChildIDCachor> Default for PaneCache<E,ChildCache,ChildIDCacho
     }
 }
 
-impl<E,ChildCache,ChildIDCachor> WidgetCache<E> for PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: WidgetCache<E>, ChildIDCachor: Clone + 'static {
+impl<E,ChildCache,ChildIDCachor> RenderCache<E> for PaneCache<E,ChildCache,ChildIDCachor> where E: Env, ChildCache: RenderCache<E>, ChildIDCachor: Clone + 'static {
     fn reset_current(&mut self) {
         self.current_gonstraints = None;
         self.current_layouted = false;

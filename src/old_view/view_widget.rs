@@ -4,7 +4,7 @@ use crate::dispatchor::AsWidgetDispatch;
 use crate::env::Env;
 use crate::error::ResolveResult;
 use crate::widget::as_widget::AsWidget;
-use crate::widget::cache::DynWidgetCache;
+use crate::widget::cache::DynRenderCache;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::{View, box_view_cb};
@@ -24,7 +24,7 @@ impl<ViewTy,ViewFn,MutorFn,E> AsWidget<E> for ViewWidget<ViewTy,ViewFn,MutorFn,E
     E: Env,
 {
     type Widget<'v,'z2> = dyn WidgetDyn<E> + 'v where 'z2: 'v, Self: 'z2;
-    type WidgetCache = DynWidgetCache<E>;
+    type WidgetCache = DynRenderCache<E>;
 
     #[inline]
     fn with_widget<'w,R>(&self, dispatch: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R

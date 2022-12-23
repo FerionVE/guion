@@ -1,4 +1,4 @@
-//! Handlers can be chained and dispatch events and other stuff
+//! Intercept widget operations
 
 use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
@@ -10,16 +10,16 @@ use crate::widget::Widget;
 
 pub mod standard;
 
-//TODO SUPER DIFFICULT support non-'static handlers
-pub trait HandlerBuilder<E>: 'static where E: Env {
-    type Built: Handler<E>;
+//TODO SUPER DIFFICULT support non-'static interceptors
+pub trait InterceptBuilder<E>: 'static where E: Env {
+    type Built: WidgetIntercept<E>;
 
     //TODO arc slow
-    fn build<Acc>(ctx: &mut E::Context<'_>) -> Self::Built where Acc: HandlerStateResolve<Self,E>;
+    fn build<Acc>(ctx: &mut E::Context<'_>) -> Self::Built where Acc: InterceptStateResolve<Self,E>;
 }
 
-/// Handlers are stacked inside a Context and any render/event/size action goes through the handler stack
-pub trait Handler<E>: 'static where E: Env {
+/// Interceptors are stacked inside a Context and any render/event/size action goes through the intercept stack
+pub trait WidgetIntercept<E>: 'static where E: Env {
     //TODO move into feature traits
     fn _render<W,Ph,S>(
         &self,
@@ -29,7 +29,6 @@ pub trait Handler<E>: 'static where E: Env {
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut W::Cache,
-        //handler_root: &ECHandlerBuilt<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized;
@@ -41,7 +40,6 @@ pub trait Handler<E>: 'static where E: Env {
         stack: &S,
         event: &Evt,
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
@@ -53,7 +51,6 @@ pub trait Handler<E>: 'static where E: Env {
         stack: &S,
         event: &Evt,
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
@@ -63,25 +60,24 @@ pub trait Handler<E>: 'static where E: Env {
         widget: &W,
         path: &Ph,
         stack: &S,
-        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized;
 
-    //fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's;
+    //fn inner<'s>(&self) -> &(dyn WidgetIntercept<E>+'s) where Self: 's;
 
     #[inline]
     fn is_tail(&self) -> bool {
         false
     }
 
-    //TODO separate from WQuery, as this definitely doesn't query the widget behind the handler but the handler itself
+    //TODO separate from WQuery, as this definitely doesn't query the widget behind the intercept but the intercept itself
     fn respond_query<'a>(&'a self, t: WQueryResponder<'_,'a,E>);
 
     fn respond_query_generic<'a,Q,G>(&'a self, t: WQueryResponderGeneric<'_,'a,Q,G,E>) where Q: WQueryGeneric<E> + ?Sized, G: ?Sized;
 }
 
-impl<E> Handler<E> for () where E: Env {
+impl<E> WidgetIntercept<E> for () where E: Env {
     #[inline] 
     fn _render<W,Ph,S>(
         &self,
@@ -107,14 +103,13 @@ impl<E> Handler<E> for () where E: Env {
         stack: &S,
         event: &Evt,
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     {
-        widget._event_direct(path, stack, event, route_to_widget, cache, root, ctx)
+        widget._event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline] 
     fn _event_root<W,Ph,S,Evt>(
@@ -124,7 +119,6 @@ impl<E> Handler<E> for () where E: Env {
         stack: &S,
         event: &Evt,
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
@@ -133,7 +127,7 @@ impl<E> Handler<E> for () where E: Env {
     {
         if !event._root_only() {//TODO warn eprint??
             //TODO everything wrong here with event root propagation and tail
-            widget._event_direct(path, stack, event, route_to_widget, cache, root, ctx)
+            widget._event_direct(path, stack, event, route_to_widget, root, ctx)
             //l.ctx.event_direct(l.widget,e)
         }else{
             false
@@ -145,17 +139,16 @@ impl<E> Handler<E> for () where E: Env {
         widget: &W,
         path: &Ph,
         stack: &S,
-        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E>
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized
     {
-        widget._size(path, stack, cache, root, ctx)
+        widget._size(path, stack, root, ctx)
     }
 
-    // fn inner<'s>(&self) -> &(dyn Handler<E>+'s) where Self: 's {
+    // fn inner<'s>(&self) -> &(dyn WidgetIntercept<E>+'s) where Self: 's {
     //     todo!()
     // }
     #[inline]
@@ -169,18 +162,18 @@ impl<E> Handler<E> for () where E: Env {
     fn respond_query_generic<'a,Q,G>(&'a self, _: WQueryResponderGeneric<'_,'a,Q,G,E>) where Q: WQueryGeneric<E> + ?Sized, G: ?Sized {}
 }
 
-impl<E> HandlerBuilder<E> for () where E: Env {
+impl<E> InterceptBuilder<E> for () where E: Env {
     type Built = ();
 
-    fn build<Acc>(_: &mut E::Context<'_>) -> Self::Built where Acc: HandlerStateResolve<Self,E> {}
+    fn build<Acc>(_: &mut E::Context<'_>) -> Self::Built where Acc: InterceptStateResolve<Self,E> {}
 }
 
-pub trait HandlerStateResolve<Dest,E> where E: Env, Dest: HandlerBuilder<E> + ?Sized + 'static {
-    fn resolve_handler_state<'a>(ctx_root: &'a mut E::Context<'_>) -> &'a mut Dest;
+pub trait InterceptStateResolve<Dest,E> where E: Env, Dest: InterceptBuilder<E> + ?Sized + 'static {
+    fn resolve_intercept_state<'a>(ctx_root: &'a mut E::Context<'_>) -> &'a mut Dest;
 }
 
-// impl<E> HandlerStateResolve<<E as Env>::Context<'_>,E> for () where E: Env, Dest: 'static {
-//     fn resolve_handler_state<'a>(ctx_root: &'a mut <E as Env>::Context<'_>) -> &'a mut Dest {
+// impl<E> InterceptStateResolve<E::Context<'_>,E> for () where E: Env, Dest: 'static {
+//     fn resolve_intercept_state<'a>(ctx_root: &'a mut E::Context<'_>) -> &'a mut Dest {
 //         ctx_root
 //     }
 // }

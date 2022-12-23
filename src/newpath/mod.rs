@@ -342,7 +342,7 @@ impl<V,E> PathFragment<E> for SimpleId<V> where V: Clone + PartialEq + 'static, 
 
 #[derive(Clone, Debug, PartialEq)]
 #[repr(transparent)]
-pub struct FixedIdx(pub usize);
+pub struct FixedIdx(pub isize);
 
 impl<E> PathFragment<E> for FixedIdx where E: Env {
     type Stack<I> = SimplePathStack<Self,E,I> where I: PathStack<E> + Sized;

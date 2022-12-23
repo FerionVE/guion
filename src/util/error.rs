@@ -29,7 +29,7 @@ pub struct TraitcastError {
 
 #[derive(Clone)]
 pub struct GuionResolveErrorChildInfo<E> where E: Env {
-    pub child_idx: usize,
+    pub child_idx: isize,
     pub widget_type: Vec<&'static str>,
     pub path: Arc<dyn PathResolvusDyn<E>>,
     //pub widget_path_if_path: Option<E::WidgetPath>,
@@ -51,8 +51,8 @@ impl<E> Display for GuionError<E> where E: Env {
         match self {
             Self::TraitcastError(e) => {
                 write!(f,"\n\nFailed to {}\n\n",e.op)?;
-                for v in &e.src_type {
-                    write!(f,"\tsrc  = {}\n",v)?;
+                for &v in &e.src_type {
+                    write!(f,"\tsrc  = {v}\n")?;
                 }
                 write!(f,"\n\tdest = {}\n\n",e.dest_trait_type)?;
             }

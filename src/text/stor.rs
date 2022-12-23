@@ -14,7 +14,7 @@ use crate::util::immu::Immutable;
 use super::layout::TxtLayout;
 
 pub trait TextStor<E> {
-    fn caption<'s>(&'s self) -> Cow<'s,str>;
+    fn caption(&self) -> Cow<'_,str>;
     #[inline]
     fn chars(&self) -> usize {
         self.caption().chars().count()
@@ -47,19 +47,19 @@ pub trait TextStorMut<E>: TextStor<E> {
 
 impl<E> TextStor<E> for () {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         Cow::Borrowed("")
     }
 }
 impl<E> TextStor<E> for str {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         Cow::Borrowed(self)
     }
 }
 impl<E> TextStor<E> for String {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         Cow::Borrowed(self)
     }
 }
@@ -74,7 +74,7 @@ impl<E> TextStorMut<E> for String {
 
 impl<E,A> TextStor<E> for &A where A: TextStor<E> + ?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -89,7 +89,7 @@ impl<E,A> TextStor<E> for &A where A: TextStor<E> + ?Sized {
 
 impl<E,A> TextStor<E> for &mut A where A: TextStor<E> + ?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -110,7 +110,7 @@ impl<E,A> TextStorMut<E> for &mut A where A: TextStorMut<E> + ?Sized {
 
 impl<E,A> TextStor<E> for MutexGuard<'_,A> where A: TextStor<E> + ?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -131,7 +131,7 @@ impl<E,A> TextStorMut<E> for MutexGuard<'_,A> where A: TextStorMut<E> + ?Sized {
 
 impl<E,A> TextStor<E> for RwLockReadGuard<'_,A> where A: TextStor<E> + ?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -146,7 +146,7 @@ impl<E,A> TextStor<E> for RwLockReadGuard<'_,A> where A: TextStor<E> + ?Sized {
 
 impl<E,A> TextStor<E> for RwLockWriteGuard<'_,A> where A: TextStor<E> + ?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -167,7 +167,7 @@ impl<E,A> TextStorMut<E> for RwLockWriteGuard<'_,A> where A: TextStorMut<E> + ?S
 
 impl<E,A> TextStor<E> for Ref<'_,A> where A: TextStor<E> + ?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -182,7 +182,7 @@ impl<E,A> TextStor<E> for Ref<'_,A> where A: TextStor<E> + ?Sized {
 
 impl<E,A> TextStor<E> for RefMut<'_,A> where A: TextStor<E> + ?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -203,7 +203,7 @@ impl<E,A> TextStorMut<E> for RefMut<'_,A> where A: TextStorMut<E> + ?Sized {
 
 impl<E,A> TextStor<E> for ManuallyDrop<A> where A: TextStor<E> + ?Sized {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -224,7 +224,7 @@ impl<E,A> TextStorMut<E> for ManuallyDrop<A> where A: TextStorMut<E> + ?Sized {
 
 impl<E,T> TextStor<E> for MutCell<T> where T: TextStor<E> {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]
@@ -278,7 +278,7 @@ impl<E,S,F> DerefMut for OnModification<E,S,F> where F: FnMut(&mut S) {
 
 impl<E,S,F> TextStor<E> for OnModification<E,S,F> where S: TextStor<E>, F: FnMut(&mut S) {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
 
@@ -379,7 +379,7 @@ pub struct TextDisplay<T>(pub T) where T: Display;
 
 impl<T,E> TextStor<E> for TextDisplay<T> where T: Display, E: Env {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         Cow::Owned(format!("{}",self.0))
     }
 }

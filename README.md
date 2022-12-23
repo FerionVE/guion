@@ -13,8 +13,7 @@ guion is an experimental GUI framework, focused on flexibility (e.g. guion core 
 guion being in an experimental state, API and concepts are still in flux.
 
 Goals: 
-- Data-oriented: Widgets abstract over model, can be directly implemented onto model, or be immediate
-- Widgets own model/data or reference model/data as immediate widget
+- Efficient retained/reactive widgets in sync with flexible declerative View/update which plays nicely with Rust's memory model
 - Dynamic separate Context/states
 - Widget Tree/Model separate from Context, State and side-data
 - Modularity
@@ -28,4 +27,4 @@ Goals:
 - Tame complexity, provide efficient abstractions to make life easier
 
 Related Project:
-- [guion_sdl2](https://github.com/FerionVE/guion_sdl2) for a prototype backend implementation
+- [guion_druid_shell](https://github.com/FerionVE/guion_druid_shell) for a example backend implementation

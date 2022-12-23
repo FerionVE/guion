@@ -6,16 +6,18 @@
 
 //#![warn(clippy::all)]
 
+pub mod widget_decl;
+
 pub mod widget;
 pub mod backend;
 pub mod env;
 pub mod render;
-pub mod event;
+pub mod event; //TODO get rid of the old event
 pub mod event_new;
 pub mod style;
 pub mod layout;
 pub mod ctx;
-pub mod handler;
+pub mod intercept;
 pub mod state;
 pub mod util;
 pub mod aliases;
@@ -24,7 +26,6 @@ pub mod widgets;
 
 pub mod root;
 pub mod traitcast;
-pub mod view;
 pub mod error;
 
 pub mod compat;

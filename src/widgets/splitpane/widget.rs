@@ -22,7 +22,7 @@ use crate::state::{CtxStdState, StdState};
 use crate::util::bounds::Bounds;
 use crate::util::tabulate::{TabulateResponse, TabulateOrigin, TabulateDirection};
 use crate::view::mutor_trait::MutorEndBuilder;
-use crate::widget::cache::{WidgetCache, StdRenderCachors};
+use crate::widget::cache::{RenderCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::{Widget, WidgetWithResolveChildDyn};
 use crate::widget::as_widget::AsWidget;
@@ -420,7 +420,7 @@ impl<E,L,R,V,TrMut> AsWidget<E> for SplitPane<E,L,R,V,TrMut> where Self: Widget<
 }
 
 #[derive(Default)]
-pub struct SplitPaneCache<LCache,RCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LCache: WidgetCache<E>, RCache: WidgetCache<E> {
+pub struct SplitPaneCache<LCache,RCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LCache: RenderCache<E>, RCache: RenderCache<E> {
     child_caches: (LCache,RCache),
     std_render_cachors: Option<StdRenderCachors<E>>,
     center_start_cachor: Option<Bounds>,
@@ -428,7 +428,7 @@ pub struct SplitPaneCache<LCache,RCache,E> where E: Env, for<'r> ERenderer<'r,E>
     //TODO cachor borders and colors
 }
 
-impl<LCache,RCache,E> WidgetCache<E> for SplitPaneCache<LCache,RCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LCache: WidgetCache<E>, RCache: WidgetCache<E> {
+impl<LCache,RCache,E> RenderCache<E> for SplitPaneCache<LCache,RCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LCache: RenderCache<E>, RCache: RenderCache<E> {
     fn reset_current(&mut self) {
         self.child_caches.0.reset_current();
         self.child_caches.1.reset_current();

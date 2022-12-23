@@ -220,7 +220,7 @@ where
     type Built = impl MutorTo<RightArgs,RightTarget,E>;
 
     #[inline]
-    fn erase<'h>(&'h self) -> &'h dyn MutorToBuilderDyn<RightArgs,RightTarget,E> {
+    fn erase(&self) -> &(dyn MutorToBuilderDyn<RightArgs,RightTarget,E>+'_) {
         self
     }
 
@@ -300,7 +300,7 @@ where
     type Built = impl MutorTo<RightArgs,RightTarget,E>;
 
     #[inline]
-    fn erase<'h>(&'h self) -> &'h dyn MutorToBuilderDyn<RightArgs,RightTarget,E> {
+    fn erase(&self) -> &(dyn MutorToBuilderDyn<RightArgs,RightTarget,E>+'_) {
         self
     }
 
@@ -379,7 +379,7 @@ where
     type Built = impl MutorEnd<RightArgs,E>;
 
     #[inline]
-    fn erase<'h>(&'h self) -> &'h dyn MutorEndBuilderDyn<RightArgs,E> {
+    fn erase(&self) -> &(dyn MutorEndBuilderDyn<RightArgs,E>+'_) {
         self
     }
 
@@ -453,7 +453,7 @@ where
     type Built = impl MutorEnd<RightArgs,E>;
 
     #[inline]
-    fn erase<'h>(&'h self) -> &'h dyn MutorEndBuilderDyn<RightArgs,E> {
+    fn erase(&self) -> &(dyn MutorEndBuilderDyn<RightArgs,E>+'_) {
         self
     }
 
@@ -665,10 +665,10 @@ impl<Args,T,E> MutorEnd<Args,E> for Box<T> where T: MutorEnd<Args,E> + ?Sized, E
 impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Target,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
         &mut self,
-        root: <E as Env>::RootMut<'s>,
+        root: E::RootMut<'s>,
         callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Target::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
-        ctx: &'c mut <E as Env>::Context<'cc>,
+        ctx: &'c mut E::Context<'cc>,
     ) where 'cc: 'c {
         (**self).with_mutor_cb(root, callback, args, ctx)
     }
@@ -776,10 +776,10 @@ where
     #[inline]
     fn with_mutor_cb<'s,'c,'cc>(
         &mut self,
-        root: <E as Env>::RootMut<'s>,
+        root: E::RootMut<'s>,
         callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
-        ctx: &'c mut <E as Env>::Context<'cc>,
+        ctx: &'c mut E::Context<'cc>,
     ) where 'cc: 'c {
         self.1.with_mutor_cb(root, callback, args, ctx)
     }
@@ -822,7 +822,7 @@ impl<Args,E> MutorEndBuilder<Args,E> for dyn MutorEndBuilderDyn<Args,E> + '_ whe
     }
 
     #[inline]
-    fn erase<'a>(&'a self) -> &'a dyn MutorEndBuilderDyn<Args,E> {
+    fn erase(&self) -> &(dyn MutorEndBuilderDyn<Args,E>+'_) {
         self
     }
 }
@@ -835,7 +835,7 @@ impl<Args,Target,E> MutorToBuilder<Args,Target,E> for dyn MutorToBuilderDyn<Args
     }
 
     #[inline]
-    fn erase<'a>(&'a self) -> &'a dyn MutorToBuilderDyn<Args,Target,E> {
+    fn erase(&self) -> &(dyn MutorToBuilderDyn<Args,Target,E>+'_) {
         self
     }
 }

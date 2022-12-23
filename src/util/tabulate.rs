@@ -48,20 +48,20 @@ pub enum TabulateNextChildOrigin {
     /// The previous focused was the widget itself
     This,
     /// Previous focused was inside specific child
-    Child(usize),
+    Child(isize),
 }
 
 pub enum TabulateNextChildResponse {
     /// The tabulation target would be the widget itself
     This,
     /// The next tabulation target would be this child
-    Child(usize),
+    Child(isize),
     /// The tabulation would leave the widget
     Leave,
 }
 
 impl TabulateNextChildOrigin {
-    pub fn child_or_this(c: Option<usize>) -> Self {
+    pub fn child_or_this(c: Option<isize>) -> Self {
         match c {
             Some(v) => Self::Child(v),
             None => Self::This,

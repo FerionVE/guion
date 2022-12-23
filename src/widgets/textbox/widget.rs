@@ -11,7 +11,7 @@ use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::text::cursel::{Direction, TxtCurSelBytePos};
 use crate::util::bounds::Offset;
-use crate::widget::cache::{WidgetCache, StdRenderCachors};
+use crate::widget::cache::{RenderCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::{event_new, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn, PathResolvus};
@@ -394,6 +394,6 @@ impl<E, TC> Default for TextBoxCache<E, TC> where E: Env, for<'r> ERenderer<'r,E
     }
 }
 
-impl<E,TC> WidgetCache<E> for TextBoxCache<E,TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
+impl<E,TC> RenderCache<E> for TextBoxCache<E,TC> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, TC: Clone + PartialEq + 'static {
     fn reset_current(&mut self) {}
 }

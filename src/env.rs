@@ -5,9 +5,10 @@ use std::fmt::Debug;
 use crate::backend::Backend;
 use crate::ctx::Context;
 use crate::event_new::downcast_map::EventDowncastMap;
-use crate::handler::Handler;
+use crate::intercept::WidgetIntercept;
 use crate::root::{RootRef, RootMut};
 use crate::util::error::GuionError;
+use crate::widget::Widget;
 
 /// Type compound
 ///
@@ -17,6 +18,7 @@ pub trait Env: Sized + Clone + Copy + Default + PartialEq + Debug + Send + Sync 
     type Context<'a>: Context<'a, Self> + 'a;
     type RootRef<'a>: RootRef<Self> + 'a;
     type RootMut<'a>: RootMut<Self> + 'a;
+    type WidgetRoot: Widget<Self> + 'static;
     type ValidState: ValidState;
     type Message;
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;
@@ -26,7 +28,7 @@ pub trait Env: Sized + Clone + Copy + Default + PartialEq + Debug + Send + Sync 
 }
 
 pub trait EnvFlexCtxHandler: Env {
-    type CtxHandler: Handler<Self>;
+    type CtxHandler: WidgetIntercept<Self>;
 }
 
 pub trait ValidState {

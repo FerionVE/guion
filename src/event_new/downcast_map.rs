@@ -4,6 +4,10 @@ use crate::newpath::{PathResolvusDyn, PathStack};
 use crate::queron::Queron;
 use crate::widget::Widget;
 
+/// The "EDM" EventDowncastMap is an experiment to eventually improve performance,
+/// to downcast the most frequent events so that specific code can be generated for that event between the typed widget zone between the dyn borders.
+/// This can reduce the amount of event downcasting inside the individual widgets and
+/// optimize away the code for the other events in the code for that specific event.
 pub trait EventDowncastMap<E> where E: Env {
     fn event_downcast_map<W,Ph,S,Evt>(
         widget: &W,
@@ -11,7 +15,6 @@ pub trait EventDowncastMap<E> where E: Env {
         stack: &S,
         event: &Evt,
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
@@ -52,13 +55,12 @@ impl<E> EventDowncastMap<E> for () where E: Env {
         stack: &S,
         event: &Evt,
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> EventResp
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: crate::event_new::Event<E> + ?Sized
     {
-        widget.event_direct(path, stack, event, route_to_widget, cache, root, ctx)
+        widget.event_direct(path, stack, event, route_to_widget, root, ctx)
     }
 }

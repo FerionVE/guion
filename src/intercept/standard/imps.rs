@@ -1,16 +1,16 @@
 use crate::aliases::EEvent;
 use crate::env::Env;
 use crate::event::imp::StdVarSup;
-use crate::handler::HandlerBuilder;
+use crate::intercept::InterceptBuilder;
 use crate::newpath::PathResolvusDyn;
 use crate::state::StdState;
 use crate::state::standard::key::StdPressedKey;
 use crate::util::bounds::Offset;
 
-use super::StdHandler;
+use super::StdIntercept;
 
-impl<S,E> StdState<E> for StdHandler<S,E> where
-    S: HandlerBuilder<E>,
+impl<S,E> StdState<E> for StdIntercept<S,E> where
+    S: InterceptBuilder<E>,
     E: Env,
     EEvent<E>: StdVarSup<E>
 {

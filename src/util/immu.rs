@@ -30,7 +30,7 @@ impl<E,T,Z> DerefMut for Immutable<E,T,Z> {
 
 impl<E,A,Z> TextStor<E> for Immutable<E,A,Z> where A: TextStor<E> {
     #[inline]
-    fn caption<'s>(&'s self) -> Cow<'s,str> {
+    fn caption(&self) -> Cow<'_,str> {
         (**self).caption()
     }
     #[inline]

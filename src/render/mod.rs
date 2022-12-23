@@ -211,7 +211,7 @@ impl<'a,S,E,C> Clone for StdRenderProps<'a,S,E,C> where S: ?Sized, E: Env, C: Pa
 
 pub struct WithTestStyle<S,E>(pub S,pub TestStyle<E>) where E: Env;
 
-impl<'a,S,E> Deref for WithTestStyle<S,E> where E: Env {
+impl<S,E> Deref for WithTestStyle<S,E> where E: Env {
     type Target = TestStyle<E>;
 
     fn deref(&self) -> &Self::Target {
@@ -295,7 +295,7 @@ pub enum TestStyleBorderType<E> where E: Env {
     Component,
     Spacing,
     Custom(Border),
-    PhantomData(E),
+    PhantomData(E::Phantom),
 }
 
 impl<E> From<Border> for TestStyleBorderType<E> where E: Env {
@@ -462,7 +462,7 @@ impl<E> TestStyle<E> where E: Env {
             TestStyleBorderType::Component => self.component_border,
             TestStyleBorderType::Spacing => self.spacing,
             TestStyleBorderType::Custom(border) => border,
-            TestStyleBorderType::PhantomData(_) => todo!(),
+            TestStyleBorderType::PhantomData(_) => unsafe { std::hint::unreachable_unchecked() },
         }
     }
 
