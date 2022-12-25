@@ -15,6 +15,7 @@ use crate::root::RootRef;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, WQuery};
 use crate::util::error::{GuionError, ResolveError, GuionResolveErrorChildInfo};
 use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, TabulateNextChildResponse, TabulateOrigin, TabulateResponse};
+use crate::widget_decl::route::UpdateRoute;
 use crate::{EventResp, event_new};
 use crate::aliases::{ERenderer, ESize};
 use crate::newpath::{PathResolvusDyn, PathStack, PathResolvus};
@@ -163,7 +164,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn update<Ph>(
         &mut self,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized;

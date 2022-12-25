@@ -1,9 +1,11 @@
 use std::marker::PhantomData;
 
 use crate::env::Env;
-use crate::newpath::{PathStack, PathResolvusDyn, PathFragment};
+use crate::newpath::{PathStack, PathFragment};
 use crate::traitcast::WQuery;
 use crate::widget::as_widgets::{AsWidgets, AsWidgetsDyn};
+
+use super::route::UpdateRoute;
 
 pub mod fixed_idx;
 
@@ -21,7 +23,7 @@ pub trait DeclList<E> where E: Env {
         &self,
         w: &mut Self::Retained,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized;
@@ -30,7 +32,6 @@ pub trait DeclList<E> where E: Env {
         &self,
         prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Retained where Ph: PathStack<E> + ?Sized;
@@ -55,11 +56,11 @@ impl<E,T> DeclList<E> for &T where T: DeclList<E> + ?Sized, E: Env {
         &self,
         w: &mut Self::Retained,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        (**self).update(w, path, resolve, root, ctx)
+        (**self).update(w, path, route, root, ctx)
     }
 
     #[inline]
@@ -67,7 +68,6 @@ impl<E,T> DeclList<E> for &T where T: DeclList<E> + ?Sized, E: Env {
         &self,
         prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Retained where Ph: PathStack<E> + ?Sized {

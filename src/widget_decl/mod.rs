@@ -2,26 +2,28 @@ use std::any::TypeId;
 use std::marker::PhantomData;
 
 use crate::env::Env;
-use crate::newpath::{PathResolvusDyn, PathStack, PathStackDyn};
+use crate::newpath::{PathStack, PathStackDyn};
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use self::imp::Erased;
 use self::memoize::Memoize;
+use self::route::UpdateRoute;
+use self::zone::Zone;
 
 pub mod mut_target;
 pub mod mutor_trait;
 
 pub mod imp;
-
 pub mod dyn_tunnel;
-
-pub mod sub;
+pub mod route;
 
 pub mod decl_list;
 
+pub mod sub;
 pub mod memoize;
+pub mod zone;
 
 pub trait WidgetDecl<E> where E: Env {
     type Widget: Widget<E> + 'static;
@@ -49,7 +51,7 @@ pub trait WidgetDecl<E> where E: Env {
         &self,
         w: &mut Self::Widget,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) where Ph: PathStack<E> + ?Sized;
@@ -59,7 +61,6 @@ pub trait WidgetDecl<E> where E: Env {
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Widget where Ph: PathStack<E> + ?Sized;
@@ -68,7 +69,6 @@ pub trait WidgetDecl<E> where E: Env {
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
@@ -81,7 +81,7 @@ pub trait WidgetDecl<E> where E: Env {
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
@@ -90,13 +90,13 @@ pub trait WidgetDecl<E> where E: Env {
             let w = unsafe {
                 &mut *(w as *mut Box<dyn WidgetDyn<E> + 'static> as *mut Self::Widget)
             };
-            return self.update(w, path, resolve, root, ctx);
+            return self.update(w, path, route, root, ctx);
         }
 
         //let w_inner = w.erase2_mut();
 
         if let Some(v) = w.as_any_mut().downcast_mut::<Self::Widget>() {
-            self.update(v, path, resolve, root, ctx);
+            self.update(v, path, route, root, ctx);
         } else {
             let new = self.update_restore_boxed(w, path, root, ctx);
             *w = new;
@@ -111,9 +111,9 @@ pub trait WidgetDecl<E> where E: Env {
             WidgetDeclCallbackMode::InstantiateBoxed(dest) =>
                 *dest = Some(self.build_boxed(v.path, v.root, ctx)),
             WidgetDeclCallbackMode::Update(widget) =>
-                self.update(widget, v.path, v.resolve, v.root, ctx),
+                self.update(widget, v.path, v.route, v.root, ctx),
             WidgetDeclCallbackMode::UpdateDyn(widget) =>
-                self.update_dyn(widget, v.path, v.resolve, v.root, ctx),
+                self.update_dyn(widget, v.path, v.route, v.root, ctx),
             WidgetDeclCallbackMode::UpdateRestore(prev, dest) =>
                 *dest = Some(self.update_restore(prev, v.path, v.root, ctx)),
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest) =>
@@ -130,9 +130,9 @@ pub trait WidgetDecl<E> where E: Env {
             WidgetDeclCallbackMode::InstantiateBoxed(dest) =>
                 *dest = Some(self.build_boxed(v.path, v.root, ctx)),
             WidgetDeclCallbackMode::Update(widget) =>
-                self.update(widget, v.path, v.resolve, v.root, ctx),
+                self.update(widget, v.path, v.route, v.root, ctx),
             WidgetDeclCallbackMode::UpdateDyn(widget) =>
-                self.update_dyn(widget, v.path, v.resolve, v.root, ctx),
+                self.update_dyn(widget, v.path, v.route, v.root, ctx),
             WidgetDeclCallbackMode::UpdateRestore(prev, dest) =>
                 *dest = Some(self.update_restore(prev, v.path, v.root, ctx)),
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest) =>
@@ -145,7 +145,7 @@ pub trait WidgetDecl<E> where E: Env {
 pub struct WidgetDeclCallback<'a,W,E> where W: Widget<E> + 'static, E: Env {
     pub(crate) root: E::RootRef<'a>,
     pub(crate) path: &'a (dyn PathStackDyn<E> + 'a),
-    pub(crate) resolve: Option<&'a (dyn PathResolvusDyn<E> + 'a)>,
+    pub(crate) route: UpdateRoute<'a,E>,
     pub(crate) command: WidgetDeclCallbackMode<'a,W,E>,
 }
 
@@ -187,6 +187,11 @@ pub trait WidgetDeclExt<E>: WidgetDecl<E> where E: Env {
     #[inline]
     fn memoize_on<M>(self, memoize: M) -> Memoize<M,Self,E> where Self: Sized, M: Clone + PartialEq + 'static {
         Memoize::new(memoize, self)
+    }
+
+    #[inline]
+    fn zone<Z>(self) -> Zone<Z,Self,E> where Self: Sized, Z: 'static {
+        Zone::new(self)
     }
 }
 

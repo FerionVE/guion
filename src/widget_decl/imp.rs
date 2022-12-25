@@ -1,10 +1,11 @@
 use std::any::TypeId;
 
 use crate::env::Env;
-use crate::newpath::{PathResolvusDyn, PathStack};
+use crate::newpath::PathStack;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
+use super::route::UpdateRoute;
 use super::{WidgetDecl, WidgetDeclCallback, WidgetDeclCallbackResult};
 
 impl<T,E> WidgetDecl<E> for &T where T: WidgetDecl<E> + ?Sized, E: Env {
@@ -31,18 +32,17 @@ impl<T,E> WidgetDecl<E> for &T where T: WidgetDecl<E> + ?Sized, E: Env {
         &self,
         w: &mut Self::Widget,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: crate::newpath::PathStack<E> + ?Sized {
-        (**self).update(w, path, resolve, root, ctx)
+        (**self).update(w, path, route, root, ctx)
     }
     #[inline]
     fn update_restore<Ph>(
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Widget where Ph: PathStack<E> + ?Sized {
@@ -53,7 +53,6 @@ impl<T,E> WidgetDecl<E> for &T where T: WidgetDecl<E> + ?Sized, E: Env {
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
@@ -64,11 +63,11 @@ impl<T,E> WidgetDecl<E> for &T where T: WidgetDecl<E> + ?Sized, E: Env {
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        (**self).update_dyn(w, path, resolve, root, ctx)
+        (**self).update_dyn(w, path, route, root, ctx)
     }
 }
 
@@ -96,18 +95,17 @@ impl<T,E> WidgetDecl<E> for Box<T> where T: WidgetDecl<E> + ?Sized, E: Env {
         &self,
         w: &mut Self::Widget,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: crate::newpath::PathStack<E> + ?Sized {
-        (**self).update(w, path, resolve, root, ctx)
+        (**self).update(w, path, route, root, ctx)
     }
     #[inline]
     fn update_restore<Ph>(
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Widget where Ph: PathStack<E> + ?Sized {
@@ -118,7 +116,6 @@ impl<T,E> WidgetDecl<E> for Box<T> where T: WidgetDecl<E> + ?Sized, E: Env {
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
@@ -129,11 +126,11 @@ impl<T,E> WidgetDecl<E> for Box<T> where T: WidgetDecl<E> + ?Sized, E: Env {
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        (**self).update_dyn(w, path, resolve, root, ctx)
+        (**self).update_dyn(w, path, route, root, ctx)
     }
     #[inline]
     fn callback(self, v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult where Self: Sized {
@@ -176,11 +173,11 @@ impl<T,E> WidgetDecl<E> for Boxed<T> where T: WidgetDecl<E>, E: Env {
         &self,
         w: &mut Self::Widget,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        self.0.update(w, path, resolve, root, ctx)
+        self.0.update(w, path, route, root, ctx)
     }
 
     #[inline]
@@ -188,7 +185,6 @@ impl<T,E> WidgetDecl<E> for Boxed<T> where T: WidgetDecl<E>, E: Env {
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Widget where Ph: PathStack<E> + ?Sized {
@@ -200,7 +196,6 @@ impl<T,E> WidgetDecl<E> for Boxed<T> where T: WidgetDecl<E>, E: Env {
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
@@ -212,24 +207,24 @@ impl<T,E> WidgetDecl<E> for Boxed<T> where T: WidgetDecl<E>, E: Env {
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
         if TypeId::of::<Self::Widget>() == TypeId::of::<Box<dyn WidgetDyn<E> + 'static>>() {
             // This actually isn't possible
             debug_assert!(false, "WidgetDecl::Widget can't be unsized");
-            return self.0.update_dyn(w, path, resolve, root, ctx);
+            return self.0.update_dyn(w, path, route, root, ctx);
         }
 
         let w_any = w.as_any_mut();
 
         if let Some(v) = w_any.downcast_mut::<Self::Widget>() {
-            self.update(v, path, resolve, root, ctx)
+            self.update(v, path, route, root, ctx)
         // } else if let Some(v) = w_any.downcast_mut::<T::Widget>() {
         //     self.0.update(v, path, resolve, ctx)
         } else {
-            self.0.update_dyn(w, path, resolve, root, ctx)
+            self.0.update_dyn(w, path, route, root, ctx)
         }
     }
 }
@@ -261,18 +256,17 @@ impl<T,E> WidgetDecl<E> for Erased<T> where T: WidgetDecl<E>, E: Env {
         &self,
         w: &mut Self::Widget,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        self.update_dyn(w, path, resolve, root, ctx)
+        self.update_dyn(w, path, route, root, ctx)
     }
     #[inline]
     fn update_restore<Ph>(
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Widget where Ph: PathStack<E> + ?Sized {
@@ -283,7 +277,6 @@ impl<T,E> WidgetDecl<E> for Erased<T> where T: WidgetDecl<E>, E: Env {
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
@@ -294,10 +287,10 @@ impl<T,E> WidgetDecl<E> for Erased<T> where T: WidgetDecl<E>, E: Env {
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        self.0.update_dyn(w, path, resolve, root, ctx)
+        self.0.update_dyn(w, path, route, root, ctx)
     }
 }

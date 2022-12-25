@@ -14,6 +14,7 @@ use crate::widget::{Widget, WidgetResolveDynResult, WidgetChildDynResultMut, Wid
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::WidgetDecl;
+use super::route::UpdateRoute;
 
 pub struct Memoize<M,T,E> where M: Clone + PartialEq + 'static, T: WidgetDecl<E>, E: Env {
     memoize: M,
@@ -68,12 +69,12 @@ impl<M,T,E> WidgetDecl<E> for Memoize<M,T,E> where M: Clone + PartialEq + 'stati
         &self,
         w: &mut Self::Widget,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        if resolve.is_some() || self.memoize != w.memoize {
-            self.inner.update(&mut w.inner, path, resolve, root, ctx)
+        if route.resolvus().is_some() || self.memoize != w.memoize {
+            self.inner.update(&mut w.inner, path, route, root, ctx)
         }
     }
 
@@ -82,7 +83,6 @@ impl<M,T,E> WidgetDecl<E> for Memoize<M,T,E> where M: Clone + PartialEq + 'stati
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Widget where Ph: PathStack<E> + ?Sized {
@@ -188,11 +188,11 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     fn update<Ph>(
         &mut self,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        self.inner.update(path, resolve, root, ctx)
+        self.inner.update(path, route, root, ctx)
     }
     #[inline]
     fn end<Ph>(

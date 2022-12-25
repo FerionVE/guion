@@ -9,6 +9,7 @@ use crate::queron::Queron;
 use crate::root::RootRef;
 use crate::traitcast::{WQuery, WQueryResponder, WQueryGeneric, WQueryResponderGeneric};
 use crate::util::tabulate;
+use crate::widget_decl::route::UpdateRoute;
 use crate::widget_decl::{WidgetDeclCallback, WidgetDeclCallbackMode};
 
 use super::dyn_tunnel::WidgetDyn;
@@ -53,7 +54,7 @@ where
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
-            resolve: None,
+            route: UpdateRoute::none(),
             command: WidgetDeclCallbackMode::Instantiate(&mut dest),
         };
 
@@ -161,20 +162,20 @@ where
     fn update<Ph>(
         &mut self,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
-            resolve,
+            route: route.clone(), //TODO
             command: WidgetDeclCallbackMode::Update(&mut self.inner),
         };
 
         (self.decl)(root.fork(), &self.data, op, ctx);
 
-        self.inner.update(path, resolve, root, ctx)
+        self.inner.update(path, route, root, ctx)
     }
     #[inline]
     fn end<Ph>(

@@ -41,7 +41,7 @@ macro_rules! impl_tuple {
                 &self,
                 w: &mut Self::Retained,
                 path: &Ph,
-                resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+                route: UpdateRoute<'_,E>,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
             ) where Ph: PathStack<E> + ?Sized {
@@ -49,11 +49,11 @@ macro_rules! impl_tuple {
                 let ($($ll2),+,) = &mut w.0;
 
                 // If resolve, try only update resolve scope
-                if let Some(resolve) = resolve {
+                if let Some(resolve) = route.resolving() {
                     if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
                         match r2.0 {
                             $($mm =>
-                                return $ll.update($ll2, &r2.push_on_stack(path), resolve.inner(), root, ctx)
+                                return $ll.update($ll2, &r2.push_on_stack(path), route.for_child_1(), root, ctx)
                             ),+ ,
                             _ => {},
                         }
@@ -64,7 +64,7 @@ macro_rules! impl_tuple {
         
                 // Update persisted exising area
                 $({
-                    $ll.update($ll2, &FixedIdx($mmm).push_on_stack(path), resolve, root.fork(), ctx)
+                    $ll.update($ll2, &FixedIdx($mmm).push_on_stack(path), route.for_child_1(), root.fork(), ctx)
                 })+
             }
         
@@ -72,8 +72,7 @@ macro_rules! impl_tuple {
                 &self,
                 prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
                 path: &Ph,
-                //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
-        root: E::RootRef<'_>,
+                root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
             ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
                 let ($($ll),+,) = &self.0;

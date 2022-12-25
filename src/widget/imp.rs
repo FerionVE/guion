@@ -5,6 +5,7 @@ use std::ops::Range;
 use crate::traitcast::{WQueryResponder, WQueryGeneric, WQueryResponderGeneric};
 use crate::util::error::GuionResolveErrorChildInfo;
 use crate::util::tabulate;
+use crate::widget_decl::route::UpdateRoute;
 use crate::{EventResp, event_new};
 use crate::aliases::{ESize, ERenderer};
 use crate::env::Env;
@@ -60,7 +61,7 @@ impl<E> Widget<E> for Infallible where E: Env {
     fn update<Ph>(
         &mut self,
         _: &Ph,
-        _: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        _: UpdateRoute<'_,E>,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
@@ -202,11 +203,11 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     fn update<Ph>(
         &mut self,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        (**self).update(path, resolve, root, ctx)
+        (**self).update(path, route, root, ctx)
     }
     #[inline]
     fn end<Ph>(

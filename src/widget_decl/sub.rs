@@ -1,11 +1,12 @@
 use std::marker::PhantomData;
 
 use crate::env::Env;
-use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::newpath::PathStack;
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
+use super::route::UpdateRoute;
 use super::{WidgetDeclCallback, WidgetDecl, WidgetDeclCallbackMode, WidgetDeclCallbackResult};
 
 pub struct SubDecl<W,F,E> 
@@ -74,7 +75,7 @@ where
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
-            resolve: None,
+            route: UpdateRoute::none(),
             command: WidgetDeclCallbackMode::Instantiate(&mut dest),
         };
 
@@ -89,7 +90,7 @@ where
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
-            resolve: None,
+            route: UpdateRoute::none(),
             command: WidgetDeclCallbackMode::InstantiateBoxed(&mut dest),
         };
 
@@ -102,14 +103,14 @@ where
         &self,
         w: &mut Self::Widget,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
-            resolve,
+            route,
             command: WidgetDeclCallbackMode::Update(w),
         };
 
@@ -120,7 +121,6 @@ where
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Widget where Ph: PathStack<E> + ?Sized {
@@ -129,7 +129,7 @@ where
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
-            resolve: None,
+            route: UpdateRoute::none(),
             command: WidgetDeclCallbackMode::UpdateRestore(prev, &mut dest),
         };
 
@@ -142,7 +142,6 @@ where
         &self,
         prev: &mut dyn WidgetDyn<E>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
@@ -151,7 +150,7 @@ where
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
-            resolve: None,
+            route: UpdateRoute::none(),
             command: WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, &mut dest),
         };
 
@@ -164,14 +163,14 @@ where
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
-            resolve,
+            route,
             command: WidgetDeclCallbackMode::UpdateDyn(w),
         };
 

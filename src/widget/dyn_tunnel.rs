@@ -6,6 +6,7 @@ use crate::queron::Queron;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric};
 use crate::util::error::GuionResolveErrorChildInfo;
 use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, TabulateOrigin, TabulateNextChildResponse, TabulateResponse};
+use crate::widget_decl::route::UpdateRoute;
 use crate::{EventResp, event_new};
 use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
@@ -81,7 +82,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn update_dyn(
         &mut self,
         path: &(dyn PathStackDyn<E>+'_),
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     );
@@ -241,11 +242,11 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     fn update_dyn(
         &mut self,
         path: &(dyn PathStackDyn<E>+'_),
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) {
-        self.update(path, resolve, root, ctx)
+        self.update(path, route, root, ctx)
     }
     #[inline]
     fn end_dyn(
@@ -480,11 +481,11 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn update<Ph>(
         &mut self,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        self.update_dyn(path._erase(), resolve, root, ctx)
+        self.update_dyn(path._erase(), route, root, ctx)
     }
     #[inline]
     fn end<Ph>(

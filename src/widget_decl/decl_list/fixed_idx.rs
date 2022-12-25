@@ -2,12 +2,13 @@ use std::mem::{MaybeUninit, ManuallyDrop};
 use std::ops::Range;
 
 use crate::env::Env;
-use crate::newpath::{FixedIdx, PathFragment, PathResolvus, PathStack, PathResolvusDyn};
+use crate::newpath::{FixedIdx, PathFragment, PathResolvus, PathStack};
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::as_widgets::AsWidgetsDyn;
 use crate::widget::as_widgets::fixed_idx::WidgetsFixedIdx;
 use crate::widget_decl::WidgetDecl;
+use crate::widget_decl::route::UpdateRoute;
 
 use super::DeclList;
 
@@ -31,15 +32,15 @@ impl<E,T> DeclList<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E: Env {
         &self,
         w: &mut Self::Retained,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
         // If resolve, try only update resolve scope
-        if let Some(resolve) = resolve {
+        if let Some(resolve) = route.resolving() {
             if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
                 if r2.0 >= 0 && (r2.0 as usize) < self.0.len().min(w.0.len()) {
-                    return self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize], &r2.push_on_stack(path), resolve.inner(), root, ctx);
+                    return self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize], &r2.push_on_stack(path), route.for_child_1(), root, ctx);
                 }
             } else {
                 //TODO what to do on invalid scope resolves in update?
@@ -54,7 +55,7 @@ impl<E,T> DeclList<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E: Env {
         }
         // Update persisted exising area
         for (idx,(d,w)) in self.0.iter().zip(w.0.iter_mut()).enumerate() {
-            d.update(w, &FixedIdx(idx as isize).push_on_stack(path), resolve, root.fork(), ctx)
+            d.update(w, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx)
         }
         // Instantiate new tail
         if self.0.len() > w.0.len() {
@@ -70,7 +71,6 @@ impl<E,T> DeclList<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E: Env {
         &self,
         prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
@@ -141,15 +141,15 @@ impl<E,T,const N: usize> DeclList<E> for WidgetsFixedIdx<[T;N]> where T: WidgetD
         &self,
         w: &mut Self::Retained,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
         // If resolve, try only update resolve scope
-        if let Some(resolve) = resolve {
+        if let Some(resolve) = route.resolving() {
             if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
                 if r2.0 >= 0 && (r2.0 as usize) < self.0.len().min(w.0.len()) {
-                    return self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize], &r2.push_on_stack(path), resolve.inner(), root, ctx);
+                    return self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize], &r2.push_on_stack(path), route.for_child_1(), root, ctx);
                 }
             } else {
                 //TODO what to do on invalid scope resolves in update?
@@ -158,7 +158,7 @@ impl<E,T,const N: usize> DeclList<E> for WidgetsFixedIdx<[T;N]> where T: WidgetD
 
         // Update persisted exising area
         for (idx,(d,w)) in self.0.iter().zip(w.0.iter_mut()).enumerate() {
-            d.update(w, &FixedIdx(idx as isize).push_on_stack(path), resolve, root.fork(), ctx)
+            d.update(w, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx)
         }
     }
 
@@ -166,7 +166,6 @@ impl<E,T,const N: usize> DeclList<E> for WidgetsFixedIdx<[T;N]> where T: WidgetD
         &self,
         prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
@@ -235,18 +234,17 @@ impl<E,T,const N: usize> DeclList<E> for WidgetsFixedIdx<&[T;N]> where T: Widget
         &self,
         w: &mut Self::Retained,
         path: &Ph,
-        resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) where Ph: PathStack<E> + ?Sized {
-        (*bender(self)).update(w, path, resolve, root, ctx)
+        (*bender(self)).update(w, path, route, root, ctx)
     }
 
     fn update_restore<Ph>(
         &self,
         prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
         path: &Ph,
-        //resolve: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
