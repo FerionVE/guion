@@ -13,9 +13,15 @@ guion is an experimental GUI framework, focused on flexibility (e.g. guion core 
 guion being in an experimental state, API and concepts are still in flux.
 
 Goals: 
-- Efficient retained/reactive widgets in sync with flexible declerative View/update which plays nicely with Rust's memory model
+- Efficient retained/reactive widgets in sync with flexible declerative View/update which plays nicely with Rust's memory model, without mandating shared pointers or interior mutability
 - Dynamic separate Context/states
 - Widget Tree/Model separate from Context, State and side-data
+- Mo mandantory macros (type system instead of DSL), as macros can be limiting
+  - Optional macros e.g. derives still possible
+- App state freedom
+  - guion can be implemented ONto exising app state/business logic without changing it at all
+  - Improved performance / efficiency with minimal additions to app state (granularly sprinkle some mutors and state trackers in)
+- flexibility to let widgets track some (side)data itself or inside app state and synced
 - Modularity
   - Separation of core, backend, and higher features
   - Components are defined in generics and traits
