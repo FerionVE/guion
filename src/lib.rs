@@ -38,5 +38,8 @@ pub mod cachor;
 
 pub type EventResp = bool;
 
+#[cfg(feature = "qcell")]
+pub use qcell;
+
 #[doc(hidden)]
 pub struct ProtectedReturn(std::marker::PhantomData<()>);

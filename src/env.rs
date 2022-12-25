@@ -24,6 +24,8 @@ pub trait Env: Sized + Clone + Copy + Default + PartialEq + Debug + Send + Sync 
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;
     type Phantom: InfallibleType;
     type EventDowncastMap: EventDowncastMap<Self>;
+    #[cfg(feature = "qcell")]
+    type CtxTCellOwner: 'static;
     //type Commit: Eq + Ord;
 }
 

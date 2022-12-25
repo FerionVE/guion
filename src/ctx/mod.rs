@@ -40,4 +40,10 @@ pub trait Context<'cc,E>: Sized + 'cc where E: Env {
     }
 
     fn retained_id(&mut self) -> WidgetID;
+
+    #[cfg(feature = "qcell")]
+    fn tcell_owner(&self) -> &qcell::TCellOwner<E::CtxTCellOwner>;
+
+    #[cfg(feature = "qcell")]
+    fn tcell_owner_mut(&mut self) -> &mut qcell::TCellOwner<E::CtxTCellOwner>;
 }

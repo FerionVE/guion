@@ -20,5 +20,12 @@ qwutils = "0.3" #TODO inline and get rid of qwutils dependency
 #qwutils = { version = "0.3.1", git = "https://github.com/qwertz19281/rust_utils", rev = "833f581b5e63117fb87a7dad9f41a6532113fd88" }
 #qwutils = { path = "../qwutils" }
 
+[dependencies.qcell]
+optional = true
+version = "0.5"
+
 [profile.release]
 codegen-units = 1
+
+[features]
+default = ["qcell"]
