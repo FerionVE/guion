@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
+use std::sync::Arc;
 
-use crate::ctx::queue::BoxMutEvent;
+use crate::ctx::queue::{BoxMutEvent, ArcMutEvent};
 use crate::env::Env;
 use crate::error::ResolveResult;
 
@@ -8,10 +9,13 @@ use super::mut_target::MuTarget;
 
 pub trait MutorEndBuilder<Args,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     type Built: MutorEnd<Args,E> + Sized + Send + Sync + 'static;
+    type Built2: MutorEnd<Args,E> + Sized + Send + Sync + 'static;
 
     fn erase<'a>(&'a self) -> &'a (dyn MutorEndBuilderDyn<Args,E>+'_);
 
     fn build(&self) -> Self::Built;
+
+    fn build2(&self) -> Self::Built2;
 
     #[inline]
     fn build_boxed(&self) -> Box<dyn MutorEnd<Args,E>> {
@@ -19,9 +23,20 @@ pub trait MutorEndBuilder<Args,E>: Send + Sync where E: Env, Args: Clone + Sized
     }
 
     #[inline]
+    fn build_arced(&self) -> Arc<dyn MutorEnd<Args,E>> {
+        Arc::new(self.build())
+    }
+
+    #[inline]
     fn build_box_mut_event(&self, args: Args) -> Option<BoxMutEvent<E>> {
-        let mut b = self.build();
+        let b = self.build();
         Some(Box::new(#[inline] move |root,_,ctx| b.with_mutor_end(root, args, ctx) ))
+    }
+
+    #[inline]
+    fn build_arc_mut_event(&self, args: Args) -> Option<ArcMutEvent<E>> {
+        let b = self.build2();
+        Some(Arc::new(#[inline] move |root,_,ctx| b.with_mutor_end(root, args, ctx) ))
     }
 }
 
@@ -29,22 +44,31 @@ pub trait MutorEndBuilder<Args,E>: Send + Sync where E: Env, Args: Clone + Sized
 
 impl<Args,E> MutorEndBuilder<Args,E> for () where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     type Built = ();
+    type Built2 = ();
+
     #[inline]
     fn erase<'a>(&'a self) -> &'a (dyn MutorEndBuilderDyn<Args,E>+'_) {
         self
     }
+
     #[inline]
     fn build(&self) -> Self::Built {}
+    #[inline]
+    fn build2(&self) -> Self::Built2 {}
 
     #[inline]
     fn build_box_mut_event(&self, _: Args) -> Option<BoxMutEvent<E>> {
+        None
+    }
+    #[inline]
+    fn build_arc_mut_event(&self, _: Args) -> Option<ArcMutEvent<E>> {
         None
     }
 }
 
 pub trait MutorEnd<Args,E>: Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     fn with_mutor_end<'s,'c,'cc>(
-        &mut self,
+        &self,
         root: E::RootMut<'s>,
         args: Args,
         ctx: &'c mut E::Context<'cc>,
@@ -59,7 +83,7 @@ pub trait MutorEnd<Args,E>: Send + Sync + 'static where E: Env, Args: Clone + Si
 impl<Args,E> MutorEnd<Args,E> for () where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     #[inline]
     fn with_mutor_end<'s,'c,'cc>(
-        &mut self,
+        &self,
         _: E::RootMut<'s>,
         _: Args,
         _: &'c mut E::Context<'cc>,
@@ -73,6 +97,7 @@ impl<Args,T,E> MutorEndBuilderExt<Args,E> for T where T: MutorEndBuilder<Args,E>
 
 pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     type Built: MutorTo<Args,Target,E> + Sized + Send + Sync + 'static;
+    type Built2: MutorTo<Args,Target,E> + Sized + Send + Sync + 'static;
 
     fn erase<'a>(&'a self) -> &'a (dyn MutorToBuilderDyn<Args,Target,E>+'_);
 
@@ -82,10 +107,16 @@ pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Clone +
     }
 
     fn build(&self) -> Self::Built;
+    fn build2(&self) -> Self::Built2;
 
     #[inline]
     fn build_boxed(&self) -> Box<dyn MutorTo<Args,Target,E>> {
         Box::new(self.build())
+    }
+
+    #[inline]
+    fn build_arced(&self) -> Arc<dyn MutorTo<Args,Target,E>> {
+        Arc::new(self.build())
     }
 }
 
@@ -93,7 +124,7 @@ pub trait MutorToBuilder<Args,Target,E>: Send + Sync where E: Env, Args: Clone +
 
 pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
-        &mut self,
+        &self,
         root: E::RootMut<'s>,
         callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Target::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
@@ -119,7 +150,7 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
         NewTarget: MuTarget<E> + ?Sized,
-        RightFn: for<'s,'ss,'c,'cc> FnMut(
+        RightFn: for<'s,'ss,'c,'cc> Fn(
             ResolveResult<&'s mut Target::Mutable<'ss>>,
             &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
             RightArgs,
@@ -136,7 +167,7 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
         NewTarget: MuTarget<E> + ?Sized,
-        RightFn: for<'s,'ss,'c,'cc> FnMut(
+        RightFn: for<'s,'ss,'c,'cc> Fn(
             &'s mut Target::Mutable<'ss>,
             &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
             RightArgs,
@@ -152,7 +183,7 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
         Self: Sized,
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
-        RightFn: for<'s,'ss,'c,'cc> FnMut(
+        RightFn: for<'s,'ss,'c,'cc> Fn(
             ResolveResult<&'s mut Target::Mutable<'ss>>,
             RightArgs,
             &'c mut E::Context<'cc>
@@ -167,7 +198,7 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
         Self: Sized,
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
-        RightFn: for<'s,'ss,'c,'cc> FnMut(
+        RightFn: for<'s,'ss,'c,'cc> Fn(
             &'s mut Target::Mutable<'ss>,
             RightArgs,
             &'c mut E::Context<'cc>
@@ -194,7 +225,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
@@ -210,7 +241,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
@@ -218,6 +249,7 @@ where
     ) + Clone + Send + Sync + 'static
 {
     type Built = impl MutorTo<RightArgs,RightTarget,E>;
+    type Built2 = impl MutorTo<RightArgs,RightTarget,E>;
 
     #[inline]
     fn erase(&self) -> &(dyn MutorToBuilderDyn<RightArgs,RightTarget,E>+'_) {
@@ -226,9 +258,26 @@ where
 
     #[inline]
     fn build(&self) -> Self::Built {
-        let mut left = self.0.build();
+        let left = self.0.build();
         let larg = self.1.clone();
-        let mut fun = self.2.clone();
+        let fun = self.2.clone();
+
+        MutorForTarget::new(#[inline] move |root,callback,rarg: RightArgs,ctx| {
+            left.with_mutor_cb(
+                root,
+                &mut |med,ctx| {
+                    (fun)(med,callback,rarg.clone(),ctx)
+                },
+                larg.clone(),ctx
+            )
+        })
+    }
+
+    #[inline]
+    fn build2(&self) -> Self::Built2 {
+        let left = self.0.build2();
+        let larg = self.1.clone();
+        let fun = self.2.clone();
 
         MutorForTarget::new(#[inline] move |root,callback,rarg: RightArgs,ctx| {
             left.with_mutor_cb(
@@ -251,7 +300,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
@@ -274,7 +323,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         &'s mut LeftTarget::Mutable<'ss>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
@@ -290,7 +339,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         &'s mut LeftTarget::Mutable<'ss>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
@@ -298,6 +347,7 @@ where
     ) + Clone + Send + Sync + 'static
 {
     type Built = impl MutorTo<RightArgs,RightTarget,E>;
+    type Built2 = impl MutorTo<RightArgs,RightTarget,E>;
 
     #[inline]
     fn erase(&self) -> &(dyn MutorToBuilderDyn<RightArgs,RightTarget,E>+'_) {
@@ -306,9 +356,29 @@ where
 
     #[inline]
     fn build(&self) -> Self::Built {
-        let mut left = self.0.build();
+        let left = self.0.build();
         let larg = self.1.clone();
-        let mut fun = self.2.clone();
+        let fun = self.2.clone();
+
+        MutorForTarget::new(#[inline] move |root,callback,rarg: RightArgs,ctx| {
+            left.with_mutor_cb(
+                root,
+                &mut |med,ctx| {
+                    match med {
+                        Ok(v) => (fun)(v,callback,rarg.clone(),ctx),
+                        Err(e) => (callback)(Err(e),ctx),
+                    }
+                },
+                larg.clone(),ctx
+            )
+        })
+    }
+
+    #[inline]
+    fn build2(&self) -> Self::Built2 {
+        let left = self.0.build2();
+        let larg = self.1.clone();
+        let fun = self.2.clone();
 
         MutorForTarget::new(#[inline] move |root,callback,rarg: RightArgs,ctx| {
             left.with_mutor_cb(
@@ -334,7 +404,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         &'s mut LeftTarget::Mutable<'ss>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
@@ -356,7 +426,7 @@ where
     LeftTarget: MuTarget<E> + ?Sized,
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         RightArgs,
         &'c mut E::Context<'cc>
@@ -370,13 +440,14 @@ where
     LeftTarget: MuTarget<E> + ?Sized,
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
 {
     type Built = impl MutorEnd<RightArgs,E>;
+    type Built2 = impl MutorEnd<RightArgs,E>;
 
     #[inline]
     fn erase(&self) -> &(dyn MutorEndBuilderDyn<RightArgs,E>+'_) {
@@ -385,9 +456,26 @@ where
 
     #[inline]
     fn build(&self) -> Self::Built {
-        let mut left = self.0.build();
+        let left = self.0.build();
         let larg = self.1.clone();
-        let mut fun = self.2.clone();
+        let fun = self.2.clone();
+
+        MutorEnde::new(#[inline] move |root,rarg: RightArgs,ctx| {
+            left.with_mutor_cb(
+                root,
+                &mut |med,ctx| {
+                    (fun)(med,rarg.clone(),ctx)
+                },
+                larg.clone(),ctx
+            )
+        })
+    }
+
+    #[inline]
+    fn build2(&self) -> Self::Built2 {
+        let left = self.0.build2();
+        let larg = self.1.clone();
+        let fun = self.2.clone();
 
         MutorEnde::new(#[inline] move |root,rarg: RightArgs,ctx| {
             left.with_mutor_cb(
@@ -409,7 +497,7 @@ where
     LeftTarget: MuTarget<E> + ?Sized,
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         RightArgs,
         &'c mut E::Context<'cc>
@@ -430,7 +518,7 @@ where
     LeftTarget: MuTarget<E> + ?Sized,
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         &'s mut LeftTarget::Mutable<'ss>,
         RightArgs,
         &'c mut E::Context<'cc>
@@ -444,13 +532,14 @@ where
     LeftTarget: MuTarget<E> + ?Sized,
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         &'s mut LeftTarget::Mutable<'ss>,
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
 {
     type Built = impl MutorEnd<RightArgs,E>;
+    type Built2 = impl MutorEnd<RightArgs,E>;
 
     #[inline]
     fn erase(&self) -> &(dyn MutorEndBuilderDyn<RightArgs,E>+'_) {
@@ -459,9 +548,29 @@ where
 
     #[inline]
     fn build(&self) -> Self::Built {
-        let mut left = self.0.build();
+        let left = self.0.build();
         let larg = self.1.clone();
-        let mut fun = self.2.clone();
+        let fun = self.2.clone();
+
+        MutorEnde::new(#[inline] move |root,rarg: RightArgs,ctx| {
+            left.with_mutor_cb(
+                root,
+                &mut |med,ctx| {
+                    match med {
+                        Ok(v) => (fun)(v,rarg.clone(),ctx),
+                        Err(e) => {}, //TODO detect lost mutor debug mode
+                    }
+                },
+                larg.clone(),ctx
+            )
+        })
+    }
+
+    #[inline]
+    fn build2(&self) -> Self::Built2 {
+        let left = self.0.build2();
+        let larg = self.1.clone();
+        let fun = self.2.clone();
 
         MutorEnde::new(#[inline] move |root,rarg: RightArgs,ctx| {
             left.with_mutor_cb(
@@ -486,7 +595,7 @@ where
     LeftTarget: MuTarget<E> + ?Sized,
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
-    RightFn: for<'s,'ss,'c,'cc> FnMut(
+    RightFn: for<'s,'ss,'c,'cc> Fn(
         &'s mut LeftTarget::Mutable<'ss>,
         RightArgs,
         &'c mut E::Context<'cc>
@@ -504,7 +613,7 @@ where
     E: Env,
     Targ: MuTarget<E> + ?Sized,
     Args: Sized + Send + Sync + 'static,
-    MutorFn: for<'s,'c,'cc> FnMut(
+    MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         Args,
@@ -517,7 +626,7 @@ where
     E: Env,
     Targ: MuTarget<E> + ?Sized,
     Args: Sized + Send + Sync + 'static,
-    MutorFn: for<'s,'c,'cc> FnMut(
+    MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         Args,
@@ -535,7 +644,7 @@ where
     E: Env,
     Targ: MuTarget<E> + ?Sized,
     Args: Clone + Sized + Send + Sync + 'static,
-    MutorFn: for<'s,'c,'cc> FnMut(
+    MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         Args,
@@ -543,12 +652,18 @@ where
     ) + Clone + Send + Sync + 'static
 {
     type Built = Self;
+    type Built2 = Self;
+
     #[inline]
     fn erase<'a>(&'a self) -> &'a (dyn MutorToBuilderDyn<Args,Targ,E>+'_) {
         self
     }
     #[inline]
     fn build(&self) -> Self::Built {
+        Self(self.0.clone(),PhantomData)
+    }
+    #[inline]
+    fn build2(&self) -> Self::Built {
         Self(self.0.clone(),PhantomData)
     }
 }
@@ -559,7 +674,7 @@ where
     E: Env,
     Targ: MuTarget<E> + ?Sized,
     Args: Clone + Sized + Send + Sync + 'static,
-    MutorFn: for<'s,'c,'cc> FnMut(
+    MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,
         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         Args,
@@ -568,7 +683,7 @@ where
 {
     #[inline]
     fn with_mutor_cb<'s,'c,'cc>(
-        &mut self,
+        &self,
         root: E::RootMut<'s>,
         callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
@@ -583,7 +698,7 @@ where
     Self: 'static,
     E: Env,
     Args: Clone + Send + Sync + Sized,
-    MutorFn: for<'s,'c,'cc> FnMut(
+    MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,
         Args,
         &'c mut E::Context<'cc>
@@ -594,7 +709,7 @@ where
     Self: 'static,
     E: Env,
     Args: Clone + Send + Sync + Sized,
-    MutorFn: for<'s,'c,'cc> FnMut(
+    MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,
         Args,
         &'c mut E::Context<'cc>
@@ -611,19 +726,25 @@ where
     Self: 'static,
     E: Env,
     Args: Clone + Sized + Send + Sync + 'static,
-    MutorFn: for<'s,'c,'cc> FnMut(
+    MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,
         Args,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
 {
     type Built = Self;
+    type Built2 = Self;
+
     #[inline]
     fn erase<'a>(&'a self) -> &'a (dyn MutorEndBuilderDyn<Args,E>+'_) {
         self
     }
     #[inline]
     fn build(&self) -> Self::Built {
+        Self(self.0.clone(),PhantomData)
+    }
+    #[inline]
+    fn build2(&self) -> Self::Built {
         Self(self.0.clone(),PhantomData)
     }
 }
@@ -633,7 +754,7 @@ where
     Self: 'static,
     E: Env,
     Args: Clone + Sized + Send + Sync + 'static,
-    MutorFn: for<'s,'c,'cc> FnMut(
+    MutorFn: for<'s,'c,'cc> Fn(
         E::RootMut<'s>,
         Args,
         &'c mut E::Context<'cc>
@@ -641,7 +762,7 @@ where
 {
     #[inline]
     fn with_mutor_end<'s,'c,'cc>(
-        &mut self,
+        &self,
         root: E::RootMut<'s>,
         args: Args,
         ctx: &'c mut E::Context<'cc>,
@@ -653,7 +774,7 @@ where
 impl<Args,T,E> MutorEnd<Args,E> for Box<T> where T: MutorEnd<Args,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {
     #[inline]
     fn with_mutor_end<'s,'c,'cc>(
-        &mut self,
+        &self,
         root: E::RootMut<'s>,
         args: Args,
         ctx: &'c mut E::Context<'cc>,
@@ -664,7 +785,31 @@ impl<Args,T,E> MutorEnd<Args,E> for Box<T> where T: MutorEnd<Args,E> + ?Sized, E
 
 impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Target,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn with_mutor_cb<'s,'c,'cc>(
-        &mut self,
+        &self,
+        root: E::RootMut<'s>,
+        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Target::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
+        args: Args,
+        ctx: &'c mut E::Context<'cc>,
+    ) where 'cc: 'c {
+        (**self).with_mutor_cb(root, callback, args, ctx)
+    }
+}
+
+impl<Args,T,E> MutorEnd<Args,E> for Arc<T> where T: MutorEnd<Args,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {
+    #[inline]
+    fn with_mutor_end<'s,'c,'cc>(
+        &self,
+        root: E::RootMut<'s>,
+        args: Args,
+        ctx: &'c mut E::Context<'cc>,
+    ) where 'cc: 'c {
+        (**self).with_mutor_end(root, args, ctx)
+    }
+}
+
+impl<Args,Target,T,E> MutorTo<Args,Target,E> for Arc<T> where T: MutorTo<Args,Target,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
+    fn with_mutor_cb<'s,'c,'cc>(
+        &self,
         root: E::RootMut<'s>,
         callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Target::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
@@ -676,6 +821,8 @@ impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Ta
 
 impl<Args,T,E> MutorEndBuilder<Args,E> for &T where T: MutorEndBuilder<Args,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {
     type Built = T::Built;
+    type Built2 = T::Built2;
+
     #[inline]
     fn erase<'a>(&'a self) -> &'a (dyn MutorEndBuilderDyn<Args,E>+'_) {
         (**self).erase()
@@ -685,13 +832,23 @@ impl<Args,T,E> MutorEndBuilder<Args,E> for &T where T: MutorEndBuilder<Args,E> +
         (**self).build()
     }
     #[inline]
+    fn build2(&self) -> Self::Built2 {
+        (**self).build2()
+    }
+    #[inline]
     fn build_boxed(&self) -> Box<dyn MutorEnd<Args,E>> {
         (**self).build_boxed()
+    }
+    #[inline]
+    fn build_arced(&self) -> Arc<dyn MutorEnd<Args,E>> {
+        (**self).build_arced()
     }
 }
 
 impl<Args,Target,T,E> MutorToBuilder<Args,Target,E> for &T where T: MutorToBuilder<Args,Target,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     type Built = T::Built;
+    type Built2 = T::Built2;
+
     #[inline]
     fn erase<'a>(&'a self) -> &'a (dyn MutorToBuilderDyn<Args,Target,E>+'_) {
         (**self).erase()
@@ -701,8 +858,16 @@ impl<Args,Target,T,E> MutorToBuilder<Args,Target,E> for &T where T: MutorToBuild
         (**self).build()
     }
     #[inline]
+    fn build2(&self) -> Self::Built2 {
+        (**self).build2()
+    }
+    #[inline]
     fn build_boxed(&self) -> Box<dyn MutorTo<Args,Target,E>> {
         (**self).build_boxed()
+    }
+    #[inline]
+    fn build_arced(&self) -> Arc<dyn MutorTo<Args,Target,E>> {
+        (**self).build_arced()
     }
 }
 
@@ -728,6 +893,7 @@ where
     for<'a> NewTarget: MuTarget<E,Mutable<'a>=Target::Mutable<'a>>
 {
     type Built = ConvertToTargetor<T::Built,Target,NewTarget,Args,E>;
+    type Built2 = ConvertToTargetor<T::Built2,Target,NewTarget,Args,E>;
 
     #[inline]
     fn erase<'a>(&'a self) -> &'a (dyn MutorToBuilderDyn<Args,NewTarget,E>+'_) {
@@ -737,6 +903,10 @@ where
     #[inline]
     fn build(&self) -> Self::Built {
         ConvertToTargetor(PhantomData,self.1.build())
+    }
+    #[inline]
+    fn build2(&self) -> Self::Built2 {
+        ConvertToTargetor(PhantomData,self.1.build2())
     }
 }
 
@@ -775,7 +945,7 @@ where
 {
     #[inline]
     fn with_mutor_cb<'s,'c,'cc>(
-        &mut self,
+        &self,
         root: E::RootMut<'s>,
         callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
@@ -787,16 +957,21 @@ where
 
 pub trait MutorEndBuilderDyn<Args,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     fn _build_dyn(&self) -> Box<dyn MutorEnd<Args,E>>;
-}
+    fn _build2_dyn(&self) -> Arc<dyn MutorEnd<Args,E>>;}
 
 pub trait MutorToBuilderDyn<Args,Target,E>: Send + Sync where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     fn _build_dyn(&self) -> Box<dyn MutorTo<Args,Target,E>>;
+    fn _build2_dyn(&self) -> Arc<dyn MutorTo<Args,Target,E>>;
 }
 
 impl<T,Args,E> MutorEndBuilderDyn<Args,E> for T where T: MutorEndBuilder<Args,E> + ?Sized, E: Env, Args: Clone + Sized + Send + Sync + 'static {
     #[inline]
     fn _build_dyn(&self) -> Box<dyn MutorEnd<Args,E>> {
         (*self).build_boxed()
+    }
+    #[inline]
+    fn _build2_dyn(&self) -> Arc<dyn MutorEnd<Args,E>> {
+        (*self).build_arced()
     }
 }
 
@@ -812,13 +987,24 @@ where
         (*self).build_boxed()
         //ConvertToTargetor(PhantomData,(**self).build())
     }
+    #[inline]
+    fn _build2_dyn(&self) -> Arc<dyn MutorTo<Args,Target,E>> {
+        (*self).build_arced()
+        //ConvertToTargetor(PhantomData,(**self).build())
+    }
 }
 
 impl<Args,E> MutorEndBuilder<Args,E> for dyn MutorEndBuilderDyn<Args,E> + '_ where E: Env, Args: Clone + Sized + Send + Sync + 'static {
     type Built = Box<dyn MutorEnd<Args,E>>;
+    type Built2 = Arc<dyn MutorEnd<Args,E>>;
+
     #[inline]
     fn build(&self) -> Self::Built {
         (*self)._build_dyn()
+    }
+    #[inline]
+    fn build2(&self) -> Self::Built2 {
+        (*self)._build2_dyn()
     }
 
     #[inline]
@@ -829,9 +1015,15 @@ impl<Args,E> MutorEndBuilder<Args,E> for dyn MutorEndBuilderDyn<Args,E> + '_ whe
 
 impl<Args,Target,E> MutorToBuilder<Args,Target,E> for dyn MutorToBuilderDyn<Args,Target,E> + '_ where E: Env, Args: Clone + Sized + Send + Sync + 'static, Target: MuTarget<E> + ?Sized {
     type Built = Box<dyn MutorTo<Args,Target,E>>;
+    type Built2 = Arc<dyn MutorTo<Args,Target,E>>;
+
     #[inline]
     fn build(&self) -> Self::Built {
         (*self)._build_dyn()
+    }
+    #[inline]
+    fn build2(&self) -> Self::Built2 {
+        (*self)._build2_dyn()
     }
 
     #[inline]
