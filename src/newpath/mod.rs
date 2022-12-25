@@ -4,11 +4,13 @@ use std::sync::Arc;
 
 use crate::env::Env;
 
-pub trait PathFragment<E>: PartialEq + 'static { //TODO cachor_eq instead of partialeq
+pub trait PathFragment<E>: 'static { //TODO cachor_eq instead of partialeq
     type Stack<I>: PathStack<E> where I: PathStack<E> + Sized;
     type Resolvus<I>: PathResolvus<E> where I: PathResolvus<E> + Sized;
 
     fn _as_any(&self) -> &dyn Any;
+
+    fn indentify_same_child(&self, rhs: &Self) -> bool;
 
     #[must_use]
     fn push_on_stack<I>(&self, target_stack: I) -> Self::Stack<I> where I: PathStack<E> + Sized;
@@ -321,7 +323,7 @@ impl<E,T> PathResolvus<E> for &T where T: PathResolvus<E> + ?Sized {
     // }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct SimpleId<V>(pub V) where V: Clone + PartialEq + 'static;
 
@@ -335,12 +337,17 @@ impl<V,E> PathFragment<E> for SimpleId<V> where V: Clone + PartialEq + 'static, 
     }
 
     #[inline]
+    fn indentify_same_child(&self, rhs: &Self) -> bool {
+        self.0 == rhs.0
+    }
+
+    #[inline]
     fn push_on_stack<I>(&self, target_stack: I) -> Self::Stack<I> where I: PathStack<E> + Sized {
         SimplePathStack { inner: target_stack, value: self.clone(), _p: PhantomData }
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 #[repr(transparent)]
 pub struct FixedIdx(pub isize);
 
@@ -351,6 +358,11 @@ impl<E> PathFragment<E> for FixedIdx where E: Env {
     #[inline]
     fn _as_any(&self) -> &dyn Any {
         self
+    }
+
+    #[inline]
+    fn indentify_same_child(&self, rhs: &Self) -> bool {
+        self.0 == rhs.0
     }
 
     #[inline]
@@ -375,19 +387,19 @@ impl<E> PathFragment<E> for FixedIdx where E: Env {
 //     }
 // }
 
-pub struct SimplePathStack<V,E,S> where V: PathFragment<E> + Clone + PartialEq, E: Env {
+pub struct SimplePathStack<V,E,S> where V: PathFragment<E> + Clone, E: Env {
     pub inner: S,
     pub value: V,
     pub _p: PhantomData<E>,
 }
 
-pub struct SimplePathResolvus<V,E,S> where V: PathFragment<E> + Clone + PartialEq, E: Env {
+pub struct SimplePathResolvus<V,E,S> where V: PathFragment<E> + Clone, E: Env {
     pub inner: S,
     pub value: V,
     pub _p: PhantomData<E>,
 }
 
-impl<V,S,E> PathStack<E> for SimplePathStack<V,E,S> where S: PathStack<E>, V: PathFragment<E> + Clone + PartialEq, E: Env {
+impl<V,S,E> PathStack<E> for SimplePathStack<V,E,S> where S: PathStack<E>, V: PathFragment<E> + Clone, E: Env {
     #[inline]
     fn _erase(&self) -> &(dyn PathStackDyn<E> + '_) {
         self
@@ -414,7 +426,7 @@ impl<V,S,E> PathStack<E> for SimplePathStack<V,E,S> where S: PathStack<E>, V: Pa
     }
 }
 
-impl<V,S,E> PathResolvus<E> for SimplePathResolvus<V,E,S> where S: PathResolvus<E>, V: PathFragment<E> + Clone + PartialEq, E: Env {
+impl<V,S,E> PathResolvus<E> for SimplePathResolvus<V,E,S> where S: PathResolvus<E>, V: PathFragment<E> + Clone, E: Env {
     #[inline]
     fn _erase(&self) -> &(dyn PathResolvusDyn<E> + '_) {
         self
@@ -433,7 +445,7 @@ impl<V,S,E> PathResolvus<E> for SimplePathResolvus<V,E,S> where S: PathResolvus<
     #[inline]
     fn fwd_compare<'a, 'b>(&self, other: &(dyn PathResolvusDyn<E> + '_)) -> FwdCompareStat {
         if let Some(other_inner) = other.inner() {
-            if other.try_fragment::<V>() == Some(&self.value) {
+            if other.try_fragment::<V>().map_or(false, #[inline] |other| self.value.indentify_same_child(other) ) {
                 self.inner.fwd_compare(other_inner)
             } else {
                 FwdCompareStat::Falsified
