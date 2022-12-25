@@ -434,7 +434,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn debugged_type_name(&self) -> Vec<&'static str> {
         let mut v = Vec::new();
         self.debug_type_name(&mut v);
-        v.shrink_to_fit();
+        // v.shrink_to_fit();
         v
     }
 
