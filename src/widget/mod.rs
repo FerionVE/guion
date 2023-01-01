@@ -12,7 +12,7 @@ use crate::env::Env;
 use crate::intercept::WidgetIntercept;
 use crate::queron::Queron;
 use crate::root::RootRef;
-use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, WQuery};
+use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, WQuery, DowncastResponder, DowncastMutResponder};
 use crate::util::error::{GuionError, ResolveError, GuionResolveErrorChildInfo};
 use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, TabulateNextChildResponse, TabulateOrigin, TabulateResponse};
 use crate::widget_decl::route::UpdateRoute;
@@ -404,29 +404,77 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             }
         }
     }
-
-    /// Get a dyn Any of the widget for downcast.
-    /// 
-    /// This will flatten through `dyn Widget` and direct `Box<dyn Widget>`, but not through other `Box<T>`.
-    /// 
-    /// If you want the `dyn Any` behind `dyn Widget` and any kind and nesting of `Box`, use `widget.erase2().as_any()`.
-    /// 
-    /// This also means that downcast to `Box<dyn Widget>` isn't possible
     #[inline]
-    fn as_any(&self) -> &dyn std::any::Any where Self: 'static {
-        WBase::_wbase_as_any(self)
+    fn inner_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's {
+        None
+    }
+    #[inline]
+    fn innest_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn WidgetDyn<E>+'w)> where Self: 'w
+        // let mut i = self.erase_mut();
+        // loop {
+        //     let v = i.inner_mut();
+        //     if let Some(v) = v {
+        //         i = v;
+        //     }else{
+        //         return Some(i);
+        //     }
+        // }
+        todo!()
     }
 
-    /// Get a dyn Any of the widget for downcast.
-    /// 
-    /// This will flatten through `dyn Widget` and direct `Box<dyn Widget>`, but not through other `Box<T>`.
-    /// 
-    /// If you want the `dyn Any` behind `dyn Widget` and any kind and nesting of `Box`, use `widget.erase2_mut().as_any_mut()`.
-    /// 
-    /// This also means that downcast to `Box<dyn Widget>` isn't possible
+    //fn mon(&self);
+
     #[inline]
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any where Self: 'static {
-        WBase::_wbase_as_any_mut(self)
+    fn downcast<'a,T>(&'a self) -> Option<&'a T> where T: ?Sized + 'static, Self: 'static {
+        let mut response: Option<&'a T> = None;
+        self.respond_downcast(DowncastResponder::new::<T>(&mut response));
+        response
+    }
+    #[inline]
+    fn downcast_mut<'a,T>(&'a mut self) -> Option<&'a mut T> where T: ?Sized + 'static, Self: 'static {
+        let mut response: Option<&'a mut T> = None;
+        self.respond_downcast_mut(DowncastMutResponder::new::<T>(&mut response));
+        response
+    }
+    #[inline]
+    fn respond_downcast<'a>(&'a self, mut responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast::<Self>() {
+            *v = Some(self);
+        }
+    }
+    #[inline]
+    fn respond_downcast_mut<'a>(&'a mut self, mut responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast::<Self>() {
+            *v = Some(self);
+        }
+    }
+    #[inline]
+    fn downcast_recursive<'a,T>(&'a self) -> Option<&'a T> where T: ?Sized + 'static, Self: 'static {
+        let mut response: Option<&'a T> = None;
+        self.respond_downcast_recursive(DowncastResponder::new::<T>(&mut response));
+        response
+    }
+    #[inline]
+    fn downcast_recursive_mut<'a,T>(&'a mut self) -> Option<&'a mut T> where T: ?Sized + 'static, Self: 'static {
+        let mut response: Option<&'a mut T> = None;
+        self.respond_downcast_recursive_mut(DowncastMutResponder::new::<T>(&mut response));
+        response
+    }
+    #[inline]
+    fn respond_downcast_recursive<'a>(&'a self, mut responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast::<Self>() {
+            *v = Some(self);
+        } else if let Some(v) = self.inner() {
+            v.respond_downcast_recursive(responder)
+        }
+    }
+    #[inline]
+    fn respond_downcast_recursive_mut<'a>(&'a mut self, mut responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast::<Self>() {
+            *v = Some(self);
+        } else if let Some(v) = self.inner_mut() {
+            v.respond_downcast_recursive_mut(responder)
+        }
     }
 
     fn debug_type_name(&self, dest: &mut Vec<&'static str>) {

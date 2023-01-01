@@ -217,9 +217,7 @@ impl<T,E> WidgetDecl<E> for Boxed<T> where T: WidgetDecl<E>, E: Env {
             return self.0.update_dyn(w, path, route, root, ctx);
         }
 
-        let w_any = w.as_any_mut();
-
-        if let Some(v) = w_any.downcast_mut::<Self::Widget>() {
+        if let Some(v) = w.downcast_mut::<Self::Widget>() {
             self.update(v, path, route, root, ctx)
         // } else if let Some(v) = w_any.downcast_mut::<T::Widget>() {
         //     self.0.update(v, path, resolve, ctx)

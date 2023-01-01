@@ -2,7 +2,7 @@ use std::any::TypeId;
 use std::convert::Infallible;
 use std::ops::Range;
 
-use crate::traitcast::{WQueryResponder, WQueryGeneric, WQueryResponderGeneric};
+use crate::traitcast::{WQueryResponder, WQueryGeneric, WQueryResponderGeneric, DowncastMutResponder, DowncastResponder};
 use crate::util::error::GuionResolveErrorChildInfo;
 use crate::util::tabulate;
 use crate::widget_decl::route::UpdateRoute;
@@ -287,20 +287,44 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
         (**self).innest()
     }
     #[inline]
-    fn as_any(&self) -> &dyn std::any::Any where Self: 'static {
-        if TypeId::of::<Self>() == TypeId::of::<Box<dyn WidgetDyn<E>+'static>>() || TypeId::of::<Self>() == TypeId::of::<Box<dyn WidgetDyn<E>>>() {
-            Widget::as_any(&**self)
-        } else {
-            self
-        }        
+    fn inner_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's {
+        (**self).inner_mut()
     }
     #[inline]
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any where Self: 'static {
-        if TypeId::of::<Self>() == TypeId::of::<Box<dyn WidgetDyn<E>+'static>>() || TypeId::of::<Self>() == TypeId::of::<Box<dyn WidgetDyn<E>>>() {
-            Widget::as_any_mut(&mut **self)
+    fn innest_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn WidgetDyn<E>+'w)> where Self: 'w
+        (**self).innest_mut()
+    }
+    #[inline]
+    fn respond_downcast<'a>(&'a self, mut responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast::<Self>() {
+            *v = Some(self);
         } else {
-            self
-        }        
+            (**self).respond_downcast(responder)
+        }
+    }
+    #[inline]
+    fn respond_downcast_mut<'a>(&'a mut self, mut responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast::<Self>() {
+            *v = Some(self);
+        } else {
+            (**self).respond_downcast_mut(responder)
+        }
+    }
+    #[inline]
+    fn respond_downcast_recursive<'a>(&'a self, mut responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast::<Self>() {
+            *v = Some(self);
+        } else {
+            (**self).respond_downcast_recursive(responder)
+        }
+    }
+    #[inline]
+    fn respond_downcast_recursive_mut<'a>(&'a mut self, mut responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast::<Self>() {
+            *v = Some(self);
+        } else {
+            (**self).respond_downcast_recursive_mut(responder)
+        }
     }
     // #[inline]
     // fn debug_type_name(&self, dest: &mut Vec<&'static str>) {

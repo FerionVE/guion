@@ -106,3 +106,74 @@ impl<'a,'s,Q,G,E> WQueryResponderGeneric<'s,'a,Q,G,E> where E: Env, Q: WQueryGen
         }
     }
 }
+
+// pub struct DowncastQuery<T>(PhantomData<T>) where T: ?Sized + 'static;
+
+// pub struct DowncastMutQuery<T>(PhantomData<T>) where T: ?Sized + 'static;
+
+// impl<T,E> WQuery<E> for DowncastQuery<T> where T: ?Sized + 'static {
+//     type Result<'a> = &'a T;
+// }
+
+// impl<T,E> WQuery<E> for DowncastMutQuery<T> where T: ?Sized + 'static {
+//     type Result<'a> = &'a mut T;
+// }
+
+pub struct DowncastResponder<'s,'a,E> where 'a: 's {
+    type_id: TypeId, // T
+    response: NonNull<()>, // &'s mut Option<&'a T>
+    _p: PhantomData<(&'s mut &'a mut (),E)>, // invariant 'a
+}
+
+impl<'s,'a,E> DowncastResponder<'s,'a,E> where E: Env {
+    #[inline]
+    pub fn new<T>(respond_into: &'s mut Option<&'a T>) -> Self where T: ?Sized + 'static {
+        Self {
+            type_id: TypeId::of::<T>(),
+            response: NonNull::<Option<&'a T>>::from(respond_into).cast::<()>(),
+            _p: PhantomData,
+        }
+    }
+
+    #[inline]
+    pub fn try_downcast<'ss,T>(&'ss mut self) -> Option<&'ss mut Option<&'a T>> where 's: 'ss, T: ?Sized + 'static {
+        if TypeId::of::<T>() == self.type_id {
+            Some(unsafe {
+                let resp: &'s mut Option<&'a T> = self.response.cast::<Option<&'a T>>().as_mut();
+                resp
+            })
+        } else {
+            None
+        }
+    }
+}
+
+
+pub struct DowncastMutResponder<'s,'a,E> where 'a: 's {
+    type_id: TypeId, // T
+    response: NonNull<()>, // &'s mut Option<&'a mut T>
+    _p: PhantomData<(&'s mut &'a mut (),E)>, // invariant 'a
+}
+
+impl<'s,'a,E> DowncastMutResponder<'s,'a,E> where E: Env {
+    #[inline]
+    pub fn new<T>(respond_into: &'s mut Option<&'a mut T>) -> Self where T: ?Sized + 'static {
+        Self {
+            type_id: TypeId::of::<T>(),
+            response: NonNull::<Option<&'a mut T>>::from(respond_into).cast::<()>(),
+            _p: PhantomData,
+        }
+    }
+
+    #[inline]
+    pub fn try_downcast<'ss,T>(&'ss mut self) -> Option<&'ss mut Option<&'a mut T>> where 's: 'ss, T: ?Sized + 'static {
+        if TypeId::of::<T>() == self.type_id {
+            Some(unsafe {
+                let resp: &'s mut Option<&'a mut T> = self.response.cast::<Option<&'a mut T>>().as_mut();
+                resp
+            })
+        } else {
+            None
+        }
+    }
+}

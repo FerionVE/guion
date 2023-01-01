@@ -7,7 +7,7 @@ use crate::event_new;
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::root::RootRef;
-use crate::traitcast::{WQuery, WQueryResponder, WQueryResponderGeneric, WQueryGeneric};
+use crate::traitcast::{WQuery, WQueryResponder, WQueryResponderGeneric, WQueryGeneric, DowncastResponder, DowncastMutResponder};
 use crate::util::tabulate;
 use crate::widget::id::WidgetID;
 use crate::widget::{Widget, WidgetResolveDynResult, WidgetChildDynResultMut, WidgetChildDynResult, WidgetChildResolveDynResultMut, WidgetChildResolveDynResult};
@@ -282,12 +282,44 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
         self.inner.innest()
     }
     #[inline]
-    fn as_any(&self) -> &dyn std::any::Any where Self: 'static {
-        Widget::as_any(&self.inner)
+    fn inner_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's {
+        self.inner.inner_mut()
     }
     #[inline]
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any where Self: 'static {
-        Widget::as_any_mut(&mut self.inner)
+    fn innest_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn WidgetDyn<E>+'w)> where Self: 'w
+        self.inner.innest_mut()
+    }
+    #[inline]
+    fn respond_downcast<'a>(&'a self, mut responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast() {
+            *v = Some(self);
+        } else {
+            self.inner.respond_downcast(responder)
+        }
+    }
+    #[inline]
+    fn respond_downcast_mut<'a>(&'a mut self, mut responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast() {
+            *v = Some(self);
+        } else {
+            self.inner.respond_downcast_mut(responder)
+        }
+    }
+    #[inline]
+    fn respond_downcast_recursive<'a>(&'a self, mut responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast() {
+            *v = Some(self);
+        } else {
+            self.inner.respond_downcast_recursive(responder)
+        }
+    }
+    #[inline]
+    fn respond_downcast_recursive_mut<'a>(&'a mut self, mut responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        if let Some(v) = responder.try_downcast() {
+            *v = Some(self);
+        } else {
+            self.inner.respond_downcast_recursive_mut(responder)
+        }
     }
     #[inline]
     fn debug_type_name(&self, dest: &mut Vec<&'static str>) {

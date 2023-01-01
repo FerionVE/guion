@@ -3,7 +3,7 @@ use std::ops::Range;
 
 use crate::event_new::downcast_map::EventDowncastMap;
 use crate::queron::Queron;
-use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric};
+use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, DowncastMutResponder, DowncastResponder};
 use crate::util::error::GuionResolveErrorChildInfo;
 use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, TabulateOrigin, TabulateNextChildResponse, TabulateResponse};
 use crate::widget_decl::route::UpdateRoute;
@@ -141,11 +141,15 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn _tabulate_dyn(&self, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error>;
     
     fn inner_dyn<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's;
-
     fn innest_dyn<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's;
 
-    fn as_any_dyn(&self) -> &dyn Any where Self: 'static;
-    fn as_any_mut_dyn(&mut self) -> &mut dyn Any where Self: 'static;
+    fn inner_mut_dyn<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's;
+    fn innest_mut_dyn<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's;
+
+    fn respond_downcast_dyn<'a>(&'a self, responder: DowncastResponder<'_,'a,E>) where Self: 'static;
+    fn respond_downcast_mut_dyn<'a>(&'a mut self, responder: DowncastMutResponder<'_,'a,E>) where Self: 'static;
+    fn respond_downcast_recursive_dyn<'a>(&'a self, responder: DowncastResponder<'_,'a,E>) where Self: 'static;
+    fn respond_downcast_recursive_mut_dyn<'a>(&'a mut self, responder: DowncastMutResponder<'_,'a,E>) where Self: 'static;
 
     fn debug_type_name_dyn(&self, dest: &mut Vec<&'static str>);
 
@@ -318,12 +322,28 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         self.innest()
     }
     #[inline]
-    fn as_any_dyn(&self) -> &dyn Any where Self: 'static {
-        Widget::as_any(self)
+    fn inner_mut_dyn<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's {
+        self.inner_mut()
     }
     #[inline]
-    fn as_any_mut_dyn(&mut self) -> &mut dyn Any where Self: 'static {
-        Widget::as_any_mut(self)
+    fn innest_mut_dyn<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's {
+        self.innest_mut()
+    }
+    #[inline]
+    fn respond_downcast_dyn<'a>(&'a self, responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        self.respond_downcast(responder)
+    }
+    #[inline]
+    fn respond_downcast_mut_dyn<'a>(&'a mut self, responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        self.respond_downcast_mut(responder)
+    }
+    #[inline]
+    fn respond_downcast_recursive_dyn<'a>(&'a self, responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        self.respond_downcast_recursive(responder)
+    }
+    #[inline]
+    fn respond_downcast_recursive_mut_dyn<'a>(&'a mut self, responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        self.respond_downcast_recursive_mut(responder)
     }
     #[inline]
     fn debug_type_name_dyn(&self, dest: &mut Vec<&'static str>) {
@@ -586,12 +606,28 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         self.innest_dyn()
     }
     #[inline]
-    fn as_any(&self) -> &dyn Any where Self: 'static {
-        self.as_any_dyn()
+    fn inner_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's {
+        self.inner_mut_dyn()
     }
     #[inline]
-    fn as_any_mut(&mut self) -> &mut dyn Any where Self: 'static {
-        self.as_any_mut_dyn()
+    fn innest_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's {
+        self.innest_mut_dyn()
+    }
+    #[inline]
+    fn respond_downcast<'a>(&'a self, responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        self.respond_downcast_dyn(responder)
+    }
+    #[inline]
+    fn respond_downcast_mut<'a>(&'a mut self, responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        self.respond_downcast_mut_dyn(responder)
+    }
+    #[inline]
+    fn respond_downcast_recursive<'a>(&'a self, responder: DowncastResponder<'_,'a,E>) where Self: 'static {
+        self.respond_downcast_recursive_dyn(responder)
+    }
+    #[inline]
+    fn respond_downcast_recursive_mut<'a>(&'a mut self, responder: DowncastMutResponder<'_,'a,E>) where Self: 'static {
+        self.respond_downcast_recursive_mut_dyn(responder)
     }
 
     #[inline]
@@ -671,10 +707,10 @@ impl<E> WBase<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
 
     fn _wbase_as_any(&self) -> &dyn Any where Self: 'static {
-        self.as_any_dyn()
+        todo!()
     }
 
     fn _wbase_as_any_mut(&mut self) -> &mut dyn Any where Self: 'static {
-        self.as_any_mut_dyn()
+        todo!()
     }
 }

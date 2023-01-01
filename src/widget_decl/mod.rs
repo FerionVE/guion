@@ -95,7 +95,7 @@ pub trait WidgetDecl<E> where E: Env {
 
         //let w_inner = w.erase2_mut();
 
-        if let Some(v) = w.as_any_mut().downcast_mut::<Self::Widget>() {
+        if let Some(v) = w.downcast_mut::<Self::Widget>() {
             self.update(v, path, route, root, ctx);
         } else {
             let new = self.update_restore_boxed(w, path, root, ctx);
