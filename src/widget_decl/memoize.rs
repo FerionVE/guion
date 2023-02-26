@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::marker::PhantomData;
 use std::ops::Range;
 
@@ -14,6 +15,7 @@ use crate::widget::{Widget, WidgetResolveDynResult, WidgetChildDynResultMut, Wid
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::WidgetDecl;
+use super::mutor_trait::MutorEnd;
 use super::route::UpdateRoute;
 
 pub struct Memoize<M,T,E> where M: Clone + PartialEq + 'static, T: WidgetDecl<E>, E: Env {
@@ -35,6 +37,18 @@ impl<M,T,E> Memoize<M,T,E> where M: Clone + PartialEq + 'static, T: WidgetDecl<E
 
 impl<M,T,E> WidgetDecl<E> for Memoize<M,T,E> where M: Clone + PartialEq + 'static, T: WidgetDecl<E>, E: Env {
     type Widget = MemoizeWidget<M,T::Widget,E>;
+
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        self.inner.send_mutation(path, resolve, args, root, ctx)
+    }
 
     #[inline]
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
@@ -238,6 +252,17 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     #[inline]
     fn collect_childs_dyn_range_mut(&mut self, range: Range<isize>) -> Vec<WidgetChildDynResultMut<'_,E>> {
         self.inner.collect_childs_dyn_range_mut(range)
+    }
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        self.inner.send_mutation(path, resolve, args, root, ctx)
     }
     #[inline]
     fn resolve<'a>(

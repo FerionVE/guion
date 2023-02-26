@@ -1,8 +1,9 @@
+use std::any::Any;
 use std::mem::{MaybeUninit, ManuallyDrop};
 use std::ops::Range;
 
 use crate::env::Env;
-use crate::newpath::{FixedIdx, PathFragment, PathResolvus, PathStack};
+use crate::newpath::{FixedIdx, PathFragment, PathResolvus, PathStack, PathResolvusDyn};
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::as_widgets::AsWidgetsDyn;
@@ -16,6 +17,23 @@ mod impl_tuple;
 
 impl<E,T> DeclList<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E: Env {
     type Retained = WidgetsFixedIdx<Vec<T::Widget>>;
+
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+            if r2.0 >= 0 && (r2.0 as usize) < self.0.len() {
+                self.0[r2.0 as usize].send_mutation(&r2.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx)
+            }
+        } else {
+            //TODO what happens if the mutor is lost
+        }
+    }
 
     fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Ph: PathStack<E> + ?Sized {
         WidgetsFixedIdx(
@@ -121,6 +139,23 @@ impl<E,T> DeclList<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E: Env {
 impl<E,T,const N: usize> DeclList<E> for WidgetsFixedIdx<[T;N]> where T: WidgetDecl<E>, E: Env {
     type Retained = WidgetsFixedIdx<[T::Widget;N]>;
 
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+            if r2.0 >= 0 && (r2.0 as usize) < self.0.len() {
+                self.0[r2.0 as usize].send_mutation(&r2.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx)
+            }
+        } else {
+            //TODO what happens if the mutor is lost
+        }
+    }
+
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Self: Sized, Ph: PathStack<E> + ?Sized {
         WidgetsFixedIdx(
             trans_array_enumerated(self.0, |idx,decl|
@@ -225,6 +260,17 @@ impl<E,T,const N: usize> DeclList<E> for WidgetsFixedIdx<[T;N]> where T: WidgetD
 
 impl<E,T,const N: usize> DeclList<E> for WidgetsFixedIdx<&[T;N]> where T: WidgetDecl<E>, E: Env {
     type Retained = WidgetsFixedIdx<[T::Widget;N]>;
+
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        (*bender(self)).send_mutation(path, resolve, args, root, ctx)
+    }
 
     fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Ph: PathStack<E> + ?Sized {
         (*bender(self)).instantiate(path, root, ctx)

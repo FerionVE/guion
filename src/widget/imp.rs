@@ -1,4 +1,4 @@
-use std::any::TypeId;
+use std::any::{TypeId, Any};
 use std::convert::Infallible;
 use std::ops::Range;
 
@@ -102,6 +102,17 @@ impl<E> Widget<E> for Infallible where E: Env {
     }
 
     fn resolve_child_dyn_mut<'a,'b>(&'a mut self, _: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
+        match *self {}
+    }
+
+    fn send_mutation<Ph>(
+        &self,
+        _: &Ph,
+        _: &(dyn PathResolvusDyn<E>+'_),
+        _: &dyn Any,
+        _: E::RootRef<'_>,
+        _: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
         match *self {}
     }
 
@@ -245,6 +256,16 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     }
     fn collect_childs_dyn_range_mut(&mut self, range: Range<isize>) -> Vec<WidgetChildDynResultMut<'_,E>> {
         (**self).collect_childs_dyn_range_mut(range)
+    }
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        (**self).send_mutation(path, resolve, args, root, ctx)
     }
     fn resolve<'a>(
         &'a self,

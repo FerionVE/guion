@@ -17,6 +17,28 @@ macro_rules! impl_tuple {
         {
             type Retained = WidgetsFixedIdx<($($tt::Widget),+,)>;
 
+            fn send_mutation<Ph>(
+                &self,
+                path: &Ph,
+                resolve: &(dyn PathResolvusDyn<E>+'_),
+                args: &dyn Any,
+                root: E::RootRef<'_>,
+                ctx: &mut E::Context<'_>,
+            ) where Ph: PathStack<E> + ?Sized {
+                let ($($ll),+,) = &self.0;
+
+                if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+                    match r2.0 {
+                        $($mm =>
+                            $ll.send_mutation(&r2.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx)
+                        ),+ ,
+                        _ => {},
+                    }
+                } else {
+                    //TODO what happens if the mutor is lost
+                }
+            }
+
             fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Self: Sized, Ph: PathStack<E> + ?Sized {
                 let ($($ll),+,) = self.0;
 

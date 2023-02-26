@@ -1,11 +1,22 @@
+use std::any::Any;
+
 use crate::env::Env;
-use crate::newpath::{PathStackDyn, PathStack};
+use crate::newpath::{PathStackDyn, PathStack, PathResolvusDyn};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::WidgetDecl;
 use super::route::UpdateRoute;
 
 pub trait WidgetDeclDyn<E> where E: Env {
+    fn send_mutation_dyn(
+        &self,
+        path: &(dyn PathStackDyn<E>+'_),
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    );
+
     fn instantiate_dyn(&self, path: &(dyn PathStackDyn<E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static>;
 
     fn update_dyn_dyn(
@@ -29,6 +40,18 @@ pub trait WidgetDeclDyn<E> where E: Env {
 }
 
 impl<T,E> WidgetDeclDyn<E> for T where T: WidgetDecl<E> + ?Sized, E: Env {
+    #[inline]
+    fn send_mutation_dyn(
+        &self,
+        path: &(dyn PathStackDyn<E>+'_),
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) {
+        self.send_mutation(path, resolve, args, root, ctx)
+    }
+
     #[inline]
     fn instantiate_dyn(&self, path: &(dyn PathStackDyn<E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> {
         self.instantiate_boxed(path, root, ctx)
@@ -58,6 +81,18 @@ impl<T,E> WidgetDeclDyn<E> for T where T: WidgetDecl<E> + ?Sized, E: Env {
 
 impl<E> WidgetDecl<E> for dyn WidgetDeclDyn<E> + '_ where E: Env {
     type Widget = Box<dyn WidgetDyn<E> + 'static>;
+
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        self.send_mutation_dyn(path._erase(), resolve, args, root, ctx)
+    }
 
     #[inline]
     fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {

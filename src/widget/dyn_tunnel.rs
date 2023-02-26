@@ -112,6 +112,15 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn collect_childs_dyn_range_mut_dyn(&mut self, range: Range<isize>) -> Vec<WidgetChildDynResultMut<'_,E>>;
 
+    fn send_mutation_dyn(
+        &self,
+        path: &(dyn PathStackDyn<E>+'_),
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    );
+
     fn resolve_dyn<'a>(
         &'a self,
         sub_path: &(dyn PathResolvusDyn<E>),
@@ -264,6 +273,17 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn childs_dyn(&self) -> Range<isize> {
         self.childs()
+    }
+    #[inline]
+    fn send_mutation_dyn(
+        &self,
+        path: &(dyn PathStackDyn<E>+'_),
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) {
+        self.send_mutation(path, resolve, args, root, ctx)
     }
 
     // #[allow(deprecated)]
@@ -552,6 +572,17 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     #[inline]
     fn collect_childs_dyn_range_mut(&mut self, range: Range<isize>) -> Vec<WidgetChildDynResultMut<'_,E>> {
         self.collect_childs_dyn_range_mut_dyn(range)
+    }
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        self.send_mutation_dyn(path._erase(), resolve, args, root, ctx)
     }
     #[inline]
     fn resolve<'a>(

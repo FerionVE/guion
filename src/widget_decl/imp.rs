@@ -1,7 +1,7 @@
-use std::any::TypeId;
+use std::any::{TypeId, Any};
 
 use crate::env::Env;
-use crate::newpath::PathStack;
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
@@ -10,6 +10,18 @@ use super::{WidgetDecl, WidgetDeclCallback, WidgetDeclCallbackResult};
 
 impl<T,E> WidgetDecl<E> for &T where T: WidgetDecl<E> + ?Sized, E: Env {
     type Widget = T::Widget;
+
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        (**self).send_mutation(path, resolve, args, root, ctx)
+    }
 
     #[inline]
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
@@ -73,6 +85,18 @@ impl<T,E> WidgetDecl<E> for &T where T: WidgetDecl<E> + ?Sized, E: Env {
 
 impl<T,E> WidgetDecl<E> for Box<T> where T: WidgetDecl<E> + ?Sized, E: Env {
     type Widget = T::Widget;
+
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        (**self).send_mutation(path, resolve, args, root, ctx)
+    }
 
     #[inline]
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
@@ -147,6 +171,18 @@ pub struct Boxed<T>(pub T);
 
 impl<T,E> WidgetDecl<E> for Boxed<T> where T: WidgetDecl<E>, E: Env {
     type Widget = Box<T::Widget>;
+
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        self.0.send_mutation(path, resolve, args, root, ctx)
+    }
 
     #[inline]
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
@@ -232,6 +268,18 @@ pub struct Erased<T>(pub T);
 
 impl<T,E> WidgetDecl<E> for Erased<T> where T: WidgetDecl<E>, E: Env {
     type Widget = Box<dyn WidgetDyn<E> + 'static>;
+
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        self.0.send_mutation(path, resolve, args, root, ctx)
+    }
 
     #[inline]
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {

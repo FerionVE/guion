@@ -1,7 +1,8 @@
+use std::any::Any;
 use std::marker::PhantomData;
 
 use crate::env::Env;
-use crate::newpath::{PathStack, PathFragment};
+use crate::newpath::{PathStack, PathFragment, PathResolvusDyn};
 use crate::traitcast::WQuery;
 use crate::widget::as_widgets::{AsWidgets, AsWidgetsDyn};
 
@@ -11,6 +12,15 @@ pub mod fixed_idx;
 
 pub trait DeclList<E> where E: Env {
     type Retained: AsWidgets<E> + 'static;
+
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized;
 
     #[inline]
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Self: Sized, Ph: PathStack<E> + ?Sized {
@@ -45,6 +55,18 @@ impl<E,CID> WQuery<E> for WQueryAsWidgetsDyn<CID> where E: Env, CID: PathFragmen
 
 impl<E,T> DeclList<E> for &T where T: DeclList<E> + ?Sized, E: Env {
     type Retained = T::Retained;
+
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        (**self).send_mutation(path, resolve, args, root, ctx)
+    }
 
     #[inline]
     fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Ph: PathStack<E> + ?Sized {

@@ -4,7 +4,7 @@
 //! 
 //! Note that some functions in the traits are not meant to be called from external, but over [`Link`]'s methods  
 
-use std::any::type_name;
+use std::any::{type_name, Any};
 use std::ops::Range;
 
 use crate::ctx::Context;
@@ -203,6 +203,15 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         self.childs_dyn_mut(range, &mut |result| dest.push(result) );
         dest
     }
+
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized;
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Resolve a deep child item by the given relative path

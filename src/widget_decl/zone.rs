@@ -1,10 +1,12 @@
+use std::any::Any;
 use std::marker::PhantomData;
 
 use crate::env::Env;
-use crate::newpath::{PathStack};
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::WidgetDecl;
+use super::mutor_trait::MutorEnd;
 use super::route::UpdateRoute;
 
 pub struct Zone<Z,T,E> where Z: 'static, T: WidgetDecl<E>, E: Env {
@@ -24,6 +26,18 @@ impl<Z,T,E> Zone<Z,T,E> where Z: 'static, T: WidgetDecl<E>, E: Env {
 
 impl<Z,T,E> WidgetDecl<E> for Zone<Z,T,E> where Z: 'static, T: WidgetDecl<E>, E: Env {
     type Widget = T::Widget;
+
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        self.inner.send_mutation(path, resolve, args, root, ctx)
+    }
 
     #[inline]
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {

@@ -1,11 +1,13 @@
+use std::any::Any;
 use std::marker::PhantomData;
 
 use crate::env::Env;
-use crate::newpath::PathStack;
+use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
+use super::mutor_trait::MutorEnd;
 use super::route::UpdateRoute;
 use super::{WidgetDeclCallback, WidgetDecl, WidgetDeclCallbackMode, WidgetDeclCallbackResult};
 
@@ -67,6 +69,29 @@ where
     E: Env,
 {
     type Widget = W;
+    
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        let mut dest = None;
+        
+        let op = WidgetDeclCallback {
+            root: root.fork(),
+            path: path._erase(),
+            route: UpdateRoute::none(),
+            command: WidgetDeclCallbackMode::SendMutation(resolve, args),
+        };
+
+        (self.decl)(op, ctx);
+
+        dest.unwrap()
+    }
 
     #[inline]
     fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {

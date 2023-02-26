@@ -1,14 +1,15 @@
-use std::any::TypeId;
+use std::any::{TypeId, Any};
 use std::marker::PhantomData;
 
 use crate::env::Env;
-use crate::newpath::{PathStack, PathStackDyn};
+use crate::newpath::{PathStack, PathStackDyn, PathResolvusDyn};
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use self::imp::Erased;
 use self::memoize::Memoize;
+use self::mutor_trait::MutorEnd;
 use self::route::UpdateRoute;
 use self::zone::Zone;
 
@@ -27,6 +28,15 @@ pub mod zone;
 
 pub trait WidgetDecl<E> where E: Env {
     type Widget: Widget<E> + 'static;
+
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized;
 
     #[inline]
     fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
@@ -118,6 +128,9 @@ pub trait WidgetDecl<E> where E: Env {
                 *dest = Some(self.update_restore(prev, v.path, v.root, ctx)),
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest) =>
                 *dest = Some(self.update_restore_boxed(prev, v.path, v.root, ctx)),
+            WidgetDeclCallbackMode::SendMutation(resolve, args) => 
+                self.send_mutation(v.path, resolve, args, v.root, ctx),
+            
         }
         WidgetDeclCallbackResult(PhantomData)
     }
@@ -137,6 +150,8 @@ pub trait WidgetDecl<E> where E: Env {
                 *dest = Some(self.update_restore(prev, v.path, v.root, ctx)),
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest) =>
                 *dest = Some(self.update_restore_boxed(prev, v.path, v.root, ctx)),
+            WidgetDeclCallbackMode::SendMutation(resolve, args) => 
+                self.send_mutation(v.path, resolve, args, v.root, ctx),
         }
         WidgetDeclCallbackResult(PhantomData)
     }
@@ -167,6 +182,7 @@ pub enum WidgetDeclCallbackMode<'a,W,E> where W: Widget<E> + 'static, E: Env {
     UpdateDyn(&'a mut Box<dyn WidgetDyn<E> + 'static>),
     UpdateRestore(&'a mut dyn WidgetDyn<E>, &'a mut Option<W>),
     UpdateRestoreBoxed(&'a mut dyn WidgetDyn<E>, &'a mut Option<Box<dyn WidgetDyn<E> + 'static>>),
+    SendMutation(&'a (dyn PathResolvusDyn<E>+'a), &'a dyn Any),
 }
 
 pub struct WidgetDeclCallbackResult(std::marker::PhantomData<()>);

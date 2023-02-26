@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::marker::PhantomData;
 use std::ops::Range;
 
@@ -221,6 +222,17 @@ where
     #[inline]
     fn collect_childs_dyn_range_mut(&mut self, range: Range<isize>) -> Vec<WidgetChildDynResultMut<'_,E>> {
         self.inner.collect_childs_dyn_range_mut(range)
+    }
+    #[inline]
+    fn send_mutation<Ph>(
+        &self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn Any,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        self.inner.send_mutation(path, resolve, args, root, ctx)
     }
     #[inline]
     fn resolve<'a>(
