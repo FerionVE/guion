@@ -33,269 +33,267 @@ macro_rules! impl_tuple {
             }
         }
 
-        impl<E,$($tt),+> AsWidgets<E> for WidgetsFixedIdx<($($tt),+,)> where
+        impl<E,$($tt),+> PaneChilds<E> for WidgetsFixedIdx<($(PaneChildWidget<$tt,E>),+,)> where
             $($tt: Widget<E>),+ ,
             E: Env
         {
             type Caches = DefaultHack<($($tt::Cache),+,)>;
-            type IdIdxIter = impl Iterator<Item=(isize,Self::ChildID)>;
-            type IndexedSideData<TT> = [TT;$n] where TT: Clone + Default;
-            type IndexedSideData2<TT> = Self::IndexedSideData<TT> where TT: Clone + Default + 'static;
         
-            #[inline]
-            fn by_index<F,R>(&self, idx: isize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-            where
-                F: AsWidgetsDispatch<Self::ChildID,R,E>
-            {
-                let ($($ll),+,) = &self.0;
+            // #[inline]
+            // fn by_index<F,R>(&self, idx: usize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+            // where
+            //     F: AsWidgetsDispatch<Self::ChildID,R,E>
+            // {
+            //     let ($($ll),+,) = &self.0;
                 
-                match idx {
-                    $($mm =>
-                        callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx),$ll), root, ctx)
-                    ),+ ,
-                    _ => callback.call_none(root, ctx),
-                }
-            }
+            //     match idx {
+            //         $($mm =>
+            //             callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx as isize),$ll), root, ctx)
+            //         ),+ ,
+            //         _ => callback.call_none(root, ctx),
+            //     }
+            // }
 
-            #[inline]
-            fn by_index_mut<F,R>(&mut self, idx: isize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-            where
-                F: AsWidgetsDispatchMut<Self::ChildID,R,E>
-            {
-                let ($($ll),+,) = &mut self.0;
+            // #[inline]
+            // fn by_index_mut<F,R>(&mut self, idx: usize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+            // where
+            //     F: AsWidgetsDispatchMut<Self::ChildID,R,E>
+            // {
+            //     let ($($ll),+,) = &mut self.0;
                 
-                match idx {
-                    $($mm =>
-                        callback.call(AsWidgetsResultMut::from_some(idx,FixedIdx(idx),$ll), root, ctx)
-                    ),+ ,
-                    _ => callback.call_none(root, ctx),
-                }
-            }
+            //     match idx {
+            //         $($mm =>
+            //             callback.call(AsWidgetsResultMut::from_some(idx,FixedIdx(idx as isize),$ll), root, ctx)
+            //         ),+ ,
+            //         _ => callback.call_none(root, ctx),
+            //     }
+            // }
 
-            #[inline]
-            fn by_index_c<F,R>(&self, idx: isize, callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-            where
-                F: AsWidgetsCDispatch<Self::ChildID,R,E>
-            {
-                let ($($ll),+,) = &self.0;
-                let ($($ll2),+,) = &mut caches.0;
+            // #[inline]
+            // fn by_index_c<F,R>(&self, idx: usize, callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+            // where
+            //     F: AsWidgetsCDispatch<Self::ChildID,R,E>
+            // {
+            //     let ($($ll),+,) = &self.0;
+            //     let ($($ll2),+,) = &mut caches.0;
                 
-                match idx {
-                    $($mm => {
-                        callback.call(AsWidgetsCResult::from_some(idx,FixedIdx(idx),$ll,$ll2), root, ctx)
-                    }),+ ,
-                    _ => callback.call_none(root, ctx),
-                }
-            }
+            //     match idx {
+            //         $($mm => {
+            //             callback.call(AsWidgetsCResult::from_some(idx,FixedIdx(idx as isize),$ll,$ll2), root, ctx)
+            //         }),+ ,
+            //         _ => callback.call_none(root, ctx),
+            //     }
+            // }
 
-            #[inline]
-            fn by_index_c_mut<F,R>(&mut self, idx: isize, callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-            where
-                F: AsWidgetsCDispatchMut<Self::ChildID,R,E>
-            {
-                let ($($ll),+,) = &mut self.0;
-                let ($($ll2),+,) = &mut caches.0;
+            // #[inline]
+            // fn by_index_c_mut<F,R>(&mut self, idx: usize, callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+            // where
+            //     F: AsWidgetsCDispatchMut<Self::ChildID,R,E>
+            // {
+            //     let ($($ll),+,) = &mut self.0;
+            //     let ($($ll2),+,) = &mut caches.0;
                 
-                match idx {
-                    $($mm => {
-                        callback.call(AsWidgetsCResultMut::from_some(idx,FixedIdx(idx),$ll,$ll2), root, ctx)
-                    }),+ ,
-                    _ => callback.call_none(root, ctx),
-                }
-            }
+            //     match idx {
+            //         $($mm => {
+            //             callback.call(AsWidgetsCResultMut::from_some(idx,FixedIdx(idx as isize),$ll,$ll2), root, ctx)
+            //         }),+ ,
+            //         _ => callback.call_none(root, ctx),
+            //     }
+            // }
         
-            #[inline]
-            fn iter_ids(&self) -> Self::IdIdxIter {
-                (0..$n).map(#[inline] |i| (i,FixedIdx(i)))
-            }
+            // #[inline]
+            // fn iter_ids(&self) -> Self::IdIdxIter {
+            //     (0..$n).map(#[inline] |i| (i,FixedIdx(i)))
+            // }
         
-            #[inline]
-            fn idx_range<F>(&self, range: Range<isize>, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-            where
-                F: AsWidgetsIndexedDispatch<Self::ChildID,E>
-            {
-                let ($($ll),+,) = &self.0;
+            // #[inline]
+            // fn idx_range<F>(&self, range: Range<usize>, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            // where
+            //     F: AsWidgetsIndexedDispatch<Self::ChildID,E>
+            // {
+            //     let ($($ll),+,) = &self.0;
 
-                $({
-                    if $mmm >= range.start && $mmm < range.end {
-                        callback.call($mmm, FixedIdx($mmm), $ll, root.fork(), ctx)
-                    }
-                })+
-            }
+            //     $({
+            //         if $mmm >= range.start && $mmm < range.end {
+            //             callback.call($mmm, FixedIdx($mmm), $ll, root.fork(), ctx)
+            //         }
+            //     })+
+            // }
 
-            #[inline]
-            fn idx_range_mut<F>(&mut self, range: Range<isize>, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-            where
-                F: AsWidgetsIndexedDispatchMut<Self::ChildID,E>
-            {
-                let ($($ll),+,) = &mut self.0;
+            // #[inline]
+            // fn idx_range_mut<F>(&mut self, range: Range<usize>, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            // where
+            //     F: AsWidgetsIndexedDispatchMut<Self::ChildID,E>
+            // {
+            //     let ($($ll),+,) = &mut self.0;
 
-                $({
-                    if $mmm >= range.start && $mmm < range.end {
-                        callback.call($mmm, FixedIdx($mmm), $ll, root.fork(), ctx)
-                    }
-                })+
-            }
+            //     $({
+            //         if $mmm >= range.start && $mmm < range.end {
+            //             callback.call($mmm, FixedIdx($mmm), $ll, root.fork(), ctx)
+            //         }
+            //     })+
+            // }
 
-            #[inline]
-            fn idx_range_c<F>(&self, range: Range<isize>, mut callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-            where
-                F: AsWidgetsIndexedCDispatch<Self::ChildID,E>
-            {
-                let ($($ll),+,) = &self.0;
-                let ($($ll2),+,) = &mut caches.0;
+            // #[inline]
+            // fn idx_range_c<F>(&self, range: Range<usize>, mut callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            // where
+            //     F: AsWidgetsIndexedCDispatch<Self::ChildID,E>
+            // {
+            //     let ($($ll),+,) = &self.0;
+            //     let ($($ll2),+,) = &mut caches.0;
 
-                $({
-                    if $mmm >= range.start && $mmm < range.end {
-                        callback.call($mmm, FixedIdx($mmm), $ll, $ll2, root.fork(), ctx)
-                    }
-                })*
-            }
+            //     $({
+            //         if $mmm >= range.start && $mmm < range.end {
+            //             callback.call($mmm, FixedIdx($mmm), $ll, $ll2, root.fork(), ctx)
+            //         }
+            //     })*
+            // }
 
-            #[inline]
-            fn idx_range_c_mut<F>(&mut self, range: Range<isize>, mut callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-            where
-                F: AsWidgetsIndexedCDispatchMut<Self::ChildID,E>
-            {
-                let ($($ll),+,) = &mut self.0;
-                let ($($ll2),+,) = &mut caches.0;
+            // #[inline]
+            // fn idx_range_c_mut<F>(&mut self, range: Range<usize>, mut callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
+            // where
+            //     F: AsWidgetsIndexedCDispatchMut<Self::ChildID,E>
+            // {
+            //     let ($($ll),+,) = &mut self.0;
+            //     let ($($ll2),+,) = &mut caches.0;
 
-                $({
-                    if $mmm >= range.start && $mmm < range.end {
-                        callback.call($mmm, FixedIdx($mmm), $ll, $ll2, root.fork(), ctx)
-                    }
-                })*
-            }
+            //     $({
+            //         if $mmm >= range.start && $mmm < range.end {
+            //             callback.call($mmm, FixedIdx($mmm), $ll, $ll2, root.fork(), ctx)
+            //         }
+            //     })*
+            // }
         
-            fn resolve<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-            where
-                F: AsWidgetsResolveDispatch<Self::ChildID,R,E>
-            {
-                let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
+            // fn resolve<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+            // where
+            //     F: AsWidgetsResolveDispatch<Self::ChildID,R,E>
+            // {
+            //     let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
 
-                let idx = v.0;
+            //     let idx = v.0;
                 
-                let ($($ll),+,) = &self.0;
+            //     let ($($ll),+,) = &self.0;
             
-                match idx {
-                    $($mm => 
-                        callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),$ll), root, ctx)
-                    ),+ ,
-                    _ => callback.call_none(root, ctx),
-                }
-            }
+            //     match idx {
+            //         $($mm => 
+            //             callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),$ll), root, ctx)
+            //         ),+ ,
+            //         _ => callback.call_none(root, ctx),
+            //     }
+            // }
 
-            fn resolve_mut<F,R>(&mut self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-            where
-                F: AsWidgetsResolveDispatchMut<Self::ChildID,R,E>
-            {
-                let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
+            // fn resolve_mut<F,R>(&mut self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+            // where
+            //     F: AsWidgetsResolveDispatchMut<Self::ChildID,R,E>
+            // {
+            //     let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
 
-                let idx = v.0;
+            //     let idx = v.0;
                 
-                let ($($ll),+,) = &mut self.0;
+            //     let ($($ll),+,) = &mut self.0;
             
-                match idx {
-                    $($mm => 
-                        callback.call(AsWidgetsResolveResultMut::from_some(idx,FixedIdx(idx),path.inner().unwrap(),$ll), root, ctx)
-                    ),+ ,
-                    _ => callback.call_none(root, ctx),
-                }
-            }
+            //     match idx {
+            //         $($mm => 
+            //             callback.call(AsWidgetsResolveResultMut::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),$ll), root, ctx)
+            //         ),+ ,
+            //         _ => callback.call_none(root, ctx),
+            //     }
+            // }
 
-            fn resolve_c<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-            where
-                F: AsWidgetsResolveCDispatch<Self::ChildID,R,E>
-            {
-                let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
+            // fn resolve_c<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+            // where
+            //     F: AsWidgetsResolveCDispatch<Self::ChildID,R,E>
+            // {
+            //     let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
 
-                let idx = v.0;
+            //     let idx = v.0;
                 
-                let ($($ll),+,) = &self.0;
-                let ($($ll2),+,) = &mut caches.0;
+            //     let ($($ll),+,) = &self.0;
+            //     let ($($ll2),+,) = &mut caches.0;
             
-                match idx {
-                    $($mm => 
-                        callback.call(AsWidgetsResolveCResult::from_some(idx,FixedIdx(idx),path.inner().unwrap(),$ll,$ll2), root, ctx)
-                    ),+ ,
-                    _ => callback.call_none(root, ctx),
-                }
-            }
+            //     match idx {
+            //         $($mm => 
+            //             callback.call(AsWidgetsResolveCResult::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),$ll,$ll2), root, ctx)
+            //         ),+ ,
+            //         _ => callback.call_none(root, ctx),
+            //     }
+            // }
 
-            fn resolve_c_mut<F,R>(&mut self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-            where
-                F: AsWidgetsResolveCDispatchMut<Self::ChildID,R,E>
-            {
-                let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
+            // fn resolve_c_mut<F,R>(&mut self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, caches: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+            // where
+            //     F: AsWidgetsResolveCDispatchMut<Self::ChildID,R,E>
+            // {
+            //     let Some(v) = path.try_fragment::<Self::ChildID>() else { return callback.call_none(root,ctx) };
 
-                let idx = v.0;
+            //     let idx = v.0;
                 
-                let ($($ll),+,) = &mut self.0;
-                let ($($ll2),+,) = &mut caches.0;
+            //     let ($($ll),+,) = &mut self.0;
+            //     let ($($ll2),+,) = &mut caches.0;
             
-                match idx {
-                    $($mm => 
-                        callback.call(AsWidgetsResolveCResultMut::from_some(idx,FixedIdx(idx),path.inner().unwrap(),$ll,$ll2), root, ctx)
-                    ),+ ,
-                    _ => callback.call_none(root, ctx),
-                }
-            }
+            //     match idx {
+            //         $($mm => 
+            //             callback.call(AsWidgetsResolveCResultMut::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),$ll,$ll2), root, ctx)
+            //         ),+ ,
+            //         _ => callback.call_none(root, ctx),
+            //     }
+            // }
         }
 
-        impl<E,$($tt),+> AsWidgetsDyn<E> for WidgetsFixedIdx<($($tt),+,)> where
+        impl<E,$($tt),+> PaneChildsDyn<E> for WidgetsFixedIdx<($(PaneChildWidget<$tt,E>),+,)> where
             $($tt: Widget<E>),+ ,
             E: Env
         {
             type ChildID = FixedIdx;
 
-            fn by_index_dyn(&self, idx: isize) -> Option<AsWidgetsDynResult<'_,Self::ChildID,E>>{
+            #[inline]
+            fn len(&self) -> usize {
+                $n
+            }
+
+            fn by_index_dyn(&self, idx: usize) -> Option<ChildWidgetDynResult<'_,Self::ChildID,E>>{
                 let ($($ll),+,) = &self.0;
                 
                 let (widget_id,widget) = match idx {
                     $($mm =>
-                        ($ll.id(), $ll as &(dyn WidgetDyn<E> + '_))
+                        ($ll.widget.id(), (&$ll.widget) as &(dyn WidgetDyn<E> + '_))
                     ),+ ,
                     _ => return None,
                 };
 
-                Some(AsWidgetsDynResult {
+                Some(ChildWidgetDynResult {
                     widget,
                     widget_id,
-                    child_id: FixedIdx(idx),
+                    child_id: FixedIdx(idx as isize),
                     idx,
                 })
             }
         
-            fn by_index_dyn_mut(&mut self, idx: isize) -> Option<AsWidgetsDynResultMut<'_,Self::ChildID,E>> {
+            fn by_index_dyn_mut(&mut self, idx: usize) -> Option<ChildWidgetDynResultMut<'_,Self::ChildID,E>> {
                 let ($($ll),+,) = &mut self.0;
                 
                 let (widget_id,widget) = match idx {
                     $($mm =>
-                        ($ll.id(), $ll as &mut (dyn WidgetDyn<E> + '_))
+                        ($ll.widget.id(), (&mut $ll.widget) as &mut (dyn WidgetDyn<E> + '_))
                     ),+ ,
                     _ => return None,
                 };
 
-                Some(AsWidgetsDynResultMut {
+                Some(ChildWidgetDynResultMut {
                     widget,
                     widget_id,
-                    child_id: FixedIdx(idx),
+                    child_id: FixedIdx(idx as isize),
                     idx,
                 })
             }
         
-            fn range(&self) -> Range<isize> {
-                0 .. $n
-            }
-        
-            fn idx_range_dyn<'a>(&'a self, range: Range<isize>, callback: &mut (dyn FnMut(AsWidgetsDynResult<'a,Self::ChildID,E>) + '_) ) {
+            fn idx_range_dyn<'a>(&'a self, range: Range<usize>, callback: &mut (dyn FnMut(ChildWidgetDynResult<'a,Self::ChildID,E>) + '_) ) {
                 let ($($ll),+,) = &self.0;
 
                 $({
                     if $mmm >= range.start && $mmm < range.end {
-                        callback(AsWidgetsDynResult {
-                            widget: $ll,
-                            widget_id: $ll.id(),
+                        callback(ChildWidgetDynResult {
+                            widget: &$ll.widget,
+                            widget_id: $ll.widget.id(),
                             child_id: FixedIdx($mmm),
                             idx: $mmm,
                         });
@@ -303,14 +301,14 @@ macro_rules! impl_tuple {
                 })+
             }
         
-            fn idx_range_dyn_mut<'a>(&'a mut self, range: Range<isize>, callback: &mut (dyn FnMut(AsWidgetsDynResultMut<'a,Self::ChildID,E>) + '_) ) {
+            fn idx_range_dyn_mut<'a>(&'a mut self, range: Range<usize>, callback: &mut (dyn FnMut(ChildWidgetDynResultMut<'a,Self::ChildID,E>) + '_) ) {
                 let ($($ll),+,) = &mut self.0;
 
                 $({
                     if $mmm >= range.start && $mmm < range.end {
-                        callback(AsWidgetsDynResultMut {
-                            widget_id: $ll.id(),
-                            widget: $ll,
+                        callback(ChildWidgetDynResultMut {
+                            widget_id: $ll.widget.id(),
+                            widget: &mut $ll.widget,
                             child_id: FixedIdx($mmm),
                             idx: $mmm,
                         });
@@ -318,51 +316,51 @@ macro_rules! impl_tuple {
                 })+
             }
         
-            fn resolve_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<AsWidgetsDynResolveResult<'a,'b,Self::ChildID,E>> {
-                let Some(v) = path.try_fragment::<Self::ChildID>() else { return None };
+            // fn resolve_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<ChildWidgetDynResolveResult<'a,'b,Self::ChildID,E>> {
+            //     let Some(v) = path.try_fragment::<Self::ChildID>() else { return None };
 
-                let idx = v.0;
+            //     let idx = v.0;
                 
-                let ($($ll),+,) = &self.0;
+            //     let ($($ll),+,) = &self.0;
             
-                let (widget_id,widget) = match idx {
-                    $($mm =>
-                        ($ll.id(), $ll as &(dyn WidgetDyn<E> + '_))
-                    ),+ ,
-                    _ => return None,
-                };
+            //     let (widget_id,widget) = match idx {
+            //         $($mm =>
+            //             ($ll.id(), $ll as &(dyn WidgetDyn<E> + '_))
+            //         ),+ ,
+            //         _ => return None,
+            //     };
 
-                Some(AsWidgetsDynResolveResult {
-                    widget,
-                    widget_id,
-                    child_id: FixedIdx(idx),
-                    idx,
-                    resolvus: path.inner().unwrap(),
-                })
-            }
+            //     Some(ChildWidgetDynResolveResult {
+            //         widget,
+            //         widget_id,
+            //         child_id: FixedIdx(idx as isize),
+            //         idx,
+            //         resolvus: path.inner().unwrap(),
+            //     })
+            // }
         
-            fn resolve_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<AsWidgetsDynResolveResultMut<'a,'b,Self::ChildID,E>> {
-                let Some(v) = path.try_fragment::<Self::ChildID>() else { return None };
+            // fn resolve_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<ChildWidgetDynResolveResultMut<'a,'b,Self::ChildID,E>> {
+            //     let Some(v) = path.try_fragment::<Self::ChildID>() else { return None };
 
-                let idx = v.0;
+            //     let idx = v.0;
                 
-                let ($($ll),+,) = &mut self.0;
+            //     let ($($ll),+,) = &mut self.0;
             
-                let (widget_id,widget) = match idx {
-                    $($mm =>
-                        ($ll.id(), $ll as &mut (dyn WidgetDyn<E> + '_))
-                    ),+ ,
-                    _ => return None,
-                };
+            //     let (widget_id,widget) = match idx {
+            //         $($mm =>
+            //             ($ll.id(), $ll as &mut (dyn WidgetDyn<E> + '_))
+            //         ),+ ,
+            //         _ => return None,
+            //     };
 
-                Some(AsWidgetsDynResolveResultMut {
-                    widget,
-                    widget_id,
-                    child_id: FixedIdx(idx),
-                    idx,
-                    resolvus: path.inner().unwrap(),
-                })
-            }
+            //     Some(ChildWidgetDynResolveResultMut {
+            //         widget,
+            //         widget_id,
+            //         child_id: FixedIdx(idx as isize),
+            //         idx,
+            //         resolvus: path.inner().unwrap(),
+            //     })
+            // }
         }
     };
 }

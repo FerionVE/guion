@@ -30,11 +30,12 @@ pub mod error;
 
 pub mod compat;
 
-pub mod dispatchor;
 pub mod cachialize;
 pub mod queron;
 pub mod newpath;
 pub mod cachor;
+
+pub mod invalidation;
 
 pub type EventResp = bool;
 

@@ -2,6 +2,7 @@ use std::any::{TypeId, Any};
 use std::convert::Infallible;
 use std::ops::Range;
 
+use crate::invalidation::Invalidation;
 use crate::traitcast::{WQueryResponder, WQueryGeneric, WQueryResponderGeneric, DowncastMutResponder, DowncastResponder};
 use crate::util::error::GuionResolveErrorChildInfo;
 use crate::util::tabulate;
@@ -12,7 +13,6 @@ use crate::env::Env;
 use crate::newpath::{PathStack, PathFragment, PathResolvusDyn};
 use crate::queron::Queron;
 
-use super::as_widgets::{AsWidgetsDynResult, AsWidgetsDynResultMut, AsWidgetsDynResolveResult, AsWidgetsDynResolveResultMut};
 use super::{Widget, WidgetChildDynResult, WidgetResolveDynResult, WidgetChildDynResultMut, WidgetResolveDynResultMut, WidgetChildResolveDynResult, WidgetChildResolveDynResultMut};
 use super::dyn_tunnel::WidgetDyn;
 
@@ -44,7 +44,7 @@ impl<E> Widget<E> for Infallible where E: Env {
         _: Option<&(dyn PathResolvusDyn<E>+'_)>,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         match *self {}
     }
 
@@ -64,7 +64,7 @@ impl<E> Widget<E> for Infallible where E: Env {
         _: UpdateRoute<'_,E>,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         match *self {}
     }
 
@@ -162,7 +162,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         (**self).event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
@@ -197,7 +197,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         (**self)._event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
@@ -217,7 +217,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         (**self).update(path, route, root, ctx)
     }
     #[inline]
@@ -456,43 +456,43 @@ impl<'a,'b,E> From<WidgetChildResolveDynResultMut<'a,'b,E>> for WidgetResolveDyn
     }
 }
 
-impl<'a,CID,E> From<AsWidgetsDynResult<'a,CID,E>> for WidgetResolveDynResult<'a,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResult<'a,CID,E>) -> Self {
-        Self {
-            widget: v.widget,
-            widget_id: v.widget_id,
-        }
-    }
-}
-impl<'a,CID,E> From<AsWidgetsDynResultMut<'a,CID,E>> for WidgetResolveDynResultMut<'a,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResultMut<'a,CID,E>) -> Self {
-        Self {
-            widget: v.widget,
-            widget_id: v.widget_id,
-        }
-    }
-}
+// impl<'a,CID,E> From<AsWidgetsDynResult<'a,CID,E>> for WidgetResolveDynResult<'a,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResult<'a,CID,E>) -> Self {
+//         Self {
+//             widget: v.widget,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
+// impl<'a,CID,E> From<AsWidgetsDynResultMut<'a,CID,E>> for WidgetResolveDynResultMut<'a,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResultMut<'a,CID,E>) -> Self {
+//         Self {
+//             widget: v.widget,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
 
-impl<'a,'b,CID,E> From<AsWidgetsDynResolveResult<'a,'b,CID,E>> for WidgetResolveDynResult<'a,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResolveResult<'a,'b,CID,E>) -> Self {
-        Self {
-            widget: v.widget,
-            widget_id: v.widget_id,
-        }
-    }
-}
-impl<'a,'b,CID,E> From<AsWidgetsDynResolveResultMut<'a,'b,CID,E>> for WidgetResolveDynResultMut<'a,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResolveResultMut<'a,'b,CID,E>) -> Self {
-        Self {
-            widget: v.widget,
-            widget_id: v.widget_id,
-        }
-    }
-}
+// impl<'a,'b,CID,E> From<AsWidgetsDynResolveResult<'a,'b,CID,E>> for WidgetResolveDynResult<'a,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResolveResult<'a,'b,CID,E>) -> Self {
+//         Self {
+//             widget: v.widget,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
+// impl<'a,'b,CID,E> From<AsWidgetsDynResolveResultMut<'a,'b,CID,E>> for WidgetResolveDynResultMut<'a,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResolveResultMut<'a,'b,CID,E>) -> Self {
+//         Self {
+//             widget: v.widget,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
 
 impl<'a,'b,E> From<WidgetChildResolveDynResult<'a,'b,E>> for WidgetChildDynResult<'a,E> {
     #[inline]
@@ -516,67 +516,67 @@ impl<'a,'b,E> From<WidgetChildResolveDynResultMut<'a,'b,E>> for WidgetChildDynRe
 }
 
 
-impl<'a,CID,E> From<AsWidgetsDynResult<'a,CID,E>> for WidgetChildDynResult<'a,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResult<'a,CID,E>) -> Self {
-        Self {
-            idx: v.idx,
-            widget: v.widget,
-            widget_id: v.widget_id,
-        }
-    }
-}
-impl<'a,CID,E> From<AsWidgetsDynResultMut<'a,CID,E>> for WidgetChildDynResultMut<'a,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResultMut<'a,CID,E>) -> Self {
-        Self {
-            idx: v.idx,
-            widget: v.widget,
-            widget_id: v.widget_id,
-        }
-    }
-}
+// impl<'a,CID,E> From<AsWidgetsDynResult<'a,CID,E>> for WidgetChildDynResult<'a,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResult<'a,CID,E>) -> Self {
+//         Self {
+//             idx: v.idx,
+//             widget: v.widget,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
+// impl<'a,CID,E> From<AsWidgetsDynResultMut<'a,CID,E>> for WidgetChildDynResultMut<'a,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResultMut<'a,CID,E>) -> Self {
+//         Self {
+//             idx: v.idx,
+//             widget: v.widget,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
 
-impl<'a,'b,CID,E> From<AsWidgetsDynResolveResult<'a,'b,CID,E>> for WidgetChildDynResult<'a,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResolveResult<'a,'b,CID,E>) -> Self {
-        Self {
-            idx: v.idx,
-            widget: v.widget,
-            widget_id: v.widget_id,
-        }
-    }
-}
-impl<'a,'b,CID,E> From<AsWidgetsDynResolveResultMut<'a,'b,CID,E>> for WidgetChildDynResultMut<'a,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResolveResultMut<'a,'b,CID,E>) -> Self {
-        Self {
-            idx: v.idx,
-            widget: v.widget,
-            widget_id: v.widget_id,
-        }
-    }
-}
+// impl<'a,'b,CID,E> From<AsWidgetsDynResolveResult<'a,'b,CID,E>> for WidgetChildDynResult<'a,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResolveResult<'a,'b,CID,E>) -> Self {
+//         Self {
+//             idx: v.idx,
+//             widget: v.widget,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
+// impl<'a,'b,CID,E> From<AsWidgetsDynResolveResultMut<'a,'b,CID,E>> for WidgetChildDynResultMut<'a,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResolveResultMut<'a,'b,CID,E>) -> Self {
+//         Self {
+//             idx: v.idx,
+//             widget: v.widget,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
 
-impl<'a,'b,CID,E> From<AsWidgetsDynResolveResult<'a,'b,CID,E>> for WidgetChildResolveDynResult<'a,'b,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResolveResult<'a,'b,CID,E>) -> Self {
-        Self {
-            idx: v.idx,
-            widget: v.widget,
-            sub_path: v.resolvus,
-            widget_id: v.widget_id,
-        }
-    }
-}
-impl<'a,'b,CID,E> From<AsWidgetsDynResolveResultMut<'a,'b,CID,E>> for WidgetChildResolveDynResultMut<'a,'b,E> where CID: PathFragment<E> + Clone + 'static {
-    #[inline]
-    fn from(v: AsWidgetsDynResolveResultMut<'a,'b,CID,E>) -> Self {
-        Self {
-            idx: v.idx,
-            widget: v.widget,
-            sub_path: v.resolvus,
-            widget_id: v.widget_id,
-        }
-    }
-}
+// impl<'a,'b,CID,E> From<AsWidgetsDynResolveResult<'a,'b,CID,E>> for WidgetChildResolveDynResult<'a,'b,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResolveResult<'a,'b,CID,E>) -> Self {
+//         Self {
+//             idx: v.idx,
+//             widget: v.widget,
+//             sub_path: v.resolvus,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }
+// impl<'a,'b,CID,E> From<AsWidgetsDynResolveResultMut<'a,'b,CID,E>> for WidgetChildResolveDynResultMut<'a,'b,E> where CID: PathFragment<E> + Clone + 'static {
+//     #[inline]
+//     fn from(v: AsWidgetsDynResolveResultMut<'a,'b,CID,E>) -> Self {
+//         Self {
+//             idx: v.idx,
+//             widget: v.widget,
+//             sub_path: v.resolvus,
+//             widget_id: v.widget_id,
+//         }
+//     }
+// }

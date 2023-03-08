@@ -3,6 +3,7 @@ use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::event::key::MatchKeyCode;
 use crate::event::standard::variants::{MouseMove, RootEvent, KbdDown, KbdPress, MouseDown, MouseUp, MouseLeave, WindowResize, WindowMove, TextInput, MouseScroll, KbdUp, MouseEnter};
+use crate::invalidation::Invalidation;
 use crate::root::RootRef;
 use crate::{event_new, EventResp};
 use crate::event_new::variants::StdVariant;
@@ -53,7 +54,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp
+    ) -> Invalidation
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     {
@@ -83,7 +84,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp
+    ) -> Invalidation
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     { //TODO BUG handle sudden invalidation of hovered widget
@@ -92,14 +93,14 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
         if let Some(ee) = event.query_variant::<RootEvent<E>>(path,stack) {
             let ee = ee.clone();
             let ts = event.ts();
-            let mut passed = false;
+            let mut passed = Invalidation::valid();
             match ee {
                 RootEvent::KbdDown{key} => {
                     //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = (self.access)(ctx).state.kbd.focused.clone() {
                         if !root.has_widget(&*id,ctx) {
                             //drop event if widget is gone
-                            return false;
+                            return Invalidation::valid();
                         }
                         (self.access)(ctx).state.key.down(
                             key.clone(),

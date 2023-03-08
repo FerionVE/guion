@@ -10,6 +10,7 @@ use std::ops::Range;
 use crate::ctx::Context;
 use crate::env::Env;
 use crate::intercept::WidgetIntercept;
+use crate::invalidation::Invalidation;
 use crate::queron::Queron;
 use crate::root::RootRef;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, WQuery, DowncastResponder, DowncastMutResponder};
@@ -31,7 +32,7 @@ pub mod ext;
 #[doc(hidden)]
 pub mod imp;
 //pub mod root;
-pub mod as_widgets;
+pub mod pane_childs;
 // #[deprecated="Replaced by AsWidgets"]
 // pub mod array;
 pub mod ident;
@@ -105,7 +106,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         ctx.build_intercept()._event_direct(self, path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
@@ -147,7 +148,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
@@ -167,7 +168,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized;
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized;
 
     #[inline]
     fn end<Ph>(

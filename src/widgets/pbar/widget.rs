@@ -89,7 +89,7 @@ impl<E> Widget<E> for ProgressBar<E> where
         _: &mut Self::Cache,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         false
     }
 

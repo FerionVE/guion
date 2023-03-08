@@ -2,6 +2,7 @@
 
 use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
+use crate::invalidation::Invalidation;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric};
 use crate::{event_new, EventResp};
 use crate::newpath::{PathResolvusDyn, PathStack};
@@ -42,7 +43,7 @@ pub trait WidgetIntercept<E>: 'static where E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> Invalidation where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
 
     fn _event_root<W,Ph,S,Evt>(
         &self,
@@ -53,7 +54,7 @@ pub trait WidgetIntercept<E>: 'static where E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> Invalidation where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
 
     fn _size<W,Ph,S>(
         &self,
@@ -105,7 +106,7 @@ impl<E> WidgetIntercept<E> for () where E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp
+    ) -> Invalidation
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     {
@@ -121,7 +122,7 @@ impl<E> WidgetIntercept<E> for () where E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp
+    ) -> Invalidation
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
     {
@@ -130,7 +131,7 @@ impl<E> WidgetIntercept<E> for () where E: Env {
             widget._event_direct(path, stack, event, route_to_widget, root, ctx)
             //l.ctx.event_direct(l.widget,e)
         }else{
-            false
+            Invalidation::valid()
         }
     }
     #[inline] 

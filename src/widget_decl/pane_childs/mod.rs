@@ -1,17 +1,20 @@
 use std::any::Any;
 use std::marker::PhantomData;
 
+use crate::aliases::ESize;
 use crate::env::Env;
+use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathFragment, PathResolvusDyn};
 use crate::traitcast::WQuery;
-use crate::widget::as_widgets::{AsWidgets, AsWidgetsDyn};
+use crate::util::bounds::Bounds;
+use crate::widget::pane_childs::{PaneChilds, PaneChildsDyn};
 
 use super::route::UpdateRoute;
 
 pub mod fixed_idx;
 
-pub trait DeclList<E> where E: Env {
-    type Retained: AsWidgets<E> + 'static;
+pub trait PaneChildsDecl<E> where E: Env {
+    type Retained: PaneChilds<E> + 'static;
 
     fn send_mutation<Ph>(
         &self,
@@ -36,11 +39,11 @@ pub trait DeclList<E> where E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized;
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized;
 
     fn update_restore<Ph>(
         &self,
-        prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
+        prev: &mut dyn PaneChildsDyn<E,ChildID=<Self::Retained as PaneChildsDyn<E>>::ChildID>,
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -50,10 +53,10 @@ pub trait DeclList<E> where E: Env {
 pub struct WQueryAsWidgetsDyn<CID>(pub PhantomData<CID>);
 
 impl<E,CID> WQuery<E> for WQueryAsWidgetsDyn<CID> where E: Env, CID: PathFragment<E> + Clone + 'static {
-    type Result<'a> = &'a mut dyn AsWidgetsDyn<E,ChildID=CID>;
+    type Result<'a> = &'a mut dyn PaneChildsDyn<E,ChildID=CID>;
 }
 
-impl<E,T> DeclList<E> for &T where T: DeclList<E> + ?Sized, E: Env {
+impl<E,T> PaneChildsDecl<E> for &T where T: PaneChildsDecl<E> + ?Sized, E: Env {
     type Retained = T::Retained;
 
     #[inline]
@@ -81,14 +84,14 @@ impl<E,T> DeclList<E> for &T where T: DeclList<E> + ?Sized, E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         (**self).update(w, path, route, root, ctx)
     }
 
     #[inline]
     fn update_restore<Ph>(
         &self,
-        prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
+        prev: &mut dyn PaneChildsDyn<E,ChildID=<Self::Retained as PaneChildsDyn<E>>::ChildID>,
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>

@@ -142,7 +142,7 @@ impl<E,W,Scroll,MutFn> Widget<E> for Area<E,W,Scroll,MutFn> where
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         let stack = with_inside_spacing_border(stack);
         let stack = with_inside_border_by_type(stack,TestStyleBorderType::Component);
         

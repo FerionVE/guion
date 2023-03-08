@@ -1,5 +1,6 @@
 use crate::EventResp;
 use crate::env::Env;
+use crate::invalidation::Invalidation;
 use crate::newpath::{PathResolvusDyn, PathStack};
 use crate::queron::Queron;
 use crate::widget::Widget;
@@ -17,7 +18,7 @@ pub trait EventDowncastMap<E> where E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp
+    ) -> Invalidation
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: crate::event_new::Event<E> + ?Sized;
 }
@@ -57,7 +58,7 @@ impl<E> EventDowncastMap<E> for () where E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp
+    ) -> Invalidation
     where
         W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: crate::event_new::Event<E> + ?Sized
     {

@@ -9,6 +9,7 @@ use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::event::standard::variants::{Unfocus, Focus};
 use crate::event_new::variants::StdVariant;
+use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::root::RootRef;
@@ -38,7 +39,7 @@ impl<S,E> StdIntercept<S,E> where S: InterceptBuilder<E>, E: Env, EEvent<E>: Std
 }
 
 impl<SB,E> StdInterceptLive<SB,E> where SB: InterceptBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
-    pub fn unfocus<W,Ph,S>(&self, root_widget: &W, root_path: &Ph, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> EventResp where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
+    pub fn unfocus<W,Ph,S>(&self, root_widget: &W, root_path: &Ph, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Invalidation where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
         if let Some(widget) = (self.access)(ctx).state.kbd.focused.take() {
             let event = StdVariant {
                 variant: Unfocus{},
@@ -51,11 +52,11 @@ impl<SB,E> StdInterceptLive<SB,E> where SB: InterceptBuilder<E>, E: Env, EEvent<
             };
             root_widget.event_direct(root_path,stack,&event,Some(&*widget),root,ctx)
         } else {
-            false
+            Invalidation::valid()
         }
     }
 
-    pub fn focus<W,Ph,S>(&self, root_widget: &W, root_path: &Ph, path_to_focus: Arc<dyn PathResolvusDyn<E>>, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<EventResp,E::Error> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
+    pub fn focus<W,Ph,S>(&self, root_widget: &W, root_path: &Ph, path_to_focus: Arc<dyn PathResolvusDyn<E>>, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Invalidation,E::Error> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
         self.unfocus(root_widget,root_path,stack,ts,root.fork(),ctx);
         (self.access)(ctx).state.kbd.focused = Some(path_to_focus.clone());
         

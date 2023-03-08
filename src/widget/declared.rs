@@ -5,6 +5,7 @@ use std::ops::Range;
 use crate::aliases::ESize;
 use crate::env::Env;
 use crate::event_new;
+use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::root::RootRef;
@@ -111,7 +112,7 @@ where
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> crate::EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         self.inner.event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
@@ -146,7 +147,7 @@ where
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> crate::EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         self.inner._event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
@@ -166,17 +167,19 @@ where
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+        let mut vali = Invalidation::new();
+
         let op = WidgetDeclCallback {
             root: root.fork(),
             path: path._erase(),
             route: route.clone(), //TODO
-            command: WidgetDeclCallbackMode::Update(&mut self.inner),
+            command: WidgetDeclCallbackMode::Update(&mut self.inner, &mut vali),
         };
 
         (self.decl)(root.fork(), &self.data, op, ctx);
 
-        self.inner.update(path, route, root, ctx)
+        self.inner.update(path, route, root, ctx) | vali
     }
     #[inline]
     fn end<Ph>(

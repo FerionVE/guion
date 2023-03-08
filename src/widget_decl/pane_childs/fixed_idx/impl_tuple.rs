@@ -11,11 +11,11 @@ macro_rules! impl_tuple {
 
         $($mm:pat => $mmm:expr => $xx:expr),+;
     } => {
-        impl<E,$($tt),+> DeclList<E> for WidgetsFixedIdx<($($tt),+,)> where
+        impl<E,$($tt),+> PaneChildsDecl<E> for WidgetsFixedIdx<($($tt),+,)> where
             $($tt: WidgetDecl<E>),+ ,
             E: Env
         {
-            type Retained = WidgetsFixedIdx<($($tt::Widget),+,)>;
+            type Retained = WidgetsFixedIdx<($(PaneChildWidget<$tt::Widget,E>),+,)>;
 
             fn send_mutation<Ph>(
                 &self,
@@ -44,7 +44,7 @@ macro_rules! impl_tuple {
 
                 WidgetsFixedIdx(
                     ($({
-                        $ll.build(&FixedIdx($mmm).push_on_stack(path), root.fork(), ctx)
+                        PaneChildWidget::new( $ll.build(&FixedIdx($mmm).push_on_stack(path), root.fork(), ctx) )
                     }),+,)
                 )
             }
@@ -54,7 +54,7 @@ macro_rules! impl_tuple {
 
                 WidgetsFixedIdx(
                     ($({
-                        $ll.instantiate(&FixedIdx($mmm).push_on_stack(path), root.fork(), ctx)
+                        PaneChildWidget::new( $ll.instantiate(&FixedIdx($mmm).push_on_stack(path), root.fork(), ctx) )
                     }),+,)
                 )
             }
@@ -66,61 +66,69 @@ macro_rules! impl_tuple {
                 route: UpdateRoute<'_,E>,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
-            ) where Ph: PathStack<E> + ?Sized {
+            ) -> Invalidation where Ph: PathStack<E> + ?Sized {
                 let ($($ll),+,) = &self.0;
                 let ($($ll2),+,) = &mut w.0;
-
+                
                 // If resolve, try only update resolve scope
                 if let Some(resolve) = route.resolving() {
                     if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
                         match r2.0 {
-                            $($mm =>
-                                return $ll.update($ll2, &r2.push_on_stack(path), route.for_child_1(), root, ctx)
-                            ),+ ,
+                            $($mm => {
+                                let v = $ll.update(&mut $ll2.widget, &r2.push_on_stack(path), route.for_child_1(), root, ctx);
+                                $ll2.vali |= v;
+                                return v;
+                            }),+ ,
                             _ => {},
                         }
                     } else {
                         //TODO what to do on invalid scope resolves in update?
                     }
+                    return Invalidation::new();
                 }
-        
+                
+                let mut vali = Invalidation::valid();
+
                 // Update persisted exising area
                 $({
-                    $ll.update($ll2, &FixedIdx($mmm).push_on_stack(path), route.for_child_1(), root.fork(), ctx)
+                    let v = $ll.update(&mut $ll2.widget, &FixedIdx($mmm).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+                    vali |= v;
+                    $ll2.vali |= v;
                 })+
+
+                vali
             }
         
             fn update_restore<Ph>(
                 &self,
-                prev: &mut dyn AsWidgetsDyn<E,ChildID=<Self::Retained as AsWidgetsDyn<E>>::ChildID>,
+                prev: &mut dyn PaneChildsDyn<E,ChildID=<Self::Retained as PaneChildsDyn<E>>::ChildID>,
                 path: &Ph,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
             ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
                 let ($($ll),+,) = &self.0;
 
-                let prev_bounds = prev.range();
+                let prev_len = prev.len();
         
-                // Negative indexed entries don't exist with FixedIdx, so remove them
-                if prev_bounds.start < 0 {
-                    end_range_dyn(prev, prev_bounds.start .. 0, path, root.fork(), ctx);
-                }
                 // Remove old tail
-                if prev_bounds.end > $n {
-                    end_range_dyn(prev, $n .. prev_bounds.end, path, root.fork(), ctx);
+                if prev_len > $n {
+                    end_range_dyn(prev, $n .. prev_len, path, root.fork(), ctx);
                 }
                 
-                let restorable = (prev_bounds.start as usize).min($n) .. (prev_bounds.end as usize).min($n);
+                let restorable = prev_len.min($n);
         
                 let new = ($({
                     let path = FixedIdx($mmm).push_on_stack(path);
-                    if $mmm < restorable.end && $mmm >= restorable.start {
+                    if $mmm < restorable {
                         let result = prev.by_index_dyn_mut($mmm);
                         let result = result.unwrap();
                         debug_assert_eq!(result.idx, $mmm);
-                        $ll.update_restore(result.widget, &path, root.fork(), ctx)
+                        let (w,v) = $ll.update_restore(result.widget, &path, root.fork(), ctx);
+                        let mut w = PaneChildWidget::new(w);
+                        w.vali |= v;
+                        w
                     } else {
-                        $ll.instantiate(&path, root.fork(), ctx)
+                        PaneChildWidget::new( $ll.instantiate(&path, root.fork(), ctx) )
                     }
                     
                 }),+,);

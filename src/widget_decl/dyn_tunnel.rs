@@ -1,6 +1,7 @@
 use std::any::Any;
 
 use crate::env::Env;
+use crate::invalidation::Invalidation;
 use crate::newpath::{PathStackDyn, PathStack, PathResolvusDyn};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
@@ -26,7 +27,7 @@ pub trait WidgetDeclDyn<E> where E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    );
+    ) -> Invalidation;
 
     fn update_restore_dyn(
         &self,
@@ -34,7 +35,7 @@ pub trait WidgetDeclDyn<E> where E: Env {
         path: &(dyn PathStackDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Box<dyn WidgetDyn<E> + 'static>;
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation);
 
     //fn call_on_dyn(&self, v: WidgetDeclCallbackDyn<'_,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult;
 }
@@ -64,7 +65,7 @@ impl<T,E> WidgetDeclDyn<E> for T where T: WidgetDecl<E> + ?Sized, E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) {
+    ) -> Invalidation {
         self.update_dyn(w, path, route, root, ctx)
     }
     #[inline]
@@ -74,7 +75,7 @@ impl<T,E> WidgetDeclDyn<E> for T where T: WidgetDecl<E> + ?Sized, E: Env {
         path: &(dyn PathStackDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Box<dyn WidgetDyn<E> + 'static> {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) {
         self.update_restore_boxed(prev, path, root, ctx)
     }
 }
@@ -110,7 +111,7 @@ impl<E> WidgetDecl<E> for dyn WidgetDeclDyn<E> + '_ where E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: crate::newpath::PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: crate::newpath::PathStack<E> + ?Sized {
         self.update_dyn(w, path, route, root, ctx)
     }
     #[inline]
@@ -120,7 +121,7 @@ impl<E> WidgetDecl<E> for dyn WidgetDeclDyn<E> + '_ where E: Env {
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Self::Widget where Ph: crate::newpath::PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) where Ph: crate::newpath::PathStack<E> + ?Sized {
         self.update_restore_dyn(prev, path._erase(), root, ctx)
     }
     #[inline]
@@ -130,7 +131,7 @@ impl<E> WidgetDecl<E> for dyn WidgetDeclDyn<E> + '_ where E: Env {
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) where Ph: PathStack<E> + ?Sized {
         self.update_restore_dyn(prev, path._erase(), root, ctx)
     }
     #[inline]
@@ -141,7 +142,7 @@ impl<E> WidgetDecl<E> for dyn WidgetDeclDyn<E> + '_ where E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         self.update_dyn_dyn(w, path._erase(), route, root, ctx)
     }
     // #[inline]

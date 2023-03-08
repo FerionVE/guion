@@ -5,6 +5,7 @@ use std::ops::Range;
 use crate::aliases::{ESize, ERenderer};
 use crate::env::Env;
 use crate::event_new;
+use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::root::RootRef;
@@ -86,9 +87,11 @@ impl<M,T,E> WidgetDecl<E> for Memoize<M,T,E> where M: Clone + PartialEq + 'stati
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         if route.resolvus().is_some() || self.memoize != w.memoize {
             self.inner.update(&mut w.inner, path, route, root, ctx)
+        } else {
+            Invalidation::new()
         }
     }
 
@@ -99,19 +102,19 @@ impl<M,T,E> WidgetDecl<E> for Memoize<M,T,E> where M: Clone + PartialEq + 'stati
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Self::Widget where Ph: PathStack<E> + ?Sized {
-        let inner = if let Some(prev_inner) = prev.query_mut::<WQueryMemoizeRestore>() {
+    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+        let (inner,vali) = if let Some(prev_inner) = prev.query_mut::<WQueryMemoizeRestore>() {
             self.inner.update_restore(prev_inner, path, root, ctx)
         } else {
             prev.end(path, root.fork(), ctx);
-            self.inner.instantiate(path, root, ctx)
+            (self.inner.instantiate(path, root, ctx),Invalidation::new())
         };
 
-        MemoizeWidget {
+        (MemoizeWidget {
             memoize: self.memoize.clone(),
             inner,
             _p: PhantomData,
-        }
+        },vali)
     }
 }
 
@@ -150,7 +153,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> crate::EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         self.inner.event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
@@ -185,7 +188,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> crate::EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         self.inner._event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
@@ -205,7 +208,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         self.inner.update(path, route, root, ctx)
     }
     #[inline]

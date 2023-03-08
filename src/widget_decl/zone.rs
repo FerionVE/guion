@@ -2,6 +2,7 @@ use std::any::Any;
 use std::marker::PhantomData;
 
 use crate::env::Env;
+use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
@@ -63,9 +64,11 @@ impl<Z,T,E> WidgetDecl<E> for Zone<Z,T,E> where Z: 'static, T: WidgetDecl<E>, E:
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: crate::newpath::PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: crate::newpath::PathStack<E> + ?Sized {
         if let Some(route) = route.through_zone::<Z>() {
             self.inner.update(w, path, route, root, ctx)
+        } else {
+            Invalidation::new()
         }
     }
     #[inline]
@@ -75,7 +78,7 @@ impl<Z,T,E> WidgetDecl<E> for Zone<Z,T,E> where Z: 'static, T: WidgetDecl<E>, E:
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
         self.inner.update_restore(prev, path, root, ctx)
     }
     #[inline]
@@ -85,7 +88,7 @@ impl<Z,T,E> WidgetDecl<E> for Zone<Z,T,E> where Z: 'static, T: WidgetDecl<E>, E:
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) where Ph: PathStack<E> + ?Sized {
         self.inner.update_restore_boxed(prev, path, root, ctx)
     }
     #[inline]
@@ -96,9 +99,11 @@ impl<Z,T,E> WidgetDecl<E> for Zone<Z,T,E> where Z: 'static, T: WidgetDecl<E>, E:
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         if let Some(route) = route.through_zone::<Z>() {
             self.inner.update_dyn(w, path, route, root, ctx)
+        } else {
+            Invalidation::new()
         }
     }
 }

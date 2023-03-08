@@ -72,44 +72,43 @@ impl<'a,E> UpdateRoute<'a,E> where E: Env {
         let new_zone = TypeId::of::<Z>();
 
         if let Some(scope) = &mut self.scope {
-            // no zones
-            let Some(mut zone) = scope.zone.as_mut() else {return Some(self)};
-
-            if zone.current_zone == new_zone {
-                return Some(self);
-            }
-            
-            if let Some(resolvus) = &mut scope.resolve {
-                // we either still have to resolve or are just on resolve target
-                if let Some(_) = resolvus.inner() {
-                    // still not resolved
-                    zone.current_zone = new_zone;
+            if let Some(mut zone) = scope.zone.as_mut() {
+                if zone.current_zone == new_zone {
+                    return Some(self);
+                }
+                
+                if let Some(resolvus) = &mut scope.resolve {
+                    // we either still have to resolve or are just on resolve target
+                    if let Some(_) = resolvus.inner() {
+                        // still not resolved
+                        zone.current_zone = new_zone;
+                    } else {
+                        // we just are in resolve target
+                        if zone.target_zone == new_zone {
+                            zone.zone_activated = true;
+                        } else if zone.zone_activated {
+                            // we ending the activated zone before even going into any child
+                            //return None;
+                            scope.zone = None;
+                            return Some(self);
+                        }
+                    }
                 } else {
-                    // we just are in resolve target
-                    if zone.target_zone == new_zone {
-                        zone.zone_activated = true;
-                    } else if zone.zone_activated {
-                        // we ending the activated zone before even going into any child
-                        //return None;
-                        scope.zone = None;
-                        return Some(self);
+                    // we are aleady inside child of resolve target
+                    if zone.current_zone != new_zone {
+                        if zone.zone_activated && zone.target_zone != new_zone {
+                            // we are leaving active zone
+                            return None;
+                        } else if !zone.zone_activated {
+                            // right zone wasn't activated as the zone wasn't reached when reaching resolve target, so zoning is dead
+                            scope.zone = None;
+                            return Some(self);
+                        }
                     }
                 }
-            } else {
-                // we are aleady inside child of resolve target
-                if zone.current_zone != new_zone {
-                    if zone.zone_activated && zone.target_zone != new_zone {
-                        // we are leaving active zone
-                        return None;
-                    } else if !zone.zone_activated {
-                        // right zone wasn't activated as the zone wasn't reached when reaching resolve target, so zoning is dead
-                        scope.zone = None;
-                        return Some(self);
-                    }
-                }
+    
+                zone.current_zone = new_zone;
             }
-
-            zone.current_zone = new_zone;
         } else {
             // zones don't matter if no scope
         }

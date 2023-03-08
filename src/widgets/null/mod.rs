@@ -32,7 +32,7 @@ impl<'w,E> Widget<'w,E> for Null<E> where
     fn _render(&self, _: Link<E>, r: &mut ERenderer<'_,E>) {
         r.fill_rect();
     }
-    fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> EventResp {
+    fn _event_direct(&self, _: Link<E>, _: &EventCompound<E>) -> Invalidation {
         //let e = e.with_style(&self.style);
         false
     }

@@ -2,6 +2,7 @@ use std::any::Any;
 use std::ops::Range;
 
 use crate::event_new::downcast_map::EventDowncastMap;
+use crate::invalidation::Invalidation;
 use crate::queron::Queron;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, DowncastMutResponder, DowncastResponder};
 use crate::util::error::GuionResolveErrorChildInfo;
@@ -40,7 +41,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp;
+    ) -> Invalidation;
 
     fn size_dyn(
         &self,
@@ -69,7 +70,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp;
+    ) -> Invalidation;
 
     fn _size_dyn(
         &self,
@@ -85,7 +86,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    );
+    ) -> Invalidation;
 
     fn end_dyn(
         &mut self,
@@ -202,7 +203,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp {
+    ) -> Invalidation {
         E::EventDowncastMap::event_downcast_map(self, path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
@@ -237,7 +238,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> EventResp {
+    ) -> Invalidation {
         todo!()
         //self._event_direct(stack, event, cache.downcast_mut_or_reset::<T::Cache>(), root, ctx)
     }
@@ -258,7 +259,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) {
+    ) -> Invalidation {
         self.update(path, route, root, ctx)
     }
     #[inline]
@@ -469,7 +470,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         self.event_direct_dyn(path._erase(), stack.erase(), event.erase(), route_to_widget, root, ctx)
     }
     #[inline]
@@ -504,7 +505,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> EventResp where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
         self._event_direct_dyn(path._erase(), stack.erase(), event.erase(), route_to_widget, root, ctx)
     }
     #[inline]
@@ -524,7 +525,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         self.update_dyn(path._erase(), route, root, ctx)
     }
     #[inline]
