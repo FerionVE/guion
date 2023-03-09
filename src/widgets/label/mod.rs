@@ -1,81 +1,71 @@
 use std::marker::PhantomData;
 
-use crate::aliases::{ESize, EStyle};
+use crate::aliases::{ESize, EStyle, ETextLayout};
 use crate::cachor::AsCachor;
 use crate::env::Env;
 use crate::layout::Gonstraints;
 use crate::text::stor::TextStor;
 
 pub mod widget;
+pub mod decl;
 
-pub struct Label<E,Text> where
-    E: Env,
-{
-    pub size: ESize<E>,
-    pub style: EStyle<E>,
-    pub text: Text,
-    pub align: (f32,f32),
-    p: PhantomData<()>,
-}
 
-impl<E> Label<E,&'static str> where
+
+impl<E> decl::Label<E,&'static str> where
     E: Env,
 {
     #[inline]
     pub fn new() -> Self {
-        Self{
-            size: ESize::<E>::zero(),
-            style: Default::default(),
+        Self {
+            size: None,
+            style: None,
             text: "",
-            align: (0.5,0.5),
-            p: PhantomData,
+            align: None,
         }
     }
 }
 
-impl<E,Text> Label<E,Text> where
+impl<E,Text> decl::Label<E,Text> where
     E: Env,
     Text: TextStor<E> + AsCachor<E>,
 {
     #[inline]
     pub fn of_text(text: Text) -> Self {
         Self{
-            size: ESize::<E>::zero(),
-            style: Default::default(),
+            size: None,
+            style: None,
             text,
-            align: (0.5,0.5),
-            p: PhantomData,
+            align: None,
         }
     }
 }
 
-impl<E,Text> Label<E,Text> where
+impl<E,Text> decl::Label<E,Text> where
     E: Env,
 {
     #[inline]
-    pub fn with_text<T>(self, text: T) -> Label<E,T> where T: TextStor<E> + AsCachor<E> {
-        Label{
+    pub fn with_text<T>(self, text: T) -> decl::Label<E,T> where T: TextStor<E> + AsCachor<E> {
+        decl::Label {
             size: self.size,
             style: self.style,
             text,
             align: self.align,
-            p: PhantomData,
         }
     }
 
     #[inline]
     pub fn with_align(mut self, align: (f32,f32)) -> Self {
-        self.align = align;
+        self.align = Some(align);
         self
     }
     #[inline]
     pub fn with_size(mut self, s: ESize<E>) -> Self {
-        self.size = s;
+        self.size = Some(s);
         self
     }
     #[inline]
-    pub fn with_style(mut self, style: EStyle<E>) -> Self {
-        self.style = style;
+    pub fn with_style(mut self, style: EStyle<E>) -> Self where EStyle<E>: PartialEq {
+        self.style = Some(style);
         self
     }
 }

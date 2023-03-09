@@ -19,7 +19,7 @@ pub mod util;
 // pub mod button;
 // // //#[allow(unused)]
 // // //pub mod null;
-// pub mod label;
+pub mod label;
 // pub mod pbar;
 // pub mod checkbox;
 // pub mod splitpane;

@@ -133,7 +133,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     }
     #[inline]
     fn render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
@@ -146,7 +146,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     }
     #[inline]
     fn event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt,
@@ -158,7 +158,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     }
     #[inline]
     fn size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         root: E::RootRef<'_>,
@@ -168,7 +168,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     }
     #[inline]
     fn _render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
@@ -181,7 +181,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     }
     #[inline]
     fn _event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt,
@@ -193,7 +193,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     }
     #[inline]
     fn _size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         root: E::RootRef<'_>,
@@ -299,6 +299,10 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     #[inline]
     fn _tabulate<P,Ph>(&self, path: &Ph, stack: &P, op: tabulate::TabulateOrigin<E>, dir: tabulate::TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<tabulate::TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         self.inner._tabulate(path, stack, op, dir, root, ctx)
+    }
+    #[inline]
+    fn invalidate_recursive(&mut self, vali: Invalidation) {
+        self.inner.invalidate_recursive(vali)
     }
     #[inline]
     fn inner<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's {

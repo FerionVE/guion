@@ -24,7 +24,7 @@ pub trait WidgetIntercept<E>: 'static where E: Env {
     //TODO move into feature traits
     fn _render<W,Ph,S>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         renderer: &mut ERenderer<'_,E>,
@@ -36,7 +36,7 @@ pub trait WidgetIntercept<E>: 'static where E: Env {
 
     fn _event_direct<W,Ph,S,Evt>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         event: &Evt,
@@ -47,7 +47,7 @@ pub trait WidgetIntercept<E>: 'static where E: Env {
 
     fn _event_root<W,Ph,S,Evt>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         event: &Evt,
@@ -58,7 +58,7 @@ pub trait WidgetIntercept<E>: 'static where E: Env {
 
     fn _size<W,Ph,S>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         root: E::RootRef<'_>,
@@ -82,7 +82,7 @@ impl<E> WidgetIntercept<E> for () where E: Env {
     #[inline] 
     fn _render<W,Ph,S>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         renderer: &mut ERenderer<'_,E>,
@@ -99,7 +99,7 @@ impl<E> WidgetIntercept<E> for () where E: Env {
     #[inline] 
     fn _event_direct<W,Ph,S,Evt>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         event: &Evt,
@@ -115,7 +115,7 @@ impl<E> WidgetIntercept<E> for () where E: Env {
     #[inline] 
     fn _event_root<W,Ph,S,Evt>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         event: &Evt,
@@ -137,7 +137,7 @@ impl<E> WidgetIntercept<E> for () where E: Env {
     #[inline] 
     fn _size<W,Ph,S>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         root: E::RootRef<'_>,

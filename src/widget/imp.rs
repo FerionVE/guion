@@ -24,7 +24,7 @@ impl<E> Widget<E> for Infallible where E: Env {
     }
 
     fn _render<P,Ph>(
-        &self,
+        &mut self,
         _: &Ph,
         _: &P,
         _: &mut ERenderer<'_,E>,
@@ -37,7 +37,7 @@ impl<E> Widget<E> for Infallible where E: Env {
     }
 
     fn _event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         _: &Ph,
         _: &P,
         _: &Evt,
@@ -49,7 +49,7 @@ impl<E> Widget<E> for Infallible where E: Env {
     }
 
     fn _size<P,Ph>(
-        &self,
+        &mut self,
         _: &Ph,
         _: &P,
         _: E::RootRef<'_>,
@@ -131,6 +131,10 @@ impl<E> Widget<E> for Infallible where E: Env {
     fn respond_query_mut<'a>(&'a mut self, _: WQueryResponder<'_,'a,E>) {
         match *self {}
     }
+
+    fn invalidate_recursive(&mut self, _: Invalidation) {
+        match *self {}
+    }
 }
 
 impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
@@ -142,7 +146,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
@@ -155,7 +159,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt,
@@ -167,7 +171,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         root: E::RootRef<'_>,
@@ -177,7 +181,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn _render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
@@ -190,7 +194,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn _event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt, // what if e.g. bounds change, if it's validated by parents then it's not signaled here
@@ -202,7 +206,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn _size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         root: E::RootRef<'_>,
@@ -314,6 +318,10 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn innest_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn WidgetDyn<E>+'w)> where Self: 'w
         (**self).innest_mut()
+    }
+    #[inline]
+    fn invalidate_recursive(&mut self, vali: Invalidation) {
+        (**self).invalidate_recursive(vali)
     }
     #[inline]
     fn respond_downcast<'a>(&'a self, mut responder: DowncastResponder<'_,'a,E>) where Self: 'static {

@@ -92,8 +92,8 @@ macro_rules! impl_tuple {
                 // Update persisted exising area
                 $({
                     let v = $ll.update(&mut $ll2.widget, &FixedIdx($mmm).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
-                    vali |= v;
                     $ll2.vali |= v;
+                    vali |= v;
                 })+
 
                 vali
@@ -105,14 +105,17 @@ macro_rules! impl_tuple {
                 path: &Ph,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
-            ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+            ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
                 let ($($ll),+,) = &self.0;
 
                 let prev_len = prev.len();
+
+                let mut vali = Invalidation::valid();
         
                 // Remove old tail
                 if prev_len > $n {
                     end_range_dyn(prev, $n .. prev_len, path, root.fork(), ctx);
+                    vali = Invalidation::new();
                 }
                 
                 let restorable = prev_len.min($n);
@@ -126,14 +129,15 @@ macro_rules! impl_tuple {
                         let (w,v) = $ll.update_restore(result.widget, &path, root.fork(), ctx);
                         let mut w = PaneChildWidget::new(w);
                         w.vali |= v;
+                        vali |= v;
                         w
                     } else {
+                        vali = Invalidation::new();
                         PaneChildWidget::new( $ll.instantiate(&path, root.fork(), ctx) )
                     }
-                    
                 }),+,);
         
-                WidgetsFixedIdx(new)
+                (WidgetsFixedIdx(new), vali)
             }
         }
     };

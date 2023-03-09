@@ -78,7 +78,9 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
         }
         // Update persisted exising area
         for (idx,(d,w)) in self.0.iter().zip(w.0.iter_mut()).enumerate() {
-            vali |= d.update(&mut w.widget, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx)
+            let v = d.update(&mut w.widget, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+            w.vali = v;
+            vali |= v;
         }
         // Instantiate new tail
         if self.0.len() > w.0.len() {
@@ -99,16 +101,15 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
         let prev_len = prev.len();
         
         let mut vali = Invalidation::valid();
 
         // Remove old tail
         if prev_len > self.0.len() {
-            if end_range_dyn(prev, self.0.len() .. prev_len, path, root.fork(), ctx) != 0 {
-                vali = Invalidation::new();
-            }
+            end_range_dyn(prev, self.0.len() .. prev_len, path, root.fork(), ctx);
+            vali = Invalidation::new();
         }
 
         let mut new = Vec::with_capacity(self.0.len());
@@ -137,7 +138,7 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
 
         assert_eq!(self.0.len(), new.len());
 
-        WidgetsFixedIdx(new)
+        (WidgetsFixedIdx(new), vali)
     }
 }
 
@@ -203,7 +204,9 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
 
         // Update persisted exising area
         for (idx,(d,w)) in self.0.iter().zip(w.0.iter_mut()).enumerate() {
-            vali |= d.update(&mut w.widget, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx)
+            let v = d.update(&mut w.widget, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+            w.vali = v;
+            vali |= v;
         }
 
         vali
@@ -215,16 +218,15 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
         let prev_len = prev.len();
 
         let mut vali = Invalidation::valid();
 
         // Remove old tail
         if prev_len > N {
-            if end_range_dyn(prev, N .. prev_len, path, root.fork(), ctx) != 0 {
-                vali = Invalidation::new();
-            }
+            end_range_dyn(prev, N .. prev_len, path, root.fork(), ctx);
+            vali = Invalidation::new();
         }
 
         let mut new: ManuallyDrop<MaybeUninit<[PaneChildWidget<T::Widget,E>;N]>> = ManuallyDrop::new(MaybeUninit::uninit());
@@ -262,7 +264,7 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
 
         assert_eq!(add_pos, N);
 
-        WidgetsFixedIdx(unsafe { ManuallyDrop::into_inner(new).assume_init() })
+        (WidgetsFixedIdx(unsafe { ManuallyDrop::into_inner(new).assume_init() }), vali)
     }
 }
 
@@ -301,7 +303,7 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<&[T;N]> where T: 
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
         (*bender(self)).update_restore(prev, path, root, ctx)
     }
 }

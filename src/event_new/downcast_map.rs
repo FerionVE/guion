@@ -11,7 +11,7 @@ use crate::widget::Widget;
 /// optimize away the code for the other events in the code for that specific event.
 pub trait EventDowncastMap<E> where E: Env {
     fn event_downcast_map<W,Ph,S,Evt>(
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         event: &Evt,
@@ -51,7 +51,7 @@ macro_rules! event_downcast_map_tryion {
 impl<E> EventDowncastMap<E> for () where E: Env {
     #[inline]
     fn event_downcast_map<W,Ph,S,Evt>(
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         event: &Evt,

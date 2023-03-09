@@ -1,7 +1,11 @@
 //! The [`Context`] trait housing handlers, queue and other side stuff
 
+use std::any::Any;
+use std::sync::Arc;
+
 use crate::env::Env;
 use crate::intercept::InterceptBuilder;
+use crate::newpath::PathResolvusDyn;
 use crate::widget::id::WidgetID;
 
 use self::queue::{BoxMutEvent, StdEnqueueable, StdOrder, Queue};
@@ -38,6 +42,8 @@ pub trait Context<'cc,E>: Sized + 'cc where E: Env {
             0,
         );
     }
+
+    fn queue_send_mutation(&mut self, dest: Arc<dyn PathResolvusDyn<E>>, payload: Box<dyn Any>);
 
     fn retained_id(&mut self) -> WidgetID;
 

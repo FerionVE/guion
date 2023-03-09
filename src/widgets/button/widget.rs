@@ -1,16 +1,17 @@
 use std::marker::PhantomData;
 
-use crate::aliases::{ERenderer, EEvent, EPressedKey, ESize};
-use crate::dispatchor::{AsWidgetClosure, AsWidgetDispatch};
+use crate::aliases::{ERenderer, EEvent, EPressedKey, ESize, EStyle};
 use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::event::key::MatchKeyCode;
 use crate::event::standard::variants::{MouseUp, KbdPress};
 use crate::layout::Gonstraints;
 use crate::root::RootRef;
+use crate::util::bounds::Dims;
 use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
-use crate::widget::cache::{RenderCache, StdRenderCachors};
+use crate::widget::cache::StdRenderCachors;
 use crate::widget::dyn_tunnel::WidgetDyn;
+use crate::widget::id::WidgetID;
 use crate::{event_new, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn, SimpleId, PathStackDyn, FwdCompareStat, PathFragment, PathResolvus};
 use crate::queron::Queron;
@@ -18,27 +19,42 @@ use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, wit
 use crate::render::widgets::RenderStdWidgets;
 use crate::state::{CtxStdState, StdState};
 use crate::style::standard::cursor::StdCursor;
-use crate::view::mutor_trait::MutorEndBuilder;
-use crate::widget::{Widget, WidgetWithResolveChildDyn};
-use crate::widget::as_widget::AsWidget;
+use crate::widget_decl::mutor_trait::MutorEndBuilder;
+use crate::widget::Widget;
 
 use super::imp::IButton;
-use super::{Button, Trigger};
+use super::Trigger;
 
-impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
+pub struct Button<E,Text,Tr> where
+    E: Env,
+{
+    pub(super) id: WidgetID,
+    pub(super) trigger: Tr,
+    pub(super) size: ESize<E>,
+    pub(super) style: EStyle<E>,
+    pub(super) locked: bool,
+    pub(super) rendered_dims: Option<Dims>,
+    //pressed: Option<EEKey<E>>,
+    pub(super) text: Text,
+}
+
+impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
-    Text: AsWidget<E>,
+    Text: Widget<E>,
     Tr: Trigger<E>,
-    TrMut: MutorEndBuilder<(),E>,
 {
-    type Cache = ButtonCache<Text::WidgetCache,E>;
+    type Cache = Text::Cache;
 
-    
+    #[inline]
+    fn id(&self) -> WidgetID {
+        self.id
+    }
+
     fn _render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
@@ -126,7 +142,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
     }
 
     fn _event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt,
@@ -157,7 +173,7 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
     }
 
     fn _size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         cache: &mut Self::Cache,
@@ -271,14 +287,13 @@ impl<E,Text,Tr,TrMut> Widget<E> for Button<E,Text,Tr,TrMut> where
     }
 }
 
-impl<E,S,Tr,TrMut> Button<E,S,Tr,TrMut> where
+impl<E,S,Tr> Button<E,S,Tr> where
     E: Env,
     for<'r> ERenderer<'r,E>: RenderStdWidgets<E>,
     EEvent<E>: StdVarSup<E>,
     for<'a> E::Context<'a>: CtxStdState<'a,E>,
-    S: AsWidget<E>,
+    S: Widget<E>,
     Tr: Trigger<E>,
-    TrMut: MutorEndBuilder<(),E>,
 {
     pub fn pressed<'l:'s,'cc: 'l,'s>(&self, path: &(dyn PathStackDyn<E>+'_), ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
         ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path)
@@ -291,33 +306,33 @@ impl<E,S,Tr,TrMut> Button<E,S,Tr,TrMut> where
     }
 }
 
-impl<E,Text,Tr,TrMut> AsWidget<E> for Button<E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
-    type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
-    type WidgetCache = <Self as Widget<E>>::Cache;
+// impl<E,Text,Tr,TrMut> AsWidget<E> for Button<E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
+//     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
+//     type WidgetCache = <Self as Widget<E>>::Cache;
 
-    #[inline]
-    fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    where
-        Self: 'w
-    {
-        f.call(self, root, ctx)
-    }
-}
+//     #[inline]
+//     fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
+//     where
+//         Self: 'w
+//     {
+//         f.call(self, root, ctx)
+//     }
+// }
 
-#[derive(Default)]
-pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
-    label_cache: LabelCache,
-    std_render_cachors: Option<StdRenderCachors<E>>,
-    vartype_cachors: Option<TestStyleVariant<E>>,
-    _p: PhantomData<E>,
-    //TODO cachor borders and colors
-}
+// #[derive(Default)]
+// pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
+//     label_cache: LabelCache,
+//     std_render_cachors: Option<StdRenderCachors<E>>,
+//     vartype_cachors: Option<TestStyleVariant<E>>,
+//     _p: PhantomData<E>,
+//     //TODO cachor borders and colors
+// }
 
-impl<LabelCache,E> RenderCache<E> for ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
-    fn reset_current(&mut self) {
-        self.label_cache.reset_current()
-    }
-}
+// impl<LabelCache,E> RenderCache<E> for ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
+//     fn reset_current(&mut self) {
+//         self.label_cache.reset_current()
+//     }
+// }
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 pub struct ButtonChild;

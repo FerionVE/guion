@@ -23,7 +23,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn id_dyn(&self) -> WidgetID;
 
     fn render_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         renderer: &mut ERenderer<'_,E>,
@@ -34,7 +34,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     );
 
     fn event_direct_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
@@ -44,7 +44,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     ) -> Invalidation;
 
     fn size_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
@@ -52,7 +52,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     ) -> ESize<E>;
 
     fn _render_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         renderer: &mut ERenderer<'_,E>,
@@ -63,7 +63,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     );
 
     fn _event_direct_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
@@ -73,7 +73,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     ) -> Invalidation;
 
     fn _size_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
@@ -150,6 +150,8 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn _tabulate_dyn(&self, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error>;
     
+    fn invalidate_recursive_dyn(&mut self, vali: Invalidation);
+
     fn inner_dyn<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's;
     fn innest_dyn<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's;
 
@@ -183,7 +185,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn render_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         renderer: &mut ERenderer<'_,E>,
@@ -196,7 +198,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn event_direct_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
@@ -208,7 +210,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn size_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
@@ -218,7 +220,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn _render_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         renderer: &mut ERenderer<'_,E>,
@@ -231,7 +233,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn _event_direct_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
@@ -244,7 +246,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn _size_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
@@ -333,6 +335,10 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     fn _tabulate_dyn(&self, path: &(dyn PathStackDyn<E>+'_),
         stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> {
         self._tabulate(path, stack, op, dir, root, ctx)
+    }
+    #[inline]
+    fn invalidate_recursive_dyn(&mut self, vali: Invalidation) {
+        self.invalidate_recursive(vali)
     }
     #[inline]
     fn inner_dyn<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's {
@@ -450,7 +456,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
@@ -463,7 +469,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt,
@@ -475,7 +481,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         root: E::RootRef<'_>,
@@ -485,7 +491,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn _render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
@@ -498,7 +504,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn _event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt,
@@ -510,7 +516,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn _size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         root: E::RootRef<'_>,
@@ -628,6 +634,10 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     fn _tabulate<P,Ph>(&self, path: &Ph,
         stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
         self._tabulate_dyn(path._erase(), stack.erase(), op, dir, root, ctx)
+    }
+    #[inline]
+    fn invalidate_recursive(&mut self, vali: Invalidation) {
+        self.invalidate_recursive_dyn(vali)
     }
     #[inline]
     fn inner<'s>(&self) -> Option<&(dyn WidgetDyn<E>+'s)> where Self: 's {

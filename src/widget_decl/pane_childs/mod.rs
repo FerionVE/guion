@@ -47,7 +47,7 @@ pub trait PaneChildsDecl<E> where E: Env {
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Self::Retained where Ph: PathStack<E> + ?Sized;
+    ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized;
 }
 
 pub struct WQueryAsWidgetsDyn<CID>(pub PhantomData<CID>);
@@ -95,7 +95,7 @@ impl<E,T> PaneChildsDecl<E> for &T where T: PaneChildsDecl<E> + ?Sized, E: Env {
         path: &Ph,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
         (**self).update_restore(prev, path, root, ctx)
     }
 }

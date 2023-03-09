@@ -1,4 +1,5 @@
 use std::any::{TypeId, Any};
+use std::convert::Infallible;
 
 use crate::env::Env;
 use crate::invalidation::Invalidation;
@@ -340,5 +341,45 @@ impl<T,E> WidgetDecl<E> for Erased<T> where T: WidgetDecl<E>, E: Env {
         ctx: &mut E::Context<'_>
     ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         self.0.update_dyn(w, path, route, root, ctx)
+    }
+}
+
+impl<E> WidgetDecl<E> for Infallible where E: Env {
+    type Widget = Infallible;
+
+    fn send_mutation<Ph>(
+        &self,
+        _: &Ph,
+        _: &(dyn PathResolvusDyn<E>+'_),
+        _: &dyn Any,
+        _: E::RootRef<'_>,
+        _: &mut E::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        match *self {}
+    }
+
+    fn instantiate<Ph>(&self, _: &Ph, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+        match *self {}
+    }
+
+    fn update<Ph>(
+        &self,
+        _: &mut Self::Widget,
+        _: &Ph,
+        _: UpdateRoute<'_,E>,
+        _: E::RootRef<'_>,
+        _: &mut E::Context<'_>,
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+        match *self {}
+    }
+
+    fn update_restore<Ph>(
+        &self,
+        _: &mut dyn WidgetDyn<E>,
+        _: &Ph,
+        _: E::RootRef<'_>,
+        _: &mut E::Context<'_>
+    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+        match *self {}
     }
 }

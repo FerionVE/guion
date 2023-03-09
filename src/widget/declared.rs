@@ -92,7 +92,7 @@ where
     }
     #[inline]
     fn render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut crate::aliases::ERenderer<'_,E>,
@@ -105,7 +105,7 @@ where
     }
     #[inline]
     fn event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt,
@@ -117,7 +117,7 @@ where
     }
     #[inline]
     fn size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         root: E::RootRef<'_>,
@@ -127,7 +127,7 @@ where
     }
     #[inline]
     fn _render<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         renderer: &mut crate::aliases::ERenderer<'_,E>,
@@ -140,7 +140,7 @@ where
     }
     #[inline]
     fn _event_direct<P,Ph,Evt>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         event: &Evt, // what if e.g. bounds change, if it's validated by parents then it's not signaled here
@@ -152,7 +152,7 @@ where
     }
     #[inline]
     fn _size<P,Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         stack: &P,
         root: E::RootRef<'_>,
@@ -285,6 +285,10 @@ where
     #[inline]
     fn innest_mut<'s>(&mut self) -> Option<&mut (dyn WidgetDyn<E>+'s)> where Self: 's { // fn inner<'s,'w>(&'s self) -> Option<&'s (dyn WidgetDyn<E>+'w)> where Self: 'w
         self.inner.innest_mut()
+    }
+    #[inline]
+    fn invalidate_recursive(&mut self, vali: Invalidation) {
+        self.inner.invalidate_recursive(vali)
     }
     #[inline]
     fn respond_downcast<'a>(&'a self, responder: DowncastResponder<'_,'a,E>) {

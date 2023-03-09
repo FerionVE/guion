@@ -1,5 +1,6 @@
 //! [`Queue`] trait and util fns for implementors
 
+use std::any::{Any, TypeId};
 use std::sync::Arc;
 
 use crate::aliases::{EEvent, ESize};
@@ -29,6 +30,8 @@ pub enum StdEnqueueable<E> where E: Env {
     InvalidateWidget{path: Arc<dyn PathResolvusDyn<E>>},
     ValidateWidgetRender{path: Arc<dyn PathResolvusDyn<E>>},
     ValidateWidgetSize{path: Arc<dyn PathResolvusDyn<E>>, size: ESize<E>},
+    SendMutation{path: Arc<dyn PathResolvusDyn<E>>, payload: Box<dyn Any>},
+    DeclUpdate{scope: Option<Arc<dyn PathResolvusDyn<E>>>, zone: Option<TypeId>},
 }
 
 pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;

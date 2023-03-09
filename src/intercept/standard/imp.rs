@@ -29,7 +29,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
     #[inline] 
     fn _render<W,Ph,S>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         renderer: &mut ERenderer<'_,E>,
@@ -47,7 +47,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
     #[inline] 
     fn _event_direct<W,Ph,S,Evt>(
         &self,
-        widget: &W,
+        widget: &mut W,
         path: &Ph,
         stack: &S,
         event: &Evt,
@@ -77,7 +77,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
     //#[inline] 
     fn _event_root<W,Ph,S,Evt>(
         &self,
-        root_widget: &W,
+        root_widget: &mut W,
         path: &Ph,
         stack: &S,
         event: &Evt,
@@ -365,7 +365,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
     #[inline] 
     fn _size<W,Ph,S>(
         &self,
-        w: &W,
+        w: &mut W,
         path: &Ph,
         stack: &S,
         root: E::RootRef<'_>,
