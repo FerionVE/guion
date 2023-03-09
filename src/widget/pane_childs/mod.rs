@@ -66,31 +66,31 @@ impl<W,E> PaneChildWidget<W,E> where W: Widget<E>, E: Env {
 }
 
 pub struct ChildWidgetDynResult<'a,CID,E> where CID: PathFragment<E> + Clone + 'static {
-    pub widget: &'a (dyn WidgetDyn<E>+'a),
-    pub widget_id: WidgetID,
-    pub child_id: CID,
     pub idx: usize,
+    pub child_id: CID,
+    pub widget_id: WidgetID,
+    pub widget: &'a (dyn WidgetDyn<E>+'a),
 }
 pub struct ChildWidgetDynResolveResult<'a,'b,CID,E> where CID: PathFragment<E> + Clone + 'static {
-    pub widget: &'a (dyn WidgetDyn<E>+'a),
-    pub widget_id: WidgetID,
-    pub child_id: CID,
     pub idx: usize,
+    pub child_id: CID,
     pub resolvus: &'b (dyn PathResolvusDyn<E>+'b),
+    pub widget_id: WidgetID,
+    pub widget: &'a (dyn WidgetDyn<E>+'a),
 }
 
 pub struct ChildWidgetDynResultMut<'a,CID,E> where CID: PathFragment<E> + Clone + 'static {
-    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
-    pub widget_id: WidgetID,
-    pub child_id: CID,
     pub idx: usize,
+    pub child_id: CID,
+    pub widget_id: WidgetID,
+    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
 }
 pub struct ChildWidgetDynResolveResultMut<'a,'b,CID,E> where CID: PathFragment<E> + Clone + 'static {
-    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
-    pub widget_id: WidgetID,
-    pub child_id: CID,
     pub idx: usize,
+    pub child_id: CID,
     pub resolvus: &'b (dyn PathResolvusDyn<E>+'b),
+    pub widget_id: WidgetID,
+    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
 }
 
 impl<'a,'b,CID,E> From<ChildWidgetDynResolveResult<'a,'b,CID,E>> for ChildWidgetDynResult<'a,CID,E> where CID: PathFragment<E> + Clone + 'static {

@@ -53,12 +53,12 @@ where
     pub fn new<Ph>(mut decl: F, data: I, root: E::RootRef<'_>, path: &Ph, ctx: &mut E::Context<'_>) -> Self where Ph: PathStack<E> + ?Sized {
         let mut dest = None;
         
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
-            route: UpdateRoute::none(),
-            command: WidgetDeclCallbackMode::Instantiate(&mut dest),
-        };
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
+            UpdateRoute::none(),
+            WidgetDeclCallbackMode::Instantiate(&mut dest),
+        );
 
         (decl)(root, &data, op, ctx);
 
@@ -170,12 +170,12 @@ where
     ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         let mut vali = Invalidation::new();
 
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
-            route: route.clone(), //TODO
-            command: WidgetDeclCallbackMode::Update(&mut self.inner, &mut vali),
-        };
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
+            route.clone(), //TODO
+            WidgetDeclCallbackMode::Update(&mut self.inner, &mut vali),
+        );
 
         (self.decl)(root.fork(), &self.data, op, ctx);
 
@@ -228,13 +228,22 @@ where
     }
     #[inline]
     fn send_mutation<Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         resolve: &(dyn PathResolvusDyn<E>+'_),
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) where Ph: PathStack<E> + ?Sized {
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
+            UpdateRoute::new_root(Some(resolve), None),
+            WidgetDeclCallbackMode::SendMutation(resolve, args),
+        );
+
+        (self.decl)(root.fork(), &self.data, op, ctx);
+
         self.inner.send_mutation(path, resolve, args, root, ctx)
     }
     #[inline]

@@ -106,7 +106,7 @@ impl<E> Widget<E> for Infallible where E: Env {
     }
 
     fn send_mutation<Ph>(
-        &self,
+        &mut self,
         _: &Ph,
         _: &(dyn PathResolvusDyn<E>+'_),
         _: &dyn Any,
@@ -262,7 +262,7 @@ impl<TT,E> Widget<E> for Box<TT> where TT: Widget<E> + ?Sized, E: Env {
         (**self).collect_childs_dyn_range_mut(range)
     }
     fn send_mutation<Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         resolve: &(dyn PathResolvusDyn<E>+'_),
         args: &dyn Any,

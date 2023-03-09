@@ -82,12 +82,12 @@ where
     ) where Ph: PathStack<E> + ?Sized {
         let mut dest = None;
         
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
-            route: UpdateRoute::none(),
-            command: WidgetDeclCallbackMode::SendMutation(resolve, args),
-        };
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
+            UpdateRoute::none(),
+            WidgetDeclCallbackMode::SendMutation(resolve, args),
+        );
 
         (self.decl)(op, ctx);
 
@@ -98,12 +98,12 @@ where
     fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
         let mut dest = None;
         
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
-            route: UpdateRoute::none(),
-            command: WidgetDeclCallbackMode::Instantiate(&mut dest),
-        };
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
+            UpdateRoute::none(),
+            WidgetDeclCallbackMode::Instantiate(&mut dest),
+        );
 
         (self.decl)(op, ctx);
 
@@ -113,12 +113,12 @@ where
     fn instantiate_boxed<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
         let mut dest = None;
         
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
-            route: UpdateRoute::none(),
-            command: WidgetDeclCallbackMode::InstantiateBoxed(&mut dest),
-        };
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
+            UpdateRoute::none(),
+            WidgetDeclCallbackMode::InstantiateBoxed(&mut dest),
+        );
 
         (self.decl)(op, ctx);
 
@@ -135,12 +135,12 @@ where
     ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         let mut vali = Invalidation::new();
 
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
             route,
-            command: WidgetDeclCallbackMode::Update(w, &mut vali),
-        };
+            WidgetDeclCallbackMode::Update(w, &mut vali),
+        );
 
         (self.decl)(op, ctx);
 
@@ -157,12 +157,12 @@ where
         let mut dest = None;
         let mut vali = Invalidation::new();
         
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
-            route: UpdateRoute::none(),
-            command: WidgetDeclCallbackMode::UpdateRestore(prev, &mut dest, &mut vali),
-        };
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
+            UpdateRoute::none(),
+            WidgetDeclCallbackMode::UpdateRestore(prev, &mut dest, &mut vali),
+        );
 
         (self.decl)(op, ctx);
 
@@ -179,12 +179,12 @@ where
         let mut dest = None;
         let mut vali = Invalidation::new();
         
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
-            route: UpdateRoute::none(),
-            command: WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, &mut dest, &mut vali),
-        };
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
+            UpdateRoute::none(),
+            WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, &mut dest, &mut vali),
+        );
 
         (self.decl)(op, ctx);
 
@@ -201,12 +201,12 @@ where
     ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         let mut vali = Invalidation::new();
 
-        let op = WidgetDeclCallback {
-            root: root.fork(),
-            path: path._erase(),
+        let op = WidgetDeclCallback::new(
+            root.fork(),
+            path._erase(),
             route,
-            command: WidgetDeclCallbackMode::UpdateDyn(w, &mut vali),
-        };
+            WidgetDeclCallbackMode::UpdateDyn(w, &mut vali),
+        );
 
         (self.decl)(op, ctx);
 

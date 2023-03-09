@@ -9,6 +9,7 @@ use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
+use self::dyn_tunnel::WidgetDeclDyn;
 use self::imp::Erased;
 use self::memoize::Memoize;
 use self::mutor_trait::MutorEnd;
@@ -117,6 +118,10 @@ pub trait WidgetDecl<E> where E: Env {
         }
     }
 
+    fn erase(&self) -> &(dyn WidgetDeclDyn<E>+'_) where Self: Sized {
+        self
+    }
+
     #[inline]
     fn callback(self, v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult where Self: Sized {
         match v.command {
@@ -170,20 +175,35 @@ pub trait WidgetDecl<E> where E: Env {
 }
 
 pub struct WidgetDeclCallback<'a,W,E> where W: Widget<E> + 'static, E: Env {
-    pub(crate) root: E::RootRef<'a>,
+    root: E::RootRef<'a>,
     pub(crate) path: &'a (dyn PathStackDyn<E> + 'a),
     pub(crate) route: UpdateRoute<'a,E>,
     pub(crate) command: WidgetDeclCallbackMode<'a,W,E>,
+    _p: PhantomData<&'a mut ()>,
 }
 
 impl<'a,W,E> WidgetDeclCallback<'a,W,E> where W: Widget<E> + 'static, E: Env {
     #[inline]
-    pub fn root(&self) -> E::RootRef<'a>{
+    pub fn root(&self) -> E::RootRef<'a> {
         self.root.fork()
     }
     #[inline]
     pub fn path(&self) -> &'a (dyn PathStackDyn<E> + 'a) {
         self.path
+    }
+
+    // pub fn sub<'s>(self) -> WidgetDeclCallback<'s,W,E> where 'a: 's {
+    //     self
+    // }
+
+    pub fn new(root: E::RootRef<'a>, path: &'a (dyn PathStackDyn<E> + 'a), route: UpdateRoute<'a,E>, command: WidgetDeclCallbackMode<'a,W,E>) -> Self {
+        WidgetDeclCallback {
+            root,
+            path,
+            route,
+            command,
+            _p: PhantomData
+        }
     }
 }
 

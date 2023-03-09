@@ -7,25 +7,25 @@ use crate::widget::dyn_tunnel::WidgetDyn;
 pub trait RootRef<E> where E: Env {
     fn fork<'s,'w:'s>(&'s self) -> E::RootRef<'w> where Self: 'w;
 
-    //TODO fix old resolve stack
-    fn with_widget<'s,'l:'s,F,R>(
-        &'s self,
-        i: &(dyn PathResolvusDyn<E>+'_),
-        callback: F,
-        ctx: &mut E::Context<'_>,
-    ) -> R
-    where 
-        F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R,
-        Self: 'l;
+    // //TODO fix old resolve stack
+    // fn with_widget<'s,'l:'s,F,R>(
+    //     &'s self,
+    //     i: &(dyn PathResolvusDyn<E>+'_),
+    //     callback: F,
+    //     ctx: &mut E::Context<'_>,
+    // ) -> R
+    // where 
+    //     F: for<'w,'ww,'c,'cc> FnMut(Result<&'w (dyn WidgetDyn<E>+'ww),E::Error>,&'c mut E::Context<'cc>) -> R,
+    //     Self: 'l;
 
-    #[must_use]
-    #[inline]
-    fn has_widget(&self, i: &(dyn PathResolvusDyn<E>+'_), ctx: &mut E::Context<'_>) -> bool {
-        self.with_widget(i, #[inline] |w,_| w.is_ok(), ctx)
-    }
+    // #[must_use]
+    // #[inline]
+    // fn has_widget(&self, i: &(dyn PathResolvusDyn<E>+'_), ctx: &mut E::Context<'_>) -> bool {
+    //     self.with_widget(i, #[inline] |w,_| w.is_ok(), ctx)
+    // }
 
-    #[deprecated] 
-    fn trace_bounds(&self, ctx: &mut E::Context<'_>, i: &(dyn PathResolvusDyn<E>+'_), b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error>;
+    // #[deprecated] 
+    // fn trace_bounds(&self, ctx: &mut E::Context<'_>, i: &(dyn PathResolvusDyn<E>+'_), b: &Bounds, e: &EStyle<E>, force: bool) -> Result<Bounds,E::Error>;
 }
 
 pub trait RootMut<E> where E: Env {

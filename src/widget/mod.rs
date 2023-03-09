@@ -46,36 +46,36 @@ pub mod id;
 pub mod declared;
 
 pub struct WidgetResolveDynResult<'a,E> {
-    pub widget: &'a (dyn WidgetDyn<E>+'a),
     pub widget_id: WidgetID,
+    pub widget: &'a (dyn WidgetDyn<E>+'a),
 }
 pub struct WidgetResolveDynResultMut<'a,E> {
-    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
     pub widget_id: WidgetID,
+    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
 }
 
 pub struct WidgetChildDynResult<'a,E> {
     pub idx: isize,
-    pub widget: &'a (dyn WidgetDyn<E>+'a),
     pub widget_id: WidgetID,
+    pub widget: &'a (dyn WidgetDyn<E>+'a),
 }
 pub struct WidgetChildDynResultMut<'a,E> {
     pub idx: isize,
-    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
     pub widget_id: WidgetID,
+    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
 }
 
 pub struct WidgetChildResolveDynResult<'a,'b,E> {
     pub idx: isize,
-    pub widget: &'a (dyn WidgetDyn<E>+'a),
     pub sub_path: &'b (dyn PathResolvusDyn<E>+'b),
     pub widget_id: WidgetID,
+    pub widget: &'a (dyn WidgetDyn<E>+'a),
 }
 pub struct WidgetChildResolveDynResultMut<'a,'b,E> {
     pub idx: isize,
-    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
     pub sub_path: &'b (dyn PathResolvusDyn<E>+'b),
     pub widget_id: WidgetID,
+    pub widget: &'a mut (dyn WidgetDyn<E>+'a),
 }
 
 /// Core Trait of guion ™️
@@ -206,7 +206,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
 
     fn send_mutation<Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         resolve: &(dyn PathResolvusDyn<E>+'_),
         args: &dyn Any,

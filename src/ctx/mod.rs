@@ -1,6 +1,6 @@
 //! The [`Context`] trait housing handlers, queue and other side stuff
 
-use std::any::Any;
+use std::any::{Any, TypeId};
 use std::sync::Arc;
 
 use crate::env::Env;
@@ -43,7 +43,23 @@ pub trait Context<'cc,E>: Sized + 'cc where E: Env {
         );
     }
 
-    fn queue_send_mutation(&mut self, dest: Arc<dyn PathResolvusDyn<E>>, payload: Box<dyn Any>);
+    #[deprecated="TODO better queue shorthands"]
+    fn queue_send_mutation(&mut self, dest: Arc<dyn PathResolvusDyn<E>>, payload: Box<dyn Any>) {
+        self.queue_mut().push(
+            StdEnqueueable::SendMutation { path: dest, payload },
+            StdOrder::PostCurrent,
+            0,
+        );
+    }
+
+    #[deprecated="TODO better queue shorthands"]
+    fn queue_decl_update(&mut self, scope: Option<Arc<dyn PathResolvusDyn<E>>>, zone: Option<TypeId>) {
+        self.queue_mut().push(
+            StdEnqueueable::DeclUpdate { scope, zone },
+            StdOrder::PostCurrent,
+            0,
+        );
+    }
 
     fn retained_id(&mut self) -> WidgetID;
 

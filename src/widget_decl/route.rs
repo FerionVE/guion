@@ -25,6 +25,23 @@ struct UpdateZone {
 }
 
 impl<'a,E> UpdateRoute<'a,E> where E: Env {
+    pub fn new_root(scope: Option<&'a (dyn PathResolvusDyn<E>+'a)>, zone: Option<TypeId>) -> Self {
+        if let Some(scope) = scope {
+            Self {
+                scope: Some(UpdateScope {
+                    resolve: Some(scope),
+                    zone: zone.map(|id| UpdateZone {
+                        target_zone: id,
+                        current_zone: TypeId::of::<()>(),
+                        zone_activated: false,
+                    }),
+                })
+            }
+        } else {
+            Self { scope: None }
+        }
+    }
+
     pub fn none() -> Self {
         Self { scope: None }
     }

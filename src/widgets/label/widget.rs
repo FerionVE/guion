@@ -42,8 +42,11 @@ impl<E,Text> Widget<E> for Label<E,Text> where
 {
     type Cache = ();
 
-    
-    
+    #[inline]
+    fn id(&self) -> WidgetID {
+        self.id
+    }
+
     fn _render<P,Ph>(
         &mut self,
         _path: &Ph,
@@ -115,44 +118,6 @@ impl<E,Text> Widget<E> for Label<E,Text> where
         ms.max( &self.size )
     }
 
-    fn childs(&self) -> Range<isize> {
-        0..0
-    }
-
-    fn _call_tabulate_on_child_idx<P,Ph>(
-        &self,
-        _: isize,
-        _: &Ph,
-        _: &P,
-        _: TabulateOrigin<E>,
-        _: TabulateDirection,
-        _: E::RootRef<'_>,
-        _: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
-        Err(todo!())
-    }
-    
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-    //     Ok(vec![])
-    // }
-    fn focusable(&self) -> bool {
-        false
-    }
-
-    #[inline]
-    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
-        //r.try_respond::<dyn AsCachor<E>>(#[inline] || &self.test) ||
-        r.try_respond::<dyn TextStor<E>>(#[inline] || &self.text);
-    }
-
-    fn id(&self) -> WidgetID {
-        self.id
-    }
-
     fn update<Ph>(
         &mut self,
         _: &Ph,
@@ -161,6 +126,10 @@ impl<E,Text> Widget<E> for Label<E,Text> where
         _: &mut E::Context<'_>
     ) -> Invalidation where Ph: PathStack<E> + ?Sized {
         Invalidation::valid()
+    }
+    
+    fn childs(&self) -> Range<isize> {
+        0..0
     }
 
     fn child_dyn(&self, _: isize) -> Option<crate::widget::WidgetChildDynResult<'_,E>> {
@@ -184,7 +153,7 @@ impl<E,Text> Widget<E> for Label<E,Text> where
     }
 
     fn send_mutation<Ph>(
-        &self,
+        &mut self,
         _: &Ph,
         _: &(dyn PathResolvusDyn<E>+'_),
         _: &dyn Any,
@@ -192,11 +161,41 @@ impl<E,Text> Widget<E> for Label<E,Text> where
         _: &mut E::Context<'_>,
     ) where Ph: PathStack<E> + ?Sized {}
 
+    // fn child_bounds<P,Ph>(&self, path: &Ph,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    //     Ok(vec![])
+    // }
+    fn focusable(&self) -> bool {
+        false
+    }
+
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        _: isize,
+        _: &Ph,
+        _: &P,
+        _: TabulateOrigin<E>,
+        _: TabulateDirection,
+        _: E::RootRef<'_>,
+        _: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        Err(todo!())
+    }
+
     #[inline]
     fn invalidate_recursive(&mut self, vali: Invalidation) {
-        if vali.render | vali.layout {
+        if vali.render {
             self.rendered_dims = None;
         }
+    }
+
+    #[inline]
+    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
+        //r.try_respond::<dyn AsCachor<E>>(#[inline] || &self.test) ||
+        r.try_respond::<dyn TextStor<E>>(#[inline] || &self.text);
     }
 
     fn respond_query_mut<'a>(&'a mut self, _: crate::traitcast::WQueryResponder<'_,'a,E>) {}

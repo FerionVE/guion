@@ -114,7 +114,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn collect_childs_dyn_range_mut_dyn(&mut self, range: Range<isize>) -> Vec<WidgetChildDynResultMut<'_,E>>;
 
     fn send_mutation_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         resolve: &(dyn PathResolvusDyn<E>+'_),
         args: &dyn Any,
@@ -279,7 +279,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     }
     #[inline]
     fn send_mutation_dyn(
-        &self,
+        &mut self,
         path: &(dyn PathStackDyn<E>+'_),
         resolve: &(dyn PathResolvusDyn<E>+'_),
         args: &dyn Any,
@@ -582,7 +582,7 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[inline]
     fn send_mutation<Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         resolve: &(dyn PathResolvusDyn<E>+'_),
         args: &dyn Any,

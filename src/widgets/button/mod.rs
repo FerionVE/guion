@@ -39,8 +39,8 @@ impl<E,Text> decl::Button<E,Text,(),(),()> where
     #[inline]
     pub fn of_text(text: Text) -> Self {
         Self{
-            size: constraint!(0|0).into(),
-            style: Default::default(),
+            size: None,
+            style: None,
             trigger: (),
             trigger_im: (),
             trigger_mut: (),
@@ -88,7 +88,7 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, mutor: T) -> decl::Button<E,Text,impl Trigger<E>,TrIm,T> where T: MutorEndBuilder<(),E> {
+    pub fn with_trigger_mut<T>(self, mutor: T) -> decl::Button<E,Text,impl Trigger<E> + Clone + 'static,TrIm,T> where T: MutorEndBuilder<(),E> {
         decl::Button {
             size: self.size,
             style: self.style,
@@ -100,7 +100,7 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> decl::Button<E,Text,impl Trigger<E>,TrIm,impl MutorEndBuilder<(),E>>
+    pub fn with_trigger_mut_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> decl::Button<E,Text,impl Trigger<E> + Clone + 'static,TrIm,impl MutorEndBuilder<(),E>>
     where 
         LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
         LeftTarget: MuTarget<E> + ?Sized,

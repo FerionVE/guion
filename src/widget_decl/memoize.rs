@@ -258,7 +258,7 @@ impl<M,T,E> Widget<E> for MemoizeWidget<M,T,E> where M: Clone + PartialEq, T: Wi
     }
     #[inline]
     fn send_mutation<Ph>(
-        &self,
+        &mut self,
         path: &Ph,
         resolve: &(dyn PathResolvusDyn<E>+'_),
         args: &dyn Any,
