@@ -236,7 +236,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         if let Some(child) = self.resolve_child_dyn(sub_path) {
             child.widget.resolve(child.sub_path, root, ctx)
         } else {
-            Err(todo!())
+            Err(().into()) //TODO
         }
     }
 

@@ -333,6 +333,16 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
             *h = Some(self);
         }
     }
+
+    #[inline]
+    fn end<Ph>(
+        &mut self,
+        path: &Ph,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where Ph: PathStack<E> + ?Sized {
+        self.text.end(&SimpleId(ButtonChild).push_on_stack(path), root, ctx)
+    }
 }
 
 impl<E,S,Tr> Button<E,S,Tr> where
@@ -353,34 +363,6 @@ impl<E,S,Tr> Button<E,S,Tr> where
             )
     }
 }
-
-// impl<E,Text,Tr,TrMut> AsWidget<E> for Button<E,Text,Tr,TrMut> where Self: Widget<E>, E: Env {
-//     type Widget<'v,'z> = Self where 'z: 'v, Self: 'z;
-//     type WidgetCache = <Self as Widget<E>>::Cache;
-
-//     #[inline]
-//     fn with_widget<'w,R>(&self, f: &mut (dyn AsWidgetDispatch<'w,Self,R,E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-//     where
-//         Self: 'w
-//     {
-//         f.call(self, root, ctx)
-//     }
-// }
-
-// #[derive(Default)]
-// pub struct ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
-//     label_cache: LabelCache,
-//     std_render_cachors: Option<StdRenderCachors<E>>,
-//     vartype_cachors: Option<TestStyleVariant<E>>,
-//     _p: PhantomData<E>,
-//     //TODO cachor borders and colors
-// }
-
-// impl<LabelCache,E> RenderCache<E> for ButtonCache<LabelCache,E> where E: Env, for<'r> ERenderer<'r,E>: RenderStdWidgets<E>, LabelCache: RenderCache<E> {
-//     fn reset_current(&mut self) {
-//         self.label_cache.reset_current()
-//     }
-// }
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 pub struct ButtonChild;

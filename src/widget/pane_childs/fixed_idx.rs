@@ -1,10 +1,24 @@
 use std::mem::MaybeUninit;
 use std::ops::{Range, Deref, DerefMut};
 
+use crate::aliases::{ESize, ERenderer};
 use crate::env::Env;
-use crate::newpath::{PathResolvusDyn, FixedIdx, PathResolvus};
+use crate::event_new;
+use crate::invalidation::Invalidation;
+use crate::layout::Gonstraints;
+use crate::layout::Orientation;
+use crate::layout::calc::calc_bounds2;
+use crate::layout::size::{StdGonstraintAxis, StdGonstraints};
+use crate::newpath::{PathResolvusDyn, FixedIdx, PathResolvus, PathFragment, PathStack};
+use crate::queron::Queron;
+use crate::render::StdRenderProps;
 use crate::root::RootRef;
+use crate::util::bounds::Dims;
+use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin};
+use crate::widget::stack::QueriedCurrentBounds;
+use crate::widget::stack::WithCurrentBounds;
 use crate::widget::{WidgetDyn, Widget};
+use crate::widget_decl::pane_childs::fixed_idx::trans_array_enumerated_mut;
 
 use super::{PaneChildWidget, PaneChilds, PaneChildsDyn, ChildWidgetDynResult, ChildWidgetDynResultMut};
 
@@ -29,358 +43,390 @@ impl<T> DerefMut for WidgetsFixedIdx<T> where T: ?Sized {
 
 impl<E,T> PaneChilds<E> for WidgetsFixedIdx<Vec<PaneChildWidget<T,E>>> where T: Widget<E>, E: Env {
     type Caches = Vec<T::Cache>;
-    
-    // #[inline]
-    // fn by_index<F,R>(&self, idx: usize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsDispatch<Self::ChildID,R,E>
-    // {
-    //     match self.0.get(idx as usize) {
-    //         Some(inner) => {
-    //             callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx as isize),inner), root, ctx)
-    //         },
-    //         None => callback.call_none(root,ctx),
-    //     }
-    // }
 
-    // #[inline]
-    // fn by_index_mut<F,R>(&mut self, idx: usize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsDispatchMut<Self::ChildID,R,E>
-    // {
-    //     match self.0.get_mut(idx as usize) {
-    //         Some(inner) => {
-    //             callback.call(AsWidgetsResultMut::from_some(idx,FixedIdx(idx as isize),inner), root, ctx)
-    //         },
-    //         None => callback.call_none(root,ctx),
-    //     }
-    // }
+    fn render<P,Ph>(
+        &mut self,
+        path: &Ph,
+        render_props: &StdRenderProps<'_,P,E,()>,
+        renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
+        cache: &mut Self::Caches,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            if w.vali.render | force_render {
+                w.widget.render(
+                    &FixedIdx(idx as isize).push_on_stack(path),
+                    &render_props
+                        .slice(w.relative_bounds.unwrap()),
+                    renderer,
+                    force_render, &mut cache[idx],
+                    root.fork(), ctx
+                );
+                w.vali.render = false;
+            }
+        }
+    }
 
-    // #[inline]
-    // fn by_index_c<F,R>(&self, idx: usize, callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsCDispatch<Self::ChildID,R,E>
-    // {
-    //     if self.0.len() != cache.len() {
-    //         cache.resize_with(self.0.len(), Default::default);
-    //     }
+    fn event<P,Ph,Evt>(
+        &mut self,
+        path: &Ph,
+        stack: &P,
+        bounds: &QueriedCurrentBounds,
+        event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        if let Some(route_to_widget) = route_to_widget {
+            if let Some(idx) = route_to_widget.try_fragment::<FixedIdx>() {
+                if let Some(w) = self.0.get_mut(idx.0 as usize) {
+                    let stack = WithCurrentBounds {
+                        inner: stack,
+                        bounds: bounds.bounds.slice(w.relative_bounds.as_ref().unwrap()),
+                        viewport: bounds.viewport.clone(),
+                    };
 
-    //     match self.0.get(idx as usize) {
-    //         Some(inner) => {
-    //             let cache_slot = unsafe { cache.get_unchecked_mut(idx as usize) };
-    //             callback.call(AsWidgetsCResult::from_some(idx,FixedIdx(idx as isize),inner, cache_slot), root, ctx)
-    //         },
-    //         None => callback.call_none(root,ctx),
-    //     }
-    // }
+                    let v = w.widget.event_direct(&idx.push_on_stack(path), &stack, event, route_to_widget.inner(), root, ctx);
+                    w.invalidate(v);
+                    return v;
+                }
+            }
+            return Invalidation::valid();
+        }
 
-    // #[inline]
-    // fn by_index_c_mut<F,R>(&mut self, idx: usize, callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsCDispatchMut<Self::ChildID,R,E>
-    // {
-    //     if self.0.len() != cache.len() {
-    //         cache.resize_with(self.0.len(), Default::default);
-    //     }
+        let mut vali = Invalidation::valid();
 
-    //     match self.0.get_mut(idx as usize) {
-    //         Some(inner) => {
-    //             let cache_slot = unsafe { cache.get_unchecked_mut(idx as usize) };
-    //             callback.call(AsWidgetsCResultMut::from_some(idx,FixedIdx(idx as isize),inner, cache_slot), root, ctx)
-    //         },
-    //         None => callback.call_none(root,ctx),
-    //     }
-    // }
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            let stack = WithCurrentBounds {
+                inner: &stack,
+                bounds: bounds.bounds.slice(w.relative_bounds.as_ref().unwrap()),
+                viewport: bounds.viewport.clone(),
+            };
 
-    // #[inline]
-    // fn iter_ids(&self) -> Self::IdIdxIter {
-    //     (0..self.len()).map(#[inline] |i| (i,FixedIdx(i)))
-    // }
+            let v = w.widget.event_direct(&FixedIdx(idx as isize).push_on_stack(path), &stack, event, None, root.fork(), ctx);
+            w.invalidate(v);
+            vali |= v
+        }
 
-    // #[inline]
-    // fn idx_range<F>(&self, idx_range: Range<usize>, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    // where
-    //     F: AsWidgetsIndexedDispatch<Self::ChildID,E>
-    // {
-    //     for (i,v) in self.0[idx_range.start as usize .. idx_range.end as usize].iter().enumerate() {
-    //         callback.call(i, FixedIdx(i), v, root.fork(), ctx)
-    //     }
-    // }
+        vali
+    }
 
-    // #[inline]
-    // fn idx_range_mut<F>(&mut self, idx_range: Range<usize>, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    // where
-    //     F: AsWidgetsIndexedDispatchMut<Self::ChildID,E>
-    // {
-    //     for (i,v) in self.0[idx_range.start as usize .. idx_range.end as usize].iter_mut().enumerate() {
-    //         callback.call(i, FixedIdx(i), v, root.fork(), ctx)
-    //     }
-    // }
+    fn constraints<P,Ph>(
+        &mut self,
+        relayout: Option<Dims>,
+        orientation: Orientation,
+        path: &Ph,
+        stack: &P,
+        root: <E as Env>::RootRef<'_>,
+        ctx: &mut <E as Env>::Context<'_>
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+        let mut constraint_sum = ESize::<E>::add_base(orientation);
 
-    // #[inline]
-    // fn idx_range_c<F>(&self, idx_range: Range<usize>, mut callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    // where
-    //     F: AsWidgetsIndexedCDispatch<Self::ChildID,E>
-    // {
-    //     if self.0.len() != cache.len() {
-    //         cache.resize_with(self.0.len(), Default::default);
-    //     }
+        let mut parallel_axis = if relayout.is_some() {Vec::with_capacity(self.len())} else {vec![]};
 
-    //     for (i,v) in self.0[idx_range.start as usize .. idx_range.end as usize].iter().enumerate() {
-    //         let cache_slot = unsafe { cache.get_unchecked_mut(i) };
-    //         callback.call(i, FixedIdx(i), v, cache_slot, root.fork(), ctx)
-    //     }
-    // }
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            let constraint = w.constraints.get_or_insert_with(||
+                w.widget.size(&FixedIdx(idx as isize).push_on_stack(path), stack, root.fork(), ctx)
+            );
 
-    // #[inline]
-    // fn idx_range_c_mut<F>(&mut self, idx_range: Range<usize>, mut callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    // where
-    //     F: AsWidgetsIndexedCDispatchMut<Self::ChildID,E>
-    // {
-    //     if self.0.len() != cache.len() {
-    //         cache.resize_with(self.0.len(), Default::default);
-    //     }
+            constraint_sum.add(constraint, orientation);
 
-    //     for (i,v) in self.0[idx_range.start as usize .. idx_range.end as usize].iter_mut().enumerate() {
-    //         let cache_slot = unsafe { cache.get_unchecked_mut(i) };
-    //         callback.call(i, FixedIdx(i), v, cache_slot, root.fork(), ctx)
-    //     }
-    // }
+            // if relayout.is_none() && w.relative_bounds.is_none() {
+            //     todo!()
+            // }
 
-    // #[inline]
-    // fn resolve<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsResolveDispatch<Self::ChildID,R,E>
-    // {
-    //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
-    //         let idx = v.0;
-    //         if let Some(inner) = self.0.get(idx as usize) {
-    //             return callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),inner), root, ctx);
-    //         }
-    //     }
+            if relayout.is_some() {
+                parallel_axis.push(constraint.clone().into().par(orientation));
+            }
+        }
 
-    //     callback.call_none(root,ctx)
-    // }
+        if let Some(dims) = relayout {
+            let new_bounds = calc_bounds2(
+                &dims,
+                &parallel_axis,
+                orientation,
+            );
 
-    // #[inline]
-    // fn resolve_mut<F,R>(&mut self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsResolveDispatchMut<Self::ChildID,R,E>
-    // {
-    //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
-    //         let idx = v.0;
-    //         if let Some(inner) = self.0.get_mut(idx as usize) {
-    //             return callback.call(AsWidgetsResolveResultMut::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),inner), root, ctx);
-    //         }
-    //     }
+            assert_eq!(new_bounds.len(),self.len());
 
-    //     callback.call_none(root,ctx)
-    // }
+            for (w,new_bound) in self.0.iter_mut().zip(new_bounds) {
+                w.relative_bounds = Some(new_bound);
+                w.vali.layout = false;
+            }
+        }
 
-    // #[inline]
-    // fn resolve_c<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsResolveCDispatch<Self::ChildID,R,E>
-    // {
-    //     if self.0.len() != cache.len() {
-    //         cache.resize_with(self.0.len(), Default::default);
-    //     }
+        constraint_sum
+    }
 
-    //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
-    //         let idx = v.0;
-    //         if let Some(inner) = self.0.get(idx as usize) {
-    //             let cache_slot = unsafe { cache.get_unchecked_mut(idx as usize) };
-    //             return callback.call(AsWidgetsResolveCResult::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),inner, cache_slot), root, ctx);
-    //         }
-    //     }
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        idx: usize,
+        path: &Ph,
+        stack: &P,
+        op: TabulateOrigin<E>,
+        dir: TabulateDirection,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        if let Some(w) = self.0.get(idx) {
+            return w.widget._tabulate(&FixedIdx(idx as isize).push_on_stack(path), stack, op, dir, root, ctx);
+        }
+        todo!()
+    }
 
-    //     callback.call_none(root,ctx)
-    // }
+    fn end<Ph>(
+        &mut self,
+        path: &Ph,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where Ph: PathStack<E> + ?Sized {
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            w.widget.end(&FixedIdx(idx as isize).push_on_stack(path), root.fork(), ctx);
+        }
+    }
 
-    // #[inline]
-    // fn resolve_c_mut<F,R>(&mut self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsResolveCDispatchMut<Self::ChildID,R,E>
-    // {
-    //     if self.0.len() != cache.len() {
-    //         cache.resize_with(self.0.len(), Default::default);
-    //     }
+    fn update<Ph>(
+        &mut self,
+        path: &Ph,
+        route: crate::widget_decl::route::UpdateRoute<'_,E>,
+        root: <E as Env>::RootRef<'_>,
+        ctx: &mut <E as Env>::Context<'_>
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+        if let Some(r2) = route.resolving() {
+            if let Some(idx) = r2.try_fragment::<FixedIdx>() {
+                let v = self.0[idx.0 as usize].widget.update(&idx.push_on_stack(path), route.for_child_1(), root, ctx);
+                self.0[idx.0 as usize].invalidate(v);
+                return v;
+            }
+            return Invalidation::valid();
+        }
 
-    //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
-    //         let idx = v.0;
-    //         if let Some(inner) = self.0.get_mut(idx as usize) {
-    //             let cache_slot = unsafe { cache.get_unchecked_mut(idx as usize) };
-    //             return callback.call(AsWidgetsResolveCResultMut::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),inner, cache_slot), root, ctx);
-    //         }
-    //     }
+        let mut vali = Invalidation::valid();
 
-    //     callback.call_none(root,ctx)
-    // }
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            let v = w.widget.update(&FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+            w.invalidate(v);
+            vali |= v
+        }
+
+        vali
+    }
+
+    fn send_mutation<Ph>(
+        &mut self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn std::any::Any,
+        root: <E as Env>::RootRef<'_>,
+        ctx: &mut <E as Env>::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        if let Some(idx) = resolve.try_fragment::<FixedIdx>() {
+            self.0[idx.0 as usize].widget.send_mutation(&idx.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx);
+        }
+    }
+
+    fn invalidate_recursive(&mut self, vali: Invalidation) {
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            w.widget.invalidate_recursive(vali);
+        }
+    }
 }
 
 impl<E,T,const N: usize> PaneChilds<E> for WidgetsFixedIdx<[PaneChildWidget<T,E>;N]> where T: Widget<E>, E: Env {
     type Caches = DefaultHack<[T::Cache;N]>;
 
-    // #[inline]
-    // fn by_index<F,R>(&self, idx: usize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsDispatch<Self::ChildID,R,E>
-    // {
-    //     match self.0.get(idx as usize) {
-    //         Some(inner) => {
-    //             callback.call(AsWidgetsResult::from_some(idx,FixedIdx(idx as isize),inner ), root, ctx)
-    //         },
-    //         None => callback.call_none(root,ctx),
-    //     }
-    // }
+    fn render<P,Ph>(
+        &mut self,
+        path: &Ph,
+        render_props: &StdRenderProps<'_,P,E,()>,
+        renderer: &mut ERenderer<'_,E>,
+        force_render: bool,
+        cache: &mut Self::Caches,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            if w.vali.render | force_render {
+                w.widget.render(
+                    &FixedIdx(idx as isize).push_on_stack(path),
+                    &render_props
+                        .slice(w.relative_bounds.unwrap()),
+                    renderer,
+                    force_render, &mut cache.0[idx],
+                    root.fork(), ctx
+                );
+                w.vali.render = false;
+            }
+        }
+    }
 
-    // #[inline]
-    // fn by_index_mut<F,R>(&mut self, idx: usize, callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsDispatchMut<Self::ChildID,R,E>
-    // {
-    //     match self.0.get_mut(idx as usize) {
-    //         Some(inner) => {
-    //             callback.call(AsWidgetsResultMut::from_some(idx,FixedIdx(idx as isize),inner), root, ctx)
-    //         },
-    //         None => callback.call_none(root,ctx),
-    //     }
-    // }
+    fn event<P,Ph,Evt>(
+        &mut self,
+        path: &Ph,
+        stack: &P,
+        bounds: &QueriedCurrentBounds,
+        event: &Evt,
+        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>,
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+        if let Some(route_to_widget) = route_to_widget {
+            if let Some(idx) = route_to_widget.try_fragment::<FixedIdx>() {
+                if let Some(w) = self.0.get_mut(idx.0 as usize) {
+                    let stack = WithCurrentBounds {
+                        inner: stack,
+                        bounds: bounds.bounds.slice(w.relative_bounds.as_ref().unwrap()),
+                        viewport: bounds.viewport.clone(),
+                    };
 
-    // #[inline]
-    // fn by_index_c<F,R>(&self, idx: usize, callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsCDispatch<Self::ChildID,R,E>
-    // {
-    //     match self.0.get(idx as usize) {
-    //         Some(inner) => {
-    //             let cache_slot = unsafe { cache.0.get_unchecked_mut(idx as usize) };
-    //             callback.call(AsWidgetsCResult::from_some(idx,FixedIdx(idx as isize),inner, cache_slot), root, ctx)
-    //         },
-    //         None => callback.call_none(root,ctx),
-    //     }
-    // }
+                    let v = w.widget.event_direct(&idx.push_on_stack(path), &stack, event, route_to_widget.inner(), root, ctx);
+                    w.invalidate(v);
+                    return v;
+                }
+            }
+            return Invalidation::valid();
+        }
 
-    // #[inline]
-    // fn by_index_c_mut<F,R>(&mut self, idx: usize, callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsCDispatchMut<Self::ChildID,R,E>
-    // {
-    //     match self.0.get_mut(idx as usize) {
-    //         Some(inner) => {
-    //             let cache_slot = unsafe { cache.0.get_unchecked_mut(idx as usize) };
-    //             callback.call(AsWidgetsCResultMut::from_some(idx,FixedIdx(idx as isize),inner, cache_slot), root, ctx)
-    //         },
-    //         None => callback.call_none(root,ctx),
-    //     }
-    // }
+        let mut vali = Invalidation::valid();
 
-    // #[inline]
-    // fn iter_ids(&self) -> Self::IdIdxIter {
-    //     (0..N).map(#[inline] |i| (i,FixedIdx(i)))
-    // }
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            let stack = WithCurrentBounds {
+                inner: &stack,
+                bounds: bounds.bounds.slice(w.relative_bounds.as_ref().unwrap()),
+                viewport: bounds.viewport.clone(),
+            };
 
-    // #[inline]
-    // fn idx_range<F>(&self, idx_range: Range<usize>, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    // where
-    //     F: AsWidgetsIndexedDispatch<Self::ChildID,E>
-    // {
-    //     for (i,v) in self.0[idx_range.start as usize .. idx_range.end as usize].iter().enumerate() {
-    //         callback.call(i, FixedIdx(i), v, root.fork(), ctx)
-    //     }
-    // }
+            let v = w.widget.event_direct(&FixedIdx(idx as isize).push_on_stack(path), &stack, event, None, root.fork(), ctx);
+            w.invalidate(v);
+            vali |= v
+        }
 
-    // #[inline]
-    // fn idx_range_mut<F>(&mut self, idx_range: Range<usize>, mut callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    // where
-    //     F: AsWidgetsIndexedDispatchMut<Self::ChildID,E>
-    // {
-    //     for (i,v) in self.0[idx_range.start as usize .. idx_range.end as usize].iter_mut().enumerate() {
-    //         callback.call(i, FixedIdx(i), v, root.fork(), ctx)
-    //     }
-    // }
+        vali
+    }
 
-    // #[inline]
-    // fn idx_range_c<F>(&self, idx_range: Range<usize>, mut callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    // where
-    //     F: AsWidgetsIndexedCDispatch<Self::ChildID,E>
-    // {
-    //     for (i,v) in self.0[idx_range.start as usize .. idx_range.end as usize].iter().enumerate() {
-    //         let cache_slot = unsafe { cache.0.get_unchecked_mut(i) };
-    //         callback.call(i, FixedIdx(i), v, cache_slot, root.fork(), ctx)
-    //     }
-    // }
+    fn constraints<P,Ph>(
+        &mut self,
+        relayout: Option<Dims>,
+        orientation: Orientation,
+        path: &Ph,
+        stack: &P,
+        root: <E as Env>::RootRef<'_>,
+        ctx: &mut <E as Env>::Context<'_>
+    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+        let mut constraint_sum = ESize::<E>::add_base(orientation);
 
-    // #[inline]
-    // fn idx_range_c_mut<F>(&mut self, idx_range: Range<usize>, mut callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>)
-    // where
-    //     F: AsWidgetsIndexedCDispatchMut<Self::ChildID,E>
-    // {
-    //     for (i,v) in self.0[idx_range.start as usize .. idx_range.end as usize].iter_mut().enumerate() {
-    //         let cache_slot = unsafe { cache.0.get_unchecked_mut(i) };
-    //         callback.call(i, FixedIdx(i), v, cache_slot, root.fork(), ctx)
-    //     }
-    // }
+        let parallel_axis = trans_array_enumerated_mut(&mut self.0, |idx,w|{
+            let constraint = w.constraints.get_or_insert_with(||
+                w.widget.size(&FixedIdx(idx as isize).push_on_stack(path), stack, root.fork(), ctx)
+            );
 
-    // fn resolve<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsResolveDispatch<Self::ChildID,R,E>
-    // {
-    //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
-    //         let idx = v.0;
-    //         if let Some(inner) = self.0.get(idx as usize) {
-    //             return callback.call(AsWidgetsResolveResult::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),inner), root, ctx);
-    //         }
-    //     }
+            constraint_sum.add(constraint, orientation);
 
-    //     callback.call_none(root,ctx)
-    // }
+            // if relayout.is_none() && w.relative_bounds.is_none() {
+            //     todo!()
+            // }
 
-    // #[inline]
-    // fn resolve_mut<F,R>(&mut self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsResolveDispatchMut<Self::ChildID,R,E>
-    // {
-    //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
-    //         let idx = v.0;
-    //         if let Some(inner) = self.0.get_mut(idx as usize) {
-    //             return callback.call(AsWidgetsResolveResultMut::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),inner), root, ctx);
-    //         }
-    //     }
+            constraint.clone().into().par(orientation)
+        });
 
-    //     callback.call_none(root,ctx)
-    // }
+        if let Some(dims) = relayout {
+            let new_bounds = calc_bounds2(
+                &dims,
+                &parallel_axis,
+                orientation,
+            );
 
-    // fn resolve_c<F,R>(&self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsResolveCDispatch<Self::ChildID,R,E>
-    // {
-    //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
-    //         let idx = v.0;
-    //         if let Some(inner) = self.0.get(idx as usize) {
-    //             let cache_slot = unsafe { cache.0.get_unchecked_mut(idx as usize) };
-    //             return callback.call(AsWidgetsResolveCResult::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),inner, cache_slot), root, ctx);
-    //         }
-    //     }
+            assert_eq!(new_bounds.len(),self.len());
 
-    //     callback.call_none(root,ctx)
-    // }
+            for (w,new_bound) in self.0.iter_mut().zip(new_bounds) {
+                w.relative_bounds = Some(new_bound);
+                w.vali.layout = false;
+            }
+        }
 
-    // #[inline]
-    // fn resolve_c_mut<F,R>(&mut self, path: &(dyn PathResolvusDyn<E>+'_), callback: F, cache: &mut Self::Caches, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
-    // where
-    //     F: AsWidgetsResolveCDispatchMut<Self::ChildID,R,E>
-    // {
-    //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
-    //         let idx = v.0;
-    //         if let Some(inner) = self.0.get_mut(idx as usize) {
-    //             let cache_slot = unsafe { cache.0.get_unchecked_mut(idx as usize) };
-    //             return callback.call(AsWidgetsResolveCResultMut::from_some(idx,FixedIdx(idx as isize),path.inner().unwrap(),inner, cache_slot), root, ctx);
-    //         }
-    //     }
+        constraint_sum
+    }
 
-    //     callback.call_none(root,ctx)
-    // }
+    fn _call_tabulate_on_child_idx<P,Ph>(
+        &self,
+        idx: usize,
+        path: &Ph,
+        stack: &P,
+        op: TabulateOrigin<E>,
+        dir: TabulateDirection,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) -> Result<TabulateResponse<E>,E::Error>
+    where 
+        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
+    {
+        if let Some(w) = self.0.get(idx) {
+            return w.widget._tabulate(&FixedIdx(idx as isize).push_on_stack(path), stack, op, dir, root, ctx);
+        }
+        todo!()
+    }
+
+    fn end<Ph>(
+        &mut self,
+        path: &Ph,
+        root: E::RootRef<'_>,
+        ctx: &mut E::Context<'_>
+    ) where Ph: PathStack<E> + ?Sized {
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            w.widget.end(&FixedIdx(idx as isize).push_on_stack(path), root.fork(), ctx);
+        }
+    }
+
+    fn update<Ph>(
+        &mut self,
+        path: &Ph,
+        route: crate::widget_decl::route::UpdateRoute<'_,E>,
+        root: <E as Env>::RootRef<'_>,
+        ctx: &mut <E as Env>::Context<'_>
+    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+        if let Some(r2) = route.resolving() {
+            if let Some(idx) = r2.try_fragment::<FixedIdx>() {
+                let v = self.0[idx.0 as usize].widget.update(&idx.push_on_stack(path), route.for_child_1(), root, ctx);
+                self.0[idx.0 as usize].invalidate(v);
+                return v;
+            }
+            return Invalidation::valid();
+        }
+
+        let mut vali = Invalidation::valid();
+
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            let v = w.widget.update(&FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+            w.invalidate(v);
+            vali |= v
+        }
+
+        vali
+    }
+
+    fn send_mutation<Ph>(
+        &mut self,
+        path: &Ph,
+        resolve: &(dyn PathResolvusDyn<E>+'_),
+        args: &dyn std::any::Any,
+        root: <E as Env>::RootRef<'_>,
+        ctx: &mut <E as Env>::Context<'_>,
+    ) where Ph: PathStack<E> + ?Sized {
+        if let Some(idx) = resolve.try_fragment::<FixedIdx>() {
+            self.0[idx.0 as usize].widget.send_mutation(&idx.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx);
+        }
+    }
+
+    fn invalidate_recursive(&mut self, vali: Invalidation) {
+        for (idx,w) in self.0.iter_mut().enumerate() {
+            w.widget.invalidate_recursive(vali);
+        }
+    }
 }
 
 impl<E,T> PaneChildsDyn<E> for WidgetsFixedIdx<Vec<PaneChildWidget<T,E>>> where T: Widget<E>, E: Env {

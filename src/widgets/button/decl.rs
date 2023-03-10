@@ -97,7 +97,7 @@ impl<E,Text,Tr,TrIm,TrMut> WidgetDecl<E> for Button<E,Text,Tr,TrIm,TrMut> where
             w.rendered_dims = None; vali = vali.relayout();
         }
 
-        self.text.update(&mut w.text, &SimpleId(ButtonChild).push_on_stack(path), route.for_child_1(), root, ctx);
+        vali |= self.text.update(&mut w.text, &SimpleId(ButtonChild).push_on_stack(path), route.for_child_1(), root, ctx);
 
         vali
     }
@@ -132,6 +132,8 @@ impl<E,Text,Tr,TrIm,TrMut> WidgetDecl<E> for Button<E,Text,Tr,TrIm,TrMut> where
 }
 
 struct Trigon;
+
+pub(super) type send_mutation_trigger_ty<E> = fn(&(dyn PathStackDyn<E>+'_),<E as Env>::RootRef<'_>,&mut <E as Env>::Context<'_>);
 
 pub(super) fn send_mutation_trigger<E>(path: &(dyn PathStackDyn<E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) where E: Env {
     ctx.queue_send_mutation(path.to_resolvus(), Box::new(Trigon));

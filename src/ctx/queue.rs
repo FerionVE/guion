@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use crate::aliases::{EEvent, ESize};
 use crate::env::Env;
+use crate::invalidation::Invalidation;
 use crate::newpath::PathResolvusDyn;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
@@ -27,9 +28,7 @@ pub enum StdEnqueueable<E> where E: Env {
     AccessRoot{f: PtrAccessRoot<E>},
     AccessRootClosure{f: BoxAccessRoot<E>},
     MutMessage{path: Arc<dyn PathResolvusDyn<E>>, msg: E::Message},
-    InvalidateWidget{path: Arc<dyn PathResolvusDyn<E>>},
-    ValidateWidgetRender{path: Arc<dyn PathResolvusDyn<E>>},
-    ValidateWidgetSize{path: Arc<dyn PathResolvusDyn<E>>, size: ESize<E>},
+    InvalidateWidget{path: Arc<dyn PathResolvusDyn<E>>, vali: Invalidation},
     SendMutation{path: Arc<dyn PathResolvusDyn<E>>, payload: Box<dyn Any>},
     DeclUpdate{scope: Option<Arc<dyn PathResolvusDyn<E>>>, zone: Option<TypeId>},
 }

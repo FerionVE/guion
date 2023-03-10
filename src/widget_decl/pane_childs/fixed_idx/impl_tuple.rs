@@ -76,7 +76,7 @@ macro_rules! impl_tuple {
                         match r2.0 {
                             $($mm => {
                                 let v = $ll.update(&mut $ll2.widget, &r2.push_on_stack(path), route.for_child_1(), root, ctx);
-                                $ll2.vali |= v;
+                                $ll2.invalidate(v);
                                 return v;
                             }),+ ,
                             _ => {},
@@ -92,7 +92,7 @@ macro_rules! impl_tuple {
                 // Update persisted exising area
                 $({
                     let v = $ll.update(&mut $ll2.widget, &FixedIdx($mmm).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
-                    $ll2.vali |= v;
+                    $ll2.invalidate(v);
                     vali |= v;
                 })+
 
@@ -128,7 +128,7 @@ macro_rules! impl_tuple {
                         debug_assert_eq!(result.idx, $mmm);
                         let (w,v) = $ll.update_restore(result.widget, &path, root.fork(), ctx);
                         let mut w = PaneChildWidget::new(w);
-                        w.vali |= v;
+                        w.invalidate(v);
                         vali |= v;
                         w
                     } else {

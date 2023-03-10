@@ -59,7 +59,9 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
         if let Some(resolve) = route.resolving() {
             if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
                 if r2.0 >= 0 && (r2.0 as usize) < self.0.len().min(w.0.len()) {
-                    return self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize].widget, &r2.push_on_stack(path), route.for_child_1(), root, ctx);
+                    let v = self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize].widget, &r2.push_on_stack(path), route.for_child_1(), root, ctx);
+                    w.0[r2.0 as usize].invalidate(v);
+                    return v;
                 }
             } else {
                 //TODO what to do on invalid scope resolves in update?
@@ -79,7 +81,7 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
         // Update persisted exising area
         for (idx,(d,w)) in self.0.iter().zip(w.0.iter_mut()).enumerate() {
             let v = d.update(&mut w.widget, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
-            w.vali = v;
+            w.invalidate(v);
             vali |= v;
         }
         // Instantiate new tail
@@ -122,7 +124,7 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
             let d = &self.0[result.idx as usize];
             let (w,v) = d.update_restore(result.widget, &path, root.fork(), ctx);
             let mut w = PaneChildWidget::new(w);
-            w.vali |= v;
+            w.invalidate(v);
             new.push(w);
             vali |= v;
         });
@@ -191,7 +193,7 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
             if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
                 if r2.0 >= 0 && (r2.0 as usize) < self.0.len().min(w.0.len()) {
                     let v = self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize].widget, &r2.push_on_stack(path), route.for_child_1(), root, ctx);
-                    w.0[r2.0 as usize].vali |= v;
+                    w.0[r2.0 as usize].invalidate(v);
                     return v;
                 }
             } else {
@@ -205,7 +207,7 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
         // Update persisted exising area
         for (idx,(d,w)) in self.0.iter().zip(w.0.iter_mut()).enumerate() {
             let v = d.update(&mut w.widget, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
-            w.vali = v;
+            w.invalidate(v);
             vali |= v;
         }
 
@@ -244,7 +246,7 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
             let d = &self.0[result.idx as usize];
             let (w,v) = d.update_restore(result.widget, &path, root.fork(), ctx);
             let mut w = PaneChildWidget::new(w);
-            w.vali |= v;
+            w.invalidate(v);
             new_mut[add_pos].write(w);
             add_pos += 1;
             vali |= v;
@@ -329,7 +331,7 @@ fn bender<'a,'b,T>(v: &'a WidgetsFixedIdx<&'b T>) -> &'a WidgetsFixedIdx<T> wher
 }
 
 #[inline]
-fn trans_array_enumerated<T,U,const N: usize>(v: [T;N], mut f: impl FnMut(usize,T) -> U) -> [U;N] {
+pub(crate) fn trans_array_enumerated<T,U,const N: usize>(v: [T;N], mut f: impl FnMut(usize,T) -> U) -> [U;N] {
     unsafe {
         let mut dest: ManuallyDrop<MaybeUninit<[U;N]>> = ManuallyDrop::new(MaybeUninit::uninit());
         for (i,(entry,src)) in (*(dest.as_mut_ptr() as *mut [MaybeUninit<U>;N])).iter_mut().zip(v).enumerate() {
@@ -340,7 +342,18 @@ fn trans_array_enumerated<T,U,const N: usize>(v: [T;N], mut f: impl FnMut(usize,
 }
 
 #[inline]
-fn trans_array_enumerated_ref<T,U,const N: usize>(v: &[T;N], mut f: impl FnMut(usize,&T) -> U) -> [U;N] {
+pub(crate) fn trans_array_enumerated_ref<T,U,const N: usize>(v: &[T;N], mut f: impl FnMut(usize,&T) -> U) -> [U;N] {
+    unsafe {
+        let mut dest: ManuallyDrop<MaybeUninit<[U;N]>> = ManuallyDrop::new(MaybeUninit::uninit());
+        for (i,(entry,src)) in (*(dest.as_mut_ptr() as *mut [MaybeUninit<U>;N])).iter_mut().zip(v).enumerate() {
+            entry.write( f(i,src) );
+        }
+        ManuallyDrop::into_inner(dest).assume_init()
+    }
+}
+
+#[inline]
+pub(crate) fn trans_array_enumerated_mut<T,U,const N: usize>(v: &mut [T;N], mut f: impl FnMut(usize,&mut T) -> U) -> [U;N] {
     unsafe {
         let mut dest: ManuallyDrop<MaybeUninit<[U;N]>> = ManuallyDrop::new(MaybeUninit::uninit());
         for (i,(entry,src)) in (*(dest.as_mut_ptr() as *mut [MaybeUninit<U>;N])).iter_mut().zip(v).enumerate() {

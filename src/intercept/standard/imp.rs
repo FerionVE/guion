@@ -98,7 +98,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                 RootEvent::KbdDown{key} => {
                     //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = (self.access)(ctx).state.kbd.focused.clone() {
-                        if root_widget.resolve_child_dyn(&*id).is_none() {
+                        if root_widget.resolve(&*id, root.fork(), ctx).is_err() {
                             //drop event if widget is gone
                             return Invalidation::valid();
                         }
@@ -182,7 +182,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             let mut do_tab = false;
                             if
                                 key == MatchKeyCode::KbdTab &&
-                                root_widget.resolve_child_dyn(&*id).map_or(false,|w| w.widget._tabulate_by_tab() )
+                                root_widget.resolve(&*id, root.fork(), ctx).map_or(false,|w| w.widget._tabulate_by_tab() )
                             {
                                 do_tab = true;
                             }
@@ -222,7 +222,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
 
                             //passed |= Self::focus(l,hovered.path.clone(),e.1,e.2).unwrap_or(false);
 
-                            let focus = root_widget.resolve_child_dyn(&*hovered)
+                            let focus = root_widget.resolve(&*hovered, root.fork(), ctx)
                                 .map_or(false,|w| w.widget._focus_on_mouse_down() );
 
                             if focus {

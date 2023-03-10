@@ -10,6 +10,8 @@ use crate::constraint;
 use crate::env::Env;
 use crate::text::stor::TextStor;
 
+use self::decl::send_mutation_trigger_ty;
+
 use super::label::decl::Label;
 
 pub mod widget;
@@ -76,7 +78,7 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_im<T>(self, immutor: T) -> decl::Button<E,Text,impl Trigger<E>,T,TrMut> where T: Fn(&(dyn PathStackDyn<E>+'_),E::RootRef<'_>,&mut E::Context<'_>) {
+    pub fn with_trigger_im<T>(self, immutor: T) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,T,TrMut> where T: Fn(&(dyn PathStackDyn<E>+'_),E::RootRef<'_>,&mut E::Context<'_>) {
         decl::Button {
             size: self.size,
             style: self.style,
@@ -88,7 +90,7 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, mutor: T) -> decl::Button<E,Text,impl Trigger<E> + Clone + 'static,TrIm,T> where T: MutorEndBuilder<(),E> {
+    pub fn with_trigger_mut<T>(self, mutor: T) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,T> where T: MutorEndBuilder<(),E> {
         decl::Button {
             size: self.size,
             style: self.style,
@@ -100,7 +102,7 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> decl::Button<E,Text,impl Trigger<E> + Clone + 'static,TrIm,impl MutorEndBuilder<(),E>>
+    pub fn with_trigger_mut_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,impl MutorEndBuilder<(),E>>
     where 
         LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
         LeftTarget: MuTarget<E> + ?Sized,

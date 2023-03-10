@@ -5,32 +5,23 @@ use crate::env::Env;
 use crate::layout::Orientation;
 
 pub mod widget;
+pub mod decl;
 
-pub struct Pane<E,T> where
-    E: Env,
-{
-    pub childs: T,
-    pub orientation: Orientation,
-    pub style: EStyle<E>,
-    p: PhantomData<T>,
-}
-
-impl<E,T> Pane<E,T> where
+impl<E,T> decl::Pane<E,T> where
     E: Env,
 {
     #[inline]
     pub fn new(orientation: Orientation, childs: T) -> Self {
-        Pane{
+        decl::Pane {
             childs,
             orientation,
-            style: Default::default(),
-            p: PhantomData,
+            style: None,
         }
     }
     
     #[inline]
     pub fn with_style(mut self, style: EStyle<E>) -> Self {
-        self.style = style;
+        self.style = Some(style);
         self
     }
 }
