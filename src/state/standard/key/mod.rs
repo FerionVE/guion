@@ -6,6 +6,7 @@ use crate::env::Env;
 use crate::event::key::PressedKey;
 use crate::newpath::PathResolvusDyn;
 use crate::util::bounds::Offset;
+use crate::widget::id::WidgetID;
 
 pub struct KeyState<E> where E: Env {
     pub pressed: Vec<StdPressedKey<E>>,
@@ -14,7 +15,7 @@ pub struct KeyState<E> where E: Env {
 pub struct StdPressedKey<E> where E: Env {
     pub key: EEKey<E>,
     ///the widget which was selected (focused) where the key press started
-    pub down: Arc<dyn PathResolvusDyn<E>>,
+    pub down: (Arc<dyn PathResolvusDyn<E>>,WidgetID),
     ///the time the key press started
     pub ts: u64,
     pub cursor: Option<Offset>,
@@ -22,7 +23,7 @@ pub struct StdPressedKey<E> where E: Env {
 
 impl<E> KeyState<E> where E: Env {
     #[inline]
-    pub fn down(&mut self, key: EEKey<E>, down: Arc<dyn PathResolvusDyn<E>>, ts: u64, cursor: Option<Offset>) -> Option<StdPressedKey<E>> {
+    pub fn down(&mut self, key: EEKey<E>, down: (Arc<dyn PathResolvusDyn<E>>,WidgetID), ts: u64, cursor: Option<Offset>) -> Option<StdPressedKey<E>> {
         let old = self.up(key.clone());
         self.pressed.push(
             StdPressedKey{
@@ -66,8 +67,8 @@ impl<E> PressedKey<E> for StdPressedKey<E> where E: Env {
         self.key.clone()
     }
     #[inline]
-    fn widget(&self) -> &(dyn PathResolvusDyn<E>+'_) {
-        &*self.down
+    fn widget(&self) -> (&(dyn PathResolvusDyn<E>+'_),WidgetID) {
+        (&*self.down.0, self.down.1)
     }
     #[inline]
     fn ts(&self) -> u64 {

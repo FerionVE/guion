@@ -4,11 +4,12 @@ use crate::aliases::EEKey;
 use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
 use crate::util::bounds::Offset;
+use crate::widget::id::WidgetID;
 
 pub trait PressedKey<E> where E: Env {
     fn key(&self) -> EEKey<E>;
     /// the widget at which the keypress started
-    fn widget(&self) -> &(dyn PathResolvusDyn<E>+'_);
+    fn widget(&self) -> (&(dyn PathResolvusDyn<E>+'_),WidgetID);
     /// the timestamp at which the keypress started
     fn ts(&self) -> u64;
     fn cursor(&self) -> Option<Offset>;

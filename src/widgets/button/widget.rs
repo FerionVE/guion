@@ -71,7 +71,7 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
 
         force_render |= self.rendered_dims != Some(render_props.absolute_bounds.size);
 
-        let mut need_render = force_render;
+        let mut need_render = true;
 
         // render_props.current_std_render_cachors()
         //     .validate(&mut cache.std_render_cachors, &mut need_render, &mut force_render);
@@ -91,12 +91,12 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
             );
         }
 
-        let render_props = render_props.inside_spacing_border();
+        let inner_render_props = render_props.inside_spacing_border();
 
         let vartypes = TestStyleVariant {
-            hovered: ctx.state().is_hovered(path._erase()),
-            selected: ctx.state().is_focused(path._erase()),
-            pressed: self.pressed(path._erase(),ctx).is_some(),
+            hovered: ctx.state().is_hovered(self.id),
+            selected: ctx.state().is_focused(self.id),
+            pressed: self.pressed(ctx).is_some(),
             disabled: self.locked,
             ..Default::default()
         };
@@ -105,7 +105,7 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
             renderer.set_cursor_specific(&StdCursor::Hand.into(),ctx);
         }
 
-        let fill_inner_color = &render_props
+        let fill_inner_color = &inner_render_props
             .with_style_color_type(TestStyleColorType::Fg)
             .with_style_type(vartypes);
 
@@ -115,7 +115,7 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
             //     ctx
             // );
             renderer.fill_border_inner(
-                &render_props
+                &inner_render_props
                     .with_style_border_type(TestStyleBorderType::Component)
                     .with_style_color_type(TestStyleColorType::Border)
                     .with_style_type(vartypes),
@@ -123,13 +123,13 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
             );
         }
 
-        let render_props = render_props
+        let inner_render_props = inner_render_props
             .inside_border_of_type(TestStyleBorderType::Component)
             .fork_with(|p| p.style.bg_color = fill_inner_color.style.current_color() )
             .with_style_type(vartypes);
 
         self.text.render(
-            &SimpleId(ButtonChild).push_on_stack(path), &render_props,
+            &SimpleId(ButtonChild).push_on_stack(path), &inner_render_props,
             renderer,
             force_render,
             cache,
@@ -164,12 +164,12 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
         {
             vali.render = true;
         } else if let Some(ee) = event.query_variant::<MouseUp<E>>(path,&stack) {
-            if ee.key == MatchKeyCode::MouseLeft && path.fwd_compare(&*ee.down_widget) == FwdCompareStat::Equal && ctx.state().is_hovered(path._erase()) && !self.locked {
+            if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.1 == self.id && ctx.state().is_hovered(self.id) && !self.locked {
                 self.trigger(path._erase(), root, ctx);
                 vali.render = true;
             }
         } else if let Some(ee) = event.query_variant::<KbdPress<E>>(path,&stack) {
-            if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && path.fwd_compare(&*ee.down_widget) == FwdCompareStat::Equal {
+            if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.1 == self.id {
                 self.trigger(path._erase(), root, ctx);
             }
         }
@@ -353,13 +353,13 @@ impl<E,S,Tr> Button<E,S,Tr> where
     S: Widget<E>,
     Tr: Trigger<E>,
 {
-    pub fn pressed<'l:'s,'cc: 'l,'s>(&self, path: &(dyn PathStackDyn<E>+'_), ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
-        ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path)
+    pub fn pressed<'l:'s,'cc: 'l,'s>(&self, ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
+        ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft, self.id)
             .or_else(||
-                ctx.state().is_pressed_and_id(MatchKeyCode::KbdReturn,path)
+                ctx.state().is_pressed_and_id(MatchKeyCode::KbdReturn, self.id)
             )
             .or_else(||
-                ctx.state().is_pressed_and_id(MatchKeyCode::KbdSpace,path)
+                ctx.state().is_pressed_and_id(MatchKeyCode::KbdSpace, self.id)
             )
     }
 }

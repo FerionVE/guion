@@ -345,7 +345,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                     }
                     TabulateNextChildResponse::This =>
                         if self.focusable() {
-                            return Ok(TabulateResponse::Done(current_path.to_resolvus()))
+                            return Ok(TabulateResponse::Done((current_path.to_resolvus(),self.id())))
                         }else{
                             // we aren't focusable, repeat
                             child_id = None;
@@ -391,7 +391,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                     // tabulate into enter the targeted child
                     TabulateNextChildResponse::Child(t) => enter_child(t, TabulateOrigin::Enter,ctx),
                     // tabulate to self
-                    TabulateNextChildResponse::This => Ok(TabulateResponse::Done(current_path.to_resolvus())),
+                    TabulateNextChildResponse::This => Ok(TabulateResponse::Done((current_path.to_resolvus(),self.id()))),
                     TabulateNextChildResponse::Leave => Ok(TabulateResponse::Leave),
                 }
             },

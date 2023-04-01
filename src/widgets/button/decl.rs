@@ -92,7 +92,7 @@ impl<E,Text,Tr,TrIm,TrMut> WidgetDecl<E> for Button<E,Text,Tr,TrIm,TrMut> where
 
         w.trigger = self.trigger.clone();
 
-        if self.size.as_ref().map_or(false, |v| v == &w.size ) {
+        if self.size.as_ref().map_or(false, |v| v != &w.size ) {
             w.size = self.size.clone().unwrap();
             w.rendered_dims = None; vali = vali.relayout();
         }

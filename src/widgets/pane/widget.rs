@@ -120,6 +120,10 @@ impl<E,T> Widget<E> for Pane<E,T> where
         }
 
         if route_to_widget.as_ref().map_or(false, |&r| PathResolvus::inner(r).is_none() ) {
+            if !event_mode.childs_after_resolve {
+                // If the event shouldn't broadcast to child widgets of the resolved widget
+                return Invalidation::valid();
+            }
             // If the event now resolved to us, disable route_to_widget and send to all childs
             route_to_widget = None;
         }
@@ -213,7 +217,18 @@ impl<E,T> Widget<E> for Pane<E,T> where
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>
     ) -> Invalidation where Ph: PathStack<E> + ?Sized {
-        self.childs.update(path, route, root, ctx)
+        let vali = self.childs.update(path, route, root, ctx);
+
+        if vali.render {
+            self.rerender_childs = true;
+        }
+        if vali.layout {
+            self.rerender_full = true;
+            self.layouted_constraints = None;
+            self.layouted_dims = None;
+        }
+
+        vali
     }
 
     fn child_dyn(&self, idx: isize) -> Option<WidgetChildDynResult<'_,E>> {

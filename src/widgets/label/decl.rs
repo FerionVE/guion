@@ -68,11 +68,11 @@ impl<E,Text> WidgetDecl<E> for Label<E,Text> where
             w.text = self.text.caption().into_owned();
             w.text_cache = None; w.rendered_dims = None; vali = vali.relayout();
         }
-        if self.align.as_ref().map_or(false, |&v| align_compare(v, w.align) ) {
+        if self.align.as_ref().map_or(false, |&v| !align_compare(v, w.align) ) {
             w.align = self.align.unwrap();
             w.text_cache = None; w.rendered_dims = None; vali = vali.relayout();
         }
-        if self.size.as_ref().map_or(false, |v| v == &w.size ) {
+        if self.size.as_ref().map_or(false, |v| v != &w.size ) {
             w.size = self.size.clone().unwrap();
             w.rendered_dims = None; vali = vali.relayout();
         }

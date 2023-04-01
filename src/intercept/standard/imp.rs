@@ -62,16 +62,25 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
 
         //TODO it can't be! this could never know of the spacing borders, so we can't properly trace the hover here
 
+        (self.access)(ctx).state.mouse.hover_last_seen = Some(widget.id());
+
+        let vali = self.sup._event_direct(widget, path, stack, event, route_to_widget, root, ctx);
+
         let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
-        if event_mode.receive_self && event.query_variant::<MouseMove>(path,stack).is_some() {
-            let hovered = &mut (self.access)(ctx).state.mouse.hovered;
-            if hovered.is_none() || path.fwd_compare(&**hovered.as_ref().unwrap()) != FwdCompareStat::Equal {
-                *hovered = Some(path.to_resolvus());
+        let receive_self = event_mode.receive_self | (event_mode.route_to_childs & event_mode.child_filter_point.is_some());
+
+        if receive_self && event.query_variant::<MouseMove>(path,stack).is_some() {
+            let self_id = widget.id();
+
+            let mouse_state = &mut (self.access)(ctx).state.mouse;
+            if mouse_state.hover_last_seen == Some(self_id) && mouse_state.hovered.as_ref().map_or(true, |(_,id)| self_id != *id ) {
+                mouse_state.prev_hovered = mouse_state.hovered.take();
+                mouse_state.hovered = Some((path.to_resolvus(), self_id));
             }
         }
 
-        self.sup._event_direct(widget, path, stack, event, route_to_widget, root, ctx)
+        vali
         //todo!()
     }
     //#[inline] 
@@ -98,7 +107,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                 RootEvent::KbdDown{key} => {
                     //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = (self.access)(ctx).state.kbd.focused.clone() {
-                        if root_widget.resolve(&*id, root.fork(), ctx).is_err() {
+                        if root_widget.resolve(&*id.0, root.fork(), ctx).is_err() {
                             //drop event if widget is gone
                             return Invalidation::valid();
                         }
@@ -116,7 +125,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(event,ts),//.with_filter_path_strict(id.path),
-                            Some(&*id),
+                            Some(&*id.0),
                             root.fork(), ctx,
                         );
                         /*let event = KbdPress{
@@ -148,7 +157,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(event.clone(),ts),//.with_filter_path_strict(id.path),
-                                Some(&*id),
+                                Some(&*id.0),
                                 root.fork(), ctx,
                             );
                         }
@@ -157,7 +166,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(event,ts),//.with_filter_path_strict(p.down.path),
-                            Some(&*p.down),
+                            Some(&*p.down.0),
                             root, ctx,
                         );
                     }
@@ -176,13 +185,13 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(event,ts),//.with_filter_path_strict(id.path.clone()),
-                                Some(&*id),
+                                Some(&*id.0),
                                 root.fork(), ctx,
                             );
                             let mut do_tab = false;
                             if
                                 key == MatchKeyCode::KbdTab &&
-                                root_widget.resolve(&*id, root.fork(), ctx).map_or(false,|w| w.widget._tabulate_by_tab() )
+                                root_widget.resolve(&*id.0, root.fork(), ctx).map_or(false,|w| w.widget._tabulate_by_tab() )
                             {
                                 do_tab = true;
                             }
@@ -215,14 +224,14 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(MouseDown{key,pos},ts),//.with_filter_path_strict(hovered.path.clone()),
-                                Some(&*hovered),
+                                Some(&*hovered.0),
                                 root.fork(), ctx,
                             );
 
 
                             //passed |= Self::focus(l,hovered.path.clone(),e.1,e.2).unwrap_or(false);
 
-                            let focus = root_widget.resolve(&*hovered, root.fork(), ctx)
+                            let focus = root_widget.resolve(&*hovered.0, root.fork(), ctx)
                                 .map_or(false,|w| w.widget._focus_on_mouse_down() );
 
                             if focus {
@@ -244,12 +253,12 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 down_ts: p.ts
                             };
                             if let Some(hovered) = (self.access)(ctx).state.mouse.hovered.clone() {
-                                if hovered.fwd_compare(&*p.down) != FwdCompareStat::Equal { //TODO is this correct
+                                if hovered.1 != p.down.1 { //TODO is this correct
                                     passed |= root_widget.event_direct(
                                         path,
                                         stack,
                                         &StdVariant::new(event.clone(),ts),//.with_filter_path_strict(hovered.path),
-                                        Some(&*hovered),
+                                        Some(&*hovered.0),
                                         root.fork(), ctx,
                                     );
                                 }
@@ -259,7 +268,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(event,ts),//.with_filter_path_strict(p.down.path),
-                                Some(&*p.down),
+                                Some(&*p.down.0),
                                 root, ctx,
                             );
                         }
@@ -269,16 +278,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                     //set pos
                     (self.access)(ctx).state.mouse.pos = Some(pos);
                     //previous hovered widget
-                    if let Some(p) = (self.access)(ctx).state.mouse.hovered.take() {
-                        //TODO only send MouseLeave and MouseEnter if hovered widget actually changes
-                        passed |= root_widget.event_direct(
-                            path,
-                            stack,
-                            &StdVariant::new(MouseLeave{},ts),//.with_filter_path_strict(p.path),
-                            Some(&*p),
-                            root.fork(), ctx,
-                        );
-                    }
+                    
                     //hover state will be updated as the event passes through the widget tree
                     passed |= self._event_root(
                         root_widget,
@@ -288,16 +288,25 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                         None, root.fork(), ctx,
                     ); // TODO discards filters from current RootEvent
 
-                    if let Some(p) = (self.access)(ctx).state.mouse.hovered.clone() {//TODO optimize clone
+                    if let Some(prev_hovered) = (self.access)(ctx).state.mouse.prev_hovered.take() {
                         passed |= root_widget.event_direct(
                             path,
                             stack,
-                            &StdVariant::new(MouseEnter{},ts),//.with_filter_path_strict(p.path),
-                            Some(&*p),
-                            root, ctx,
+                            &StdVariant::new(MouseLeave{},ts).direct_only(),//.with_filter_path_strict(p.path),
+                            Some(&*prev_hovered.0),
+                            root.fork(), ctx,
                         );
+
+                        if let Some(hovered) = (self.access)(ctx).state.mouse.hovered.clone() {//TODO optimize clone
+                            passed |= root_widget.event_direct(
+                                path,
+                                stack,
+                                &StdVariant::new(MouseEnter{},ts).direct_only(),//.with_filter_path_strict(p.path),
+                                Some(&*hovered.0),
+                                root, ctx,
+                            );
+                        }
                     }
-                    
                 }
                 RootEvent::MouseLeaveWindow{} => {
                     if let Some(p) = (self.access)(ctx).state.mouse.hovered.clone() {//TODO optimize clone
@@ -305,7 +314,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(MouseLeave{},ts),//.with_filter_path_strict(p.path),
-                            Some(&*p),
+                            Some(&*p.0),
                             root, ctx,
                         );
                     }
@@ -337,7 +346,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(TextInput{text},ts),//.with_filter_path_strict(id.path),
-                            Some(&*id),
+                            Some(&*id.0),
                             root, ctx,
                         );
                     }
@@ -348,7 +357,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(MouseScroll{x,y},ts),//.with_filter_path_strict(hovered.path),
-                            Some(&*hovered),
+                            Some(&*hovered.0),
                             root, ctx,
                         );
                     }

@@ -129,6 +129,7 @@ impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone + 'sta
                 receive_self,
                 route_to_childs,
                 child_filter_point,
+                childs_after_resolve: !self.direct_only,
                 //child_filter_sub_path,
                 _p: PhantomData,
             };

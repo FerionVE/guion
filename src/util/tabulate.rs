@@ -5,6 +5,7 @@ use crate::newpath::{PathResolvusDyn, PathStack};
 use crate::queron::Queron;
 use crate::root::RootRef;
 use crate::widget::Widget;
+use crate::widget::id::WidgetID;
 
 #[derive(Clone,Copy)]
 pub enum TabulateDirection { //TODO trait
@@ -20,14 +21,14 @@ pub enum TabulateOrigin<'a,E> where E: Env {
 
 #[derive(Clone)]
 pub enum TabulateResponse<E> where E: Env {
-    Done(Arc<dyn PathResolvusDyn<E>>),
+    Done((Arc<dyn PathResolvusDyn<E>>,WidgetID)),
     Leave,
 }
 
-pub fn tabi<E>(root_widget: &(impl Widget<E> + ?Sized), root_path: &(impl PathStack<E> + ?Sized), root_stack: &(impl Queron<E> + ?Sized), old_path: Arc<dyn PathResolvusDyn<E>>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Arc<dyn PathResolvusDyn<E>>,E::Error> where E: Env { //TODO rename to tabulate_root
+pub fn tabi<E>(root_widget: &(impl Widget<E> + ?Sized), root_path: &(impl PathStack<E> + ?Sized), root_stack: &(impl Queron<E> + ?Sized), old_path: (Arc<dyn PathResolvusDyn<E>>,WidgetID), dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(Arc<dyn PathResolvusDyn<E>>,WidgetID),E::Error> where E: Env { //TODO rename to tabulate_root
     assert!(root_path.inner().is_none());
-    let mut current: Arc<dyn PathResolvusDyn<E>> = old_path;
-    let result = root_widget._tabulate(root_path, root_stack, TabulateOrigin::Resolve( &*current /*TODO strip_prefix*/ ), dir, root.fork(), ctx)?;
+    let mut current: (Arc<dyn PathResolvusDyn<E>>,WidgetID) = old_path;
+    let result = root_widget._tabulate(root_path, root_stack, TabulateOrigin::Resolve( &*current.0 /*TODO strip_prefix*/ ), dir, root.fork(), ctx)?;
     match result {
         TabulateResponse::Done(p) => current = p,
         TabulateResponse::Leave => {

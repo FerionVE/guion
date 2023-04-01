@@ -16,6 +16,7 @@ use crate::root::RootRef;
 use crate::state::CtxStdState;
 use crate::state::standard::StdStdState;
 use crate::widget::Widget;
+use crate::widget::id::WidgetID;
 
 use super::{InterceptBuilder, InterceptStateResolve};
 
@@ -50,13 +51,13 @@ impl<SB,E> StdInterceptLive<SB,E> where SB: InterceptBuilder<E>, E: Env, EEvent<
                 //filter_path_strict: true,
                 _p: PhantomData,
             };
-            root_widget.event_direct(root_path,stack,&event,Some(&*widget),root,ctx)
+            root_widget.event_direct(root_path,stack,&event,Some(&*widget.0),root,ctx)
         } else {
             Invalidation::valid()
         }
     }
 
-    pub fn focus<W,Ph,S>(&self, root_widget: &mut W, root_path: &Ph, path_to_focus: Arc<dyn PathResolvusDyn<E>>, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Invalidation,E::Error> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
+    pub fn focus<W,Ph,S>(&self, root_widget: &mut W, root_path: &Ph, path_to_focus: (Arc<dyn PathResolvusDyn<E>>,WidgetID), stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Invalidation,E::Error> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
         self.unfocus(root_widget,root_path,stack,ts,root.fork(),ctx);
         (self.access)(ctx).state.kbd.focused = Some(path_to_focus.clone());
         
@@ -69,7 +70,7 @@ impl<SB,E> StdInterceptLive<SB,E> where SB: InterceptBuilder<E>, E: Env, EEvent<
             //filter_path_strict: true,
             _p: PhantomData
         };
-        Ok(root_widget.event_direct(root_path,stack,&event,Some(&*path_to_focus),root,ctx))
+        Ok(root_widget.event_direct(root_path,stack,&event,Some(&*path_to_focus.0),root,ctx))
     }
 }
 

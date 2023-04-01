@@ -76,6 +76,13 @@ impl<E,T> WidgetDecl<E> for Pane<E,T> where
 
         vali |= self.childs.update(&mut w.childs, path, route, root, ctx);
 
+        if vali.render {
+            w.rerender_childs = true;
+        }
+        if vali.layout {
+            w.rerender_full = true; w.layouted_constraints = None; w.layouted_dims = None;
+        }
+
         vali
     }
 

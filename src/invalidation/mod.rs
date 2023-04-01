@@ -1,7 +1,7 @@
 use std::ops::{BitOrAssign, BitOr};
 
 #[non_exhaustive]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Invalidation {
     pub render: bool,
     pub layout: bool,
