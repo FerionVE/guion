@@ -80,8 +80,6 @@ where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) where Ph: PathStack<E> + ?Sized {
-        let mut dest = None;
-        
         let op = WidgetDeclCallback::new(
             root.fork(),
             path._erase(),
@@ -90,8 +88,6 @@ where
         );
 
         (self.decl)(op, ctx);
-
-        dest.unwrap()
     }
 
     #[inline]
