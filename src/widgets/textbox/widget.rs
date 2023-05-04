@@ -13,7 +13,7 @@ use crate::text::cursel::{Direction, TxtCurSelBytePos};
 use crate::util::bounds::Offset;
 use crate::widget::cache::{WidgetCache, StdRenderCachors};
 use crate::widget::dyn_tunnel::WidgetDyn;
-use crate::{event_new, impl_traitcast, EventResp};
+use crate::{event_new, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn, PathResolvus};
 use crate::queron::Queron;
 use crate::render::{TestStyleColorType, StdRenderProps, TestStyleBorderType, QueryTestStyle, with_inside_spacing_border, TestStyleVariant};
@@ -350,13 +350,14 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
         true
     }
 
-    impl_traitcast!( dyn WidgetDyn<E>:
-        dyn TextStor<E> => |s| &s.text;
-        // dyn AtomState<E,(u32,u32)> => |s| &s.scroll;
-        // dyn AtomState<E,ETCurSel<E>> => |s| &s.cursor;
-        dyn ITextBox<E> => |s| s;
-        //dyn AsCachor<E> => |s| &s.text;
-    );
+    #[inline]
+    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
+        r.try_respond::<dyn TextStor<E>>(#[inline] || &self.text) ||
+        // r.try_respond::<dyn AtomState<E,(u32,u32)>(#[inline] || &self.scroll) ||
+        // r.try_respond::<dyn AtomState<E,ETCurSel<E>>>(#[inline] || &self.cursor) ||
+        //r.try_respond::<dyn AsCachor<E>>(#[inline] || &self.text);
+        r.try_respond::<dyn ITextBox<E>>(#[inline] || self);
+    }
 }
 
 impl<E,Text,Scroll,Curs,TBUpd> AsWidget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd> where Self: Widget<E>, E: Env {

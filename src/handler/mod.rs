@@ -1,10 +1,8 @@
 //! Handlers can be chained and dispatch events and other stuff
 
-use std::any::TypeId;
-
 use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
-use crate::traitcast::TraitObject;
+use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric};
 use crate::{event_new, EventResp};
 use crate::newpath::{PathResolvusDyn, PathStack};
 use crate::queron::Queron;
@@ -77,13 +75,10 @@ pub trait Handler<E>: 'static where E: Env {
         false
     }
 
-    /// The [`impl_traitcast`] macro should be used to implement this function
-    #[allow(unused)]
-    #[doc(hidden)]
-    #[inline]
-    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
-        None
-    }
+    //TODO separate from WQuery, as this definitely doesn't query the widget behind the handler but the handler itself
+    fn respond_query<'a>(&'a self, t: WQueryResponder<'_,'a,E>);
+
+    fn respond_query_generic<'a,Q,G>(&'a self, t: WQueryResponderGeneric<'_,'a,Q,G,E>) where Q: WQueryGeneric<E> + ?Sized, G: ?Sized;
 }
 
 impl<E> Handler<E> for () where E: Env {
@@ -167,6 +162,11 @@ impl<E> Handler<E> for () where E: Env {
     fn is_tail(&self) -> bool {
         true
     }
+
+    #[inline]
+    fn respond_query<'a>(&'a self, _: WQueryResponder<'_,'a,E>) {}
+    #[inline]
+    fn respond_query_generic<'a,Q,G>(&'a self, _: WQueryResponderGeneric<'_,'a,Q,G,E>) where Q: WQueryGeneric<E> + ?Sized, G: ?Sized {}
 }
 
 impl<E> HandlerBuilder<E> for () where E: Env {

@@ -1,6 +1,6 @@
 use crate::ctx::Context;
 use crate::env::Env;
-use crate::traitcast_for_from_widget;
+use crate::traitcast::WQuery;
 use crate::view::mutor_trait::MutorEndBuilder;
 use crate::widgets::util::state::AtomState;
 
@@ -27,4 +27,6 @@ impl<E,State,Text,TrMut> ICheckBox<E> for CheckBox<E,State,Text,TrMut> where
     }
 }
 
-traitcast_for_from_widget!(ICheckBox<E>);
+impl<E> WQuery<E> for dyn ICheckBox<E> where E: Env {
+    type Result<'a> = &'a (dyn ICheckBox<E> + 'a);
+}

@@ -7,7 +7,7 @@ use std::mem::ManuallyDrop;
 use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::env::Env;
-use crate::traitcast_for_from_widget;
+use crate::traitcast::WQuery;
 
 /// Simple atomic type state
 pub trait AtomState<E,T> where E: Env {
@@ -408,4 +408,6 @@ impl<E,A,F,T> AtomState<E,T> for &AtomStateOnSet<E,A,F,T> where E: Env, A: AtomS
     }
 }
 
-traitcast_for_from_widget!(<T> AtomState<E,T> where T: 'static);
+impl<E,T> WQuery<E> for dyn AtomState<E,T> where E: Env, T: 'static {
+    type Result<'a> = &'a (dyn AtomState<E,T> + 'a);
+}

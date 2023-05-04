@@ -15,7 +15,7 @@ use crate::state::CtxStdState;
 use crate::text::cursel::{Direction, TxtCurSel};
 use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
 use crate::text::stor::TextStor;
-use crate::traitcast_for_from_widget;
+use crate::traitcast::WQuery;
 use crate::util::bounds::{Bounds, Offset};
 use crate::view::mutor_trait::MutorEndBuilder;
 use crate::widget::cache::ValidationStat;
@@ -156,7 +156,9 @@ impl<E,Text,Scroll,Curs,TBUpd> ITextBox<E> for TextBox<'_,E,Text,Scroll,Curs,TBU
     }
 }
 
-traitcast_for_from_widget!(ITextBox<E>);
+impl<E> WQuery<E> for dyn ITextBox<E> where E: Env {
+    type Result<'a> = &'a (dyn ITextBox<E> + 'a);
+}
 
 impl<E,Text,Scroll,Curs,TBUpd> TextBox<'_,E,Text,Scroll,Curs,TBUpd> where
     E: Env,

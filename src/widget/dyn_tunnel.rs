@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use crate::event_new::downcast_map::EventDowncastMap;
 use crate::queron::Queron;
-use crate::traitcast::TraitObject;
+use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric};
 use crate::util::error::GuionResolveErrorChildInfo;
 use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, TabulateOrigin, TabulateNextChildResponse, TabulateResponse};
 use crate::{EventResp, ProtectedReturn, event_new};
@@ -147,7 +147,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn debug_type_name_dyn(&self, dest: &mut Vec<&'static str>);
     fn debugged_type_name_dyn(&self) -> Vec<&'static str>;
 
-    unsafe fn _as_trait_ref_dyn(&self, t: TypeId) -> Option<TraitObject>;
+    fn respond_query_dyn<'a>(&'a self, t: WQueryResponder<'_,'a,E>);
 
     fn erase_dyn<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's;
 
@@ -348,8 +348,8 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         self.debugged_type_name()
     }
     #[inline]
-    unsafe fn _as_trait_ref_dyn(&self, t: TypeId) -> Option<TraitObject> {
-        self._as_trait_ref(t)
+    fn respond_query_dyn<'a>(&'a self, t: WQueryResponder<'_,'a,E>) {
+        self.respond_query(t)
     }
     #[inline]
     fn erase_dyn<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {
@@ -608,8 +608,12 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         self.debugged_type_name_dyn()
     }
     #[inline]
-    unsafe fn _as_trait_ref(&self, t: TypeId) -> Option<TraitObject> {
-        self._as_trait_ref_dyn(t)
+    fn respond_query<'a>(&'a self, t: WQueryResponder<'_,'a,E>) {
+        self.respond_query_dyn(t)
+    }
+    #[inline]
+    fn respond_query_generic<'a,Q,G>(&'a self, _: WQueryResponderGeneric<'_,'a,Q,G,E>) where Q: WQueryGeneric<E> + ?Sized, G: ?Sized {
+        //TODO generic query not supported on dyn tunnel
     }
     #[inline]
     fn erase<'s>(&self) -> &(dyn WidgetDyn<E>+'s) where Self: 's {

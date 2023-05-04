@@ -55,8 +55,8 @@ where
     LeftTarget: MuTarget<E> + ?Sized,
     RightView: View<E>,
     MutorFn: for<'s,'ss,'c,'cc> Fn(
-        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut <RightView::Mutarget as MuTarget<E>>::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut <RightView::Mutarget as MuTarget<E>>::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         (),
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -83,7 +83,7 @@ where
 //     RightView: View<E>,
 //     for<'a> <RightView::Mutarget as MuTarget<E>>::Mutable<'a>: Sized,
 //     MutorFn: for<'s,'ss,'c,'cc> Fn(
-//         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+//         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
 //         (),
 //         &'c mut E::Context<'cc>
 //     ) -> ResolveResult<<RightView::Mutarget as MuTarget<E>>::Mutable<'ss>> + Clone + Send + Sync + 'static
@@ -109,7 +109,7 @@ where
 //     LeftTarget: MuTarget<E> + ?Sized,
 //     RightView: View<E>,
 //     MutorFn: for<'s,'ss,'c,'cc> Fn(
-//         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+//         ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
 //         (),
 //         &'c mut E::Context<'cc>
 //     ) -> ResolveResult<&'s mut <RightView::Mutarget as MuTarget<E>>::Mutable<'ss>> + Clone + Send + Sync + 'static
@@ -135,8 +135,8 @@ where
     LeftTarget: MuTarget<E> + ?Sized,
     RightView: View<E>,
     MutorFn: for<'s,'ss,'c,'cc> Fn(
-        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut <RightView::Mutarget as MuTarget<E>>::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        &'s mut LeftTarget::Mutable<'ss>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut <RightView::Mutarget as MuTarget<E>>::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         (),
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -162,8 +162,8 @@ where
 //     LeftTarget: MuTarget<E> + ?Sized,
 //     RightView: View<E>,
 //     MutorFn: for<'s,'ss,'c,'cc> Fn(
-//         &'s mut LeftTarget::Mutable<'ss>,&'ss (),
-//         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut <RightView::Mutarget as MuTarget<E>>::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+//         &'s mut LeftTarget::Mutable<'ss>,
+//         &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut <RightView::Mutarget as MuTarget<E>>::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
 //         (),
 //         &'c mut E::Context<'cc>
 //     ) + Clone + Send + Sync + 'static
@@ -190,7 +190,7 @@ where
 //     RightView: View<E>,
 //     for<'a> <RightView::Mutarget as MuTarget<E>>::Mutable<'a>: Sized,
 //     MutorFn: for<'s,'ss,'c,'cc> Fn(
-//         &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+//         &'s mut LeftTarget::Mutable<'ss>,
 //         (),
 //         &'c mut E::Context<'cc>
 //     ) -> ResolveResult<<RightView::Mutarget as MuTarget<E>>::Mutable<'ss>> + Clone + Send + Sync + 'static
@@ -218,7 +218,7 @@ where
 //     RightTarget: MuTarget<E> + ?Sized,
 //     for<'a> RightTarget::Mutable<'a>: Sized,
 //     MutorFn: for<'s,'ss,'c,'cc> Fn(
-//         &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+//         &'s mut LeftTarget::Mutable<'ss>,
 //         (),
 //         &'c mut E::Context<'cc>
 //     ) -> ResolveResult<RightTarget::Mutable<'ss>> + Clone + Send + Sync + 'static
@@ -244,7 +244,7 @@ where
 //     LeftTarget: MuTarget<E> + ?Sized,
 //     RightView: View<E>,
 //     MutorFn: for<'s,'ss,'c,'cc> Fn(
-//         &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+//         &'s mut LeftTarget::Mutable<'ss>,
 //         (),
 //         &'c mut E::Context<'cc>
 //     ) -> ResolveResult<&'s mut <RightView::Mutarget as MuTarget<E>>::Mutable<'ss>> + Clone + Send + Sync + 'static

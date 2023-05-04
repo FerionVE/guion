@@ -67,7 +67,7 @@ impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where
         T: MutorToBuilder<(),DynAtomStateMutTarget<bool>,E>
     {
         self.with_update_if(
-            mutor, (), |state,_,value,ctx| {
+            mutor, (), |state,value,ctx| {
                 //TODO ResolveResult handling
                 state.set(value,ctx);
             }
@@ -81,7 +81,7 @@ impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             bool,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
@@ -98,14 +98,14 @@ impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             &'c mut E::Context<'cc>
         ) -> &'s mut (dyn AtomStateMut<E,bool> + 's) + Clone + Send + Sync + 'static
     {
         self.with_update_if(
             left_mutor, left_arg,
-            move |state,_,value,ctx| {
-                let state = (right_fn)(state,&(),ctx);
+            move |state,value,ctx| {
+                let state = (right_fn)(state,ctx);
                 //TODO ResolveResult handling
                 state.set(value,ctx);
             }

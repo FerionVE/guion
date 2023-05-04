@@ -2,9 +2,10 @@ use std::marker::PhantomData;
 
 use crate::aliases::{ESize, EStyle};
 use crate::cachor::AsCachor;
+use crate::traitcast::WQuery;
 use crate::view::mut_target::MuTarget;
 use crate::view::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
-use crate::{constraint, traitcast_for_from_widget};
+use crate::constraint;
 use crate::env::Env;
 use crate::text::stor::TextStor;
 
@@ -104,7 +105,7 @@ impl<E,Text,Tr,TrMut> Button<E,Text,Tr,TrMut> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             (),
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
@@ -177,4 +178,6 @@ impl<T,E> Trigger<E> for T where T: Fn(E::RootRef<'_>,&mut E::Context<'_>), E: E
     }
 }
 
-traitcast_for_from_widget!(Trigger<E>);
+impl<E> WQuery<E> for dyn Trigger<E> where E: Env {
+    type Result<'a> = &'a (dyn Trigger<E> + 'a);
+}

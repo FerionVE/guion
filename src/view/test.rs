@@ -39,8 +39,8 @@ impl<'z,E> View<'z,E> for TestRoot where
     fn view<'d,MutFn,DispatchFn,R>(&self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutFn: for<'s,'c,'cc> Fn(
-            E::RootMut<'s>,&'s (),
-            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            E::RootMut<'s>,
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutFn,R,E>,
@@ -87,8 +87,8 @@ impl<'z,E> View<'z,E> for A where
     fn view<'d,MutFn,DispatchFn,R>(&self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutFn: for<'s,'c,'cc> Fn(
-            E::RootMut<'s>,&'s (),
-            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            E::RootMut<'s>,
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutFn,R,E>,
@@ -133,8 +133,8 @@ impl<'z,E> View<'z,E> for B where
     fn view<'d,MutFn,DispatchFn,R>(&self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutFn: for<'s,'c,'cc> Fn(
-            E::RootMut<'s>,&'s (),
-            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            E::RootMut<'s>,
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutFn,R,E>,
@@ -172,8 +172,8 @@ impl<'z,E> View<'z,E> for ViewC<'z> where
     fn view<'d,MutFn,DispatchFn,R>(&self, dispatch: DispatchFn, remut: MutFn, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> R
     where
         MutFn: for<'s,'c,'cc> Fn(
-            E::RootMut<'s>,&'s (),
-            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'iss (),&'c mut E::Context<'cc>)),
+            E::RootMut<'s>,
+            &mut (dyn for<'is,'iss> FnMut(ResolveResult<&'is mut Self::Mutable<'iss>>,&'c mut E::Context<'cc>)),
             &'c mut E::Context<'cc>
         ) + Clone + 'static,
         DispatchFn: ViewDispatch<'z,Self,MutFn,R,E>,
@@ -227,7 +227,7 @@ impl<'z,E> View<'z,E> for ViewC<'z> where
 //                 |mut a,_,cb,root| {
 //                     let _ = crate::root::RootMut::<TestEnv>::fork(&mut a).a.b.c.d; //test
 //                     //Ok(a)
-//                     (cb)(Ok(a),&(),root)
+//                     (cb)(Ok(a),root)
 //                 },
 //                 &dom,
 //                 &mut ctx,
@@ -237,7 +237,7 @@ impl<'z,E> View<'z,E> for ViewC<'z> where
 //         assert_eq!(dom.a.b.c.d, 23);
 
 //         for i in std::mem::replace(&mut ctx.v, Vec::new()) {
-//             i(&mut dom,&(),&mut ctx);
+//             i(&mut dom,&mut ctx);
 //         }
 
 //         assert_eq!(dom.a.b.c.d, 42);

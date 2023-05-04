@@ -95,7 +95,7 @@ pub trait MutorTo<Args,Target,E>: Send + Sync + 'static where E: Env, Args: Clon
     fn with_mutor_cb<'s,'c,'cc>(
         &mut self,
         root: E::RootMut<'s>,
-        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Target::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Target::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
         ctx: &'c mut E::Context<'cc>,
     ) where 'cc: 'c;
@@ -120,8 +120,8 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
         RightArgs: Clone + Sized + Send + Sync + 'static,
         NewTarget: MuTarget<E> + ?Sized,
         RightFn: for<'s,'ss,'c,'cc> FnMut(
-            ResolveResult<&'s mut Target::Mutable<'ss>>,&'ss (),
-            &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+            ResolveResult<&'s mut Target::Mutable<'ss>>,
+            &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
             RightArgs,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
@@ -137,8 +137,8 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
         RightArgs: Clone + Sized + Send + Sync + 'static,
         NewTarget: MuTarget<E> + ?Sized,
         RightFn: for<'s,'ss,'c,'cc> FnMut(
-            &'s mut Target::Mutable<'ss>,&'ss (),
-            &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+            &'s mut Target::Mutable<'ss>,
+            &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
             RightArgs,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
@@ -153,7 +153,7 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> FnMut(
-            ResolveResult<&'s mut Target::Mutable<'ss>>,&'ss (),
+            ResolveResult<&'s mut Target::Mutable<'ss>>,
             RightArgs,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
@@ -168,7 +168,7 @@ pub trait MutorToBuilderExt<Args,Target,E>: MutorToBuilder<Args,Target,E> + Send
         E: Env,
         RightArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> FnMut(
-            &'s mut Target::Mutable<'ss>,&'ss (),
+            &'s mut Target::Mutable<'ss>,
             RightArgs,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
@@ -195,8 +195,8 @@ where
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static;
@@ -211,8 +211,8 @@ where
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -230,11 +230,11 @@ where
         let larg = self.1.clone();
         let mut fun = self.2.clone();
 
-        MutorForTarget::new(#[inline] move |root,_,callback,rarg: RightArgs,ctx| {
+        MutorForTarget::new(#[inline] move |root,callback,rarg: RightArgs,ctx| {
             left.with_mutor_cb(
                 root,
-                &mut |med,_,ctx| {
-                    (fun)(med,&(),callback,rarg.clone(),ctx)
+                &mut |med,ctx| {
+                    (fun)(med,callback,rarg.clone(),ctx)
                 },
                 larg.clone(),ctx
             )
@@ -252,8 +252,8 @@ where
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -275,8 +275,8 @@ where
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        &'s mut LeftTarget::Mutable<'ss>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static;
@@ -291,8 +291,8 @@ where
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        &'s mut LeftTarget::Mutable<'ss>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -310,13 +310,13 @@ where
         let larg = self.1.clone();
         let mut fun = self.2.clone();
 
-        MutorForTarget::new(#[inline] move |root,_,callback,rarg: RightArgs,ctx| {
+        MutorForTarget::new(#[inline] move |root,callback,rarg: RightArgs,ctx| {
             left.with_mutor_cb(
                 root,
-                &mut |med,_,ctx| {
+                &mut |med,ctx| {
                     match med {
-                        Ok(v) => (fun)(v,&(),callback,rarg.clone(),ctx),
-                        Err(e) => (callback)(Err(e),&(),ctx),
+                        Ok(v) => (fun)(v,callback,rarg.clone(),ctx),
+                        Err(e) => (callback)(Err(e),ctx),
                     }
                 },
                 larg.clone(),ctx
@@ -335,8 +335,8 @@ where
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightTarget: MuTarget<E> + ?Sized,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        &'s mut LeftTarget::Mutable<'ss>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut RightTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -357,7 +357,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static;
@@ -371,7 +371,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -389,11 +389,11 @@ where
         let larg = self.1.clone();
         let mut fun = self.2.clone();
 
-        MutorEnde::new(#[inline] move |root,_,rarg: RightArgs,ctx| {
+        MutorEnde::new(#[inline] move |root,rarg: RightArgs,ctx| {
             left.with_mutor_cb(
                 root,
-                &mut |med,_,ctx| {
-                    (fun)(med,&(),rarg.clone(),ctx)
+                &mut |med,ctx| {
+                    (fun)(med,rarg.clone(),ctx)
                 },
                 larg.clone(),ctx
             )
@@ -410,7 +410,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,&'ss (),
+        ResolveResult<&'s mut LeftTarget::Mutable<'ss>>,
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -431,7 +431,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+        &'s mut LeftTarget::Mutable<'ss>,
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static;
@@ -445,7 +445,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+        &'s mut LeftTarget::Mutable<'ss>,
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -463,12 +463,12 @@ where
         let larg = self.1.clone();
         let mut fun = self.2.clone();
 
-        MutorEnde::new(#[inline] move |root,_,rarg: RightArgs,ctx| {
+        MutorEnde::new(#[inline] move |root,rarg: RightArgs,ctx| {
             left.with_mutor_cb(
                 root,
-                &mut |med,_,ctx| {
+                &mut |med,ctx| {
                     match med {
-                        Ok(v) => (fun)(v,&(),rarg.clone(),ctx),
+                        Ok(v) => (fun)(v,rarg.clone(),ctx),
                         Err(e) => {}, //TODO detect lost mutor debug mode
                     }
                 },
@@ -487,7 +487,7 @@ where
     LeftArgs: Clone + Sized + Send + Sync + 'static ,
     RightArgs: Clone + Sized + Send + Sync + 'static,
     RightFn: for<'s,'ss,'c,'cc> FnMut(
-        &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+        &'s mut LeftTarget::Mutable<'ss>,
         RightArgs,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -505,8 +505,8 @@ where
     Targ: MuTarget<E> + ?Sized,
     Args: Sized + Send + Sync + 'static,
     MutorFn: for<'s,'c,'cc> FnMut(
-        E::RootMut<'s>,&'s (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        E::RootMut<'s>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         Args,
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static;
@@ -518,8 +518,8 @@ where
     Targ: MuTarget<E> + ?Sized,
     Args: Sized + Send + Sync + 'static,
     MutorFn: for<'s,'c,'cc> FnMut(
-        E::RootMut<'s>,&'s (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        E::RootMut<'s>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         Args,
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static
@@ -536,8 +536,8 @@ where
     Targ: MuTarget<E> + ?Sized,
     Args: Clone + Sized + Send + Sync + 'static,
     MutorFn: for<'s,'c,'cc> FnMut(
-        E::RootMut<'s>,&'s (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        E::RootMut<'s>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         Args,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -560,8 +560,8 @@ where
     Targ: MuTarget<E> + ?Sized,
     Args: Clone + Sized + Send + Sync + 'static,
     MutorFn: for<'s,'c,'cc> FnMut(
-        E::RootMut<'s>,&'s (),
-        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        E::RootMut<'s>,
+        &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         Args,
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static
@@ -570,11 +570,11 @@ where
     fn with_mutor_cb<'s,'c,'cc>(
         &mut self,
         root: E::RootMut<'s>,
-        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Targ::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
         ctx: &'c mut E::Context<'cc>,
     ) where 'cc: 'c {
-        (self.0)(root,&(),callback,args,ctx)
+        (self.0)(root,callback,args,ctx)
     }
 }
 
@@ -584,7 +584,7 @@ where
     E: Env,
     Args: Clone + Send + Sync + Sized,
     MutorFn: for<'s,'c,'cc> FnMut(
-        E::RootMut<'s>,&'s (),
+        E::RootMut<'s>,
         Args,
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static;
@@ -595,7 +595,7 @@ where
     E: Env,
     Args: Clone + Send + Sync + Sized,
     MutorFn: for<'s,'c,'cc> FnMut(
-        E::RootMut<'s>,&'s (),
+        E::RootMut<'s>,
         Args,
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static
@@ -612,7 +612,7 @@ where
     E: Env,
     Args: Clone + Sized + Send + Sync + 'static,
     MutorFn: for<'s,'c,'cc> FnMut(
-        E::RootMut<'s>,&'s (),
+        E::RootMut<'s>,
         Args,
         &'c mut E::Context<'cc>
     ) + Clone + Send + Sync + 'static
@@ -634,7 +634,7 @@ where
     E: Env,
     Args: Clone + Sized + Send + Sync + 'static,
     MutorFn: for<'s,'c,'cc> FnMut(
-        E::RootMut<'s>,&'s (),
+        E::RootMut<'s>,
         Args,
         &'c mut E::Context<'cc>
     ) + Send + Sync + 'static
@@ -646,7 +646,7 @@ where
         args: Args,
         ctx: &'c mut E::Context<'cc>,
     ) where 'cc: 'c {
-        (self.0)(root,&(),args,ctx);
+        (self.0)(root,args,ctx);
     }
 }
 
@@ -666,7 +666,7 @@ impl<Args,Target,T,E> MutorTo<Args,Target,E> for Box<T> where T: MutorTo<Args,Ta
     fn with_mutor_cb<'s,'c,'cc>(
         &mut self,
         root: <E as Env>::RootMut<'s>,
-        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Target::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut Target::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
         ctx: &'c mut <E as Env>::Context<'cc>,
     ) where 'cc: 'c {
@@ -777,7 +777,7 @@ where
     fn with_mutor_cb<'s,'c,'cc>(
         &mut self,
         root: <E as Env>::RootMut<'s>,
-        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'iss (),&'ic mut E::Context<'icc>)),
+        callback: &mut (dyn for<'is,'iss,'ic,'icc> FnMut(ResolveResult<&'is mut NewTarget::Mutable<'iss>>,&'ic mut E::Context<'icc>)),
         args: Args,
         ctx: &'c mut <E as Env>::Context<'cc>,
     ) where 'cc: 'c {

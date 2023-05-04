@@ -22,7 +22,7 @@ macro_rules! messaged {
             let __id = ($id);
             #[inline] move |$root, _: &'_ (), $ctx: &'_ mut _| {
                 ($mutor)(
-                    $root,&(),
+                    $root,
                     &mut move |__resolved,_,$ctx| {
                         let mut __resolved = __resolved.expect("TODO");
                         let __msg = $id;
@@ -41,7 +41,7 @@ macro_rules! messaged {
             let __id = ($id);
             #[inline] move |$root, _: &'_ (), __ctx: &'_ mut _ | {
                 ($mutor)(
-                    $root,&(),
+                    $root,
                     &mut move |__resolved,_,$ctx| {
                         let mut __resolved = __resolved.expect("TODO");
                         let __msg = $id;
@@ -60,7 +60,7 @@ macro_rules! messaged {
             let __id = ($id);
             #[inline] move |$root, _: &'_ (), $ctx: &'_ mut _ ,$($extra_in $(: $extra_in_ty)?),*| {
                 ($mutor)(
-                    $root,&(),
+                    $root,
                     &mut move |__resolved,_,$ctx| {
                         let mut __resolved = __resolved.expect("TODO");
                         let __msg = $id;
@@ -79,7 +79,7 @@ macro_rules! messaged {
             let __id = ($id);
             #[inline] move |$root, _: &'_ (), __ctx: &'_ mut _ ,$($extra_in $(: $extra_in_ty)?),*| {
                 ($mutor)(
-                    $root,&(),
+                    $root,
                     &mut move |__resolved,_,$ctx| {
                         let mut __resolved =__resolved.expect("TODO");
                         let __msg = $id;
@@ -98,7 +98,7 @@ macro_rules! messaged {
             let __id = ($id);
             #[inline] move |__root, _: &'_ (), __ctx: &'_ mut _ ,$($extra_in $(: $extra_in_ty)?),*| {
                 ($mutor)(
-                    $root,&(),
+                    $root,
                     &mut move |__resolved,_,$ctx| {
                         let mut __resolved = __resolved.expect("TODO");
                         let __msg = $id;
@@ -117,7 +117,7 @@ macro_rules! messaged {
             let __id = ($id);
             #[inline] move |__root, _: &'_ (), __ctx: &'_ mut _| {
                 ($mutor)(
-                    $root,&(),
+                    $root,
                     &mut move |__resolved,_,$ctx| {
                         let mut __resolved = __resolved.expect("TODO");
                         let __msg = $id;

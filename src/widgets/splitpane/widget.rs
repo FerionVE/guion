@@ -13,7 +13,7 @@ use crate::layout::Orientation;
 use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::style::standard::cursor::StdCursor;
-use crate::{event_new, EventResp, impl_traitcast};
+use crate::{event_new, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn, FixedIdx, PathResolvus, PathFragment};
 use crate::queron::Queron;
 use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, widget_size_inside_border_type, with_inside_spacing_border, TestStyleVariant};
@@ -391,9 +391,10 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         false
     }
 
-    impl_traitcast!( dyn WidgetDyn<E>:
-        dyn AtomState<E,f32> => |s| &s.state;
-    );
+    #[inline]
+    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
+        r.try_respond::<dyn AtomState<E,f32>>(#[inline] || &self.state);
+    }
 }
 
 impl<E,L,R,V,TrMut> SplitPane<E,L,R,V,TrMut> where

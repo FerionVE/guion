@@ -145,7 +145,7 @@ impl<'w,E,Text,Scroll,Curs,TBUpd> TextBox<'w,E,Text,Scroll,Curs,TBUpd> where
         LeftTarget: MuTarget<E> + ?Sized,
         LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,&'ss (),
+            &'s mut LeftTarget::Mutable<'ss>,
             TextBoxUpdate<E>,
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static

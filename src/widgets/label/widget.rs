@@ -5,7 +5,7 @@ use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::layout::Gonstraints;
 use crate::widget::as_widget::AsWidget;
-use crate::{event_new, impl_traitcast, EventResp};
+use crate::{event_new, EventResp};
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::queron::Queron;
 use crate::render::{StdRenderProps, TestStyleColorType};
@@ -157,10 +157,11 @@ impl<E,Text> Widget<E> for Label<E,Text> where
         false
     }
 
-    impl_traitcast!( dyn WidgetDyn<E>:
-        //dyn AsCachor<E> => |s| &s.text;
-        dyn TextStor<E> => |s| &s.text;
-    );
+    #[inline]
+    fn respond_query<'a>(&'a self, mut r: crate::traitcast::WQueryResponder<'_,'a,E>) {
+        //r.try_respond::<dyn AsCachor<E>>(#[inline] || &self.test) ||
+        r.try_respond::<dyn TextStor<E>>(#[inline] || &self.text);
+    }
 }
 
 impl<E,Text> Label<E,Text> where
