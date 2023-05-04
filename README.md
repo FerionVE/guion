@@ -28,4 +28,4 @@ Goals:
 - Tame complexity, provide efficient abstractions to make life easier
 
 Related Project:
-- [guion_sdl2](https://github.com/FerionVE/guion_sdl2) for a prototype backend implementation
+- [guion_druid_shell](https://github.com/FerionVE/guion_druid_shell) for a prototype backend implementation
