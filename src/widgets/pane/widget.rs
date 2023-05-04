@@ -1,7 +1,10 @@
 use std::marker::PhantomData;
 use std::ops::Range;
 
+use crate::event_new::Event;
 use crate::invalidation::Invalidation;
+use crate::pathslice::{NewPathStack, PathSliceRef, PathSliceMatch};
+use crate::queron::dyn_tunnel::QueronDyn;
 use crate::queron::query::Query;
 use crate::root::RootRef;
 use crate::widget::id::WidgetID;
@@ -48,21 +51,21 @@ impl<E,T> Widget<E> for Pane<E,T> where
         self.id
     }
 
-    fn _render<P,Ph>(
+    fn _render(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        let render_props = StdRenderProps::new(stack);
+    ) {
+        let render_props = stack;
         let render_props_inside = render_props.inside_spacing_border();
 
         if self.layouted_dims != Some(render_props_inside.absolute_bounds.size) || self.layouted_constraints.is_none() {
-            self.layouted_constraints = Some(self.childs.constraints(Some(render_props_inside.absolute_bounds.size), self.orientation, path, stack, root.fork(), ctx));
+            self.layouted_constraints = Some(self.childs.constraints(Some(render_props_inside.absolute_bounds.size), self.orientation, path, &render_props, root.fork(), ctx));
             self.layouted_dims = Some(render_props_inside.absolute_bounds.size);
             self.rerender_full = true;
             self.rerender_childs = true;
@@ -94,15 +97,15 @@ impl<E,T> Widget<E> for Pane<E,T> where
         //TODO FIX viewport
     }
 
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &mut self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt,
-        mut route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        mut route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         let stack = with_inside_spacing_border(stack);
 
         let bounds = QueryCurrentBounds.query_in(&stack).unwrap();
@@ -119,7 +122,7 @@ impl<E,T> Widget<E> for Pane<E,T> where
             self.rerender_childs = true;
         }
 
-        if route_to_widget.as_ref().map_or(false, |&r| PathResolvus::inner(r).is_none() ) {
+        if route_to_widget.as_ref().map_or(false, |&r| r.fetch().is_empty() ) {
             if !event_mode.childs_after_resolve {
                 // If the event shouldn't broadcast to child widgets of the resolved widget
                 return Invalidation::valid();
@@ -142,13 +145,13 @@ impl<E,T> Widget<E> for Pane<E,T> where
         vali
     }
 
-    fn _size<P,Ph>(
+    fn _size(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
             |stack| //TODO no bounds available in Widget::size
@@ -156,8 +159,8 @@ impl<E,T> Widget<E> for Pane<E,T> where
         )
     }
 
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    // fn child_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
     //     //TODO holy stack
     //     // let mut child_sizes = Vec::with_capacity(self.childs());
 
@@ -178,19 +181,16 @@ impl<E,T> Widget<E> for Pane<E,T> where
         0 .. self.childs.len() as isize
     }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: isize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         self.childs._call_tabulate_on_child_idx(idx as usize, path, stack, op, dir, root, ctx)
     }
 
@@ -198,25 +198,25 @@ impl<E,T> Widget<E> for Pane<E,T> where
         false
     }
 
-    fn end<Ph>(
+    fn end(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         self.childs.end(path, root, ctx)
     }
 
     #[inline]
     fn respond_query<'a>(&'a self, _: crate::traitcast::WQueryResponder<'_,'a,E>) {}
 
-    fn update<Ph>(
+    fn update(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: crate::widget_decl::route::UpdateRoute<'_,E>,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         let vali = self.childs.update(path, route, root, ctx);
 
         if vali.render {
@@ -247,11 +247,11 @@ impl<E,T> Widget<E> for Pane<E,T> where
         self.childs.idx_range_dyn_mut(range.start as usize .. range.end as usize, &mut |r| callback(r.into()) )
     }
 
-    fn resolve_child_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
-        if let Some(idx) = path.try_fragment::<FixedIdx>() {
+    fn resolve_child_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
+        if let PathSliceMatch::Match(idx, path_inner) = path.fetch().slice_forward::<FixedIdx>() {
             self.childs.by_index_dyn(idx.0 as usize).map(|r| WidgetChildResolveDynResult {
                 idx: idx.0,
-                sub_path: path.inner().unwrap(),
+                sub_path: path_inner,
                 widget_id: r.widget_id,
                 widget: r.widget,
             })
@@ -260,11 +260,11 @@ impl<E,T> Widget<E> for Pane<E,T> where
         }
     }
 
-    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
-        if let Some(idx) = path.try_fragment::<FixedIdx>() {
+    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
+        if let PathSliceMatch::Match(idx, path_inner) = path.fetch().slice_forward::<FixedIdx>() {
             self.childs.by_index_dyn_mut(idx.0 as usize).map(|r| WidgetChildResolveDynResultMut {
                 idx: idx.0,
-                sub_path: path.inner().unwrap(),
+                sub_path: path_inner,
                 widget_id: r.widget_id,
                 widget: r.widget,
             })
@@ -273,14 +273,14 @@ impl<E,T> Widget<E> for Pane<E,T> where
         }
     }
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn std::any::Any,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         self.childs.send_mutation(path, resolve, args, root, ctx)
     }
 

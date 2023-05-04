@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use crate::env::Env;
 use crate::event::variant::Variant;
 use crate::newpath::PathStack;
+use crate::pathslice::NewPathStack;
 use crate::queron::Queron;
 use crate::queron::query::{QueryStack, Query};
 use crate::util::bounds::Offset;
@@ -15,7 +16,7 @@ use super::filter::{QueryVariant, QueryStdEventMode, StdEventMode};
 pub struct StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
     pub variant: V,
     pub ts: u64,
-    //pub filter_path: Option<Arc<dyn PathResolvusDyn<E>>>,
+    //pub filter_path: Option<PathSliceOwned>,
     //pub filter_path_strict: bool,
     pub direct_only: bool,
     pub filter_point: Option<Offset>,
@@ -43,13 +44,13 @@ impl<V,E> StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
         Self { variant, ts, filter_point: None, direct_only: false, _p: PhantomData }
     }
     // #[inline]
-    // pub fn with_filter_path(mut self, filter_path: Arc<dyn PathResolvusDyn<E>>) -> Self {
+    // pub fn with_filter_path(mut self, filter_path: PathSliceOwned) -> Self {
     //     self.filter_path = Some(filter_path);
     //     self.filter_path_strict = false;
     //     self
     // }
     // #[inline]
-    // pub fn with_filter_path_strict(mut self, filter_path: Arc<dyn PathResolvusDyn<E>>) -> Self {
+    // pub fn with_filter_path_strict(mut self, filter_path: PathSliceOwned) -> Self {
     //     self.filter_path = Some(filter_path);
     //     self.filter_path_strict = true;
     //     self
@@ -74,7 +75,7 @@ impl<V,E> StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
 impl<V,E> super::Event<E> for StdVariant<V,E> where V: Variant<E> + Clone + 'static, E: Env {
     type WithPrefetch<R> = R where R: Queron<E>;
 
-    fn _query<'a,Q,Ph,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, path: &Ph, stack: &S) where Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Self: 'a {
+    fn _query<'a,Q,S>(&'a self, mut builder: QueryStack<'_,'a,Q,E>, path: &mut NewPathStack, stack: &S) where S: Queron<E> + ?Sized, Self: 'a {
         if let Some((_,builder)) = builder.downcast::<'_,QueryVariant<V>>() {
             *builder = Some(&self.variant);
         } else if let Some((_,builder)) = builder.downcast::<'_,QueryStdEventMode>() {

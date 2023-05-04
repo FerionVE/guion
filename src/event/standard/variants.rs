@@ -8,6 +8,7 @@ use crate::env::Env;
 use crate::event::Destination;
 use crate::event::variant::Variant;
 use crate::newpath::PathResolvusDyn;
+use crate::pathslice::PathSliceOwned;
 use crate::util::bounds::{Bounds, Offset, Dims};
 use crate::widget::id::WidgetID;
 
@@ -18,7 +19,7 @@ pub struct KbdDown<E> where E: Env {
 #[derive(Clone)]
 pub struct KbdUp<E> where E: Env {
     pub key: EEKey<E>,
-    pub down_widget: (Arc<dyn PathResolvusDyn<E>>,WidgetID),
+    pub down_widget: (PathSliceOwned,WidgetID),
     pub down_ts: u64,
 }
 impl<E> Debug for KbdUp<E> where E: Env {
@@ -30,7 +31,7 @@ impl<E> Debug for KbdUp<E> where E: Env {
 #[derive(Clone)]
 pub struct KbdPress<E> where E: Env {
     pub key: EEKey<E>,
-    pub down_widget: (Arc<dyn PathResolvusDyn<E>>,WidgetID),
+    pub down_widget: (PathSliceOwned,WidgetID),
     pub down_ts: u64,
 }
 impl<E> Debug for KbdPress<E> where E: Env {
@@ -54,7 +55,7 @@ pub struct MouseUp<E> where E: Env {
     pub key: EEKey<E>,
     pub pos: Offset,
     pub down_pos: Offset,
-    pub down_widget: (Arc<dyn PathResolvusDyn<E>>,WidgetID),
+    pub down_widget: (PathSliceOwned,WidgetID),
     pub down_ts: u64,
 }
 impl<E> Debug for MouseUp<E> where E: Env {

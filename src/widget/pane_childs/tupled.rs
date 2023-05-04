@@ -6,7 +6,9 @@ use crate::event_new;
 use crate::invalidation::Invalidation;
 use crate::layout::Orientation;
 use crate::newpath::{PathFragment, PathResolvusDyn, PathResolvus, PathStack};
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::queron::Queron;
+use crate::queron::dyn_tunnel::QueronDyn;
 use crate::render::StdRenderProps;
 use crate::root::RootRef;
 use crate::util::bounds::Dims;
@@ -37,87 +39,84 @@ impl<T> DerefMut for Tupled<T> where T: ?Sized {
 impl<E,I,T> PaneChilds<E> for Tupled<Vec<(I,PaneChildWidget<T,E>)>> where T: Widget<E>, E: Env, I: PathFragment<E> + Clone + PartialEq + 'static {
     type Caches = Vec<T::Cache>;
 
-    fn render<P,Ph>(
+    fn render(
         &mut self,
-        path: &Ph,
-        render_props: &StdRenderProps<'_,P,E,()>,
+        path: &mut NewPathStack,
+        render_props: &StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Caches,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         todo!()
     }
 
-    fn event<P,Ph,Evt>(
+    fn event(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         bounds: &QueriedCurrentBounds,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         todo!()
     }
 
-    fn constraints<P,Ph>(
+    fn constraints(
         &mut self,
         relayout: Option<Dims>,
         orientation: Orientation,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         todo!()
     }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: usize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         todo!()
     }
 
-    fn end<Ph>(
+    fn end(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         todo!()
     }
 
-    fn update<Ph>(
+    fn update(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: crate::widget_decl::route::UpdateRoute<'_,E>,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         todo!()
     }
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn std::any::Any,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         todo!()
     }
 
@@ -129,87 +128,84 @@ impl<E,I,T> PaneChilds<E> for Tupled<Vec<(I,PaneChildWidget<T,E>)>> where T: Wid
 impl<E,I,T,const N: usize> PaneChilds<E> for Tupled<[(I,PaneChildWidget<T,E>);N]> where T: Widget<E>, E: Env, I: PathFragment<E> + Clone + PartialEq + 'static {
     type Caches = Vec<T::Cache>;
 
-    fn render<P,Ph>(
+    fn render(
         &mut self,
-        path: &Ph,
-        render_props: &StdRenderProps<'_,P,E,()>,
+        path: &mut NewPathStack,
+        render_props: &StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Caches,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         todo!()
     }
 
-    fn event<P,Ph,Evt>(
+    fn event(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         bounds: &QueriedCurrentBounds,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         todo!()
     }
 
-    fn constraints<P,Ph>(
+    fn constraints(
         &mut self,
         relayout: Option<Dims>,
         orientation: Orientation,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         todo!()
     }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: usize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         todo!()
     }
 
-    fn end<Ph>(
+    fn end(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         todo!()
     }
 
-    fn update<Ph>(
+    fn update(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: crate::widget_decl::route::UpdateRoute<'_,E>,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         todo!()
     }
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn std::any::Any,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         todo!()
     }
 
@@ -270,7 +266,7 @@ impl<E,I,T> PaneChildsDyn<E> for Tupled<Vec<(I,PaneChildWidget<T,E>)>> where T: 
         }
     }
 
-    // fn resolve_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<ChildWidgetDynResolveResult<'a,'b,Self::ChildID,E>> {
+    // fn resolve_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<ChildWidgetDynResolveResult<'a,'b,Self::ChildID,E>> {
     //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
     //         let res = self.0.iter().enumerate()
     //             .find(#[inline] |(_,(i,_))| *i == *v);
@@ -289,7 +285,7 @@ impl<E,I,T> PaneChildsDyn<E> for Tupled<Vec<(I,PaneChildWidget<T,E>)>> where T: 
     //     None
     // }
 
-    // fn resolve_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<ChildWidgetDynResolveResultMut<'a,'b,Self::ChildID,E>> {
+    // fn resolve_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<ChildWidgetDynResolveResultMut<'a,'b,Self::ChildID,E>> {
     //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
     //         let res = self.0.iter_mut().enumerate()
     //             .find(#[inline] |(_,(i,_))| *i == *v);
@@ -361,7 +357,7 @@ impl<E,I,T,const N: usize> PaneChildsDyn<E> for Tupled<[(I,PaneChildWidget<T,E>)
         }
     }
 
-    // fn resolve_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<ChildWidgetDynResolveResult<'a,'b,Self::ChildID,E>> {
+    // fn resolve_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<ChildWidgetDynResolveResult<'a,'b,Self::ChildID,E>> {
     //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
     //         let res = self.0.iter().enumerate()
     //             .find(#[inline] |(_,(i,_))| *i == *v);
@@ -380,7 +376,7 @@ impl<E,I,T,const N: usize> PaneChildsDyn<E> for Tupled<[(I,PaneChildWidget<T,E>)
     //     None
     // }
 
-    // fn resolve_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<ChildWidgetDynResolveResultMut<'a,'b,Self::ChildID,E>> {
+    // fn resolve_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<ChildWidgetDynResolveResultMut<'a,'b,Self::ChildID,E>> {
     //     if let Some(v) = path.try_fragment::<Self::ChildID>() {
     //         let res = self.0.iter_mut().enumerate()
     //             .find(#[inline] |(_,(i,_))| *i == *v);

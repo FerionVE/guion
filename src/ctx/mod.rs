@@ -6,6 +6,7 @@ use std::sync::Arc;
 use crate::env::Env;
 use crate::intercept::InterceptBuilder;
 use crate::newpath::PathResolvusDyn;
+use crate::pathslice::PathSliceOwned;
 use crate::widget::id::WidgetID;
 
 use self::queue::{BoxMutEvent, StdEnqueueable, StdOrder, Queue};
@@ -44,7 +45,7 @@ pub trait Context<'cc,E>: Sized + 'cc where E: Env {
     }
 
     #[deprecated="TODO better queue shorthands"]
-    fn queue_send_mutation(&mut self, dest: Arc<dyn PathResolvusDyn<E>>, payload: Box<dyn Any>) {
+    fn queue_send_mutation(&mut self, dest: PathSliceOwned, payload: Box<dyn Any>) {
         self.queue_mut().push(
             StdEnqueueable::SendMutation { path: dest, payload },
             StdOrder::PostCurrent,
@@ -53,7 +54,7 @@ pub trait Context<'cc,E>: Sized + 'cc where E: Env {
     }
 
     #[deprecated="TODO better queue shorthands"]
-    fn queue_decl_update(&mut self, scope: Option<Arc<dyn PathResolvusDyn<E>>>, zone: Option<TypeId>) {
+    fn queue_decl_update(&mut self, scope: Option<PathSliceOwned>, zone: Option<TypeId>) {
         self.queue_mut().push(
             StdEnqueueable::DeclUpdate { scope, zone },
             StdOrder::PostCurrent,

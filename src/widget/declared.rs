@@ -7,7 +7,10 @@ use crate::env::Env;
 use crate::event_new;
 use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::queron::Queron;
+use crate::queron::dyn_tunnel::QueronDyn;
+use crate::render::StdRenderProps;
 use crate::root::RootRef;
 use crate::traitcast::{WQuery, WQueryResponder, WQueryGeneric, WQueryResponderGeneric, DowncastResponder, DowncastMutResponder};
 use crate::util::tabulate;
@@ -50,12 +53,12 @@ where
     E: Env,
 {
     //TODO widget can't yet be created right here as the mutor to &mut I isn't known yet here
-    pub fn new<Ph>(mut decl: F, data: I, root: E::RootRef<'_>, path: &Ph, ctx: &mut E::Context<'_>) -> Self where Ph: PathStack<E> + ?Sized {
+    pub fn new(mut decl: F, data: I, root: E::RootRef<'_>, path: &mut NewPathStack, ctx: &mut E::Context<'_>) -> Self {
         let mut dest = None;
         
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::Instantiate(&mut dest),
         );
@@ -91,88 +94,88 @@ where
         self.inner.id()
     }
     #[inline]
-    fn render<P,Ph>(
+    fn render(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut crate::aliases::ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         self.inner.render(path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
-    fn event_direct<P,Ph,Evt>(
+    fn event_direct(
         &mut self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         self.inner.event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
-    fn size<P,Ph>(
+    fn size(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         self.inner.size(path, stack, root, ctx)
     }
     #[inline]
-    fn _render<P,Ph>(
+    fn _render(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut crate::aliases::ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         self.inner._render(path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &mut self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt, // what if e.g. bounds change, if it's validated by parents then it's not signaled here
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_), // what if e.g. bounds change, if it's validated by parents then it's not signaled here
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         self.inner._event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
-    fn _size<P,Ph>(
+    fn _size(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         self.inner._size(path, stack, root, ctx)
     }
     #[inline]
-    fn update<Ph>(
+    fn update(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         let mut vali = Invalidation::new();
 
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             route.clone(), //TODO
             WidgetDeclCallbackMode::Update(&mut self.inner, &mut vali),
         );
@@ -182,12 +185,12 @@ where
         self.inner.update(path, route, root, ctx) | vali
     }
     #[inline]
-    fn end<Ph>(
+    fn end(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         self.inner.end(path, root, ctx)
     }
     #[inline]
@@ -211,11 +214,11 @@ where
         self.inner.childs_dyn_mut(range, callback)
     }
     #[inline]
-    fn resolve_child_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
+    fn resolve_child_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
         self.inner.resolve_child_dyn(path)
     }
     #[inline]
-    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
+    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
         self.inner.resolve_child_dyn_mut(path)
     }
     #[inline]
@@ -227,17 +230,17 @@ where
         self.inner.collect_childs_dyn_range_mut(range)
     }
     #[inline]
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             UpdateRoute::new_root(Some(resolve), None),
             WidgetDeclCallbackMode::SendMutation(resolve, args),
         );
@@ -249,7 +252,7 @@ where
     #[inline]
     fn resolve<'a>(
         &'a self,
-        sub_path: &(dyn PathResolvusDyn<E>),
+        sub_path: PathSliceRef,
         root: E::RootRef<'a>,
         ctx: &mut E::Context<'_>
     ) -> Result<super::WidgetResolveDynResult<'a,E>,E::Error> {
@@ -268,15 +271,15 @@ where
         self.inner._tabulate_by_tab()
     }
     #[inline]
-    fn _tabulate_next_child<P,Ph>(&self, path: &Ph, stack: &P, origin: tabulate::TabulateNextChildOrigin, dir: tabulate::TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> tabulate::TabulateNextChildResponse where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    fn _tabulate_next_child(&self, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), origin: tabulate::TabulateNextChildOrigin, dir: tabulate::TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> tabulate::TabulateNextChildResponse {
         self.inner._tabulate_next_child(path, stack, origin, dir, root, ctx)
     }
     #[inline]
-    fn _call_tabulate_on_child_idx<P,Ph>(&self, idx: isize, path: &Ph, stack: &P, op: tabulate::TabulateOrigin<E>, dir: tabulate::TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<tabulate::TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    fn _call_tabulate_on_child_idx(&self, idx: isize, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), op: tabulate::TabulateOrigin, dir: tabulate::TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<tabulate::TabulateResponse,E::Error> {
         self.inner._call_tabulate_on_child_idx(idx, path, stack, op, dir, root, ctx)
     }
     #[inline]
-    fn _tabulate<P,Ph>(&self, path: &Ph, stack: &P, op: tabulate::TabulateOrigin<E>, dir: tabulate::TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<tabulate::TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    fn _tabulate(&self, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), op: tabulate::TabulateOrigin, dir: tabulate::TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<tabulate::TabulateResponse,E::Error> {
         self.inner._tabulate(path, stack, op, dir, root, ctx)
     }
     #[inline]

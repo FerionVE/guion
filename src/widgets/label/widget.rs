@@ -9,7 +9,9 @@ use crate::invalidation::Invalidation;
 use crate::layout::Gonstraints;
 use crate::event_new;
 use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::queron::Queron;
+use crate::queron::dyn_tunnel::QueronDyn;
 use crate::render::{StdRenderProps, TestStyleColorType};
 use crate::render::widgets::RenderStdWidgets;
 use crate::text::layout::{TxtLayoutFromStor, TxtLayout};
@@ -47,16 +49,16 @@ impl<E,Text> Widget<E> for Label<E,Text> where
         self.id
     }
 
-    fn _render<P,Ph>(
+    fn _render(
         &mut self,
-        _path: &Ph,
-        stack: &P,
+        _path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         _root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         let mut need_render = force_render;
 
         // StdRenderCachors::current(stack)
@@ -64,7 +66,7 @@ impl<E,Text> Widget<E> for Label<E,Text> where
 
         //TODO cachor align and style stuff e.g. bg color
         //TODO text layout cachors
-        self.validate(stack, ctx);
+        self.validate(&stack, ctx);
 
         let render_props = StdRenderProps::new(&stack);
 
@@ -92,25 +94,25 @@ impl<E,Text> Widget<E> for Label<E,Text> where
         self.rendered_dims = Some(render_props.absolute_bounds.size);
     }
 
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &mut self,
-        _: &Ph,
-        _: &P,
-        _: &Evt,
-        _: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        _: &mut NewPathStack,
+        _: &(dyn QueronDyn<E>+'_),
+        _: &(dyn event_new::EventDyn<E>+'_),
+        _: Option<PathSliceRef>,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         Invalidation::valid()
     }
 
-    fn _size<P,Ph>(
+    fn _size(
         &mut self,
-        _path: &Ph,
-        stack: &P,
+        _path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         _root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         self.validate(stack, ctx);
 
         let ms = self.text_cache.as_ref().unwrap().display_size();
@@ -118,13 +120,13 @@ impl<E,Text> Widget<E> for Label<E,Text> where
         ms.max( &self.size )
     }
 
-    fn update<Ph>(
+    fn update(
         &mut self,
-        _: &Ph,
+        _: &mut NewPathStack,
         _: crate::widget_decl::route::UpdateRoute<'_,E>,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         Invalidation::valid()
     }
     
@@ -144,44 +146,41 @@ impl<E,Text> Widget<E> for Label<E,Text> where
 
     fn childs_dyn_mut<'a,F>(&'a mut self, _: Range<isize>, _: F) where F: FnMut(crate::widget::WidgetChildDynResultMut<'a,E>) {}
 
-    fn resolve_child_dyn<'a,'b>(&'a self, _: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<crate::widget::WidgetChildResolveDynResult<'a,'b,E>> {
+    fn resolve_child_dyn<'a,'b>(&'a self, _: PathSliceRef<'b>) -> Option<crate::widget::WidgetChildResolveDynResult<'a,'b,E>> {
         None
     }
 
-    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, _: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<crate::widget::WidgetChildResolveDynResultMut<'a,'b,E>> {
+    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, _: PathSliceRef<'b>) -> Option<crate::widget::WidgetChildResolveDynResultMut<'a,'b,E>> {
         None
     }
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        _: &Ph,
-        _: &(dyn PathResolvusDyn<E>+'_),
+        _: &mut NewPathStack,
+        _: PathSliceRef,
         _: &dyn Any,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {}
+    ) {}
 
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    // fn child_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
     //     Ok(vec![])
     // }
     fn focusable(&self) -> bool {
         false
     }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         _: isize,
-        _: &Ph,
-        _: &P,
-        _: TabulateOrigin<E>,
+        _: &mut NewPathStack,
+        _: &(dyn QueronDyn<E>+'_),
+        _: TabulateOrigin,
         _: TabulateDirection,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         Err(todo!())
     }
 

@@ -5,6 +5,7 @@ use crate::env::Env;
 use crate::event::key::PressedKey;
 use crate::event::key_combo::{KeyCombo, MatchKey, Matches};
 use crate::newpath::{PathResolvusDyn, FwdCompareStat, PathStackDyn, PathStack};
+use crate::pathslice::PathSliceRef;
 use crate::util::bounds::Offset;
 use crate::widget::id::WidgetID;
 
@@ -25,17 +26,17 @@ pub trait CtxStdState<'cc,E>: Context<'cc,E> + Sized + 'cc where E: Env {
 pub trait StdState<E> where E: Env {
     type K: PressedKey<E> + 'static;
     
-    fn hovered(&self) -> Option<(&(dyn PathResolvusDyn<E>+'_),WidgetID)>;
-    fn selected(&self) -> Option<(&(dyn PathResolvusDyn<E>+'_),WidgetID)>;
+    fn hovered(&self) -> Option<(PathSliceRef,WidgetID)>;
+    fn selected(&self) -> Option<(PathSliceRef,WidgetID)>;
 
-    #[inline]
-    fn is_hovered_path(&self, i: &(dyn PathStackDyn<E>+'_)) -> bool {
-        self.hovered().map_or(false, #[inline] |w| i.fwd_compare(w.0) == FwdCompareStat::Equal )
-    }
-    #[inline]
-    fn is_focused_path(&self, i: &(dyn PathStackDyn<E>+'_)) -> bool {
-        self.selected().map_or(false, #[inline] |w| i.fwd_compare(w.0) == FwdCompareStat::Equal )
-    }
+    // #[inline]
+    // fn is_hovered_path(&self, i: PathSliceRef) -> bool {
+    //     self.hovered().map_or(false, #[inline] |w| i.fwd_compare(w.0) == FwdCompareStat::Equal )
+    // }
+    // #[inline]
+    // fn is_focused_path(&self, i: PathSliceRef) -> bool {
+    //     self.selected().map_or(false, #[inline] |w| i.fwd_compare(w.0) == FwdCompareStat::Equal )
+    // }
 
     #[inline]
     fn is_hovered(&self, i: WidgetID) -> bool {
@@ -67,15 +68,15 @@ pub trait StdState<E> where E: Env {
             None
         }
     }
-    #[inline]
-    fn is_pressed_and_path(&self, c: impl KeyCombo<E>, id: &(dyn PathStackDyn<E>+'_)) -> Option<&Self::K> {
-        if let Some(v) = self.is_pressed(c) {
-            if id.fwd_compare(v.widget().0) == FwdCompareStat::Equal {
-                return Some(v);
-            }
-        }
-        None
-    }
+    // #[inline]
+    // fn is_pressed_and_path(&self, c: impl KeyCombo<E>, id: PathSliceRef) -> Option<&Self::K> {
+    //     if let Some(v) = self.is_pressed(c) {
+    //         if id.fwd_compare(v.widget().0) == FwdCompareStat::Equal {
+    //             return Some(v);
+    //         }
+    //     }
+    //     None
+    // }
     #[inline]
     fn is_pressed_and_id(&self, c: impl KeyCombo<E>, id: WidgetID) -> Option<&Self::K> {
         if let Some(v) = self.is_pressed(c) {

@@ -6,8 +6,11 @@ use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::event::key::MatchKeyCode;
 use crate::event::standard::variants::{MouseUp, KbdPress, MouseEnter, MouseLeave, MouseDown, KbdDown, KbdUp};
+use crate::event_new::Event;
 use crate::invalidation::Invalidation;
 use crate::layout::Gonstraints;
+use crate::pathslice::{NewPathStack, PathSliceRef, PathSliceMatch};
+use crate::queron::dyn_tunnel::QueronDyn;
 use crate::root::RootRef;
 use crate::traitcast::WQueryResponder;
 use crate::util::bounds::Dims;
@@ -57,17 +60,17 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
         self.id
     }
 
-    fn _render<P,Ph>(
+    fn _render(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        let render_props = StdRenderProps::new(stack);
+    ) {
+        let render_props = stack;
 
         force_render |= self.rendered_dims != Some(render_props.absolute_bounds.size);
 
@@ -129,7 +132,7 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
             .with_style_type(vartypes);
 
         self.text.render(
-            &SimpleId(ButtonChild).push_on_stack(path), &inner_render_props,
+            &mut path.with(SimpleId(ButtonChild)), inner_render_props,
             renderer,
             force_render,
             cache,
@@ -139,19 +142,19 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
         self.rendered_dims = Some(render_props.absolute_bounds.size);
     }
 
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &mut self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         let stack = with_inside_spacing_border(stack);
         let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
-        let receive_self = event_mode.receive_self && route_to_widget.map_or(true, |i| i.inner().is_none() );
+        let receive_self = event_mode.receive_self && route_to_widget.map_or(true, |i| i.fetch().is_empty() );
 
         let mut vali = Invalidation::valid();
 
@@ -165,12 +168,12 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
             vali.render = true;
         } else if let Some(ee) = event.query_variant::<MouseUp<E>>(path,&stack) {
             if ee.key == MatchKeyCode::MouseLeft && ee.down_widget.1 == self.id && ctx.state().is_hovered(self.id) && !self.locked {
-                self.trigger(path._erase(), root, ctx);
+                self.trigger(path, root, ctx);
                 vali.render = true;
             }
         } else if let Some(ee) = event.query_variant::<KbdPress<E>>(path,&stack) {
             if (ee.key == MatchKeyCode::KbdReturn || ee.key == MatchKeyCode::KbdSpace) && ee.down_widget.1 == self.id {
-                self.trigger(path._erase(), root, ctx);
+                self.trigger(path, root, ctx);
             }
         }
         
@@ -183,33 +186,33 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
         vali
     }
 
-    fn _size<P,Ph>(
+    fn _size(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         let size = widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
             |stack| widget_size_inside_border_type(
                 stack, TestStyleBorderType::Component,
                 |stack|
-                    self.text.size(&SimpleId(ButtonChild).push_on_stack(path), &stack, root,ctx)
+                    self.text.size(&mut path.with(SimpleId(ButtonChild)), &stack, root,ctx)
             )
         );
 
         size.max( &self.size )
     }
 
-    fn update<Ph>(
+    fn update(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: crate::widget_decl::route::UpdateRoute<'_,E>,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
-        self.text.update(&SimpleId(ButtonChild).push_on_stack(path), route.for_child_1(), root, ctx)
+    ) -> Invalidation {
+        self.text.update(&mut path.with(SimpleId(ButtonChild)), route.for_child_1::<SimpleId<ButtonChild>>(), root, ctx)
     }
 
     fn childs(&self) -> Range<isize> {
@@ -256,62 +259,63 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
         }
     }
 
-    fn resolve_child_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
-        path.try_fragment::<SimpleId<ButtonChild>>().map(|_|
-            WidgetChildResolveDynResult {
+    fn resolve_child_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
+        match path.fetch().slice_forward::<SimpleId<ButtonChild>>() {
+            PathSliceMatch::Match(_, inner) => Some(WidgetChildResolveDynResult {
                 idx: 0,
                 widget_id: self.text.id(),
                 widget: &self.text,
-                sub_path: path.inner().unwrap(),
-            }
-        )
+                sub_path: inner,
+            }),
+            PathSliceMatch::Mismatch => None,
+            PathSliceMatch::End => None,
+        }
     }
 
-    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
-        path.try_fragment::<SimpleId<ButtonChild>>().map(|_|
-            WidgetChildResolveDynResultMut {
+    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
+        match path.fetch().slice_forward::<SimpleId<ButtonChild>>() {
+            PathSliceMatch::Match(_, inner) => Some(WidgetChildResolveDynResultMut {
                 idx: 0,
                 widget_id: self.text.id(),
                 widget: &mut self.text,
-                sub_path: path.inner().unwrap(),
-            }
-        )
+                sub_path: inner,
+            }),
+            PathSliceMatch::Mismatch => None,
+            PathSliceMatch::End => None,
+        }
     }
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn std::any::Any,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         //todo!()
     }
 
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    // fn child_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
     //     todo!();
     //     Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
     // }
     fn focusable(&self) -> bool { true }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: isize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         if idx != 0 { return Err(todo!()); }
 
-        self.text._tabulate(&SimpleId(ButtonChild).push_on_stack(path), stack, op.clone(), dir, root, ctx)
+        self.text._tabulate(&mut path.with(SimpleId(ButtonChild)), stack, op.clone(), dir, root, ctx)
     }
 
     fn invalidate_recursive(&mut self, vali: Invalidation) {
@@ -335,13 +339,13 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
     }
 
     #[inline]
-    fn end<Ph>(
+    fn end(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
-        self.text.end(&SimpleId(ButtonChild).push_on_stack(path), root, ctx)
+    ) {
+        self.text.end(&mut path.with(SimpleId(ButtonChild)), root, ctx)
     }
 }
 

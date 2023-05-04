@@ -4,6 +4,7 @@ use std::convert::Infallible;
 use crate::env::Env;
 use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
@@ -14,73 +15,73 @@ impl<T,E> WidgetDecl<E> for &T where T: WidgetDecl<E> + ?Sized, E: Env {
     type Widget = T::Widget;
 
     #[inline]
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         (**self).send_mutation(path, resolve, args, root, ctx)
     }
 
     #[inline]
-    fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized {
         (*self).instantiate(path, root, ctx)
     }
     #[inline]
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {
         (**self).instantiate(path, root, ctx)
     }
     #[inline]
-    fn build_boxed<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build_boxed(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized {
         (*self).instantiate_boxed(path, root, ctx)
     }
     #[inline]
-    fn instantiate_boxed<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
+    fn instantiate_boxed(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> {
         (**self).instantiate_boxed(path, root, ctx)
     }
     #[inline]
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Widget,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: crate::newpath::PathStack<E> + ?Sized {
+    ) -> Invalidation {
         (**self).update(w, path, route, root, ctx)
     }
     #[inline]
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) {
         (**self).update_restore(prev, path, root, ctx)
     }
     #[inline]
-    fn update_restore_boxed<Ph>(
+    fn update_restore_boxed(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) {
         (**self).update_restore_boxed(prev, path, root, ctx)
     }
     #[inline]
-    fn update_dyn<Ph>(
+    fn update_dyn(
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         (**self).update_dyn(w, path, route, root, ctx)
     }
 }
@@ -89,73 +90,73 @@ impl<T,E> WidgetDecl<E> for Box<T> where T: WidgetDecl<E> + ?Sized, E: Env {
     type Widget = T::Widget;
 
     #[inline]
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         (**self).send_mutation(path, resolve, args, root, ctx)
     }
 
     #[inline]
-    fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized {
         (*self).instantiate(path, root, ctx) //TODO function self can't receive unsized, do we need box_box equilavent
     }
     #[inline]
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {
         (**self).instantiate(path, root, ctx)
     }
     #[inline]
-    fn build_boxed<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build_boxed(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized {
         (*self).instantiate_boxed(path, root, ctx)
     }
     #[inline]
-    fn instantiate_boxed<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
+    fn instantiate_boxed(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> {
         (**self).instantiate_boxed(path, root, ctx)
     }
     #[inline]
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Widget,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: crate::newpath::PathStack<E> + ?Sized {
+    ) -> Invalidation {
         (**self).update(w, path, route, root, ctx)
     }
     #[inline]
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) {
         (**self).update_restore(prev, path, root, ctx)
     }
     #[inline]
-    fn update_restore_boxed<Ph>(
+    fn update_restore_boxed(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) {
         (**self).update_restore_boxed(prev, path, root, ctx)
     }
     #[inline]
-    fn update_dyn<Ph>(
+    fn update_dyn(
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         (**self).update_dyn(w, path, route, root, ctx)
     }
     #[inline]
@@ -175,81 +176,81 @@ impl<T,E> WidgetDecl<E> for Boxed<T> where T: WidgetDecl<E>, E: Env {
     type Widget = Box<T::Widget>;
 
     #[inline]
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         self.0.send_mutation(path, resolve, args, root, ctx)
     }
 
     #[inline]
-    fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized {
         Box::new(self.0.build(path, root, ctx))
     }
 
     #[inline]
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {
         Box::new(self.0.instantiate(path, root, ctx))
     }
 
     #[inline]
-    fn build_boxed<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build_boxed(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized {
         self.0.build_boxed(path, root, ctx)
     }
 
     #[inline]
-    fn instantiate_boxed<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
+    fn instantiate_boxed(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> {
         self.0.instantiate_boxed(path, root, ctx)
     }
 
     #[inline]
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Widget,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         self.0.update(w, path, route, root, ctx)
     }
 
     #[inline]
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) {
         let (widget,vali) = self.0.update_restore(prev, path, root, ctx);
         (Box::new(widget), vali)
     }
 
     #[inline]
-    fn update_restore_boxed<Ph>(
+    fn update_restore_boxed(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) {
         self.0.update_restore_boxed(prev, path, root, ctx)
     }
 
     #[inline]
-    fn update_dyn<Ph>(
+    fn update_dyn(
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         if TypeId::of::<Self::Widget>() == TypeId::of::<Box<dyn WidgetDyn<E> + 'static>>() {
             // This actually isn't possible
             debug_assert!(false, "WidgetDecl::Widget can't be unsized");
@@ -273,73 +274,73 @@ impl<T,E> WidgetDecl<E> for Erased<T> where T: WidgetDecl<E>, E: Env {
     type Widget = Box<dyn WidgetDyn<E> + 'static>;
 
     #[inline]
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         self.0.send_mutation(path, resolve, args, root, ctx)
     }
 
     #[inline]
-    fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized {
         self.0.build_boxed(path, root, ctx)
     }
     #[inline]
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {
         self.0.instantiate_boxed(path, root, ctx)
     }
     #[inline]
-    fn build_boxed<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build_boxed(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized {
         self.0.build_boxed(path, root, ctx)
     }
     #[inline]
-    fn instantiate_boxed<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
+    fn instantiate_boxed(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> {
         self.0.instantiate_boxed(path, root, ctx)
     }
     #[inline]
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Widget,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         self.update_dyn(w, path, route, root, ctx)
     }
     #[inline]
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) {
         self.0.update_restore_boxed(prev, path, root, ctx)
     }
     #[inline]
-    fn update_restore_boxed<Ph>(
+    fn update_restore_boxed(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) {
         self.0.update_restore_boxed(prev, path, root, ctx)
     }
     #[inline]
-    fn update_dyn<Ph>(
+    fn update_dyn(
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         self.0.update_dyn(w, path, route, root, ctx)
     }
 }
@@ -347,39 +348,39 @@ impl<T,E> WidgetDecl<E> for Erased<T> where T: WidgetDecl<E>, E: Env {
 impl<E> WidgetDecl<E> for Infallible where E: Env {
     type Widget = Infallible;
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        _: &Ph,
-        _: &(dyn PathResolvusDyn<E>+'_),
+        _: &mut NewPathStack,
+        _: PathSliceRef,
         _: &dyn Any,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         match *self {}
     }
 
-    fn instantiate<Ph>(&self, _: &Ph, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, _: &mut NewPathStack, _: E::RootRef<'_>, _: &mut E::Context<'_>) -> Self::Widget {
         match *self {}
     }
 
-    fn update<Ph>(
+    fn update(
         &self,
         _: &mut Self::Widget,
-        _: &Ph,
+        _: &mut NewPathStack,
         _: UpdateRoute<'_,E>,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>,
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         match *self {}
     }
 
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         _: &mut dyn WidgetDyn<E>,
-        _: &Ph,
+        _: &mut NewPathStack,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) {
         match *self {}
     }
 }

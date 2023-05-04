@@ -11,6 +11,7 @@ use crate::event::standard::variants::{Unfocus, Focus};
 use crate::event_new::variants::StdVariant;
 use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::pathslice::{NewPathStack, PathSliceOwned};
 use crate::queron::Queron;
 use crate::root::RootRef;
 use crate::state::CtxStdState;
@@ -40,7 +41,7 @@ impl<S,E> StdIntercept<S,E> where S: InterceptBuilder<E>, E: Env, EEvent<E>: Std
 }
 
 impl<SB,E> StdInterceptLive<SB,E> where SB: InterceptBuilder<E>, E: Env, EEvent<E>: StdVarSup<E> {
-    pub fn unfocus<W,Ph,S>(&self, root_widget: &mut W, root_path: &Ph, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Invalidation where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
+    pub fn unfocus<W,S>(&self, root_widget: &mut W, root_path: &mut NewPathStack, stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Invalidation where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
         if let Some(widget) = (self.access)(ctx).state.kbd.focused.take() {
             let event = StdVariant {
                 variant: Unfocus{},
@@ -51,13 +52,13 @@ impl<SB,E> StdInterceptLive<SB,E> where SB: InterceptBuilder<E>, E: Env, EEvent<
                 //filter_path_strict: true,
                 _p: PhantomData,
             };
-            root_widget.event_direct(root_path,stack,&event,Some(&*widget.0),root,ctx)
+            root_widget.event_direct(root_path,stack.erase(),&event,Some(widget.0.as_slice()),root,ctx)
         } else {
             Invalidation::valid()
         }
     }
 
-    pub fn focus<W,Ph,S>(&self, root_widget: &mut W, root_path: &Ph, path_to_focus: (Arc<dyn PathResolvusDyn<E>>,WidgetID), stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Invalidation,E::Error> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized {
+    pub fn focus<W,S>(&self, root_widget: &mut W, root_path: &mut NewPathStack, path_to_focus: (PathSliceOwned,WidgetID), stack: &S, ts: u64, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Invalidation,E::Error> where W: Widget<E> + ?Sized, S: Queron<E> + ?Sized {
         self.unfocus(root_widget,root_path,stack,ts,root.fork(),ctx);
         (self.access)(ctx).state.kbd.focused = Some(path_to_focus.clone());
         
@@ -70,7 +71,7 @@ impl<SB,E> StdInterceptLive<SB,E> where SB: InterceptBuilder<E>, E: Env, EEvent<
             //filter_path_strict: true,
             _p: PhantomData
         };
-        Ok(root_widget.event_direct(root_path,stack,&event,Some(&*path_to_focus.0),root,ctx))
+        Ok(root_widget.event_direct(root_path,stack.erase(),&event,Some(path_to_focus.0.as_slice()),root,ctx))
     }
 }
 

@@ -47,16 +47,16 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
 {
     type Cache = SplitPaneCache<L::WidgetCache,R::WidgetCache,E>;
 
-    fn _render<P,Ph>(
+    fn _render(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -90,7 +90,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
 
         let render_props = render_props.inside_spacing_border();
 
-        if ctx.state().is_hovered(path._erase()) {
+        if ctx.state().is_hovered(path) {
             let cursor = match self.orientation {
                 Orientation::Horizontal => StdCursor::SizeWE,
                 Orientation::Vertical => StdCursor::SizeNS,
@@ -106,8 +106,8 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
                     .with_style_color_type(TestStyleColorType::Fg)
                     .with_style_type(
                         TestStyleVariant {
-                            hovered: ctx.state().is_hovered(path._erase()),
-                            selected: ctx.state().is_focused(path._erase()),
+                            hovered: ctx.state().is_hovered(path),
+                            selected: ctx.state().is_focused(path),
                             activated: false, //self.pressed(ctx).is_some(),
                             disabled: false, //self.locked, //TODO add locked
                             ..Default::default()
@@ -121,7 +121,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         self.childs.0.0.with_widget(
             &mut AsWidgetClosure::<'_,_,L,_,E>::new(|widget,root,ctx| {
                 widget.render(
-                    &FixedIdx(0usize).push_on_stack(path),
+                    &FixedIdx(0usize) path,
                     &render_props.slice_absolute(&bounds[0]),
                     renderer,
                     force_render, &mut cache.child_caches.0,
@@ -133,7 +133,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         self.childs.0.1.with_widget(
             &mut AsWidgetClosure::<'_,_,R,_,E>::new(|widget,root,ctx| {
                 widget.render(
-                    &FixedIdx(1usize).push_on_stack(path),
+                    &FixedIdx(1usize) path,
                     &render_props.slice_absolute(&bounds[2]),
                     renderer,
                     force_render, &mut cache.child_caches.1,
@@ -145,16 +145,16 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         //TODO FIX viewport
     }
     
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
-        event: &Evt,
-        mut route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        event: &(dyn event_new::EventDyn<E>+'_),
+        mut route_to_widget: Option<PathSliceRef>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         let stack = with_inside_spacing_border(stack);
 
         let current = QueryCurrentBounds.query_in(&stack).unwrap();
@@ -173,7 +173,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         //if let Some(e) = e.slice_bounds(&bounds[1]).filter(&l) {
             if let Some(mm) = event.query_variant::<MouseMove>(path,&stack) {
                 //if mouse is down and was pressed on us
-                if let Some(_) = ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()) {
+                if let Some(_) = ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path) {
                     let cursor = ctx.state().cursor_pos().expect("TODO");
                     let mut cx = cursor.par(o);
                     let (mut wx0, ww) = current.bounds.par(o);
@@ -181,13 +181,13 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
 
                     let l_min = self.childs.0.0.with_widget(
                         &mut AsWidgetClosure::<'_,_,L,_,E>::new(|widget,root,ctx| {
-                            widget.size(&FixedIdx(0usize).push_on_stack(path), &stack, &mut cache.child_caches.0, root,ctx) //TODO It can't be! We can't already have the bounds for the widget when constraining
+                            widget.size(&FixedIdx(0usize) path, &stack, &mut cache.child_caches.0, root,ctx) //TODO It can't be! We can't already have the bounds for the widget when constraining
                         }),
                         root.fork(),ctx
                     ).par(o).min();
                     let r_min = self.childs.0.1.with_widget(
                         &mut AsWidgetClosure::<'_,_,R,_,E>::new(|widget,root,ctx| {
-                            widget.size(&FixedIdx(1usize).push_on_stack(path), &stack, &mut cache.child_caches.1, root,ctx)
+                            widget.size(&FixedIdx(1usize) path, &stack, &mut cache.child_caches.1, root,ctx)
                         }),
                         root.fork(),ctx
                     ).par(o).min();
@@ -231,7 +231,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
                         };
 
                         passed |= widget.event_direct(
-                            &FixedIdx(0).push_on_stack(path),
+                            &FixedIdx(0) path,
                             &stack,
                             event,
                             route_to_widget.and_then(PathResolvus::inner),
@@ -252,7 +252,7 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
                         };
 
                         passed |= widget.event_direct(
-                            &FixedIdx(1).push_on_stack(path),
+                            &FixedIdx(1) path,
                             &stack,
                             event,
                             route_to_widget.and_then(PathResolvus::inner),
@@ -268,14 +268,14 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         passed
     }
 
-    fn _size<P,Ph>(
+    fn _size(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         let size = widget_size_inside_border_type(
             stack, TestStyleBorderType::Spacing,
             |stack| {
@@ -283,14 +283,14 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
 
                 self.childs.0.0.with_widget(
                     &mut AsWidgetClosure::<'_,_,L,_,E>::new(|widget,root,ctx| {
-                        s.add( &widget.size(&FixedIdx(0usize).push_on_stack(path), &stack, &mut cache.child_caches.0, root,ctx), self.orientation )
+                        s.add( &widget.size(&FixedIdx(0usize) path, &stack, &mut cache.child_caches.0, root,ctx), self.orientation )
                     }),
                     root.fork(),ctx
                 );
                 s.add_space(self.width,self.orientation);
                 self.childs.0.1.with_widget(
                     &mut AsWidgetClosure::<'_,_,R,_,E>::new(|widget,root,ctx| {
-                        s.add( &widget.size(&FixedIdx(1usize).push_on_stack(path), &stack, &mut cache.child_caches.1, root,ctx), self.orientation )
+                        s.add( &widget.size(&FixedIdx(1usize) path, &stack, &mut cache.child_caches.1, root,ctx), self.orientation )
                     }),
                     root,ctx
                 );
@@ -302,8 +302,8 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         size
     }
 
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    // fn child_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
     //     Ok(self.calc_bounds(b,self.state.get(ctx)).into())
     // }
     fn childs(&self) -> usize {
@@ -352,19 +352,16 @@ impl<E,L,R,V,TrMut> Widget<E> for SplitPane<E,L,R,V,TrMut> where
         )
     }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: usize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         let rootf = root.fork();
 
         self.childs.by_index(

@@ -323,11 +323,11 @@ impl<E,T> PathResolvus<E> for &T where T: PathResolvus<E> + ?Sized {
     // }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 #[repr(transparent)]
-pub struct SimpleId<V>(pub V) where V: Clone + PartialEq + 'static;
+pub struct SimpleId<V>(pub V) where V: Clone + Copy + PartialEq + 'static;
 
-impl<V,E> PathFragment<E> for SimpleId<V> where V: Clone + PartialEq + 'static, E: Env {
+impl<V,E> PathFragment<E> for SimpleId<V> where V: Clone + Copy + PartialEq + 'static, E: Env {
     type Stack<I> = SimplePathStack<Self,E,I> where I: PathStack<E> + Sized;
     type Resolvus<I> = SimplePathResolvus<Self,E,I> where I: PathResolvus<E> + Sized;
 
@@ -347,7 +347,7 @@ impl<V,E> PathFragment<E> for SimpleId<V> where V: Clone + PartialEq + 'static, 
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(transparent)]
 pub struct FixedIdx(pub isize);
 

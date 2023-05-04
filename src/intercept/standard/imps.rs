@@ -3,6 +3,7 @@ use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::intercept::InterceptBuilder;
 use crate::newpath::PathResolvusDyn;
+use crate::pathslice::PathSliceRef;
 use crate::state::StdState;
 use crate::state::standard::key::StdPressedKey;
 use crate::util::bounds::Offset;
@@ -17,12 +18,12 @@ impl<S,E> StdState<E> for StdIntercept<S,E> where
 {
     type K = StdPressedKey<E>;
     #[inline]
-    fn hovered(&self) -> Option<(&(dyn PathResolvusDyn<E>+'_),WidgetID)> { //TODO eventually WidgetIdent return in trait
-        self.state.mouse.hovered.as_ref().map(|(a,v)| (&**a,*v) )
+    fn hovered(&self) -> Option<(PathSliceRef,WidgetID)> { //TODO eventually WidgetIdent return in trait
+        self.state.mouse.hovered.as_ref().map(|(a,v)| (a.as_slice(),*v) )
     }
     #[inline]
-    fn selected(&self) -> Option<(&(dyn PathResolvusDyn<E>+'_),WidgetID)> {
-        self.state.kbd.focused.as_ref().map(|(a,v)| (&**a,*v) )
+    fn selected(&self) -> Option<(PathSliceRef,WidgetID)> {
+        self.state.kbd.focused.as_ref().map(|(a,v)| (a.as_slice(),*v) )
     }
     #[inline]
     fn pressed(&self) -> &[Self::K] {

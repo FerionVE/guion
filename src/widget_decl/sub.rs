@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use crate::env::Env;
 use crate::invalidation::Invalidation;
 use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -72,17 +73,17 @@ where
     type Widget = W;
     
     #[inline]
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::SendMutation(resolve, args),
         );
@@ -91,12 +92,12 @@ where
     }
 
     #[inline]
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {
         let mut dest = None;
         
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::Instantiate(&mut dest),
         );
@@ -106,12 +107,12 @@ where
         dest.unwrap()
     }
     #[inline]
-    fn instantiate_boxed<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
+    fn instantiate_boxed(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> {
         let mut dest = None;
         
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::InstantiateBoxed(&mut dest),
         );
@@ -121,19 +122,19 @@ where
         dest.unwrap()
     }
     #[inline]
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Widget,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         let mut vali = Invalidation::new();
 
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             route,
             WidgetDeclCallbackMode::Update(w, &mut vali),
         );
@@ -143,19 +144,19 @@ where
         vali
     }
     #[inline]
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) {
         let mut dest = None;
         let mut vali = Invalidation::new();
         
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::UpdateRestore(prev, &mut dest, &mut vali),
         );
@@ -165,19 +166,19 @@ where
         (dest.unwrap(), vali)
     }
     #[inline]
-    fn update_restore_boxed<Ph>(
+    fn update_restore_boxed(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) {
         let mut dest = None;
         let mut vali = Invalidation::new();
         
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, &mut dest, &mut vali),
         );
@@ -187,19 +188,19 @@ where
         (dest.unwrap(), vali)
     }
     #[inline]
-    fn update_dyn<Ph>(
+    fn update_dyn(
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         let mut vali = Invalidation::new();
 
         let op = WidgetDeclCallback::new(
             root.fork(),
-            path._erase(),
+            path.fork(),
             route,
             WidgetDeclCallbackMode::UpdateDyn(w, &mut vali),
         );

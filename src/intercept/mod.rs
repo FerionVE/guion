@@ -3,8 +3,12 @@
 use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
 use crate::invalidation::Invalidation;
+use crate::pathslice::{NewPathStack, PathSliceRef};
+use crate::queron::dyn_tunnel::QueronDyn;
+use crate::render::StdRenderProps;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric};
 use crate::{event_new, EventResp};
+use crate::event_new::Event;
 use crate::newpath::{PathResolvusDyn, PathStack};
 use crate::queron::Queron;
 use crate::widget::Widget;
@@ -22,48 +26,48 @@ pub trait InterceptBuilder<E>: 'static where E: Env {
 /// Interceptors are stacked inside a Context and any render/event/size action goes through the intercept stack
 pub trait WidgetIntercept<E>: 'static where E: Env {
     //TODO move into feature traits
-    fn _render<W,Ph,S>(
+    fn _render<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut W::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized;
+    ) where W: Widget<E> + ?Sized;
 
-    fn _event_direct<W,Ph,S,Evt>(
+    fn _event_direct<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> Invalidation where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> Invalidation where W: Widget<E> + ?Sized;
 
-    fn _event_root<W,Ph,S,Evt>(
+    fn _event_root<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> Invalidation where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> Invalidation where W: Widget<E> + ?Sized;
 
-    fn _size<W,Ph,S>(
+    fn _size<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> ESize<E> where W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized;
+    ) -> ESize<E> where W: Widget<E> + ?Sized;
 
     //fn inner<'s>(&self) -> &(dyn WidgetIntercept<E>+'s) where Self: 's;
 
@@ -80,11 +84,11 @@ pub trait WidgetIntercept<E>: 'static where E: Env {
 
 impl<E> WidgetIntercept<E> for () where E: Env {
     #[inline] 
-    fn _render<W,Ph,S>(
+    fn _render<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut W::Cache,
@@ -92,39 +96,39 @@ impl<E> WidgetIntercept<E> for () where E: Env {
         ctx: &mut E::Context<'_>,
     )
     where
-        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized
+        W: Widget<E> + ?Sized
     {
         widget._render(path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline] 
-    fn _event_direct<W,Ph,S,Evt>(
+    fn _event_direct<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> Invalidation
     where
-        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
+        W: Widget<E> + ?Sized
     {
         widget._event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline] 
-    fn _event_root<W,Ph,S,Evt>(
+    fn _event_root<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> Invalidation
     where
-        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
+        W: Widget<E> + ?Sized
     {
         if !event._root_only() {//TODO warn eprint??
             //TODO everything wrong here with event root propagation and tail
@@ -135,16 +139,16 @@ impl<E> WidgetIntercept<E> for () where E: Env {
         }
     }
     #[inline] 
-    fn _size<W,Ph,S>(
+    fn _size<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E>
     where
-        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized
+        W: Widget<E> + ?Sized
     {
         widget._size(path, stack, root, ctx)
     }

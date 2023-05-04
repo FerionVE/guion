@@ -35,7 +35,7 @@ pub struct StdEventMode<E> where E: Env {
     // /// Only relevent if route_to_childs is enabled
     // /// 
     // /// If no child_filters are set, the event will be routed to all childs
-    // pub child_filter_absolute_path: Option<Arc<dyn PathResolvusDyn<E>>>,
+    // pub child_filter_absolute_path: Option<PathSliceOwned>,
     pub childs_after_resolve: bool,
     pub _p: PhantomData<E>,
 }

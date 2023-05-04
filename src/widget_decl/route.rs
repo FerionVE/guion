@@ -1,7 +1,9 @@
 use std::any::TypeId;
+use std::marker::PhantomData;
 
 use crate::env::Env;
 use crate::newpath::{PathResolvusDyn, PathResolvus};
+use crate::pathslice::{PathSliceRef, PathSliceMatch};
 
 #[derive(Clone)]
 pub struct UpdateRoute<'a,E> where E: Env {
@@ -13,8 +15,9 @@ struct UpdateScope<'a,E> where E: Env {
     /// Some(v) if v.inner().is_some(): target still not resolve
     /// Some(v) if v.inner().is_none(): target just resolved
     /// None: resolving is done, we are aleady in sub or child of resolve target
-    resolve: Option<&'a (dyn PathResolvusDyn<E>+'a)>,
+    resolve: Option<PathSliceRef<'a>>,
     zone: Option<UpdateZone>,
+    _p: PhantomData<E>,
 }
 
 #[derive(Clone)]
@@ -25,7 +28,7 @@ struct UpdateZone {
 }
 
 impl<'a,E> UpdateRoute<'a,E> where E: Env {
-    pub fn new_root(scope: Option<&'a (dyn PathResolvusDyn<E>+'a)>, zone: Option<TypeId>) -> Self {
+    pub fn new_root(scope: Option<PathSliceRef<'a>>, zone: Option<TypeId>) -> Self {
         if let Some(scope) = scope {
             Self {
                 scope: Some(UpdateScope {
@@ -35,6 +38,7 @@ impl<'a,E> UpdateRoute<'a,E> where E: Env {
                         current_zone: TypeId::of::<()>(),
                         zone_activated: false,
                     }),
+                    _p: PhantomData,
                 })
             }
         } else {
@@ -46,28 +50,33 @@ impl<'a,E> UpdateRoute<'a,E> where E: Env {
         Self { scope: None }
     }
 
-    pub fn resolving(&self) -> Option<&'a (dyn PathResolvusDyn<E>+'a)> {
-        self.resolvus().filter(|resolvus| resolvus.inner().is_some() )
+    pub fn resolving(&self) -> Option<PathSliceRef<'a>> {
+        self.resolvus().filter(|resolvus| !resolvus.fetch().is_empty() )
     }
 
-    pub fn resolvus(&self) -> Option<&'a (dyn PathResolvusDyn<E>+'a)> {
+    pub fn resolvus(&self) -> Option<PathSliceRef<'a>> {
         self.scope.as_ref().and_then(|scope| scope.resolve )
     }
 
-    pub fn for_child_1(&self) -> Self {
-        self.for_child_f(|resolvus| resolvus.inner().unwrap() )
+    #[deprecated]
+    pub fn for_child_1<T>(&self) -> Self where T: Copy + 'static {
+        self.for_child_f(|resolvus| match resolvus.fetch().slice_forward::<T>() {
+            PathSliceMatch::Match(_, inner) => inner,
+            PathSliceMatch::Mismatch => panic!(),
+            PathSliceMatch::End => panic!(),
+        } )
     }
 
-    pub fn for_child_f(&self, fun: impl FnOnce(&'a (dyn PathResolvusDyn<E>+'a)) -> &'a (dyn PathResolvusDyn<E>+'a)) -> Self {
+    pub fn for_child_f(&self, fun: impl FnOnce(PathSliceRef<'a>) -> PathSliceRef<'a>) -> Self {
         let mut this = self.clone();
 
         if let Some(scope) = &mut this.scope {
             if let Some(resolvus) = &mut scope.resolve {
-                if let Some(_) = resolvus.inner() {
+                if !resolvus.fetch().is_empty() {
                     // still resolved, the child may or may not be the target
-                    *resolvus = fun(&**resolvus);
+                    *resolvus = fun(*resolvus);
                     if let Some(zone) = &mut scope.zone {
-                        if resolvus.inner().is_none() && zone.current_zone == zone.target_zone {
+                        if resolvus.fetch().is_empty() && zone.current_zone == zone.target_zone {
                             zone.zone_activated = true;
                         }
                     }
@@ -94,9 +103,9 @@ impl<'a,E> UpdateRoute<'a,E> where E: Env {
                     return Some(self);
                 }
                 
-                if let Some(resolvus) = &mut scope.resolve {
+                if let Some(resolvus) = scope.resolve {
                     // we either still have to resolve or are just on resolve target
-                    if let Some(_) = resolvus.inner() {
+                    if !resolvus.fetch().is_empty() {
                         // still not resolved
                         zone.current_zone = new_zone;
                     } else {

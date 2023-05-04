@@ -25,16 +25,16 @@ impl<E> Widget<E> for ProgressBar<E> where
 {
     type Cache = ProgressBarCache<E>;
     
-    fn _render<P,Ph>(
+    fn _render(
         &self,
-        _path: &Ph,
+        _path: &mut NewPathStack,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         _root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -80,27 +80,27 @@ impl<E> Widget<E> for ProgressBar<E> where
         );
     }
 
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &self,
-        _: &Ph,
-        _: &P,
-        _: &Evt,
-        _: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        _: &mut NewPathStack,
+        _: &(dyn QueronDyn<E>+'_),
+        _: &(dyn event_new::EventDyn<E>+'_),
+        _: Option<PathSliceRef>,
         _: &mut Self::Cache,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         false
     }
 
-    fn _size<P,Ph>(
+    fn _size(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         self.size.clone() //TODO shouldn't the borders be added?
     }
 
@@ -133,24 +133,21 @@ impl<E> Widget<E> for ProgressBar<E> where
         (callback)(Err(todo!()),ctx)
     }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: usize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         Err(todo!())
     }
     
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    // fn child_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
     //     Ok(vec![])
     // }
     fn focusable(&self) -> bool {

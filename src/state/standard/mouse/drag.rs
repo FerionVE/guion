@@ -3,9 +3,10 @@ use std::sync::Arc;
 
 use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
+use crate::pathslice::PathSliceOwned;
 
-pub enum DragItem<E> where E: Env {
-    Widget(Arc<dyn PathResolvusDyn<E>>), //TODO fix
+pub enum DragItem {
+    Widget(PathSliceOwned), //TODO fix
     Text(String),
     RawText(OsString),
 }

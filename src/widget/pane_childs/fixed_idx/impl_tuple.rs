@@ -39,24 +39,24 @@ macro_rules! impl_tuple {
         {
             type Caches = DefaultHack<($($tt::Cache),+,)>;
 
-            fn render<P,Ph>(
+            fn render(
                 &mut self,
-                path: &Ph,
-                render_props: &StdRenderProps<'_,P,E,()>,
+                path: &mut NewPathStack,
+                render_props: &StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
                 renderer: &mut ERenderer<'_,E>,
                 force_render: bool,
                 cache: &mut Self::Caches,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
-            ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+            ) {
                 let ($($ll),+,) = &mut self.0;
                 let ($($ll2),+,) = &mut cache.0;
 
                 $({
                     if $ll.vali.render | force_render {
                         $ll.widget.render(
-                            &FixedIdx($mmm).push_on_stack(path),
-                            &render_props
+                            &mut path.with(FixedIdx($mmm)),
+                            render_props
                                 .slice($ll.relative_bounds.unwrap()),
                             renderer,
                             force_render, $ll2,
@@ -67,20 +67,20 @@ macro_rules! impl_tuple {
                 });+
             }
 
-            fn event<P,Ph,Evt>(
+            fn event(
                 &mut self,
-                path: &Ph,
-                stack: &P,
+                path: &mut NewPathStack,
+                stack: &(dyn QueronDyn<E>+'_),
                 bounds: &QueriedCurrentBounds,
-                event: &Evt,
-                route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+                event: &(dyn event_new::EventDyn<E>+'_),
+                route_to_widget: Option<PathSliceRef>,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>,
-            ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+            ) -> Invalidation {
                 let ($($ll),+,) = &mut self.0;
 
                 if let Some(route_to_widget) = route_to_widget {
-                    if let Some(idx) = route_to_widget.try_fragment::<FixedIdx>() {
+                    if let PathSliceMatch::Match(idx, route_to_widget_inner) = route_to_widget.fetch().slice_forward::<FixedIdx>() {
                         match idx.0 {
                             $($mm => {
                                 let stack = WithCurrentBounds {
@@ -89,7 +89,7 @@ macro_rules! impl_tuple {
                                     viewport: bounds.viewport.clone(),
                                 };
 
-                                let v = $ll.widget.event_direct(&idx.push_on_stack(path), &stack, event, route_to_widget.inner(), root, ctx);
+                                let v = $ll.widget.event_direct(&mut path.with(*idx), &stack, event, Some(route_to_widget_inner), root, ctx);
                                 $ll.invalidate(v);
                                 return v;
                             }),+,
@@ -108,7 +108,7 @@ macro_rules! impl_tuple {
                         viewport: bounds.viewport.clone(),
                     };
 
-                    let v = $ll.widget.event_direct(&FixedIdx($mmm).push_on_stack(path), &stack, event, None, root.fork(), ctx);
+                    let v = $ll.widget.event_direct(&mut path.with(FixedIdx($mmm)), &stack, event, None, root.fork(), ctx);
                     $ll.invalidate(v);
                     vali |= v
                 });+
@@ -116,15 +116,15 @@ macro_rules! impl_tuple {
                 vali
             }
 
-            fn constraints<P,Ph>(
+            fn constraints(
                 &mut self,
                 relayout: Option<Dims>,
                 orientation: Orientation,
-                path: &Ph,
-                stack: &P,
+                path: &mut NewPathStack,
+                stack: &(dyn QueronDyn<E>+'_),
                 root: <E as Env>::RootRef<'_>,
                 ctx: &mut <E as Env>::Context<'_>
-            ) -> crate::aliases::ESize<E> where Ph: crate::newpath::PathStack<E> + ?Sized, P: crate::queron::Queron<E> + ?Sized {
+            ) -> crate::aliases::ESize<E> {
                 let ($($ll),+,) = &mut self.0;
                 
                 let mut constraint_sum = ESize::<E>::add_base(orientation);
@@ -132,7 +132,7 @@ macro_rules! impl_tuple {
                 let parallel_axis = [
                     $({
                         let constraint = $ll.constraints.get_or_insert_with(||
-                            $ll.widget.size(&FixedIdx($mmm).push_on_stack(path), stack, root.fork(), ctx)
+                            $ll.widget.size(&mut path.with(FixedIdx($mmm)), stack, root.fork(), ctx)
                         );
             
                         constraint_sum.add(constraint, orientation);
@@ -163,56 +163,53 @@ macro_rules! impl_tuple {
                 constraint_sum
             }
 
-            fn _call_tabulate_on_child_idx<P,Ph>(
+            fn _call_tabulate_on_child_idx(
                 &self,
                 idx: usize,
-                path: &Ph,
-                stack: &P,
-                op: TabulateOrigin<E>,
+                path: &mut NewPathStack,
+                stack: &(dyn QueronDyn<E>+'_),
+                op: TabulateOrigin,
                 dir: TabulateDirection,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
-            ) -> Result<TabulateResponse<E>,E::Error>
-            where 
-                Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-            {
+            ) -> Result<TabulateResponse,E::Error> {
                 let ($($ll),+,) = &self.0;
 
                 match idx {
                     $($mm => {
-                        $ll.widget._tabulate(&FixedIdx($mmm).push_on_stack(path), stack, op, dir, root, ctx)
+                        $ll.widget._tabulate(&mut path.with(FixedIdx($mmm)), stack, op, dir, root, ctx)
                     }),+,
                     _ => todo!(),
                 }
             }
 
-            fn end<Ph>(
+            fn end(
                 &mut self,
-                path: &Ph,
+                path: &mut NewPathStack,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
-            ) where Ph: PathStack<E> + ?Sized {
+            ) {
                 let ($($ll),+,) = &mut self.0;
 
                 $({
-                    $ll.widget.end(&FixedIdx($mmm).push_on_stack(path), root.fork(), ctx);
+                    $ll.widget.end(&mut path.with(FixedIdx($mmm)), root.fork(), ctx);
                 });+
             }
         
-            fn update<Ph>(
+            fn update(
                 &mut self,
-                path: &Ph,
+                path: &mut NewPathStack,
                 route: crate::widget_decl::route::UpdateRoute<'_,E>,
                 root: <E as Env>::RootRef<'_>,
                 ctx: &mut <E as Env>::Context<'_>
-            ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+            ) -> Invalidation {
                 let ($($ll),+,) = &mut self.0;
 
                 if let Some(r2) = route.resolving() {
-                    if let Some(idx) = r2.try_fragment::<FixedIdx>() {
+                    if let PathSliceMatch::Match(idx, _) = r2.fetch().slice_forward::<FixedIdx>() {
                         match idx.0 {
                             $($mm => {
-                                let v = $ll.widget.update(&idx.push_on_stack(path), route.for_child_1(), root, ctx);
+                                let v = $ll.widget.update(&mut path.with(*idx), route.for_child_1::<FixedIdx>(), root, ctx);
                                 $ll.invalidate(v);
                                 return v;
                             }),+,
@@ -225,7 +222,7 @@ macro_rules! impl_tuple {
                 let mut vali = Invalidation::valid();
 
                 $({
-                    let v = $ll.widget.update(&FixedIdx($mmm).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+                    let v = $ll.widget.update(&mut path.with(FixedIdx($mmm)), route.for_child_1::<FixedIdx>(), root.fork(), ctx);
                     $ll.invalidate(v);
                     vali |= v
                 });+
@@ -233,20 +230,20 @@ macro_rules! impl_tuple {
                 vali
             }
         
-            fn send_mutation<Ph>(
+            fn send_mutation(
                 &mut self,
-                path: &Ph,
-                resolve: &(dyn PathResolvusDyn<E>+'_),
+                path: &mut NewPathStack,
+                resolve: PathSliceRef,
                 args: &dyn std::any::Any,
                 root: <E as Env>::RootRef<'_>,
                 ctx: &mut <E as Env>::Context<'_>,
-            ) where Ph: PathStack<E> + ?Sized {
+            ) {
                 let ($($ll),+,) = &mut self.0;
 
-                if let Some(idx) = resolve.try_fragment::<FixedIdx>() {
+                if let PathSliceMatch::Match(idx, resolve_inner) = resolve.fetch().slice_forward::<FixedIdx>() {
                     match idx.0 {
                         $($mm => {
-                            $ll.widget.send_mutation(&idx.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx);
+                            $ll.widget.send_mutation(&mut path.with(*idx), resolve_inner, args, root, ctx);
                         }),+,
                         _ => {},
                     }
@@ -339,7 +336,7 @@ macro_rules! impl_tuple {
                 })+
             }
         
-            // fn resolve_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<ChildWidgetDynResolveResult<'a,'b,Self::ChildID,E>> {
+            // fn resolve_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<ChildWidgetDynResolveResult<'a,'b,Self::ChildID,E>> {
             //     let Some(v) = path.try_fragment::<Self::ChildID>() else { return None };
 
             //     let idx = v.0;
@@ -362,7 +359,7 @@ macro_rules! impl_tuple {
             //     })
             // }
         
-            // fn resolve_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<ChildWidgetDynResolveResultMut<'a,'b,Self::ChildID,E>> {
+            // fn resolve_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<ChildWidgetDynResolveResultMut<'a,'b,Self::ChildID,E>> {
             //     let Some(v) = path.try_fragment::<Self::ChildID>() else { return None };
 
             //     let idx = v.0;

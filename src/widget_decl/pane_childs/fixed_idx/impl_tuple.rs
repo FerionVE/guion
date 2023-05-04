@@ -17,20 +17,20 @@ macro_rules! impl_tuple {
         {
             type Retained = WidgetsFixedIdx<($(PaneChildWidget<$tt::Widget,E>),+,)>;
 
-            fn send_mutation<Ph>(
+            fn send_mutation(
                 &self,
-                path: &Ph,
-                resolve: &(dyn PathResolvusDyn<E>+'_),
+                path: &mut NewPathStack,
+                resolve: PathSliceRef,
                 args: &dyn Any,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>,
-            ) where Ph: PathStack<E> + ?Sized {
+            ) {
                 let ($($ll),+,) = &self.0;
 
-                if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+                if let PathSliceMatch::Match(r2, resolve_inner) = resolve.fetch().slice_forward::<FixedIdx>() {
                     match r2.0 {
                         $($mm =>
-                            $ll.send_mutation(&r2.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx)
+                            $ll.send_mutation(&mut path.with(*r2), resolve_inner, args, root, ctx)
                         ),+ ,
                         _ => {},
                     }
@@ -39,43 +39,43 @@ macro_rules! impl_tuple {
                 }
             }
 
-            fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Self: Sized, Ph: PathStack<E> + ?Sized {
+            fn build(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Self: Sized {
                 let ($($ll),+,) = self.0;
 
                 WidgetsFixedIdx(
                     ($({
-                        PaneChildWidget::new( $ll.build(&FixedIdx($mmm).push_on_stack(path), root.fork(), ctx) )
+                        PaneChildWidget::new( $ll.build(&mut path.with(FixedIdx($mmm)), root.fork(), ctx) )
                     }),+,)
                 )
             }
         
-            fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+            fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained {
                 let ($($ll),+,) = &self.0;
 
                 WidgetsFixedIdx(
                     ($({
-                        PaneChildWidget::new( $ll.instantiate(&FixedIdx($mmm).push_on_stack(path), root.fork(), ctx) )
+                        PaneChildWidget::new( $ll.instantiate(&mut path.with(FixedIdx($mmm)), root.fork(), ctx) )
                     }),+,)
                 )
             }
         
-            fn update<Ph>(
+            fn update(
                 &self,
                 w: &mut Self::Retained,
-                path: &Ph,
+                path: &mut NewPathStack,
                 route: UpdateRoute<'_,E>,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
-            ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+            ) -> Invalidation {
                 let ($($ll),+,) = &self.0;
                 let ($($ll2),+,) = &mut w.0;
                 
                 // If resolve, try only update resolve scope
                 if let Some(resolve) = route.resolving() {
-                    if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+                    if let PathSliceMatch::Match(r2, resolve_inner) = resolve.fetch().slice_forward::<FixedIdx>() {
                         match r2.0 {
                             $($mm => {
-                                let v = $ll.update(&mut $ll2.widget, &r2.push_on_stack(path), route.for_child_1(), root, ctx);
+                                let v = $ll.update(&mut $ll2.widget, &mut path.with(*r2), route.for_child_1::<FixedIdx>(), root, ctx);
                                 $ll2.invalidate(v);
                                 return v;
                             }),+ ,
@@ -91,7 +91,7 @@ macro_rules! impl_tuple {
 
                 // Update persisted exising area
                 $({
-                    let v = $ll.update(&mut $ll2.widget, &FixedIdx($mmm).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+                    let v = $ll.update(&mut $ll2.widget, &mut path.with(FixedIdx($mmm)), route.for_child_1::<FixedIdx>(), root.fork(), ctx);
                     $ll2.invalidate(v);
                     vali |= v;
                 })+
@@ -99,13 +99,13 @@ macro_rules! impl_tuple {
                 vali
             }
         
-            fn update_restore<Ph>(
+            fn update_restore(
                 &self,
                 prev: &mut dyn PaneChildsDyn<E,ChildID=<Self::Retained as PaneChildsDyn<E>>::ChildID>,
-                path: &Ph,
+                path: &mut NewPathStack,
                 root: E::RootRef<'_>,
                 ctx: &mut E::Context<'_>
-            ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
+            ) -> (Self::Retained,Invalidation) {
                 let ($($ll),+,) = &self.0;
 
                 let prev_len = prev.len();
@@ -121,19 +121,19 @@ macro_rules! impl_tuple {
                 let restorable = prev_len.min($n);
         
                 let new = ($({
-                    let path = FixedIdx($mmm).push_on_stack(path);
+                    let mut path = path.with(FixedIdx($mmm));
                     if $mmm < restorable {
                         let result = prev.by_index_dyn_mut($mmm);
                         let result = result.unwrap();
                         debug_assert_eq!(result.idx, $mmm);
-                        let (w,v) = $ll.update_restore(result.widget, &path, root.fork(), ctx);
+                        let (w,v) = $ll.update_restore(result.widget, &mut path, root.fork(), ctx);
                         let mut w = PaneChildWidget::new(w);
                         w.invalidate(v);
                         vali |= v;
                         w
                     } else {
                         vali = Invalidation::new();
-                        PaneChildWidget::new( $ll.instantiate(&path, root.fork(), ctx) )
+                        PaneChildWidget::new( $ll.instantiate(&mut path, root.fork(), ctx) )
                     }
                 }),+,);
         

@@ -4,7 +4,7 @@ use std::fmt::Debug;
 
 use crate::backend::Backend;
 use crate::ctx::Context;
-use crate::event_new::downcast_map::EventDowncastMap;
+//use crate::event_new::downcast_map::EventDowncastMap;
 use crate::intercept::WidgetIntercept;
 use crate::root::{RootRef, RootMut};
 use crate::util::error::GuionError;
@@ -23,7 +23,7 @@ pub trait Env: Sized + Clone + Copy + Default + PartialEq + Debug + Send + Sync 
     type Message;
     type Error: std::error::Error + From<GuionError<Self>> + From<()>;
     type Phantom: InfallibleType;
-    type EventDowncastMap: EventDowncastMap<Self>;
+    //type EventDowncastMap: EventDowncastMap<Self>;
     #[cfg(feature = "qcell")]
     type CtxTCellOwner: 'static;
     //type Commit: Eq + Ord;

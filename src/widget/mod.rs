@@ -11,7 +11,10 @@ use crate::ctx::Context;
 use crate::env::Env;
 use crate::intercept::WidgetIntercept;
 use crate::invalidation::Invalidation;
+use crate::pathslice::{PathStack, NewPathStack, PathSliceRef};
 use crate::queron::Queron;
+use crate::queron::dyn_tunnel::QueronDyn;
+use crate::render::StdRenderProps;
 use crate::root::RootRef;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, WQuery, DowncastResponder, DowncastMutResponder};
 use crate::util::error::{GuionError, ResolveError, GuionResolveErrorChildInfo};
@@ -19,7 +22,7 @@ use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, Tabulate
 use crate::widget_decl::route::UpdateRoute;
 use crate::{EventResp, event_new};
 use crate::aliases::{ERenderer, ESize};
-use crate::newpath::{PathResolvusDyn, PathStack, PathResolvus};
+use crate::newpath::{PathResolvusDyn, PathResolvus};
 
 use self::cache::WidgetCache;
 use self::dyn_tunnel::WidgetDyn;
@@ -67,13 +70,13 @@ pub struct WidgetChildDynResultMut<'a,E> {
 
 pub struct WidgetChildResolveDynResult<'a,'b,E> {
     pub idx: isize,
-    pub sub_path: &'b (dyn PathResolvusDyn<E>+'b),
+    pub sub_path: PathSliceRef<'b>,
     pub widget_id: WidgetID,
     pub widget: &'a (dyn WidgetDyn<E>+'a),
 }
 pub struct WidgetChildResolveDynResultMut<'a,'b,E> {
     pub idx: isize,
-    pub sub_path: &'b (dyn PathResolvusDyn<E>+'b),
+    pub sub_path: PathSliceRef<'b>,
     pub widget_id: WidgetID,
     pub widget: &'a mut (dyn WidgetDyn<E>+'a),
 }
@@ -85,38 +88,38 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     fn id(&self) -> WidgetID;
 
     #[inline]
-    fn render<P,Ph>(
+    fn render(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         ctx.build_intercept()._render(self, path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
-    fn event_direct<P,Ph,Evt>(
+    fn event_direct(
         &mut self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         ctx.build_intercept()._event_direct(self, path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
-    fn size<P,Ph>(
+    fn size(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         ctx.build_intercept()._size(self, path, stack, root, ctx)
     }
 
@@ -125,58 +128,58 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// ![RENDER](https://img.shields.io/badge/-render-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::render`]
-    fn _render<P,Ph>(
+    fn _render(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+    );
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![EVENT](https://img.shields.io/badge/-event-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::event`](Link::send_event)
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &mut self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt, // what if e.g. bounds change, if it's validated by parents then it's not signaled here
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> Invalidation;
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![IMPL](https://img.shields.io/badge/-impl-important?style=flat-square)  
     /// ![LAYOUT](https://img.shields.io/badge/-layout-000?style=flat-square)
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square)
     /// generally not called directly, rather through [`Link::size`]
-    fn _size<P,Ph>(
+    fn _size(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+    ) -> ESize<E>;
 
-    fn update<Ph>(
+    fn update(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized;
+    ) -> Invalidation;
 
     #[inline]
-    fn end<Ph>(
+    fn end(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {}
+    ) {}
 
     /// ![CHILDS](https://img.shields.io/badge/-childs-000?style=flat-square)
     fn childs(&self) -> Range<isize>;
@@ -189,9 +192,9 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
     fn childs_dyn_mut<'a,F>(&'a mut self, range: Range<isize>, callback: F) where F: FnMut(WidgetChildDynResultMut<'a,E>);
 
-    fn resolve_child_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResult<'a,'b,E>>;
+    fn resolve_child_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResult<'a,'b,E>>;
 
-    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>>;
+    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>>;
 
     fn collect_childs_dyn_range(&self, range: Range<isize>) -> Vec<WidgetChildDynResult<'_,E>> {
         let mut dest = Vec::with_capacity(range.len());
@@ -205,14 +208,14 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
         dest
     }
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized;
+    );
 
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Resolve a deep child item by the given relative path
@@ -222,11 +225,11 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     /// ![USER](https://img.shields.io/badge/-user-0077ff?style=flat-square) generally not used directly, but through [`Widgets::widget`]
     fn resolve<'a>(
         &'a self,
-        sub_path: &(dyn PathResolvusDyn<E>),
+        sub_path: PathSliceRef,
         root: E::RootRef<'a>,
         ctx: &mut E::Context<'_>
     ) -> Result<WidgetResolveDynResult<'a,E>,E::Error> {
-        if sub_path.inner().is_none() {
+        if sub_path.fetch().is_empty() {
             return Ok(WidgetResolveDynResult {
                 widget_id: self.id(),
                 widget: self.erase(),
@@ -242,8 +245,8 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
     // /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
     // #[inline]
-    // fn trace_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    // fn trace_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error> {
     //     if i.is_empty() {
     //         return Ok(*b)
     //     }
@@ -253,8 +256,8 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     //     Ok(bounds[child])
     // }
     // /// ![LAYOUT](https://img.shields.io/badge/-resolving-000?style=flat-square)
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+    // fn child_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()>;
     
     /// ![RESOLVING](https://img.shields.io/badge/-resolving-000?style=flat-square)  
     /// Attach widget's id to the given parent path
@@ -275,7 +278,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
     /// Determines the next child in this widget in the tabulation step
     #[inline]
-    fn _tabulate_next_child<P,Ph>(&self, path: &Ph, stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    fn _tabulate_next_child(&self, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse {
         let childs = self.childs();
         
         match origin {
@@ -314,15 +317,15 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
     }
 
     #[deprecated]
-    fn _call_tabulate_on_child_idx<P,Ph>(&self, idx: isize, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+    fn _call_tabulate_on_child_idx(&self, idx: isize, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse,E::Error>;
 
-    fn _tabulate<P,Ph>(&self, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        let current_path = path;
+    fn _tabulate(&self, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse,E::Error> {
+        //let current_path = path;
         // fn to tabulate to the next child away from the previous child (child_id None = self)
-        let enter_child_sub = |child_id: isize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
+        let enter_child_sub = |path: &mut NewPathStack, child_id: isize, to: TabulateOrigin, ctx: &mut E::Context<'_>| -> Result<TabulateResponse,E::Error> {
             self._call_tabulate_on_child_idx(child_id, path, stack, to.clone(), dir, root.fork(), ctx)
         };
-        let next_child = |mut child_id: Option<isize>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
+        let next_child = |path: &mut NewPathStack, mut child_id: Option<isize>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse,E::Error> {
             loop {
                 // determine the targeted next child
                 let targeted_child = self._tabulate_next_child(
@@ -335,7 +338,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
                 match targeted_child {
                     // enter child or repeat
-                    TabulateNextChildResponse::Child(t) => match enter_child_sub(t,TabulateOrigin::Enter,ctx)? {
+                    TabulateNextChildResponse::Child(t) => match enter_child_sub(path, t,TabulateOrigin::Enter,ctx)? {
                         TabulateResponse::Done(v) => return Ok(TabulateResponse::Done(v)),
                         TabulateResponse::Leave => {
                             // couldn't enter next child, repeat
@@ -345,7 +348,7 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
                     }
                     TabulateNextChildResponse::This =>
                         if self.focusable() {
-                            return Ok(TabulateResponse::Done((current_path.to_resolvus(),self.id())))
+                            return Ok(TabulateResponse::Done((path.left_slice().to_owned(),self.id())))
                         }else{
                             // we aren't focusable, repeat
                             child_id = None;
@@ -357,23 +360,23 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
             Ok(TabulateResponse::Leave)
         };
         // tabulate into specific child, either in resolve phase or enter
-        let enter_child = |child_id: isize, to: TabulateOrigin<E>, ctx: &mut E::Context<'_>| -> Result<TabulateResponse<E>,E::Error> {
-            match enter_child_sub(child_id,to,ctx)? {
+        let enter_child = |path: &mut NewPathStack, child_id: isize, to: TabulateOrigin, ctx: &mut E::Context<'_>| -> Result<TabulateResponse,E::Error> {
+            match enter_child_sub(path, child_id, to, ctx)? {
                 TabulateResponse::Done(v) => Ok(TabulateResponse::Done(v)),
-                TabulateResponse::Leave => next_child(Some(child_id),ctx),
+                TabulateResponse::Leave => next_child(path, Some(child_id),ctx),
             }
         };
         match op {
             TabulateOrigin::Resolve(p) => {
-                if p.inner().is_some() {
+                if !p.fetch().is_empty() {
                     // pass 1: resolve to previous focused widget
                     match self.resolve_child_dyn(p) {
-                        Some(result) => enter_child(result.idx, TabulateOrigin::Resolve(result.sub_path),ctx),
+                        Some(result) => enter_child(path, result.idx, TabulateOrigin::Resolve(result.sub_path),ctx),
                         None => Err(todo!()),
                     }
                 }else{
                     // pass 2: we are the previous focused widget and should tabulate away
-                    next_child(None,ctx)
+                    next_child(path, None,ctx)
                 }
             },
             TabulateOrigin::Enter => {
@@ -389,9 +392,9 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
                 match enter_dir {
                     // tabulate into enter the targeted child
-                    TabulateNextChildResponse::Child(t) => enter_child(t, TabulateOrigin::Enter,ctx),
+                    TabulateNextChildResponse::Child(t) => enter_child(path, t, TabulateOrigin::Enter,ctx),
                     // tabulate to self
-                    TabulateNextChildResponse::This => Ok(TabulateResponse::Done((current_path.to_resolvus(),self.id()))),
+                    TabulateNextChildResponse::This => Ok(TabulateResponse::Done((path.left_slice().to_owned(),self.id()))),
                     TabulateNextChildResponse::Leave => Ok(TabulateResponse::Leave),
                 }
             },
@@ -612,13 +615,14 @@ pub trait Widget<E>: WBase<E> + /*TODO bring back AsWidgetImplemented*/ where E:
 
     #[inline(never)]
     fn guion_resolve_error_child_info(&self, child_idx: isize) -> GuionResolveErrorChildInfo<E> {
-        GuionResolveErrorChildInfo {
-            child_idx,
-            widget_type: self.debugged_type_name(),
-            // widget_path_if_path: None,
-            // widget_id: Some(self.id()),
-            path: todo!(),
-        }
+        // GuionResolveErrorChildInfo {
+        //     child_idx,
+        //     widget_type: self.debugged_type_name(),
+        //     // widget_path_if_path: None,
+        //     // widget_id: Some(self.id()),
+        //     path: todo!(),
+        // }
+        todo!()
     }
 }
 

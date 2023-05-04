@@ -6,6 +6,7 @@ use crate::event::imp::StdVarSup;
 use crate::invalidation::Invalidation;
 use crate::layout::Gonstraints;
 use crate::newpath::{PathStack, PathResolvusDyn};
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::render::widgets::RenderStdWidgets;
 use crate::root::RootRef;
 use crate::text::layout::TxtLayoutFromStor;
@@ -33,16 +34,16 @@ impl<E,Text> WidgetDecl<E> for Label<E,Text> where
 {
     type Widget = super::widget::Label<E,String>;
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        _: &Ph,
-        _: &(dyn PathResolvusDyn<E>+'_),
+        _: &mut NewPathStack,
+        _: PathSliceRef,
         _: &dyn std::any::Any,
         _: E::RootRef<'_>,
         _: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {}
+    ) {}
 
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {
         super::widget::Label {
             id: ctx.retained_id(),
             size: self.size.clone().unwrap_or(ESize::<E>::zero()),
@@ -54,14 +55,14 @@ impl<E,Text> WidgetDecl<E> for Label<E,Text> where
         }
     }
 
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Widget,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         let mut vali = Invalidation::valid();
 
         if self.text.caption() != w.text {
@@ -80,13 +81,13 @@ impl<E,Text> WidgetDecl<E> for Label<E,Text> where
         vali
     }
 
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) {
         prev.end(path, root.fork(), ctx);
         (self.instantiate(path, root, ctx), Invalidation::new())
     }

@@ -6,7 +6,9 @@ use crate::event_new;
 use crate::invalidation::Invalidation;
 use crate::layout::Orientation;
 use crate::newpath::{PathFragment, PathResolvusDyn, PathStack};
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::queron::Queron;
+use crate::queron::dyn_tunnel::QueronDyn;
 use crate::render::StdRenderProps;
 use crate::util::bounds::{Bounds, Dims};
 use crate::util::tabulate::{TabulateOrigin, TabulateDirection, TabulateResponse};
@@ -22,74 +24,72 @@ pub mod tupled;
 pub trait PaneChilds<E>: PaneChildsDyn<E> where E: Env {
     type Caches: Default + Sized + 'static;
 
-    fn render<P,Ph>(
+    fn render(
         &mut self,
-        path: &Ph,
-        render_props: &StdRenderProps<'_,P,E,()>,
+        path: &mut NewPathStack,
+        render_props: &StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Caches,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+    );
 
-    fn event<P,Ph,Evt>(
+    fn event(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         bounds: &QueriedCurrentBounds,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized;
+    ) -> Invalidation;
 
-    fn constraints<P,Ph>(
+    fn constraints(
         &mut self,
         relayout: Option<Dims>,
         orientation: Orientation,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+    ) -> ESize<E>;
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: usize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized;
+    ) -> Result<TabulateResponse,E::Error>;
 
-    fn end<Ph>(
+    fn end(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized;
+    );
 
-    fn update<Ph>(
+    fn update(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: crate::widget_decl::route::UpdateRoute<'_,E>,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized;
+    ) -> Invalidation;
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn std::any::Any,
         root: <E as Env>::RootRef<'_>,
         ctx: &mut <E as Env>::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized;
+    );
 
     fn invalidate_recursive(&mut self, vali: Invalidation);
 }
@@ -151,7 +151,7 @@ pub struct ChildWidgetDynResult<'a,CID,E> where CID: PathFragment<E> + Clone + '
 pub struct ChildWidgetDynResolveResult<'a,'b,CID,E> where CID: PathFragment<E> + Clone + 'static {
     pub idx: usize,
     pub child_id: CID,
-    pub resolvus: &'b (dyn PathResolvusDyn<E>+'b),
+    pub resolvus: PathSliceRef<'b>,
     pub widget_id: WidgetID,
     pub widget: &'a (dyn WidgetDyn<E>+'a),
 }
@@ -165,7 +165,7 @@ pub struct ChildWidgetDynResultMut<'a,CID,E> where CID: PathFragment<E> + Clone 
 pub struct ChildWidgetDynResolveResultMut<'a,'b,CID,E> where CID: PathFragment<E> + Clone + 'static {
     pub idx: usize,
     pub child_id: CID,
-    pub resolvus: &'b (dyn PathResolvusDyn<E>+'b),
+    pub resolvus: PathSliceRef<'b>,
     pub widget_id: WidgetID,
     pub widget: &'a mut (dyn WidgetDyn<E>+'a),
 }

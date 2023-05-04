@@ -1,9 +1,11 @@
 use std::any::Any;
 use std::ops::Range;
 
-use crate::event_new::downcast_map::EventDowncastMap;
+//use crate::event_new::downcast_map::EventDowncastMap;
 use crate::invalidation::Invalidation;
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::queron::Queron;
+use crate::render::StdRenderProps;
 use crate::traitcast::{WQueryResponder, WQueryResponderGeneric, WQueryGeneric, DowncastMutResponder, DowncastResponder};
 use crate::util::error::GuionResolveErrorChildInfo;
 use crate::util::tabulate::{TabulateNextChildOrigin, TabulateDirection, TabulateOrigin, TabulateNextChildResponse, TabulateResponse};
@@ -13,6 +15,7 @@ use crate::aliases::{ERenderer, ESize};
 use crate::env::Env;
 use crate::event_new::EventDyn;
 use crate::newpath::{PathStackDyn, PathResolvusDyn, PathStack};
+use crate::event_new::Event;
 use crate::queron::dyn_tunnel::QueronDyn;
 
 use super::id::WidgetID;
@@ -24,8 +27,8 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn render_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
-        stack: &(dyn QueronDyn<E>+'_),
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut DynWidgetCache<E>,
@@ -35,17 +38,17 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn event_direct_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> Invalidation;
 
     fn size_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -53,8 +56,8 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn _render_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
-        stack: &(dyn QueronDyn<E>+'_),
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut DynWidgetCache<E>,
@@ -64,17 +67,17 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn _event_direct_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> Invalidation;
 
     fn _size_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -82,7 +85,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn update_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -90,7 +93,7 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn end_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     );
@@ -105,9 +108,9 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn childs_dyn_mut_dyn<'a>(&'a mut self, range: Range<isize>, callback: &mut (dyn FnMut(WidgetChildDynResultMut<'a,E>) + '_) );
 
-    fn resolve_child_dyn_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResult<'a,'b,E>>;
+    fn resolve_child_dyn_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResult<'a,'b,E>>;
 
-    fn resolve_child_dyn_mut_dyn<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>>;
+    fn resolve_child_dyn_mut_dyn<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>>;
 
     fn collect_childs_dyn_range_dyn(&self, range: Range<isize>) -> Vec<WidgetChildDynResult<'_,E>>;
 
@@ -115,8 +118,8 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn send_mutation_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -124,17 +127,17 @@ pub trait WidgetDyn<E> where E: Env + 'static {
 
     fn resolve_dyn<'a>(
         &'a self,
-        sub_path: &(dyn PathResolvusDyn<E>),
+        sub_path: PathSliceRef,
         root: E::RootRef<'a>,
         ctx: &mut E::Context<'_>
     ) -> Result<WidgetResolveDynResult<'a,E>,E::Error>;
 
     // fn resolve_child_dyn(&self, sub_path: &E::WidgetPath, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<(isize,E::WidgetPath),E::Error>;
 
-    // fn trace_bounds_dyn(&self, path: &(dyn PathStackDyn<E>+'_),
+    // fn trace_bounds_dyn(&self, path: &mut NewPathStack,
     //     stack: &(dyn QueronDyn<E>+'_), i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error>;
 
-    // fn child_bounds_dyn(&self, path: &(dyn PathStackDyn<E>+'_),
+    // fn child_bounds_dyn(&self, path: &mut NewPathStack,
     //     stack: &(dyn QueronDyn<E>+'_), b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()>;
 
     fn focusable_dyn(&self) -> bool;
@@ -144,11 +147,11 @@ pub trait WidgetDyn<E> where E: Env + 'static {
     fn _tabulate_by_tab_dyn(&self) -> bool;
 
     #[deprecated="Not supposted to be exposed"]
-    fn _tabulate_next_child_dyn(&self, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse;
+    fn _tabulate_next_child_dyn(&self, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse;
 
-    fn _call_tabulate_on_child_idx_dyn(&self, child_idx: isize, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error>;
+    fn _call_tabulate_on_child_idx_dyn(&self, child_idx: isize, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse,E::Error>;
 
-    fn _tabulate_dyn(&self, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error>;
+    fn _tabulate_dyn(&self, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse,E::Error>;
     
     fn invalidate_recursive_dyn(&mut self, vali: Invalidation);
 
@@ -186,8 +189,8 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn render_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
-        stack: &(dyn QueronDyn<E>+'_),
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut DynWidgetCache<E>,
@@ -199,19 +202,20 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn event_direct_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> Invalidation {
-        E::EventDowncastMap::event_downcast_map(self, path, stack, event, route_to_widget, root, ctx)
+        //E::EventDowncastMap::event_downcast_map(self, path, stack, event, route_to_widget, root, ctx)
+        self.event_direct(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
     fn size_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -221,8 +225,8 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn _render_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
-        stack: &(dyn QueronDyn<E>+'_),
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut DynWidgetCache<E>,
@@ -234,10 +238,10 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn _event_direct_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_),
         event: &(dyn EventDyn<E>+'_),
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> Invalidation {
@@ -247,7 +251,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn _size_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -257,7 +261,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn update_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
@@ -267,7 +271,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn end_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) {
@@ -280,8 +284,8 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn send_mutation_dyn(
         &mut self,
-        path: &(dyn PathStackDyn<E>+'_),
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
@@ -300,12 +304,12 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     //     self.resolve_child(sub_path, root, ctx)
     // }
     // #[inline]
-    // fn trace_bounds_dyn(&self, path: &(dyn PathStackDyn<E>+'_),
+    // fn trace_bounds_dyn(&self, path: &mut NewPathStack,
     //     stack: &(dyn QueronDyn<E>+'_), i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error> {
     //     self.trace_bounds(path, stack, i, b, e, force, root, ctx)
     // }
     // #[inline]
-    // fn child_bounds_dyn(&self, path: &(dyn PathStackDyn<E>+'_),
+    // fn child_bounds_dyn(&self, path: &mut NewPathStack,
     //     stack: &(dyn QueronDyn<E>+'_), b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
     //     self.child_bounds(path, stack, b, force, root, ctx)
     // }
@@ -322,18 +326,18 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         self._tabulate_by_tab()
     }
     #[inline]
-    fn _tabulate_next_child_dyn(&self, path: &(dyn PathStackDyn<E>+'_),
+    fn _tabulate_next_child_dyn(&self, path: &mut NewPathStack,
         stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse {
         self._tabulate_next_child(path, stack, origin, dir, root, ctx)
     }
     #[allow(deprecated)]
     #[inline]
-    fn _call_tabulate_on_child_idx_dyn(&self, child_idx: isize, path: &(dyn PathStackDyn<E>+'_), stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> {
+    fn _call_tabulate_on_child_idx_dyn(&self, child_idx: isize, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse,E::Error> {
         self._call_tabulate_on_child_idx(child_idx, path, stack, op, dir, root, ctx)
     }
     #[inline]
-    fn _tabulate_dyn(&self, path: &(dyn PathStackDyn<E>+'_),
-        stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> {
+    fn _tabulate_dyn(&self, path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse,E::Error> {
         self._tabulate(path, stack, op, dir, root, ctx)
     }
     #[inline]
@@ -421,11 +425,11 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
         self.childs_dyn_mut(range, callback)
     }
     #[inline]
-    fn resolve_child_dyn_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
+    fn resolve_child_dyn_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
         self.resolve_child_dyn(path)
     }
     #[inline]
-    fn resolve_child_dyn_mut_dyn<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
+    fn resolve_child_dyn_mut_dyn<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
         self.resolve_child_dyn_mut(path)
     }
     #[inline]
@@ -439,7 +443,7 @@ impl<T,E> WidgetDyn<E> for T where T: Widget<E> + ?Sized, E: Env {
     #[inline]
     fn resolve_dyn<'a>(
         &'a self,
-        sub_path: &(dyn PathResolvusDyn<E>),
+        sub_path: PathSliceRef,
         root: E::RootRef<'a>,
         ctx: &mut E::Context<'_>
     ) -> Result<WidgetResolveDynResult<'a,E>,E::Error> {
@@ -455,93 +459,93 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         self.id_dyn()
     }
     #[inline]
-    fn render<P,Ph>(
+    fn render(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        self.render_dyn(path._erase(), stack.erase(), renderer, force_render, cache, root, ctx)
+    ) {
+        self.render_dyn(path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
-    fn event_direct<P,Ph,Evt>(
+    fn event_direct(
         &mut self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        self.event_direct_dyn(path._erase(), stack.erase(), event.erase(), route_to_widget, root, ctx)
+    ) -> Invalidation {
+        self.event_direct_dyn(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
-    fn size<P,Ph>(
+    fn size(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        self.size_dyn(path._erase(), stack.erase(), root, ctx)
+    ) -> ESize<E> {
+        self.size_dyn(path, stack, root, ctx)
     }
     #[inline]
-    fn _render<P,Ph>(
+    fn _render(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        self._render_dyn(path._erase(), stack.erase(), renderer, force_render, cache, root, ctx)
+    ) {
+        self._render_dyn(path, stack, renderer, force_render, cache, root, ctx)
     }
     #[inline]
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &mut self,
-        path: &Ph,
-        stack: &P,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
-        self._event_direct_dyn(path._erase(), stack.erase(), event.erase(), route_to_widget, root, ctx)
+    ) -> Invalidation {
+        self._event_direct_dyn(path, stack, event, route_to_widget, root, ctx)
     }
     #[inline]
-    fn _size<P,Ph>(
+    fn _size(
         &mut self,
-        path: &Ph,
-        stack: &P,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        self._size_dyn(path._erase(), stack.erase(), root, ctx)
+    ) -> ESize<E> {
+        self._size_dyn(path, stack, root, ctx)
     }
     #[inline]
-    fn update<Ph>(
+    fn update(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
-        self.update_dyn(path._erase(), route, root, ctx)
+    ) -> Invalidation {
+        self.update_dyn(path, route, root, ctx)
     }
     #[inline]
-    fn end<Ph>(
+    fn end(
         &mut self,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized {
-        self.end_dyn(path._erase(), root, ctx)
+    ) {
+        self.end_dyn(path, root, ctx)
     }
     #[inline]
     fn childs(&self) -> Range<isize> {
@@ -565,11 +569,11 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         self.childs_dyn_mut_dyn(range, &mut callback)
     }
     #[inline]
-    fn resolve_child_dyn<'a,'b>(&'a self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
+    fn resolve_child_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
         self.resolve_child_dyn_dyn(path)
     }
     #[inline]
-    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: &'b (dyn PathResolvusDyn<E>+'b)) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
+    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
         self.resolve_child_dyn_mut_dyn(path)
     }
     #[inline]
@@ -581,29 +585,29 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
         self.collect_childs_dyn_range_mut_dyn(range)
     }
     #[inline]
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &mut self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
-        self.send_mutation_dyn(path._erase(), resolve, args, root, ctx)
+    ) {
+        self.send_mutation_dyn(path, resolve, args, root, ctx)
     }
     #[inline]
     fn resolve<'a>(
         &'a self,
-        sub_path: &(dyn PathResolvusDyn<E>),
+        sub_path: PathSliceRef,
         root: E::RootRef<'a>,
         ctx: &mut E::Context<'_>
     ) -> Result<WidgetResolveDynResult<'a,E>,E::Error> {
         self.resolve_dyn(sub_path, root, ctx)
     }
     // #[inline]
-    // fn trace_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-    //     self.trace_bounds_dyn(path._erase(), stack.erase(), i, b, e, force, root, ctx)
+    // fn trace_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, i: E::WidgetPath, b: &Bounds, e: &EStyle<E>, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Bounds,E::Error> {
+    //     self.trace_bounds_dyn(path, stack, i, b, e, force, root, ctx)
     // }
     #[inline]
     fn focusable(&self) -> bool {
@@ -619,21 +623,18 @@ impl<E> Widget<E> for dyn WidgetDyn<E> + '_ where E: Env {
     }
     #[allow(deprecated)]
     #[inline]
-    fn _tabulate_next_child<P,Ph>(&self, path: &Ph,
-        stack: &P, origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        self._tabulate_next_child_dyn(path._erase(), stack.erase(), origin, dir, root, ctx)
+    fn _tabulate_next_child(&self, path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_), origin: TabulateNextChildOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> TabulateNextChildResponse {
+        self._tabulate_next_child_dyn(path, stack, origin, dir, root, ctx)
     }
     #[inline]
-    fn _call_tabulate_on_child_idx<P,Ph>(&self, idx: isize, path: &Ph, stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
-        self._call_tabulate_on_child_idx_dyn(idx, path._erase(), stack.erase(), op, dir, root, ctx)
+    fn _call_tabulate_on_child_idx(&self, idx: isize, path: &mut NewPathStack, stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse,E::Error> {
+        self._call_tabulate_on_child_idx_dyn(idx, path, stack, op, dir, root, ctx)
     }
     #[inline]
-    fn _tabulate<P,Ph>(&self, path: &Ph,
-        stack: &P, op: TabulateOrigin<E>, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse<E>,E::Error> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
-        self._tabulate_dyn(path._erase(), stack.erase(), op, dir, root, ctx)
+    fn _tabulate(&self, path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_), op: TabulateOrigin, dir: TabulateDirection, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<TabulateResponse,E::Error> {
+        self._tabulate_dyn(path, stack, op, dir, root, ctx)
     }
     #[inline]
     fn invalidate_recursive(&mut self, vali: Invalidation) {

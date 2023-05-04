@@ -7,6 +7,7 @@ use crate::aliases::{EEvent, ESize};
 use crate::env::Env;
 use crate::invalidation::Invalidation;
 use crate::newpath::PathResolvusDyn;
+use crate::pathslice::PathSliceOwned;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 /// The Queue, accessible from [`E::Context`](Context), used to enqueue [events](Event) or actions from any thread
@@ -23,14 +24,14 @@ pub enum StdEnqueueable<E> where E: Env {
     Event{event: EEvent<E>, ts: u64},
     MutateRoot{f: PtrMutEvent<E>},
     MutateRootClosure{f: BoxMutEvent<E>},
-    AccessWidget{path: Arc<dyn PathResolvusDyn<E>>, f: PtrAccessWidget<E>},
-    AccessWidgetClosure{path: Arc<dyn PathResolvusDyn<E>>, f: BoxAccessWidget<E>},
+    AccessWidget{path: PathSliceOwned, f: PtrAccessWidget<E>},
+    AccessWidgetClosure{path: PathSliceOwned, f: BoxAccessWidget<E>},
     AccessRoot{f: PtrAccessRoot<E>},
     AccessRootClosure{f: BoxAccessRoot<E>},
-    MutMessage{path: Arc<dyn PathResolvusDyn<E>>, msg: E::Message},
-    InvalidateWidget{path: Arc<dyn PathResolvusDyn<E>>, vali: Invalidation},
-    SendMutation{path: Arc<dyn PathResolvusDyn<E>>, payload: Box<dyn Any>},
-    DeclUpdate{scope: Option<Arc<dyn PathResolvusDyn<E>>>, zone: Option<TypeId>},
+    MutMessage{path: PathSliceOwned, msg: E::Message},
+    InvalidateWidget{path: PathSliceOwned, vali: Invalidation},
+    SendMutation{path: PathSliceOwned, payload: Box<dyn Any>},
+    DeclUpdate{scope: Option<PathSliceOwned>, zone: Option<TypeId>},
 }
 
 pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;

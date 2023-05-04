@@ -4,7 +4,8 @@ use std::ops::BitOr;
 
 use crate::env::Env;
 use crate::invalidation::Invalidation;
-use crate::newpath::{PathStack, PathStackDyn, PathResolvusDyn};
+use crate::newpath::{PathStackDyn, PathResolvusDyn};
+use crate::pathslice::{PathStack, NewPathStack, PathSliceRef};
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
@@ -32,73 +33,73 @@ pub mod zone;
 pub trait WidgetDecl<E> where E: Env {
     type Widget: Widget<E> + 'static;
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized;
+    );
 
     #[inline]
-    fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Self: Sized {
         self.instantiate(path, root, ctx)
     }
 
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized;
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget;
 
     #[inline]
-    fn build_boxed<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build_boxed(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Self: Sized {
         self.instantiate_boxed(path, root, ctx)
     }
 
     // dyn flattening
     #[inline]
-    fn instantiate_boxed<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> where Ph: PathStack<E> + ?Sized {
+    fn instantiate_boxed(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> {
         Box::new(self.instantiate(path, root, ctx))
     }
 
     // update to reconcile decl and widget (state)
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Widget,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized;
+    ) -> Invalidation;
 
     /// This function not to be called from outside
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized;
+    ) -> (Self::Widget,Invalidation);
 
-    fn update_restore_boxed<Ph>(
+    fn update_restore_boxed(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Box<dyn WidgetDyn<E> + 'static>,Invalidation) {
         let (widget, vali) = self.update_restore(prev, path, root, ctx);
         (Box::new(widget), vali)
     }
 
     // dyn flattening
     #[inline]
-    fn update_dyn<Ph>(
+    fn update_dyn(
         &self,
         w: &mut Box<dyn WidgetDyn<E> + 'static>,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         if TypeId::of::<Self::Widget>() == TypeId::of::<Box<dyn WidgetDyn<E> + 'static>>() {
             // Due to the flattening, downcast to Box<dyn Widget> isn't possible
             let w = unsafe {
@@ -123,52 +124,52 @@ pub trait WidgetDecl<E> where E: Env {
     }
 
     #[inline]
-    fn callback(self, v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult where Self: Sized {
+    fn callback(self, mut v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult where Self: Sized {
         match v.command {
             WidgetDeclCallbackMode::Instantiate(dest) =>
-                *dest = Some(self.build(v.path, v.root, ctx)),
+                *dest = Some(self.build(&mut v.path, v.root, ctx)),
             WidgetDeclCallbackMode::InstantiateBoxed(dest) =>
-                *dest = Some(self.build_boxed(v.path, v.root, ctx)),
+                *dest = Some(self.build_boxed(&mut v.path, v.root, ctx)),
             WidgetDeclCallbackMode::Update(widget, vali) =>
-                *vali = self.update(widget, v.path, v.route, v.root, ctx),
+                *vali = self.update(widget, &mut v.path, v.route, v.root, ctx),
             WidgetDeclCallbackMode::UpdateDyn(widget, vali) =>
-                *vali = self.update_dyn(widget, v.path, v.route, v.root, ctx),
+                *vali = self.update_dyn(widget, &mut v.path, v.route, v.root, ctx),
             WidgetDeclCallbackMode::UpdateRestore(prev, dest, vali) => {
-                let (d,v) = self.update_restore(prev, v.path, v.root, ctx);
+                let (d,v) = self.update_restore(prev, &mut v.path, v.root, ctx);
                 *dest = Some(d); *vali = v;
             },
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest, vali) => {
-                let (d,v) = self.update_restore_boxed(prev, v.path, v.root, ctx);
+                let (d,v) = self.update_restore_boxed(prev, &mut v.path, v.root, ctx);
                 *dest = Some(d); *vali = v;
             },
             WidgetDeclCallbackMode::SendMutation(resolve, args) => 
-                self.send_mutation(v.path, resolve, args, v.root, ctx),
+                self.send_mutation(&mut v.path, resolve, args, v.root, ctx),
             
         }
         WidgetDeclCallbackResult(PhantomData)
     }
 
     #[inline]
-    fn call_on(&self, v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult {
+    fn call_on(&self, mut v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult {
         match v.command {
             WidgetDeclCallbackMode::Instantiate(dest) =>
-                *dest = Some(self.build(v.path, v.root, ctx)),
+                *dest = Some(self.build(&mut v.path, v.root, ctx)),
             WidgetDeclCallbackMode::InstantiateBoxed(dest) =>
-                *dest = Some(self.build_boxed(v.path, v.root, ctx)),
+                *dest = Some(self.build_boxed(&mut v.path, v.root, ctx)),
             WidgetDeclCallbackMode::Update(widget, vali) =>
-                *vali = self.update(widget, v.path, v.route, v.root, ctx),
+                *vali = self.update(widget, &mut v.path, v.route, v.root, ctx),
             WidgetDeclCallbackMode::UpdateDyn(widget, vali) =>
-                *vali = self.update_dyn(widget, v.path, v.route, v.root, ctx),
+                *vali = self.update_dyn(widget, &mut v.path, v.route, v.root, ctx),
             WidgetDeclCallbackMode::UpdateRestore(prev, dest, vali) => {
-                let (d,v) = self.update_restore(prev, v.path, v.root, ctx);
+                let (d,v) = self.update_restore(prev, &mut v.path, v.root, ctx);
                 *dest = Some(d); *vali = v;
             },
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest, vali) => {
-                let (d,v) = self.update_restore_boxed(prev, v.path, v.root, ctx);
+                let (d,v) = self.update_restore_boxed(prev, &mut v.path, v.root, ctx);
                 *dest = Some(d); *vali = v;
             },
             WidgetDeclCallbackMode::SendMutation(resolve, args) => 
-                self.send_mutation(v.path, resolve, args, v.root, ctx),
+                self.send_mutation(&mut v.path, resolve, args, v.root, ctx),
         }
         WidgetDeclCallbackResult(PhantomData)
     }
@@ -176,7 +177,7 @@ pub trait WidgetDecl<E> where E: Env {
 
 pub struct WidgetDeclCallback<'a,W,E> where W: Widget<E> + 'static, E: Env {
     root: E::RootRef<'a>,
-    pub(crate) path: &'a (dyn PathStackDyn<E> + 'a),
+    pub(crate) path: NewPathStack<'a>,
     pub(crate) route: UpdateRoute<'a,E>,
     pub(crate) command: WidgetDeclCallbackMode<'a,W,E>,
     _p: PhantomData<&'a mut ()>,
@@ -188,15 +189,15 @@ impl<'a,W,E> WidgetDeclCallback<'a,W,E> where W: Widget<E> + 'static, E: Env {
         self.root.fork()
     }
     #[inline]
-    pub fn path(&self) -> &'a (dyn PathStackDyn<E> + 'a) {
-        self.path
+    pub fn path(&mut self) -> &mut NewPathStack<'a> {
+        &mut self.path
     }
 
     // pub fn sub<'s>(self) -> WidgetDeclCallback<'s,W,E> where 'a: 's {
     //     self
     // }
 
-    pub fn new(root: E::RootRef<'a>, path: &'a (dyn PathStackDyn<E> + 'a), route: UpdateRoute<'a,E>, command: WidgetDeclCallbackMode<'a,W,E>) -> Self {
+    pub fn new(root: E::RootRef<'a>, path: NewPathStack<'a>, route: UpdateRoute<'a,E>, command: WidgetDeclCallbackMode<'a,W,E>) -> Self {
         WidgetDeclCallback {
             root,
             path,
@@ -214,7 +215,7 @@ pub enum WidgetDeclCallbackMode<'a,W,E> where W: Widget<E> + 'static, E: Env {
     UpdateDyn(&'a mut Box<dyn WidgetDyn<E> + 'static>, &'a mut Invalidation),
     UpdateRestore(&'a mut dyn WidgetDyn<E>, &'a mut Option<W>, &'a mut Invalidation),
     UpdateRestoreBoxed(&'a mut dyn WidgetDyn<E>, &'a mut Option<Box<dyn WidgetDyn<E> + 'static>>, &'a mut Invalidation),
-    SendMutation(&'a (dyn PathResolvusDyn<E>+'a), &'a dyn Any),
+    SendMutation(PathSliceRef<'a>, &'a dyn Any),
 }
 
 pub struct WidgetDeclCallbackResult(PhantomData<()>);

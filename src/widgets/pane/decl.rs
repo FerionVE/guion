@@ -7,6 +7,7 @@ use crate::event::imp::StdVarSup;
 use crate::invalidation::Invalidation;
 use crate::layout::{Gonstraints, Orientation};
 use crate::newpath::{PathStackDyn, PathStack, PathResolvusDyn, SimpleId, PathFragment, PathResolvus};
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::render::widgets::RenderStdWidgets;
 use crate::root::RootRef;
 use crate::state::CtxStdState;
@@ -35,18 +36,18 @@ impl<E,T> WidgetDecl<E> for Pane<E,T> where
 {
     type Widget = super::widget::Pane<E,T::Retained>;
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn std::any::Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         self.childs.send_mutation(path, resolve, args, root, ctx)
     }
 
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {
         super::widget::Pane {
             id: ctx.retained_id(),
             childs: self.childs.instantiate(path, root, ctx),
@@ -59,14 +60,14 @@ impl<E,T> WidgetDecl<E> for Pane<E,T> where
         }
     }
 
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Widget,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         let mut vali = Invalidation::valid();
 
         if self.orientation != w.orientation {
@@ -86,13 +87,13 @@ impl<E,T> WidgetDecl<E> for Pane<E,T> where
         vali
     }
 
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn WidgetDyn<E>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Widget,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Widget,Invalidation) {
         let (inner,_) = if let Some(prev_inner) = prev.query_mut::<WQueryPaneRestore<<T::Retained as PaneChildsDyn<E>>::ChildID>>() {
             self.childs.update_restore(prev_inner, path, root, ctx)
         } else {

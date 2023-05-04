@@ -3,7 +3,11 @@ use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::event::key::MatchKeyCode;
 use crate::event::standard::variants::{MouseMove, RootEvent, KbdDown, KbdPress, MouseDown, MouseUp, MouseLeave, WindowResize, WindowMove, TextInput, MouseScroll, KbdUp, MouseEnter};
+use crate::event_new::Event;
 use crate::invalidation::Invalidation;
+use crate::pathslice::{NewPathStack, PathSliceRef};
+use crate::queron::dyn_tunnel::QueronDyn;
+use crate::render::StdRenderProps;
 use crate::root::RootRef;
 use crate::{event_new, EventResp};
 use crate::event_new::variants::StdVariant;
@@ -27,11 +31,11 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
     // }
 
     #[inline] 
-    fn _render<W,Ph,S>(
+    fn _render<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
+        path: &mut NewPathStack,
+        stack: StdRenderProps<'_,dyn QueronDyn<E>+'_,E,()>,
         renderer: &mut ERenderer<'_,E>,
         force_render: bool,
         cache: &mut W::Cache,
@@ -39,24 +43,24 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
         ctx: &mut E::Context<'_>,
     )
     where
-        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized
+        W: Widget<E> + ?Sized
     {
         self.sup._render(widget, path, stack, renderer, force_render, cache, root, ctx)
         //todo!()
     }
     #[inline] 
-    fn _event_direct<W,Ph,S,Evt>(
+    fn _event_direct<W>(
         &self,
         widget: &mut W,
-        path: &Ph,
-        stack: &S,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> Invalidation
     where
-        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
+        W: Widget<E> + ?Sized
     {
         //let widget_data = QueryCurrentWidget.query_in(stack).unwrap();
 
@@ -76,7 +80,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
             let mouse_state = &mut (self.access)(ctx).state.mouse;
             if mouse_state.hover_last_seen == Some(self_id) && mouse_state.hovered.as_ref().map_or(true, |(_,id)| self_id != *id ) {
                 mouse_state.prev_hovered = mouse_state.hovered.take();
-                mouse_state.hovered = Some((path.to_resolvus(), self_id));
+                mouse_state.hovered = Some((path.left_slice().to_owned(), self_id));
             }
         }
 
@@ -84,20 +88,22 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
         //todo!()
     }
     //#[inline] 
-    fn _event_root<W,Ph,S,Evt>(
+    fn _event_root<W>(
         &self,
         root_widget: &mut W,
-        path: &Ph,
-        stack: &S,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> Invalidation
     where
-        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized
+        W: Widget<E> + ?Sized
     { //TODO BUG handle sudden invalidation of hovered widget
-        assert!(path.inner().is_none()); //TODO stupid path.is_empty() check
+        let root_path_slice = path.left_slice().fetch();
+        
+        assert!(root_path_slice.is_empty()); //TODO stupid path.is_empty() check
 
         if let Some(ee) = event.query_variant::<RootEvent<E>>(path,stack) {
             let ee = ee.clone();
@@ -107,7 +113,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                 RootEvent::KbdDown{key} => {
                     //Self::_event_root(l.reference(),(Event::from(RootEvent::KbdUp{key: key.clone()}),e.1,e.2));
                     if let Some(id) = (self.access)(ctx).state.kbd.focused.clone() {
-                        if root_widget.resolve(&*id.0, root.fork(), ctx).is_err() {
+                        if root_widget.resolve(id.0.as_slice(), root.fork(), ctx).is_err() {
                             //drop event if widget is gone
                             return Invalidation::valid();
                         }
@@ -125,7 +131,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(event,ts),//.with_filter_path_strict(id.path),
-                            Some(&*id.0),
+                            Some(id.0.as_slice()),
                             root.fork(), ctx,
                         );
                         /*let event = KbdPress{
@@ -157,7 +163,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(event.clone(),ts),//.with_filter_path_strict(id.path),
-                                Some(&*id.0),
+                                Some(id.0.as_slice()),
                                 root.fork(), ctx,
                             );
                         }
@@ -166,7 +172,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(event,ts),//.with_filter_path_strict(p.down.path),
-                            Some(&*p.down.0),
+                            Some(p.down.0.as_slice()),
                             root, ctx,
                         );
                     }
@@ -185,13 +191,13 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(event,ts),//.with_filter_path_strict(id.path.clone()),
-                                Some(&*id.0),
+                                Some(id.0.as_slice()),
                                 root.fork(), ctx,
                             );
                             let mut do_tab = false;
                             if
                                 key == MatchKeyCode::KbdTab &&
-                                root_widget.resolve(&*id.0, root.fork(), ctx).map_or(false,|w| w.widget._tabulate_by_tab() )
+                                root_widget.resolve(id.0.as_slice(), root.fork(), ctx).map_or(false,|w| w.widget._tabulate_by_tab() )
                             {
                                 do_tab = true;
                             }
@@ -224,14 +230,14 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(MouseDown{key,pos},ts),//.with_filter_path_strict(hovered.path.clone()),
-                                Some(&*hovered.0),
+                                Some(hovered.0.as_slice()),
                                 root.fork(), ctx,
                             );
 
 
                             //passed |= Self::focus(l,hovered.path.clone(),e.1,e.2).unwrap_or(false);
 
-                            let focus = root_widget.resolve(&*hovered.0, root.fork(), ctx)
+                            let focus = root_widget.resolve(hovered.0.as_slice(), root.fork(), ctx)
                                 .map_or(false,|w| w.widget._focus_on_mouse_down() );
 
                             if focus {
@@ -258,7 +264,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                         path,
                                         stack,
                                         &StdVariant::new(event.clone(),ts),//.with_filter_path_strict(hovered.path),
-                                        Some(&*hovered.0),
+                                        Some(hovered.0.as_slice()),
                                         root.fork(), ctx,
                                     );
                                 }
@@ -268,7 +274,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(event,ts),//.with_filter_path_strict(p.down.path),
-                                Some(&*p.down.0),
+                                Some(p.down.0.as_slice()),
                                 root, ctx,
                             );
                         }
@@ -293,7 +299,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(MouseLeave{},ts).direct_only(),//.with_filter_path_strict(p.path),
-                            Some(&*prev_hovered.0),
+                            Some(prev_hovered.0.as_slice()),
                             root.fork(), ctx,
                         );
 
@@ -302,7 +308,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                                 path,
                                 stack,
                                 &StdVariant::new(MouseEnter{},ts).direct_only(),//.with_filter_path_strict(p.path),
-                                Some(&*hovered.0),
+                                Some(hovered.0.as_slice()),
                                 root, ctx,
                             );
                         }
@@ -314,7 +320,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(MouseLeave{},ts),//.with_filter_path_strict(p.path),
-                            Some(&*p.0),
+                            Some(p.0.as_slice()),
                             root, ctx,
                         );
                     }
@@ -346,7 +352,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(TextInput{text},ts),//.with_filter_path_strict(id.path),
-                            Some(&*id.0),
+                            Some(id.0.as_slice()),
                             root, ctx,
                         );
                     }
@@ -357,7 +363,7 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
                             path,
                             stack,
                             &StdVariant::new(MouseScroll{x,y},ts),//.with_filter_path_strict(hovered.path),
-                            Some(&*hovered.0),
+                            Some(hovered.0.as_slice()),
                             root, ctx,
                         );
                     }
@@ -369,16 +375,16 @@ impl<SB,E> WidgetIntercept<E> for StdInterceptLive<SB,E> where
         }
     }
     #[inline] 
-    fn _size<W,Ph,S>(
+    fn _size<W>(
         &self,
         w: &mut W,
-        path: &Ph,
-        stack: &S,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) -> ESize<E>
     where
-        W: Widget<E> + ?Sized, Ph: PathStack<E> + ?Sized, S: Queron<E> + ?Sized
+        W: Widget<E> + ?Sized
     {
         //todo!();
         self.sup._size(w, path, stack, root, ctx)

@@ -5,6 +5,7 @@ use std::ops::Range;
 use crate::env::Env;
 use crate::invalidation::Invalidation;
 use crate::newpath::{FixedIdx, PathFragment, PathResolvus, PathStack, PathResolvusDyn};
+use crate::pathslice::{NewPathStack, PathSliceRef, PathSliceMatch};
 use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::pane_childs::PaneChildWidget;
@@ -19,47 +20,47 @@ mod impl_tuple;
 impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E: Env {
     type Retained = WidgetsFixedIdx<Vec<PaneChildWidget<T::Widget,E>>>;
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
-        if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+    ) {
+        if let PathSliceMatch::Match(r2, resolve_inner) = resolve.fetch().slice_forward::<FixedIdx>() {
             if r2.0 >= 0 && (r2.0 as usize) < self.0.len() {
-                self.0[r2.0 as usize].send_mutation(&r2.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx)
+                self.0[r2.0 as usize].send_mutation(&mut path.with(*r2), resolve_inner, args, root, ctx)
             }
         } else {
             //TODO what happens if the mutor is lost
         }
     }
 
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained {
         WidgetsFixedIdx(
             self.0.iter()
                 .enumerate()
                 .map(|(idx,decl)|
-                    PaneChildWidget::new( decl.instantiate(&FixedIdx(idx as isize).push_on_stack(path), root.fork(), ctx) )
+                    PaneChildWidget::new( decl.instantiate(&mut path.with(FixedIdx(idx as isize)), root.fork(), ctx) )
                 )
                 .collect()
         )
     }
 
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Retained,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         // If resolve, try only update resolve scope
         if let Some(resolve) = route.resolving() {
-            if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+            if let PathSliceMatch::Match(r2, resolve_inner) = resolve.fetch().slice_forward::<FixedIdx>() {
                 if r2.0 >= 0 && (r2.0 as usize) < self.0.len().min(w.0.len()) {
-                    let v = self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize].widget, &r2.push_on_stack(path), route.for_child_1(), root, ctx);
+                    let v = self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize].widget, &mut path.with(*r2), route.for_child_1::<FixedIdx>(), root, ctx);
                     w.0[r2.0 as usize].invalidate(v);
                     return v;
                 }
@@ -74,21 +75,21 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
         // Remove old tail
         if w.0.len() > self.0.len() {
             for (idx,w) in w.0[self.0.len()..].iter_mut().enumerate() {
-                w.widget.end(&FixedIdx((self.0.len() + idx) as isize).push_on_stack(path), root.fork(), ctx);
+                w.widget.end(&mut path.with(FixedIdx((self.0.len() + idx) as isize)), root.fork(), ctx);
                 vali = Invalidation::new();
             }
         }
         // Update persisted exising area
         for (idx,(d,w)) in self.0.iter().zip(w.0.iter_mut()).enumerate() {
-            let v = d.update(&mut w.widget, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+            let v = d.update(&mut w.widget, &mut path.with(FixedIdx(idx as isize)), route.for_child_1::<FixedIdx>(), root.fork(), ctx);
             w.invalidate(v);
             vali |= v;
         }
         // Instantiate new tail
         if self.0.len() > w.0.len() {
             for (idx,d) in self.0[w.0.len()..].iter().enumerate() {
-                let path = FixedIdx((w.0.len() + idx) as isize).push_on_stack(path);
-                w.0.push(PaneChildWidget::new( d.instantiate(&path, root.fork(), ctx) ));
+                let mut path = path.with(FixedIdx((w.0.len() + idx) as isize));
+                w.0.push(PaneChildWidget::new( d.instantiate(&mut path, root.fork(), ctx) ));
                 vali = Invalidation::new();
             }
         }
@@ -97,13 +98,13 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
         vali
     }
 
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn PaneChildsDyn<E,ChildID=<Self::Retained as PaneChildsDyn<E>>::ChildID>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Retained,Invalidation) {
         let prev_len = prev.len();
         
         let mut vali = Invalidation::valid();
@@ -120,9 +121,9 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
 
         // Restore-update persisted exising area
         prev.idx_range_dyn_mut(0 .. restorable, &mut |result| {
-            let path = result.child_id.push_on_stack(path);
+            let mut path = path.with(result.child_id);
             let d = &self.0[result.idx as usize];
-            let (w,v) = d.update_restore(result.widget, &path, root.fork(), ctx);
+            let (w,v) = d.update_restore(result.widget, &mut path, root.fork(), ctx);
             let mut w = PaneChildWidget::new(w);
             w.invalidate(v);
             new.push(w);
@@ -132,8 +133,8 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
         // Instantiate new tail
         if self.0.len() > restorable {
             for (idx,d) in self.0[restorable..].iter().enumerate() {
-                let path = FixedIdx((restorable + idx) as isize).push_on_stack(path);
-                new.push(PaneChildWidget::new( d.instantiate(&path, root.fork(), ctx) ));
+                let mut path = path.with(FixedIdx((restorable + idx) as isize));
+                new.push(PaneChildWidget::new( d.instantiate(&mut path, root.fork(), ctx) ));
                 vali = Invalidation::new();
             }
         }
@@ -147,52 +148,52 @@ impl<E,T> PaneChildsDecl<E> for WidgetsFixedIdx<&[T]> where T: WidgetDecl<E>, E:
 impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: WidgetDecl<E>, E: Env {
     type Retained = WidgetsFixedIdx<[PaneChildWidget<T::Widget,E>;N]>;
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
-        if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+    ) {
+        if let PathSliceMatch::Match(r2, resolve_inner) = resolve.fetch().slice_forward::<FixedIdx>() {
             if r2.0 >= 0 && (r2.0 as usize) < self.0.len() {
-                self.0[r2.0 as usize].send_mutation(&r2.push_on_stack(path), resolve.inner().unwrap(), args, root, ctx)
+                self.0[r2.0 as usize].send_mutation(&mut path.with(*r2), resolve_inner, args, root, ctx)
             }
         } else {
             //TODO what happens if the mutor is lost
         }
     }
 
-    fn build<Ph>(self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Self: Sized, Ph: PathStack<E> + ?Sized {
+    fn build(self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Self: Sized {
         WidgetsFixedIdx(
             trans_array_enumerated(self.0, |idx,decl|
-                PaneChildWidget::new( decl.build(&FixedIdx(idx as isize).push_on_stack(path), root.fork(), ctx) )
+                PaneChildWidget::new( decl.build(&mut path.with(FixedIdx(idx as isize)), root.fork(), ctx) )
             )
         )
     }
 
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained {
         WidgetsFixedIdx(
             trans_array_enumerated_ref(&self.0, |idx,decl|
-                PaneChildWidget::new( decl.build(&FixedIdx(idx as isize).push_on_stack(path), root.fork(), ctx) )
+                PaneChildWidget::new( decl.build(&mut path.with(FixedIdx(idx as isize)), root.fork(), ctx) )
             )
         )
     }
 
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Retained,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         // If resolve, try only update resolve scope
         if let Some(resolve) = route.resolving() {
-            if let Some(r2) = resolve.try_fragment::<FixedIdx>() {
+            if let PathSliceMatch::Match(r2, resolve_inner) = resolve.fetch().slice_forward::<FixedIdx>() {
                 if r2.0 >= 0 && (r2.0 as usize) < self.0.len().min(w.0.len()) {
-                    let v = self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize].widget, &r2.push_on_stack(path), route.for_child_1(), root, ctx);
+                    let v = self.0[r2.0 as usize].update(&mut w.0[r2.0 as usize].widget, &mut path.with(*r2), route.for_child_1::<FixedIdx>(), root, ctx);
                     w.0[r2.0 as usize].invalidate(v);
                     return v;
                 }
@@ -206,7 +207,7 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
 
         // Update persisted exising area
         for (idx,(d,w)) in self.0.iter().zip(w.0.iter_mut()).enumerate() {
-            let v = d.update(&mut w.widget, &FixedIdx(idx as isize).push_on_stack(path), route.for_child_1(), root.fork(), ctx);
+            let v = d.update(&mut w.widget, &mut path.with(FixedIdx(idx as isize)), route.for_child_1::<FixedIdx>(), root.fork(), ctx);
             w.invalidate(v);
             vali |= v;
         }
@@ -214,13 +215,13 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
         vali
     }
 
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn PaneChildsDyn<E,ChildID=<Self::Retained as PaneChildsDyn<E>>::ChildID>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Retained,Invalidation) {
         let prev_len = prev.len();
 
         let mut vali = Invalidation::valid();
@@ -242,9 +243,9 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
         // Restore-update persisted exising area
         prev.idx_range_dyn_mut(0 .. restorable, &mut |result| {
             debug_assert_eq!(result.idx as usize, add_pos);
-            let path = result.child_id.push_on_stack(path);
+            let mut path = path.with(result.child_id);
             let d = &self.0[result.idx as usize];
-            let (w,v) = d.update_restore(result.widget, &path, root.fork(), ctx);
+            let (w,v) = d.update_restore(result.widget, &mut path, root.fork(), ctx);
             let mut w = PaneChildWidget::new(w);
             w.invalidate(v);
             new_mut[add_pos].write(w);
@@ -257,8 +258,8 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
         // Instantiate new tail
         if N > restorable {
             for d in &self.0[restorable..] {
-                let path = FixedIdx(add_pos as isize).push_on_stack(path);
-                new_mut[add_pos].write(PaneChildWidget::new( d.instantiate(&path, root.fork(), ctx) ));
+                let mut path = path.with(FixedIdx(add_pos as isize));
+                new_mut[add_pos].write(PaneChildWidget::new( d.instantiate(&mut path, root.fork(), ctx) ));
                 add_pos += 1;
                 vali |= Invalidation::new();
             }
@@ -273,53 +274,52 @@ impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<[T;N]> where T: W
 impl<E,T,const N: usize> PaneChildsDecl<E> for WidgetsFixedIdx<&[T;N]> where T: WidgetDecl<E>, E: Env {
     type Retained = WidgetsFixedIdx<[PaneChildWidget<T::Widget,E>;N]>;
 
-    fn send_mutation<Ph>(
+    fn send_mutation(
         &self,
-        path: &Ph,
-        resolve: &(dyn PathResolvusDyn<E>+'_),
+        path: &mut NewPathStack,
+        resolve: PathSliceRef,
         args: &dyn Any,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
-    ) where Ph: PathStack<E> + ?Sized {
+    ) {
         (*bender(self)).send_mutation(path, resolve, args, root, ctx)
     }
 
-    fn instantiate<Ph>(&self, path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained where Ph: PathStack<E> + ?Sized {
+    fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Retained {
         (*bender(self)).instantiate(path, root, ctx)
     }
 
-    fn update<Ph>(
+    fn update(
         &self,
         w: &mut Self::Retained,
-        path: &Ph,
+        path: &mut NewPathStack,
         route: UpdateRoute<'_,E>,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized {
+    ) -> Invalidation {
         (*bender(self)).update(w, path, route, root, ctx)
     }
 
-    fn update_restore<Ph>(
+    fn update_restore(
         &self,
         prev: &mut dyn PaneChildsDyn<E,ChildID=<Self::Retained as PaneChildsDyn<E>>::ChildID>,
-        path: &Ph,
+        path: &mut NewPathStack,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> (Self::Retained,Invalidation) where Ph: PathStack<E> + ?Sized {
+    ) -> (Self::Retained,Invalidation) {
         (*bender(self)).update_restore(prev, path, root, ctx)
     }
 }
 
 #[inline]
-fn end_range_dyn<Ph,CID,E>(w: &mut (dyn PaneChildsDyn<E,ChildID=CID> + '_), range: Range<usize>, parent_path: &Ph, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> usize
+fn end_range_dyn<CID,E>(w: &mut (dyn PaneChildsDyn<E,ChildID=CID> + '_), range: Range<usize>, parent_path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> usize
 where
-    Ph: PathStack<E> + ?Sized,
-    CID: PathFragment<E> + Clone + 'static,
+    CID: PathFragment<E> + Clone + Copy + 'static,
     E: Env,
 {
     let mut n = 0;
     w.idx_range_dyn_mut(range, &mut |result| {
-        result.widget.end(&result.child_id.push_on_stack(parent_path), root.fork(), ctx);
+        result.widget.end(&mut parent_path.with(result.child_id), root.fork(), ctx);
         n += 1;
     });
     n

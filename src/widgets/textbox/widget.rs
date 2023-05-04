@@ -47,16 +47,16 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
 {
     type Cache = TextBoxCache<E,Text::Cachor>;
     
-    fn _render<P,Ph>(
+    fn _render(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         _root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -76,14 +76,14 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
         //cursor.fix_boundaries(&*g);
         let off: Offset = self.get_scroll(ctx).into();
 
-        let selected = ctx.state().is_focused(path._erase());
+        let selected = ctx.state().is_focused(path);
 
         if cache.scroll_curs_cachor != Some((cursor.cachor(),off,selected)) {
             need_render = true;
             cache.scroll_curs_cachor = Some((cursor.cachor(),off,selected));
         }
 
-        if ctx.state().is_hovered(path._erase()) {
+        if ctx.state().is_hovered(path) {
             renderer.set_cursor_specific(&StdCursor::IBeam.into(),ctx);
         }
 
@@ -146,16 +146,16 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
         cache.text_rendered = true;
     }
     
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         let stack = with_inside_spacing_border(stack);
 
         let style = QueryTestStyle.query_in(&stack).unwrap();
@@ -268,7 +268,7 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
             if let Some(mouse) = ctx.state().cursor_pos() { //TODO strange event handling
 
                 let mouse_down = event.query_variant::<MouseDown<E>>(path,&stack).cloned();
-                let mouse_pressed = ctx.state().is_hovered(path._erase()) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path._erase()).is_some();
+                let mouse_pressed = ctx.state().is_hovered(path) && ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path).is_some();
 
                 // if mouse_down.is_some() || mouse_pressed {
                 //     dbg!(event._debug());
@@ -286,14 +286,14 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
         passed
     }
 
-    fn _size<P,Ph>(
+    fn _size(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         self.size.clone()
     }
 
@@ -326,24 +326,21 @@ impl<E,Text,Scroll,Curs,TBUpd> Widget<E> for TextBox<'_,E,Text,Scroll,Curs,TBUpd
         (callback)(Err(todo!()),ctx)
     }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: usize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         Err(todo!())
     }
 
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    // fn child_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
     //     Ok(vec![])
     // }
     fn focusable(&self) -> bool {

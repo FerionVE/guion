@@ -1,9 +1,11 @@
 use std::error::Error;
 use std::fmt::{Debug, Display};
+use std::marker::PhantomData;
 use std::sync::Arc;
 
 use crate::env::Env;
 use crate::newpath::PathResolvusDyn;
+use crate::pathslice::PathSliceOwned;
 
 #[derive(Clone)]
 #[non_exhaustive]
@@ -16,7 +18,7 @@ pub enum GuionError<E> where E: Env {
 #[derive(Clone)]
 pub struct ResolveError<E> where E: Env {
     pub op: &'static str,
-    pub sub_path: Arc<dyn PathResolvusDyn<E>>,
+    pub sub_path: PathSliceOwned,
     pub widget_type: Vec<&'static str>,
     pub child_info: Vec<GuionResolveErrorChildInfo<E>>,
 }
@@ -31,7 +33,8 @@ pub struct TraitcastError {
 pub struct GuionResolveErrorChildInfo<E> where E: Env {
     pub child_idx: isize,
     pub widget_type: Vec<&'static str>,
-    pub path: Arc<dyn PathResolvusDyn<E>>,
+    pub path: PathSliceOwned,
+    _p: PhantomData<E>,
     //pub widget_path_if_path: Option<E::WidgetPath>,
     //pub widget_id: Option<E::WidgetID>,
 }

@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use crate::aliases::{ESize, EStyle};
 use crate::cachor::AsCachor;
 use crate::newpath::PathStackDyn;
+use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::traitcast::WQuery;
 use crate::widget_decl::mut_target::MuTarget;
 use crate::widget_decl::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
@@ -78,7 +79,7 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_im<T>(self, immutor: T) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,T,TrMut> where T: Fn(&(dyn PathStackDyn<E>+'_),E::RootRef<'_>,&mut E::Context<'_>) {
+    pub fn with_trigger_im<T>(self, immutor: T) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,T,TrMut> where T: Fn(&'_ mut NewPathStack,E::RootRef<'_>,&mut E::Context<'_>) {
         decl::Button {
             size: self.size,
             style: self.style,
@@ -166,17 +167,17 @@ impl<E,T,Tr,TrIm,TrMut> decl::Button<E,Label<E,T>,Tr,TrIm,TrMut> where
 
 /// blanket-implemented on all `Fn(Link<E>)`
 pub trait Trigger<E> where E: Env {
-    fn trigger(&self, path: &(dyn PathStackDyn<E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
+    fn trigger(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>);
 }
 
 impl<E> Trigger<E> for () where E: Env {
     #[inline]
-    fn trigger(&self, _: &(dyn PathStackDyn<E>+'_), _: E::RootRef<'_>, _: &mut E::Context<'_>) {}
+    fn trigger(&self, _: &mut NewPathStack, _: E::RootRef<'_>, _: &mut E::Context<'_>) {}
 }
 
-impl<T,E> Trigger<E> for T where T: Fn(&(dyn PathStackDyn<E>+'_),E::RootRef<'_>,&mut E::Context<'_>), E: Env {
+impl<T,E> Trigger<E> for T where T: Fn(&'_ mut NewPathStack,E::RootRef<'_>,&mut E::Context<'_>), E: Env {
     #[inline]
-    fn trigger(&self, path: &(dyn PathStackDyn<E>+'_), root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
+    fn trigger(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) {
         (self)(path, root, ctx)
     }
 }

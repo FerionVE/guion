@@ -41,16 +41,16 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
 {
     type Cache = CheckBoxCache<Text::WidgetCache,E>;
 
-    fn _render<P,Ph>(
+    fn _render(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
         renderer: &mut ERenderer<'_,E>,
         mut force_render: bool,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) {
         let mut need_render = force_render;
 
         let render_props = StdRenderProps::new(stack);
@@ -76,10 +76,10 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
         let render_props = render_props.inside_spacing_border();
 
         let vartypes = TestStyleVariant {
-            hovered: ctx.state().is_hovered(path._erase()),
-            selected: ctx.state().is_focused(path._erase()),
+            hovered: ctx.state().is_hovered(path),
+            selected: ctx.state().is_focused(path),
             activated: self.state.get(ctx),
-            pressed: self.pressed(path._erase(), ctx).is_some(),
+            pressed: self.pressed(path, ctx).is_some(),
             disabled: false, //TODO
             ..Default::default()
         };
@@ -89,7 +89,7 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
             cache.vartype_cachors = Some(vartypes);
         }
 
-        if ctx.state().is_hovered(path._erase()) {
+        if ctx.state().is_hovered(path) {
             renderer.set_cursor_specific(&StdCursor::Hand.into(),ctx);
         }
 
@@ -134,7 +134,7 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
             self.text.with_widget(
                 &mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>| {
                     widget.render(
-                        &SimpleId(CheckBoxChild).push_on_stack(path),
+                        &SimpleId(CheckBoxChild) path,
                         &render_props
                             .inside_border(text_border)
                             .with_style_type(
@@ -157,16 +157,16 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
         }
     }
 
-    fn _event_direct<P,Ph,Evt>(
+    fn _event_direct(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
-        event: &Evt,
-        route_to_widget: Option<&(dyn PathResolvusDyn<E>+'_)>,
+        event: &(dyn event_new::EventDyn<E>+'_),
+        route_to_widget: Option<PathSliceRef>,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Invalidation where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized, Evt: event_new::Event<E> + ?Sized {
+    ) -> Invalidation {
         let stack = with_inside_spacing_border(stack);
         let event_mode = event.query_std_event_mode(path,&stack).unwrap();
 
@@ -175,7 +175,7 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
         if !receive_self {return false;}
 
         if let Some(ee) = event.query_variant::<MouseUp<E>>(path,&stack) {
-            if ee.key == MatchKeyCode::MouseLeft && path.fwd_compare(&*ee.down_widget) == FwdCompareStat::Equal && ctx.state().is_hovered(path._erase()) && !self.locked { //TODO down_widgets checks are redundand as event is sent?
+            if ee.key == MatchKeyCode::MouseLeft && path.fwd_compare(&*ee.down_widget) == FwdCompareStat::Equal && ctx.state().is_hovered(path) && !self.locked { //TODO down_widgets checks are redundand as event is sent?
                 let new = !self.state.get(ctx);
                 self.set(new,ctx);
                 return true;
@@ -190,14 +190,14 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
         event.query_variant::<MouseDown<E>>(path,&stack).is_some() //TODO tf, also what is this EventResp? useless?
     }
 
-    fn _size<P,Ph>(
+    fn _size(
         &self,
-        path: &Ph,
+        path: &mut NewPathStack,
         stack: &P,
         cache: &mut Self::Cache,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> ESize<E> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    ) -> ESize<E> {
         let check_size = QueryCurrentBounds.query_in(stack).unwrap().bounds.size.h;
         let text_border = Border::new(check_size+4/*TODO fix border impl*/*2,0,0,0);
 
@@ -207,7 +207,7 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
                 stack, text_border,
                 |stack|
                     self.text.with_widget(&mut AsWidgetClosure::new(|widget: &<Text as AsWidget<E>>::Widget<'_,'_>,root,ctx: &mut E::Context<'_>|
-                        widget.size(&SimpleId(CheckBoxChild).push_on_stack(path), &stack, &mut cache.label_cache, root,ctx)
+                        widget.size(&SimpleId(CheckBoxChild) path, &stack, &mut cache.label_cache, root,ctx)
                     ),root,ctx)
             )
         );
@@ -270,33 +270,30 @@ impl<E,State,Text,TrMut> Widget<E> for CheckBox<E,State,Text,TrMut> where
         }
     }
 
-    fn _call_tabulate_on_child_idx<P,Ph>(
+    fn _call_tabulate_on_child_idx(
         &self,
         idx: usize,
-        path: &Ph,
-        stack: &P,
-        op: TabulateOrigin<E>,
+        path: &mut NewPathStack,
+        stack: &(dyn QueronDyn<E>+'_),
+        op: TabulateOrigin,
         dir: TabulateDirection,
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse<E>,E::Error>
-    where 
-        Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized
-    {
+    ) -> Result<TabulateResponse,E::Error> {
         if idx != 0 { return Err(todo!()); }
 
         let rootf = root.fork();
 
         self.text.with_widget(
             &mut AsWidgetClosure::new(move |widget: &<Text as AsWidget<E>>::Widget<'_,'_>,_,ctx: &mut E::Context<'_>|
-                widget._tabulate(&SimpleId(CheckBoxChild).push_on_stack(path), stack, op.clone(), dir, root.fork(), ctx)
+                widget._tabulate(&SimpleId(CheckBoxChild) path, stack, op.clone(), dir, root.fork(), ctx)
             ),
             rootf,ctx
         )
     }
     
-    // fn child_bounds<P,Ph>(&self, path: &Ph,
-    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> where Ph: PathStack<E> + ?Sized, P: Queron<E> + ?Sized {
+    // fn child_bounds<P,Ph>(&self, path: &mut NewPathStack,
+    //     stack: &P, b: &Bounds, force: bool, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Result<Vec<Bounds>,()> {
     //     todo!();
     //     Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
     // }
@@ -319,7 +316,7 @@ impl<E,State,Text,TrMut> CheckBox<E,State,Text,TrMut> where
     Text: AsWidget<E>,
     TrMut: MutorEndBuilder<bool,E>,
 {
-    pub fn pressed<'l:'s,'cc: 'l,'s>(&self, path: &(dyn PathStackDyn<E>+'_), ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
+    pub fn pressed<'l:'s,'cc: 'l,'s>(&self, path: &mut NewPathStack, ctx: &'l mut E::Context<'cc>) -> Option<&'s EPressedKey<'cc,E>> {
         ctx.state().is_pressed_and_id(MatchKeyCode::MouseLeft,path)
             .or_else(||
                 ctx.state().is_pressed_and_id(MatchKeyCode::KbdReturn,path)

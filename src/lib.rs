@@ -3,6 +3,7 @@
 
 #![feature(generic_associated_types)]
 #![feature(type_alias_impl_trait)]
+#![feature(impl_trait_in_assoc_type)]
 
 //#![warn(clippy::all)]
 
@@ -36,6 +37,8 @@ pub mod newpath;
 pub mod cachor;
 
 pub mod invalidation;
+
+pub mod pathslice;
 
 pub type EventResp = bool;
 
