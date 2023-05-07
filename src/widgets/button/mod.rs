@@ -91,7 +91,7 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, mutor: T) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,T> where T: MutorEndBuilder<(),E> {
+    pub fn with_trigger_mut<T>(self, mutor: T) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,T> where T: MutorEndBuilder<E> {
         decl::Button {
             size: self.size,
             style: self.style,
@@ -103,19 +103,17 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut_if<LeftMutor,LeftArgs,LeftTarget,RightFn>(self, left_mutor: LeftMutor, left_arg: LeftArgs, right_fn: RightFn) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,impl MutorEndBuilder<(),E>>
+    pub fn with_trigger_mut_if<LeftMutor,LeftTarget,RightFn>(self, left_mutor: LeftMutor, right_fn: RightFn) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,impl MutorEndBuilder<E>>
     where 
-        LeftMutor: MutorToBuilder<LeftArgs,LeftTarget,E> + Sized,
+        LeftMutor: MutorToBuilder<LeftTarget,E> + Sized,
         LeftTarget: MuTarget<E> + ?Sized,
-        LeftArgs: Clone + Sized + Send + Sync + 'static,
         RightFn: for<'s,'ss,'c,'cc> Fn(
             &'s mut LeftTarget::Mutable<'ss>,
-            (),
             &'c mut E::Context<'cc>
         ) + Clone + Send + Sync + 'static
     {
         self.with_trigger_mut(
-            left_mutor.mutor_end_if(left_arg, right_fn)
+            left_mutor.mutor_end_if(right_fn)
         )
     }
     #[inline]

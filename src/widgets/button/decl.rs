@@ -41,7 +41,7 @@ impl<E,Text,Tr,TrIm,TrMut> WidgetDecl<E> for Button<E,Text,Tr,TrIm,TrMut> where
     Text: WidgetDecl<E>,
     Tr: Trigger<E> + Clone + 'static,
     TrIm: Trigger<E>,
-    TrMut: MutorEndBuilder<(),E>,
+    TrMut: MutorEndBuilder<E>,
 {
     type Widget = super::widget::Button<E,Text::Widget,Tr>;
 
@@ -57,7 +57,7 @@ impl<E,Text,Tr,TrIm,TrMut> WidgetDecl<E> for Button<E,Text,Tr,TrIm,TrMut> where
 
         self.trigger_im.trigger(path, root, ctx);
         
-        if let Some(t) = self.trigger_mut.build_box_mut_event(()) {
+        if let Some(t) = self.trigger_mut.build_box_mut_event() {
             ctx.mutate_closure(t);
         }
     }
