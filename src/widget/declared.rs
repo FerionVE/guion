@@ -15,7 +15,7 @@ use crate::root::RootRef;
 use crate::traitcast::{WQuery, WQueryResponder, WQueryGeneric, WQueryResponderGeneric, DowncastResponder, DowncastMutResponder};
 use crate::util::tabulate;
 use crate::widget_decl::route::UpdateRoute;
-use crate::widget_decl::{WidgetDeclCallback, WidgetDeclCallbackMode};
+use crate::widget_decl::{DeclScope, WidgetDeclCallbackMode};
 
 use super::dyn_tunnel::WidgetDyn;
 use super::{Widget, WidgetChildDynResultMut, WidgetChildDynResult, WidgetChildResolveDynResultMut, WidgetChildResolveDynResult};
@@ -23,11 +23,9 @@ use super::{Widget, WidgetChildDynResultMut, WidgetChildDynResult, WidgetChildRe
 pub struct WidgetDeclarative<I,W,F,E>
 where
     F: FnMut(
-        E::RootRef<'_>,
+        DeclScope<'_,'_,W,E>,
         &I,
         //Arc<dyn for<'a> Fn(E::RootMut<'a>,&'a ()) -> &'a mut I>,
-        WidgetDeclCallback<'_,W,E>,
-        &mut E::Context<'_>,
     ),
     W: Widget<E> + 'static,
     I: 'static,
@@ -42,11 +40,9 @@ where
 impl<I,W,F,E> WidgetDeclarative<I,W,F,E>
 where
     F: FnMut(
-        E::RootRef<'_>,
+        DeclScope<'_,'_,W,E>,
         &I,
         //Arc<dyn for<'a> Fn(E::RootMut<'a>,&'a ()) -> &'a mut I>,
-        WidgetDeclCallback<'_,W,E>,
-        &mut E::Context<'_>,
     ),
     W: Widget<E> + 'static,
     I: 'static,
@@ -56,14 +52,15 @@ where
     pub fn new(mut decl: F, data: I, root: E::RootRef<'_>, path: &mut NewPathStack, ctx: &mut E::Context<'_>) -> Self {
         let mut dest = None;
         
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::Instantiate(&mut dest),
         );
 
-        (decl)(root, &data, op, ctx);
+        (decl)(op, &data);
 
         Self {
             data,
@@ -77,11 +74,9 @@ where
 impl<XI,XW,XF,E> Widget<E> for WidgetDeclarative<XI,XW,XF,E>
 where
     XF: FnMut(
-        E::RootRef<'_>,
+        DeclScope<'_,'_,XW,E>,
         &XI,
         //Arc<dyn for<'a> Fn(E::RootMut<'a>,&'a ()) -> &'a mut XI>,
-        WidgetDeclCallback<'_,XW,E>,
-        &mut E::Context<'_>,
     ),
     XW: Widget<E> + 'static,
     XI: 'static,
@@ -173,14 +168,15 @@ where
     ) -> Invalidation {
         let mut vali = Invalidation::new();
 
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             route.clone(), //TODO
             WidgetDeclCallbackMode::Update(&mut self.inner, &mut vali),
         );
 
-        (self.decl)(root.fork(), &self.data, op, ctx);
+        (self.decl)(op, &self.data);
 
         self.inner.update(path, route, root, ctx) | vali
     }
@@ -238,14 +234,15 @@ where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) {
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             UpdateRoute::new_root(Some(resolve), None),
             WidgetDeclCallbackMode::SendMutation(resolve, args),
         );
 
-        (self.decl)(root.fork(), &self.data, op, ctx);
+        (self.decl)(op, &self.data);
 
         self.inner.send_mutation(path, resolve, args, root, ctx)
     }

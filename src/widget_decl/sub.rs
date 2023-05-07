@@ -11,14 +11,13 @@ use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::mutor_trait::MutorEnd;
 use super::route::UpdateRoute;
-use super::{WidgetDeclCallback, WidgetDecl, WidgetDeclCallbackMode, WidgetDeclCallbackResult};
+use super::{DeclScope, WidgetDecl, WidgetDeclCallbackMode, DeclResult};
 
 pub struct SubDecl<W,F,E> 
 where
     F: Fn(
-        WidgetDeclCallback<'_,W,E>,
-        &mut E::Context<'_>,
-    ) -> WidgetDeclCallbackResult,
+        DeclScope<'_,'_,W,E>,
+    ) -> DeclResult,
     W: Widget<E> + 'static,
     E: Env,
 {
@@ -29,9 +28,8 @@ where
 impl<W,F,E> SubDecl<W,F,E> 
 where
     F: Fn(
-        WidgetDeclCallback<'_,W,E>,
-        &mut E::Context<'_>,
-    ) -> WidgetDeclCallbackResult,
+        DeclScope<'_,'_,W,E>,
+    ) -> DeclResult,
     W: Widget<E> + 'static,
     E: Env,
 {
@@ -47,9 +45,8 @@ where
 impl<F,E> SubDecl<Box<dyn WidgetDyn<E> + 'static>,F,E> 
 where
     F: Fn(
-        WidgetDeclCallback<'_,Box<dyn WidgetDyn<E> + 'static>,E>,
-        &mut E::Context<'_>,
-    ) -> WidgetDeclCallbackResult,
+        DeclScope<'_,'_,Box<dyn WidgetDyn<E> + 'static>,E>,
+    ) -> DeclResult,
     E: Env,
 {
     #[inline]
@@ -64,9 +61,8 @@ where
 impl<W,F,E> WidgetDecl<E> for SubDecl<W,F,E> 
 where
     F: Fn(
-        WidgetDeclCallback<'_,W,E>,
-        &mut E::Context<'_>,
-    ) -> WidgetDeclCallbackResult,
+        DeclScope<'_,'_,W,E>
+    ) -> DeclResult,
     W: Widget<E> + 'static,
     E: Env,
 {
@@ -81,28 +77,30 @@ where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>,
     ) {
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::SendMutation(resolve, args),
         );
 
-        (self.decl)(op, ctx);
+        (self.decl)(op);
     }
 
     #[inline]
     fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {
         let mut dest = None;
         
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::Instantiate(&mut dest),
         );
 
-        (self.decl)(op, ctx);
+        (self.decl)(op);
 
         dest.unwrap()
     }
@@ -110,14 +108,15 @@ where
     fn instantiate_boxed(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Box<dyn WidgetDyn<E> + 'static> {
         let mut dest = None;
         
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::InstantiateBoxed(&mut dest),
         );
 
-        (self.decl)(op, ctx);
+        (self.decl)(op);
 
         dest.unwrap()
     }
@@ -132,14 +131,15 @@ where
     ) -> Invalidation {
         let mut vali = Invalidation::new();
 
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             route,
             WidgetDeclCallbackMode::Update(w, &mut vali),
         );
 
-        (self.decl)(op, ctx);
+        (self.decl)(op);
 
         vali
     }
@@ -154,14 +154,15 @@ where
         let mut dest = None;
         let mut vali = Invalidation::new();
         
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::UpdateRestore(prev, &mut dest, &mut vali),
         );
 
-        (self.decl)(op, ctx);
+        (self.decl)(op);
 
         (dest.unwrap(), vali)
     }
@@ -176,14 +177,15 @@ where
         let mut dest = None;
         let mut vali = Invalidation::new();
         
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             UpdateRoute::none(),
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, &mut dest, &mut vali),
         );
 
-        (self.decl)(op, ctx);
+        (self.decl)(op);
 
         (dest.unwrap(), vali)
     }
@@ -198,23 +200,24 @@ where
     ) -> Invalidation {
         let mut vali = Invalidation::new();
 
-        let op = WidgetDeclCallback::new(
+        let op = DeclScope::new(
             root.fork(),
+            ctx,
             path.fork(),
             route,
             WidgetDeclCallbackMode::UpdateDyn(w, &mut vali),
         );
 
-        (self.decl)(op, ctx);
+        (self.decl)(op);
 
         vali
     }
     #[inline]
-    fn callback(self, v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> super::WidgetDeclCallbackResult where Self: Sized {
-        (self.decl)(v, ctx)
+    fn callback(self, v: DeclScope<'_,'_,Self::Widget,E>) -> super::DeclResult where Self: Sized {
+        (self.decl)(v)
     }
     #[inline]
-    fn call_on(&self, v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> super::WidgetDeclCallbackResult {
-        (self.decl)(v, ctx)
+    fn call_on(&self, v: DeclScope<'_,'_,Self::Widget,E>) -> super::DeclResult {
+        (self.decl)(v)
     }
 }

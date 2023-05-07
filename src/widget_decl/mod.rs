@@ -123,70 +123,79 @@ pub trait WidgetDecl<E> where E: Env {
         self
     }
 
-    #[inline]
-    fn callback(self, mut v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult where Self: Sized {
-        match v.command {
-            WidgetDeclCallbackMode::Instantiate(dest) =>
-                *dest = Some(self.build(&mut v.path, v.root, ctx)),
-            WidgetDeclCallbackMode::InstantiateBoxed(dest) =>
-                *dest = Some(self.build_boxed(&mut v.path, v.root, ctx)),
-            WidgetDeclCallbackMode::Update(widget, vali) =>
-                *vali = self.update(widget, &mut v.path, v.route, v.root, ctx),
-            WidgetDeclCallbackMode::UpdateDyn(widget, vali) =>
-                *vali = self.update_dyn(widget, &mut v.path, v.route, v.root, ctx),
-            WidgetDeclCallbackMode::UpdateRestore(prev, dest, vali) => {
-                let (d,v) = self.update_restore(prev, &mut v.path, v.root, ctx);
-                *dest = Some(d); *vali = v;
-            },
-            WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest, vali) => {
-                let (d,v) = self.update_restore_boxed(prev, &mut v.path, v.root, ctx);
-                *dest = Some(d); *vali = v;
-            },
-            WidgetDeclCallbackMode::SendMutation(resolve, args) => 
-                self.send_mutation(&mut v.path, resolve, args, v.root, ctx),
-            
-        }
-        WidgetDeclCallbackResult(PhantomData)
+    fn into_erased<'a>(self) -> Box<(dyn WidgetDeclDyn<E>+'a)> where Self: Sized + 'a {
+        Box::new(self)
     }
 
     #[inline]
-    fn call_on(&self, mut v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult {
+    fn callback(self, mut v: DeclScope<'_,'_,Self::Widget,E>) -> DeclResult where Self: Sized {
         match v.command {
             WidgetDeclCallbackMode::Instantiate(dest) =>
-                *dest = Some(self.build(&mut v.path, v.root, ctx)),
+                *dest = Some(self.build(&mut v.path, v.root, v.ctx)),
             WidgetDeclCallbackMode::InstantiateBoxed(dest) =>
-                *dest = Some(self.build_boxed(&mut v.path, v.root, ctx)),
+                *dest = Some(self.build_boxed(&mut v.path, v.root, v.ctx)),
             WidgetDeclCallbackMode::Update(widget, vali) =>
-                *vali = self.update(widget, &mut v.path, v.route, v.root, ctx),
+                *vali = self.update(widget, &mut v.path, v.route, v.root, v.ctx),
             WidgetDeclCallbackMode::UpdateDyn(widget, vali) =>
-                *vali = self.update_dyn(widget, &mut v.path, v.route, v.root, ctx),
+                *vali = self.update_dyn(widget, &mut v.path, v.route, v.root, v.ctx),
             WidgetDeclCallbackMode::UpdateRestore(prev, dest, vali) => {
-                let (d,v) = self.update_restore(prev, &mut v.path, v.root, ctx);
+                let (d,v) = self.update_restore(prev, &mut v.path, v.root, v.ctx);
                 *dest = Some(d); *vali = v;
             },
             WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest, vali) => {
-                let (d,v) = self.update_restore_boxed(prev, &mut v.path, v.root, ctx);
+                let (d,v) = self.update_restore_boxed(prev, &mut v.path, v.root, v.ctx);
                 *dest = Some(d); *vali = v;
             },
             WidgetDeclCallbackMode::SendMutation(resolve, args) => 
-                self.send_mutation(&mut v.path, resolve, args, v.root, ctx),
+                self.send_mutation(&mut v.path, resolve, args, v.root, v.ctx),
+            
         }
-        WidgetDeclCallbackResult(PhantomData)
+        DeclResult(PhantomData)
+    }
+
+    #[inline]
+    fn call_on(&self, mut v: DeclScope<'_,'_,Self::Widget,E>) -> DeclResult {
+        match v.command {
+            WidgetDeclCallbackMode::Instantiate(dest) =>
+                *dest = Some(self.build(&mut v.path, v.root, v.ctx)),
+            WidgetDeclCallbackMode::InstantiateBoxed(dest) =>
+                *dest = Some(self.build_boxed(&mut v.path, v.root, v.ctx)),
+            WidgetDeclCallbackMode::Update(widget, vali) =>
+                *vali = self.update(widget, &mut v.path, v.route, v.root, v.ctx),
+            WidgetDeclCallbackMode::UpdateDyn(widget, vali) =>
+                *vali = self.update_dyn(widget, &mut v.path, v.route, v.root, v.ctx),
+            WidgetDeclCallbackMode::UpdateRestore(prev, dest, vali) => {
+                let (d,v) = self.update_restore(prev, &mut v.path, v.root, v.ctx);
+                *dest = Some(d); *vali = v;
+            },
+            WidgetDeclCallbackMode::UpdateRestoreBoxed(prev, dest, vali) => {
+                let (d,v) = self.update_restore_boxed(prev, &mut v.path, v.root, v.ctx);
+                *dest = Some(d); *vali = v;
+            },
+            WidgetDeclCallbackMode::SendMutation(resolve, args) => 
+                self.send_mutation(&mut v.path, resolve, args, v.root, v.ctx),
+        }
+        DeclResult(PhantomData)
     }
 }
 
-pub struct WidgetDeclCallback<'a,W,E> where W: Widget<E> + 'static, E: Env {
-    root: E::RootRef<'a>,
+pub struct DeclScope<'a,'b,W,E> where W: Widget<E> + 'static, E: Env, 'b: 'a {
+    pub(crate) root: E::RootRef<'a>,
+    pub(crate) ctx: &'a mut E::Context<'b>,
     pub(crate) path: NewPathStack<'a>,
     pub(crate) route: UpdateRoute<'a,E>,
     pub(crate) command: WidgetDeclCallbackMode<'a,W,E>,
-    _p: PhantomData<&'a mut ()>,
+    _p: PhantomData<&'a mut &'b mut ()>,
 }
 
-impl<'a,W,E> WidgetDeclCallback<'a,W,E> where W: Widget<E> + 'static, E: Env {
+impl<'a,'b,W,E> DeclScope<'a,'b,W,E> where W: Widget<E> + 'static, E: Env, 'b: 'a {
     #[inline]
     pub fn root(&self) -> E::RootRef<'a> {
         self.root.fork()
+    }
+    #[inline]
+    pub fn ctx(&mut self) -> &mut E::Context<'b> {
+        self.ctx
     }
     #[inline]
     pub fn path(&mut self) -> &mut NewPathStack<'a> {
@@ -197,9 +206,10 @@ impl<'a,W,E> WidgetDeclCallback<'a,W,E> where W: Widget<E> + 'static, E: Env {
     //     self
     // }
 
-    pub fn new(root: E::RootRef<'a>, path: NewPathStack<'a>, route: UpdateRoute<'a,E>, command: WidgetDeclCallbackMode<'a,W,E>) -> Self {
-        WidgetDeclCallback {
+    pub fn new(root: E::RootRef<'a>, ctx: &'a mut E::Context<'b>, path: NewPathStack<'a>, route: UpdateRoute<'a,E>, command: WidgetDeclCallbackMode<'a,W,E>) -> Self {
+        DeclScope {
             root,
+            ctx,
             path,
             route,
             command,
@@ -218,7 +228,7 @@ pub enum WidgetDeclCallbackMode<'a,W,E> where W: Widget<E> + 'static, E: Env {
     SendMutation(PathSliceRef<'a>, &'a dyn Any),
 }
 
-pub struct WidgetDeclCallbackResult(PhantomData<()>);
+pub struct DeclResult(PhantomData<()>);
 
 // impl BitOr<Invalidation> for WidgetDeclCallbackResult {
 //     type Output = Invalidation;
@@ -228,17 +238,17 @@ pub struct WidgetDeclCallbackResult(PhantomData<()>);
 //     }
 // }
 
-pub type WidgetDeclCallbackDyn<'a,E> = WidgetDeclCallback<'a,Box<dyn WidgetDyn<E> + 'static>,E>;
+pub type DeclScopeDyn<'a,'b,E> = DeclScope<'a,'b,Box<dyn WidgetDyn<E> + 'static>,E>;
 
 pub trait WidgetDeclExt<E>: WidgetDecl<E> where E: Env {
     #[inline]
-    fn callback_erased(self, v: WidgetDeclCallback<'_,Box<dyn WidgetDyn<E>+'static>,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult where Self: Sized {
-        Erased(self).callback(v, ctx)
+    fn callback_erased(self, v: DeclScope<'_,'_,Box<dyn WidgetDyn<E>+'static>,E>) -> DeclResult where Self: Sized {
+        Erased(self).callback(v)
     }
 
     #[inline]
-    fn call_on_erased(&self, v: WidgetDeclCallback<'_,Box<dyn WidgetDyn<E>+'static>,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult {
-        Erased(self).callback(v, ctx)
+    fn call_on_erased(&self, v: DeclScope<'_,'_,Box<dyn WidgetDyn<E>+'static>,E>) -> DeclResult {
+        Erased(self).callback(v)
     }
 
     #[inline]

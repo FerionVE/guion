@@ -9,7 +9,7 @@ use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::route::UpdateRoute;
-use super::{WidgetDecl, WidgetDeclCallback, WidgetDeclCallbackResult};
+use super::{WidgetDecl, DeclScope, DeclResult};
 
 impl<T,E> WidgetDecl<E> for &T where T: WidgetDecl<E> + ?Sized, E: Env {
     type Widget = T::Widget;
@@ -160,12 +160,12 @@ impl<T,E> WidgetDecl<E> for Box<T> where T: WidgetDecl<E> + ?Sized, E: Env {
         (**self).update_dyn(w, path, route, root, ctx)
     }
     #[inline]
-    fn callback(self, v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult where Self: Sized {
-        (*self).call_on(v, ctx) //TODO function self can't receive unsized, do we need box_box equilavent
+    fn callback(self, v: DeclScope<'_,'_,Self::Widget,E>) -> DeclResult where Self: Sized {
+        (*self).call_on(v) //TODO function self can't receive unsized, do we need box_box equilavent
     }
     #[inline]
-    fn call_on(&self, v: WidgetDeclCallback<'_,Self::Widget,E>, ctx: &mut E::Context<'_>) -> WidgetDeclCallbackResult {
-        (**self).call_on(v, ctx)
+    fn call_on(&self, v: DeclScope<'_,'_,Self::Widget,E>) -> DeclResult {
+        (**self).call_on(v)
     }
 }
 
