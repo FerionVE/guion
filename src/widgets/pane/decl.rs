@@ -17,7 +17,6 @@ use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::pane_childs::PaneChildsDyn;
 use crate::widget_decl::WidgetDecl;
-use crate::widget_decl::mutor_trait::MutorEndBuilder;
 use crate::widget_decl::pane_childs::PaneChildsDecl;
 use crate::widget_decl::route::UpdateRoute;
 

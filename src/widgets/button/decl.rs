@@ -1,9 +1,12 @@
+use std::sync::Arc;
+
 use crate::aliases::{EStyle, ESize, ERenderer, EEvent};
 use crate::ctx::Context;
 use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::invalidation::Invalidation;
 use crate::layout::Gonstraints;
+use crate::mutorenddyn;
 use crate::newpath::{PathStackDyn, PathStack, PathResolvusDyn, SimpleId, PathFragment, PathResolvus};
 use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::render::widgets::RenderStdWidgets;
@@ -14,7 +17,6 @@ use crate::util::bounds::Dims;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget_decl::WidgetDecl;
-use crate::widget_decl::mutor_trait::MutorEndBuilder;
 use crate::widget_decl::route::UpdateRoute;
 
 use super::Trigger;
@@ -41,7 +43,7 @@ impl<E,Text,Tr,TrIm,TrMut> WidgetDecl<E> for Button<E,Text,Tr,TrIm,TrMut> where
     Text: WidgetDecl<E>,
     Tr: Trigger<E> + Clone + 'static,
     TrIm: Trigger<E>,
-    TrMut: MutorEndBuilder<E>,
+    TrMut: Fn() -> Arc<mutorenddyn!(E;)>,
 {
     type Widget = super::widget::Button<E,Text::Widget,Tr>;
 
@@ -57,9 +59,7 @@ impl<E,Text,Tr,TrIm,TrMut> WidgetDecl<E> for Button<E,Text,Tr,TrIm,TrMut> where
 
         self.trigger_im.trigger(path, root, ctx);
         
-        if let Some(t) = self.trigger_mut.build_box_mut_event() {
-            ctx.mutate_closure(t);
-        }
+        ctx.mutate_closure((self.trigger_mut)());
     }
 
     fn instantiate(&self, path: &mut NewPathStack, root: E::RootRef<'_>, ctx: &mut E::Context<'_>) -> Self::Widget {

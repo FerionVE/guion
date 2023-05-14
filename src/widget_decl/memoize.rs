@@ -19,7 +19,6 @@ use crate::widget::{Widget, WidgetResolveDynResult, WidgetChildDynResultMut, Wid
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::WidgetDecl;
-use super::mutor_trait::MutorEnd;
 use super::route::UpdateRoute;
 
 pub struct Memoize<M,T,E> where M: Clone + PartialEq + 'static, T: WidgetDecl<E>, E: Env {

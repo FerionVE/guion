@@ -3,7 +3,6 @@ use crate::env::Env;
 use crate::newpath::PathStackDyn;
 use crate::pathslice::NewPathStack;
 use crate::traitcast::WQuery;
-use crate::widget_decl::mutor_trait::MutorEndBuilder;
 
 use super::{widget::Button, Trigger};
 

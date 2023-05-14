@@ -1,13 +1,12 @@
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use crate::aliases::{ESize, EStyle};
 use crate::cachor::AsCachor;
 use crate::newpath::PathStackDyn;
 use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::traitcast::WQuery;
-use crate::widget_decl::mut_target::MuTarget;
-use crate::widget_decl::mutor_trait::{MutorEndBuilder, MutorToBuilder, MutorToBuilderExt};
-use crate::constraint;
+use crate::{constraint, mutorenddyn};
 use crate::env::Env;
 use crate::text::stor::TextStor;
 
@@ -91,7 +90,7 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
         }
     }
     #[inline]
-    pub fn with_trigger_mut<T>(self, mutor: T) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,T> where T: MutorEndBuilder<E> {
+    pub fn with_trigger_mut<T>(self, mutor: T) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,T> where T: Fn() -> Arc<mutorenddyn!(E;)> {
         decl::Button {
             size: self.size,
             style: self.style,
@@ -101,20 +100,6 @@ impl<E,Text,Tr,TrIm,TrMut> decl::Button<E,Text,Tr,TrIm,TrMut> where
             locked: self.locked,
             text: self.text,
         }
-    }
-    #[inline]
-    pub fn with_trigger_mut_if<LeftMutor,LeftTarget,RightFn>(self, left_mutor: LeftMutor, right_fn: RightFn) -> decl::Button<E,Text,send_mutation_trigger_ty<E>,TrIm,impl MutorEndBuilder<E>>
-    where 
-        LeftMutor: MutorToBuilder<LeftTarget,E> + Sized,
-        LeftTarget: MuTarget<E> + ?Sized,
-        RightFn: for<'s,'ss,'c,'cc> Fn(
-            &'s mut LeftTarget::Mutable<'ss>,
-            &'c mut E::Context<'cc>
-        ) + Clone + Send + Sync + 'static
-    {
-        self.with_trigger_mut(
-            left_mutor.mutor_end_if(right_fn)
-        )
     }
     #[inline]
     pub fn with_caption<T>(self, text: T) -> decl::Button<E,T,Tr,TrIm,TrMut> {

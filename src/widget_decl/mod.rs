@@ -13,12 +13,10 @@ use crate::widget::dyn_tunnel::WidgetDyn;
 use self::dyn_tunnel::WidgetDeclDyn;
 use self::imp::Erased;
 use self::memoize::Memoize;
-use self::mutor_trait::MutorEnd;
 use self::route::UpdateRoute;
 use self::zone::Zone;
 
-pub mod mut_target;
-pub mod mutor_trait;
+pub mod mutor;
 
 pub mod imp;
 pub mod dyn_tunnel;

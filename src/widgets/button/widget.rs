@@ -25,7 +25,6 @@ use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, wit
 use crate::render::widgets::RenderStdWidgets;
 use crate::state::{CtxStdState, StdState};
 use crate::style::standard::cursor::StdCursor;
-use crate::widget_decl::mutor_trait::MutorEndBuilder;
 use crate::widget::{Widget, WidgetChildDynResult, WidgetChildDynResultMut, WidgetChildResolveDynResult, WidgetChildResolveDynResultMut};
 
 use super::decl::WQueryButtonRestore;

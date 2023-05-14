@@ -9,7 +9,7 @@ use crate::newpath::PathResolvusDyn;
 use crate::pathslice::PathSliceOwned;
 use crate::widget::id::WidgetID;
 
-use self::queue::{BoxMutEvent, StdEnqueueable, StdOrder, Queue};
+use self::queue::{BoxMutEvent, StdEnqueueable, StdOrder, Queue, ArcMutEvent};
 
 pub mod queue;
 pub mod clipboard;
@@ -36,7 +36,7 @@ pub trait Context<'cc,E>: Sized + 'cc where E: Env {
     // }
 
     #[deprecated="TODO better queue shorthands"]
-    fn mutate_closure(&mut self, closure: BoxMutEvent<E>) {
+    fn mutate_closure(&mut self, closure: ArcMutEvent<E>) {
         self.queue_mut().push(
             StdEnqueueable::MutateRootClosure { f: closure },
             StdOrder::PostCurrent,

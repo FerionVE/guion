@@ -9,7 +9,6 @@ use crate::root::RootRef;
 use crate::widget::Widget;
 use crate::widget::dyn_tunnel::WidgetDyn;
 
-use super::mutor_trait::MutorEnd;
 use super::route::UpdateRoute;
 use super::{DeclScope, WidgetDecl, WidgetDeclCallbackMode, DeclResult};
 

@@ -23,7 +23,7 @@ pub enum StdEnqueueable<E> where E: Env {
     Render{force: bool},
     Event{event: EEvent<E>, ts: u64},
     MutateRoot{f: PtrMutEvent<E>},
-    MutateRootClosure{f: BoxMutEvent<E>},
+    MutateRootClosure{f: ArcMutEvent<E>},
     AccessWidget{path: PathSliceOwned, f: PtrAccessWidget<E>},
     AccessWidgetClosure{path: PathSliceOwned, f: BoxAccessWidget<E>},
     AccessRoot{f: PtrAccessRoot<E>},
@@ -34,9 +34,9 @@ pub enum StdEnqueueable<E> where E: Env {
     DeclUpdate{scope: Option<PathSliceOwned>, zone: Option<TypeId>},
 }
 
-pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
-pub type ArcMutEvent<E> = Arc<dyn for<'r> FnOnce(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
-pub type PtrMutEvent<E> = for<'r> fn(<E as Env>::RootMut<'r>,&'r (),&mut <E as Env>::Context<'_>);
+pub type BoxMutEvent<E> = Box<dyn for<'r> FnOnce(&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
+pub type ArcMutEvent<E> = Arc<dyn for<'r> Fn(&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
+pub type PtrMutEvent<E> = for<'r> fn(&mut <E as Env>::Context<'_>);
 pub type BoxAccessWidget<E> = Box<dyn for<'w,'ww,'r> FnOnce(&'w (dyn WidgetDyn<E>+'ww),<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;
 pub type PtrAccessWidget<E> = for<'w,'ww,'r> fn(&'w (dyn WidgetDyn<E>+'ww),<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>);
 pub type BoxAccessRoot<E> = Box<dyn for<'r> FnOnce(<E as Env>::RootRef<'r>,&'r (),&mut <E as Env>::Context<'_>) + Send + Sync + 'static>;

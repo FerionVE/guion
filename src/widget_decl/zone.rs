@@ -8,7 +8,6 @@ use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::widget::dyn_tunnel::WidgetDyn;
 
 use super::WidgetDecl;
-use super::mutor_trait::MutorEnd;
 use super::route::UpdateRoute;
 
 pub struct Zone<Z,T,E> where Z: 'static, T: WidgetDecl<E>, E: Env {
