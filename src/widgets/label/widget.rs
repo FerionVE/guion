@@ -7,7 +7,7 @@ use crate::env::Env;
 use crate::event::imp::StdVarSup;
 use crate::invalidation::Invalidation;
 use crate::layout::Gonstraints;
-use crate::event_new;
+use crate::{event_new, widget_childs_macro};
 use crate::newpath::{PathStack, PathResolvusDyn};
 use crate::pathslice::{NewPathStack, PathSliceRef};
 use crate::queron::Queron;
@@ -129,30 +129,6 @@ impl<E,Text> Widget<E> for Label<E,Text> where
     ) -> Invalidation {
         Invalidation::valid()
     }
-    
-    fn childs(&self) -> Range<isize> {
-        0..0
-    }
-
-    fn child_dyn(&self, _: isize) -> Option<crate::widget::WidgetChildDynResult<'_,E>> {
-        None
-    }
-
-    fn child_dyn_mut(&mut self, _: isize) -> Option<crate::widget::WidgetChildDynResultMut<'_,E>> {
-        None
-    }
-
-    fn childs_dyn<'a,F>(&'a self, _: Range<isize>, _: F) where F: FnMut(crate::widget::WidgetChildDynResult<'a,E>) {}
-
-    fn childs_dyn_mut<'a,F>(&'a mut self, _: Range<isize>, _: F) where F: FnMut(crate::widget::WidgetChildDynResultMut<'a,E>) {}
-
-    fn resolve_child_dyn<'a,'b>(&'a self, _: PathSliceRef<'b>) -> Option<crate::widget::WidgetChildResolveDynResult<'a,'b,E>> {
-        None
-    }
-
-    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, _: PathSliceRef<'b>) -> Option<crate::widget::WidgetChildResolveDynResultMut<'a,'b,E>> {
-        None
-    }
 
     fn send_mutation(
         &mut self,
@@ -171,19 +147,6 @@ impl<E,Text> Widget<E> for Label<E,Text> where
         false
     }
 
-    fn _call_tabulate_on_child_idx(
-        &self,
-        _: isize,
-        _: &mut NewPathStack,
-        _: &(dyn QueronDyn<E>+'_),
-        _: TabulateOrigin,
-        _: TabulateDirection,
-        _: E::RootRef<'_>,
-        _: &mut E::Context<'_>
-    ) -> Result<TabulateResponse,E::Error> {
-        Err(todo!())
-    }
-
     #[inline]
     fn invalidate_recursive(&mut self, vali: Invalidation) {
         if vali.render {
@@ -198,6 +161,8 @@ impl<E,Text> Widget<E> for Label<E,Text> where
     }
 
     fn respond_query_mut<'a>(&'a mut self, _: crate::traitcast::WQueryResponder<'_,'a,E>) {}
+
+    widget_childs_macro!();
 }
 
 impl<E,Text> Label<E,Text> where

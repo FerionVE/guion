@@ -18,7 +18,7 @@ use crate::util::tabulate::{TabulateResponse, TabulateDirection, TabulateOrigin}
 use crate::widget::cache::StdRenderCachors;
 use crate::widget::dyn_tunnel::WidgetDyn;
 use crate::widget::id::WidgetID;
-use crate::{event_new, EventResp};
+use crate::{event_new, EventResp, widget_childs_macro};
 use crate::newpath::{PathStack, PathResolvusDyn, SimpleId, PathStackDyn, FwdCompareStat, PathFragment, PathResolvus};
 use crate::queron::Queron;
 use crate::render::{StdRenderProps, TestStyleColorType, TestStyleBorderType, with_inside_spacing_border, widget_size_inside_border_type, TestStyleCurrent, TestStyleVariant};
@@ -132,7 +132,7 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
             .with_style_type(vartypes);
 
         self.text.render(
-            &mut path.with(SimpleId(ButtonChild)), inner_render_props,
+            &mut path.with(ButtonChild), inner_render_props,
             renderer,
             force_render,
             cache,
@@ -215,76 +215,6 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
         self.text.update(&mut path.with(SimpleId(ButtonChild)), route.for_child_1::<SimpleId<ButtonChild>>(), root, ctx)
     }
 
-    fn childs(&self) -> Range<isize> {
-        0..1
-    }
-    
-    fn child_dyn(&self, idx: isize) -> Option<WidgetChildDynResult<'_,E>> {
-        if idx != 0 { return None; }
-
-        Some(WidgetChildDynResult {
-            idx,
-            widget_id: self.text.id(),
-            widget: &self.text,
-        })
-    }
-
-    fn child_dyn_mut(&mut self, idx: isize) -> Option<WidgetChildDynResultMut<'_,E>> {
-        if idx != 0 { return None; }
-
-        Some(WidgetChildDynResultMut {
-            idx,
-            widget_id: self.text.id(),
-            widget: &mut self.text,
-        })
-    }
-
-    fn childs_dyn<'a,F>(&'a self, range: Range<isize>, mut callback: F) where F: FnMut(WidgetChildDynResult<'a,E>) {
-        if range.start <= 0 && range.end >= 1 {
-            (callback)(WidgetChildDynResult {
-                idx: 0,
-                widget_id: self.text.id(),
-                widget: &self.text,
-            })
-        }
-    }
-
-    fn childs_dyn_mut<'a,F>(&'a mut self, range: Range<isize>, mut callback: F) where F: FnMut(WidgetChildDynResultMut<'a,E>) {
-        if range.start <= 0 && range.end >= 1 {
-            (callback)(WidgetChildDynResultMut {
-                idx: 0,
-                widget_id: self.text.id(),
-                widget: &mut self.text,
-            })
-        }
-    }
-
-    fn resolve_child_dyn<'a,'b>(&'a self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResult<'a,'b,E>> {
-        match path.fetch().slice_forward::<SimpleId<ButtonChild>>() {
-            PathSliceMatch::Match(_, inner) => Some(WidgetChildResolveDynResult {
-                idx: 0,
-                widget_id: self.text.id(),
-                widget: &self.text,
-                sub_path: inner,
-            }),
-            PathSliceMatch::Mismatch => None,
-            PathSliceMatch::End => None,
-        }
-    }
-
-    fn resolve_child_dyn_mut<'a,'b>(&'a mut self, path: PathSliceRef<'b>) -> Option<WidgetChildResolveDynResultMut<'a,'b,E>> {
-        match path.fetch().slice_forward::<SimpleId<ButtonChild>>() {
-            PathSliceMatch::Match(_, inner) => Some(WidgetChildResolveDynResultMut {
-                idx: 0,
-                widget_id: self.text.id(),
-                widget: &mut self.text,
-                sub_path: inner,
-            }),
-            PathSliceMatch::Mismatch => None,
-            PathSliceMatch::End => None,
-        }
-    }
-
     fn send_mutation(
         &mut self,
         path: &mut NewPathStack,
@@ -302,21 +232,6 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
     //     Ok(vec![]) //TODO or should None be returned for child-free widgets?? check this
     // }
     fn focusable(&self) -> bool { true }
-
-    fn _call_tabulate_on_child_idx(
-        &self,
-        idx: isize,
-        path: &mut NewPathStack,
-        stack: &(dyn QueronDyn<E>+'_),
-        op: TabulateOrigin,
-        dir: TabulateDirection,
-        root: E::RootRef<'_>,
-        ctx: &mut E::Context<'_>
-    ) -> Result<TabulateResponse,E::Error> {
-        if idx != 0 { return Err(todo!()); }
-
-        self.text._tabulate(&mut path.with(SimpleId(ButtonChild)), stack, op.clone(), dir, root, ctx)
-    }
 
     fn invalidate_recursive(&mut self, vali: Invalidation) {
         if vali.render {
@@ -345,8 +260,14 @@ impl<E,Text,Tr> Widget<E> for Button<E,Text,Tr> where
         root: E::RootRef<'_>,
         ctx: &mut E::Context<'_>
     ) {
-        self.text.end(&mut path.with(SimpleId(ButtonChild)), root, ctx)
+        self.text.end(&mut path.with(ButtonChild), root, ctx)
     }
+
+    widget_childs_macro!(
+        ButtonChild |i| ButtonChild;
+        |s|
+        0 =>  s.text;
+    );
 }
 
 impl<E,S,Tr> Button<E,S,Tr> where

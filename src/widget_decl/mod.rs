@@ -30,6 +30,8 @@ pub mod sub;
 pub mod memoize;
 pub mod zone;
 
+pub mod childs_macro;
+
 pub trait WidgetDecl<E> where E: Env {
     type Widget: Widget<E> + 'static;
 
