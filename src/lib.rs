@@ -22,6 +22,7 @@ pub mod util;
 pub mod aliases;
 pub mod text;
 pub mod widgets;
+pub mod log;
 
 pub mod root;
 pub mod traitcast;

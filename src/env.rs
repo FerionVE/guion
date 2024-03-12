@@ -23,6 +23,7 @@ pub trait Env: Sized + Clone + Copy + Default + PartialEq + Debug + Send + Sync 
     type Phantom: InfallibleType;
     type EventDowncastMap: EventDowncastMap<Self>;
     //type Commit: Eq + Ord;
+    type Log: crate::log::Logger;
 }
 
 pub trait EnvFlexCtxHandler: Env {
